@@ -123,9 +123,12 @@ class VibeSurvivor {
         this.backgroundMusic = new Audio('sound/Vibe_Survivor.mp3');
         this.backgroundMusic.loop = true;
         this.backgroundMusic.volume = 0.3; // Adjust volume as needed
-        
+
         // Mobile touch controls
         this.isMobile = this.detectMobile();
+
+        // Bind layout helpers that run from event listeners
+        this.updateStartOverlayLayout = this.updateStartOverlayLayout.bind(this);
         
         
         // Performance optimization - detect if we should reduce rendering quality
@@ -443,7 +446,9 @@ class VibeSurvivor {
         `;
 
         document.body.insertAdjacentHTML('beforeend', modalHTML);
-        
+
+        requestAnimationFrame(() => this.updateStartOverlayLayout());
+
         // Add toast notification styles
         this.addToastStyles();
         
@@ -903,9 +908,10 @@ class VibeSurvivor {
             /* Separate Start Screen Overlay - Contained within modal */
             .survivor-start-overlay {
                 position: relative;
-                top: 50%;
-                max-height: 100%;
+                flex: 1 1 auto;
                 max-width: 900px;
+                max-height: 100%;
+                align-self: stretch;
                 display: none !important;
                 align-items: center !important;
                 justify-content: center !important;
@@ -1688,6 +1694,7 @@ class VibeSurvivor {
                     setTimeout(() => this.ensureDashButtonInBounds(dashBtn), 50);
                 }
             }
+            this.updateStartOverlayLayout();
         });
         
         // Setup mobile controls if on mobile device
@@ -1880,7 +1887,7 @@ class VibeSurvivor {
             // Show title and hide stats during menu screens
             const title = document.getElementById('game-title');
             const stats = document.getElementById('header-stats');
-            
+
             header.style.display = 'flex';
             if (title) {
                 title.style.display = 'block';
@@ -1893,11 +1900,50 @@ class VibeSurvivor {
             // Header not found
         }
     }
-    
+
+    updateStartOverlayLayout() {
+        const modal = document.getElementById('vibe-survivor-modal');
+        const overlay = document.getElementById('survivor-start-overlay');
+
+        if (!modal || !overlay) {
+            return;
+        }
+
+        if (!overlay.classList.contains('active')) {
+            overlay.style.removeProperty('margin-top');
+            overlay.style.removeProperty('margin-bottom');
+            return;
+        }
+
+        const content = modal.querySelector('.vibe-survivor-content');
+        if (!content) {
+            return;
+        }
+
+        const header = content.querySelector('.vibe-survivor-header');
+        const headerHeight = header ? header.offsetHeight : 0;
+
+        overlay.style.removeProperty('margin-top');
+        overlay.style.removeProperty('margin-bottom');
+
+        const availableHeight = content.clientHeight - headerHeight;
+        const overlayHeight = overlay.offsetHeight || overlay.scrollHeight;
+
+        if (availableHeight <= 0 || overlayHeight <= 0) {
+            overlay.style.marginTop = '32px';
+            overlay.style.marginBottom = '32px';
+            return;
+        }
+
+        const marginValue = Math.max((availableHeight - overlayHeight) / 2, 32);
+        overlay.style.marginTop = `${marginValue}px`;
+        overlay.style.marginBottom = `${marginValue}px`;
+    }
+
     showStartScreen() {
         // Show modal header for start screen
         this.showModalHeader();
-        
+
         // Ensure game screen (canvas container) is visible behind start screen
         const gameScreen = document.getElementById('game-screen');
         if (gameScreen) {
@@ -1908,7 +1954,9 @@ class VibeSurvivor {
         const startOverlay = document.getElementById('survivor-start-overlay');
         if (startOverlay) {
             startOverlay.classList.add('active');
-            
+
+            requestAnimationFrame(() => this.updateStartOverlayLayout());
+
             // Render canvas background now that game screen is visible
             if (this.canvas && this.ctx) {
                 requestAnimationFrame(() => {
@@ -9284,7 +9332,9 @@ class VibeSurvivor {
         const startScreen = document.getElementById('survivor-start-overlay');
         if (startScreen) {
             startScreen.classList.add('active');
-            
+
+            requestAnimationFrame(() => this.updateStartOverlayLayout());
+
             // Re-attach start button event listener
             const startBtn = document.getElementById('start-survivor');
             if (startBtn) {
