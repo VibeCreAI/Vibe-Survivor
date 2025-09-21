@@ -1209,14 +1209,27 @@ class VibeSurvivor {
 
             .levelup-modal {
                 position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+                backdrop-filter: blur(5px);
+            }
+
+            .levelup-content {
                 background: linear-gradient(135deg, #0a0a1a, #1a0a2a);
                 border: 2px solid #00ffff;
                 border-radius: 15px;
                 padding: 30px;
-                z-index: 2000;
+                text-align: center;
+                max-width: 90%;
+                max-height: 80%;
+                overflow-y: auto;
                 box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
                 backdrop-filter: blur(10px);
             }
@@ -1332,8 +1345,8 @@ class VibeSurvivor {
 
             .mobile-dash-btn {
                 position: absolute;
-                bottom: 30px;
-                right: 30px;
+                bottom: 20px;
+                right: 20px;
                 width: 100px;
                 height: 100px;
                 background: rgba(0, 255, 255, 0.3);
@@ -1360,8 +1373,8 @@ class VibeSurvivor {
 
             .canvas-help-btn {
                 position: absolute;
-                top: 30px;
-                right: 30px;
+                top: 20px;
+                right: 20px;
                 width: 50px;
                 height: 50px;
                 background: rgba(0, 255, 255, 0.3);
@@ -1376,7 +1389,7 @@ class VibeSurvivor {
                 transition: all 0.3s ease;
                 box-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
                 backdrop-filter: blur(3px);
-                z-index: 1000;
+                z-index: 2000;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -2713,10 +2726,74 @@ class VibeSurvivor {
                 selectedButton.classList.add('menu-selected');
                 selectedButton.style.boxShadow = '0 0 15px rgba(0, 255, 255, 0.8)';
                 selectedButton.style.borderColor = '#00ffff';
+
+                // Auto-scroll to keep selected item in view
+                this.scrollToSelectedItem(selectedButton);
             }
         }
     }
-    
+
+    scrollToSelectedItem(selectedButton) {
+        if (!selectedButton) return;
+
+        // Find the scrollable container for this button
+        let scrollContainer = null;
+
+        // Check if it's in the help modal
+        if (selectedButton.closest('.help-content')) {
+            scrollContainer = selectedButton.closest('.help-content');
+        }
+        // Check if it's in the level up modal
+        else if (selectedButton.closest('.upgrade-choices-container')) {
+            scrollContainer = selectedButton.closest('.upgrade-choices-container');
+        }
+        // Check if it's in other scrollable containers
+        else {
+            // Look for parent with overflow-y: auto or scroll
+            let parent = selectedButton.parentElement;
+            while (parent && parent !== document.body) {
+                const style = window.getComputedStyle(parent);
+                if (style.overflowY === 'auto' || style.overflowY === 'scroll') {
+                    scrollContainer = parent;
+                    break;
+                }
+                parent = parent.parentElement;
+            }
+        }
+
+        if (!scrollContainer) return;
+
+        // Get container and button positions
+        const containerRect = scrollContainer.getBoundingClientRect();
+        const buttonRect = selectedButton.getBoundingClientRect();
+
+        // Calculate if button is outside visible area
+        const containerTop = containerRect.top;
+        const containerBottom = containerRect.bottom;
+        const buttonTop = buttonRect.top;
+        const buttonBottom = buttonRect.bottom;
+
+        // Add some padding for better UX
+        const padding = 20;
+
+        // Check if button is above visible area
+        if (buttonTop < containerTop + padding) {
+            const scrollAmount = buttonTop - containerTop - padding;
+            scrollContainer.scrollBy({
+                top: scrollAmount,
+                behavior: 'smooth'
+            });
+        }
+        // Check if button is below visible area
+        else if (buttonBottom > containerBottom - padding) {
+            const scrollAmount = buttonBottom - containerBottom + padding;
+            scrollContainer.scrollBy({
+                top: scrollAmount,
+                behavior: 'smooth'
+            });
+        }
+    }
+
     navigateMenu(direction) {
         if (!this.menuNavigationState.active) return;
         
@@ -2936,8 +3013,8 @@ class VibeSurvivor {
         if (!dashBtn) return;
         
         // Always force consistent positioning - same as original CSS
-        dashBtn.style.right = '30px';
-        dashBtn.style.bottom = '30px';
+        dashBtn.style.right = '20px';
+        dashBtn.style.bottom = '20px';
     }
     
     updateTouchControlsPositioning() {
@@ -5087,15 +5164,17 @@ class VibeSurvivor {
         
         const modalHTML = `
             <div id="levelup-modal" class="levelup-modal levelup-modal-responsive">
-                <div class="levelup-title">LEVEL UP!</div>
-                <div class="upgrade-choices-container">
-                    <div class="upgrade-choices">
-                        ${choices.map((choice, index) => `
-                            <div class="upgrade-choice" data-choice="${index}">
-                                <h3>${choice.icon} ${choice.name}</h3>
-                                <p>${choice.description}</p>
-                            </div>
-                        `).join('')}
+                <div class="levelup-content">
+                    <div class="levelup-title">LEVEL UP!</div>
+                    <div class="upgrade-choices-container">
+                        <div class="upgrade-choices">
+                            ${choices.map((choice, index) => `
+                                <div class="upgrade-choice" data-choice="${index}">
+                                    <h3>${choice.icon} ${choice.name}</h3>
+                                    <p>${choice.description}</p>
+                                </div>
+                            `).join('')}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -5168,18 +5247,16 @@ class VibeSurvivor {
             choiceHeight = 'auto';
         }
         
-        // Apply styles directly to the modal
-        modal.style.cssText += `
-            max-width: ${modalMaxWidth}px !important;
-            max-height: ${modalMaxHeight}px !important;
-            width: auto !important;
-            height: auto !important;
-            position: fixed !important;
-            top: 56% !important;
-            left: 50% !important;
-            transform: translate(-50%, -50%) !important;
-            overflow: visible !important;
-        `;
+        // Apply styles to the modal content instead of the modal backdrop
+        const modalContent = modal.querySelector('.levelup-content');
+        if (modalContent) {
+            modalContent.style.cssText += `
+                max-width: ${modalMaxWidth}px !important;
+                max-height: ${modalMaxHeight}px !important;
+                width: auto !important;
+                height: auto !important;
+            `;
+        }
         
         // Style the container for scrolling
         const container = modal.querySelector('.upgrade-choices-container');
@@ -5262,7 +5339,7 @@ class VibeSurvivor {
                 box-shadow: 0 0 15px rgba(0, 255, 255, 0.8) !important;
                 border: 2px solid #00ffff !important;
                 background: rgba(0, 255, 255, 0.1) !important;
-                transform: scale(1.05) !important;
+                transform: scale(1.03) !important;
                 transition: all 0.2s ease !important;
             }
             
