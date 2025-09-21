@@ -1071,6 +1071,8 @@ class VibeSurvivor {
                 width: 90%;
                 max-height: 80vh;
                 overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                touch-action: pan-y;
             }
 
             .help-content h2 {
@@ -2556,6 +2558,9 @@ class VibeSurvivor {
             this.timePaused = true;
             helpMenu.style.display = 'flex';
 
+            // Enable touch scrolling for help content
+            this.enableHelpScrolling();
+
             // Initialize keyboard navigation for help menu
             const closeBtn = document.getElementById('close-help-btn');
             if (closeBtn) {
@@ -2572,9 +2577,104 @@ class VibeSurvivor {
             this.timePaused = false;
             helpMenu.style.display = 'none';
 
+            // Clean up help scrolling handlers
+            this.disableHelpScrolling();
+
             // Deactivate keyboard navigation
             this.resetMenuNavigation();
         }
+    }
+
+    enableHelpScrolling() {
+        const helpContent = document.querySelector('.help-content');
+        if (!helpContent) return;
+
+        // Remove any existing touch event listeners to avoid duplicates
+        if (this.helpScrollHandler) {
+            helpContent.removeEventListener('touchstart', this.helpScrollHandler.start, { passive: false });
+            helpContent.removeEventListener('touchmove', this.helpScrollHandler.move, { passive: false });
+            helpContent.removeEventListener('touchend', this.helpScrollHandler.end, { passive: false });
+        }
+
+        // Create touch scroll handlers that allow native scrolling
+        this.helpScrollHandler = {
+            start: (e) => {
+                // Don't prevent default - allow native touch scrolling
+                e.stopPropagation(); // Stop it from bubbling to modal
+            },
+            move: (e) => {
+                // Don't prevent default - allow native touch scrolling
+                e.stopPropagation(); // Stop it from bubbling to modal
+            },
+            end: (e) => {
+                // Don't prevent default - allow native touch scrolling
+                e.stopPropagation(); // Stop it from bubbling to modal
+            }
+        };
+
+        // Add touch event listeners that explicitly allow scrolling
+        helpContent.addEventListener('touchstart', this.helpScrollHandler.start, { passive: true });
+        helpContent.addEventListener('touchmove', this.helpScrollHandler.move, { passive: true });
+        helpContent.addEventListener('touchend', this.helpScrollHandler.end, { passive: true });
+    }
+
+    disableHelpScrolling() {
+        const helpContent = document.querySelector('.help-content');
+        if (!helpContent || !this.helpScrollHandler) return;
+
+        // Remove touch event listeners
+        helpContent.removeEventListener('touchstart', this.helpScrollHandler.start, { passive: true });
+        helpContent.removeEventListener('touchmove', this.helpScrollHandler.move, { passive: true });
+        helpContent.removeEventListener('touchend', this.helpScrollHandler.end, { passive: true });
+
+        // Clear the handler reference
+        this.helpScrollHandler = null;
+    }
+
+    enableLevelUpScrolling() {
+        const levelUpContent = document.querySelector('.upgrade-choices-container');
+        if (!levelUpContent) return;
+
+        // Remove any existing touch event listeners to avoid duplicates
+        if (this.levelUpScrollHandler) {
+            levelUpContent.removeEventListener('touchstart', this.levelUpScrollHandler.start, { passive: false });
+            levelUpContent.removeEventListener('touchmove', this.levelUpScrollHandler.move, { passive: false });
+            levelUpContent.removeEventListener('touchend', this.levelUpScrollHandler.end, { passive: false });
+        }
+
+        // Create touch scroll handlers that allow native scrolling
+        this.levelUpScrollHandler = {
+            start: (e) => {
+                // Don't prevent default - allow native touch scrolling
+                e.stopPropagation(); // Stop it from bubbling to modal
+            },
+            move: (e) => {
+                // Don't prevent default - allow native touch scrolling
+                e.stopPropagation(); // Stop it from bubbling to modal
+            },
+            end: (e) => {
+                // Don't prevent default - allow native touch scrolling
+                e.stopPropagation(); // Stop it from bubbling to modal
+            }
+        };
+
+        // Add touch event listeners that explicitly allow scrolling
+        levelUpContent.addEventListener('touchstart', this.levelUpScrollHandler.start, { passive: true });
+        levelUpContent.addEventListener('touchmove', this.levelUpScrollHandler.move, { passive: true });
+        levelUpContent.addEventListener('touchend', this.levelUpScrollHandler.end, { passive: true });
+    }
+
+    disableLevelUpScrolling() {
+        const levelUpContent = document.querySelector('.upgrade-choices-container');
+        if (!levelUpContent || !this.levelUpScrollHandler) return;
+
+        // Remove touch event listeners
+        levelUpContent.removeEventListener('touchstart', this.levelUpScrollHandler.start, { passive: true });
+        levelUpContent.removeEventListener('touchmove', this.levelUpScrollHandler.move, { passive: true });
+        levelUpContent.removeEventListener('touchend', this.levelUpScrollHandler.end, { passive: true });
+
+        // Clear the handler reference
+        this.levelUpScrollHandler = null;
     }
 
     checkHelpButtonVisibility() {
@@ -2756,7 +2856,7 @@ class VibeSurvivor {
         const preventTouchDefault = (e) => {
             // Only prevent default if the touch isn't on game controls
             const target = e.target;
-            const isGameControl = target.closest('#survivor-canvas') || 
+            const isGameControl = target.closest('#survivor-canvas') ||
                                 target.closest('.mobile-controls') ||
                                 target.closest('.close-btn') ||
                                 target.closest('.pause-btn') ||
@@ -2767,8 +2867,12 @@ class VibeSurvivor {
                                 target.closest('#overlay-retry-btn') ||
                                 target.closest('#overlay-exit-btn') ||
                                 target.closest('#survivor-game-over-overlay');
-                                
-            if (!isGameControl) {
+
+            // Allow scrolling within help content and level up modal
+            const isHelpContent = target.closest('.help-content');
+            const isLevelUpContent = target.closest('.upgrade-choices-container');
+
+            if (!isGameControl && !isHelpContent && !isLevelUpContent) {
                 e.preventDefault();
                 e.stopPropagation();
             }
@@ -2779,14 +2883,16 @@ class VibeSurvivor {
         modal.addEventListener('touchmove', preventTouchDefault, { passive: false });
         modal.addEventListener('touchend', preventTouchDefault, { passive: false });
         
-        content.addEventListener('touchstart', preventTouchDefault, { passive: false });
-        content.addEventListener('touchmove', preventTouchDefault, { passive: false });
-        content.addEventListener('touchend', preventTouchDefault, { passive: false });
-        
-        // Also prevent wheel events for desktop
+        // Also prevent wheel events for desktop, but allow scrolling in help content and level up modal
         modal.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
+            const target = e.target;
+            const isHelpContent = target.closest('.help-content');
+            const isLevelUpContent = target.closest('.upgrade-choices-container');
+
+            if (!isHelpContent && !isLevelUpContent) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
         }, { passive: false });
         
         // Prevent body scrolling while modal is open
@@ -5002,7 +5108,10 @@ class VibeSurvivor {
         if (modal) {
             this.applyResponsiveModalStyles(modal, choices.length, isMobile);
         }
-        
+
+        // Enable touch scrolling for level up modal
+        this.enableLevelUpScrolling();
+
         // Add menu navigation styles
         this.addMenuNavigationStyles();
         
@@ -5021,6 +5130,9 @@ class VibeSurvivor {
             document.querySelector(`[data-choice="${index}"]`).addEventListener('click', () => {
                 this.resetMenuNavigation();
                 this.selectUpgrade(choice);
+
+                // Clean up level up scrolling handlers before removing modal
+                this.disableLevelUpScrolling();
                 document.getElementById('levelup-modal').remove();
                 
                 
@@ -5077,8 +5189,11 @@ class VibeSurvivor {
                 max-height: calc(${modalMaxHeight}px - 8rem);
                 padding: 0 10px;
                 margin: 10px -10px;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                touch-action: pan-y;
             `;
-            
+
             // Custom scrollbar for better mobile experience
             container.style.cssText += `
                 scrollbar-width: thin;
