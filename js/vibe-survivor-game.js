@@ -1366,9 +1366,12 @@ class VibeSurvivor {
                 z-index: 1000;
             }
 
-            .mobile-dash-btn:active {
+            .mobile-dash-btn:active,
+            .mobile-dash-btn.dash-pressed {
                 background: #00ffff;
                 transform: scale(0.9);
+                box-shadow: 0 0 25px rgba(0, 255, 255, 1.0);
+                border-color: #00ffff;
             }
 
             .canvas-help-btn {
@@ -1628,13 +1631,23 @@ class VibeSurvivor {
                     case 'w':
                         e.preventDefault();
                         this.menuNavigationState.keyboardUsed = true;
-                        this.navigateMenu('up');
+                        // Special scrolling behavior for help modal
+                        if (this.menuNavigationState.menuType === 'help') {
+                            this.scrollHelpContent('up');
+                        } else {
+                            this.navigateMenu('up');
+                        }
                         break;
                     case 'arrowdown':
                     case 's':
                         e.preventDefault();
                         this.menuNavigationState.keyboardUsed = true;
-                        this.navigateMenu('down');
+                        // Special scrolling behavior for help modal
+                        if (this.menuNavigationState.menuType === 'help') {
+                            this.scrollHelpContent('down');
+                        } else {
+                            this.navigateMenu('down');
+                        }
                         break;
                     case 'arrowleft':
                     case 'a':
@@ -2690,6 +2703,26 @@ class VibeSurvivor {
         this.levelUpScrollHandler = null;
     }
 
+    scrollHelpContent(direction) {
+        const helpContent = document.querySelector('.help-content');
+        if (!helpContent) return;
+
+        // Scroll amount per key press (adjust as needed)
+        const scrollAmount = 50;
+
+        if (direction === 'up') {
+            helpContent.scrollBy({
+                top: -scrollAmount,
+                behavior: 'smooth'
+            });
+        } else if (direction === 'down') {
+            helpContent.scrollBy({
+                top: scrollAmount,
+                behavior: 'smooth'
+            });
+        }
+    }
+
     checkHelpButtonVisibility() {
         const helpBtn = document.getElementById('help-btn');
         if (!helpBtn) return;
@@ -3201,12 +3234,16 @@ class VibeSurvivor {
             e.preventDefault();
             e.stopPropagation(); // Prevent event from bubbling to modal
             this.touchControls.dashButton.pressed = true;
+            // Add visual flash effect for mobile
+            dashBtn.classList.add('dash-pressed');
         }, { passive: false });
-        
+
         const endDashTouch = (e) => {
             e.preventDefault();
             e.stopPropagation(); // Prevent event from bubbling to modal
             this.touchControls.dashButton.pressed = false;
+            // Remove visual flash effect for mobile
+            dashBtn.classList.remove('dash-pressed');
         };
         
         dashBtn.addEventListener('touchend', endDashTouch, { passive: false });
@@ -3217,12 +3254,16 @@ class VibeSurvivor {
             e.preventDefault();
             e.stopPropagation(); // Prevent event from bubbling to modal
             this.touchControls.dashButton.pressed = true;
+            // Add visual flash effect for desktop (enhances existing :active)
+            dashBtn.classList.add('dash-pressed');
         });
-        
+
         const endDashMouse = (e) => {
             e.preventDefault();
             e.stopPropagation(); // Prevent event from bubbling to modal
             this.touchControls.dashButton.pressed = false;
+            // Remove visual flash effect for desktop
+            dashBtn.classList.remove('dash-pressed');
         };
         
         dashBtn.addEventListener('mouseup', endDashMouse);
