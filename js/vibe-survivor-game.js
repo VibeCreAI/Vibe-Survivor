@@ -2146,6 +2146,15 @@ class VibeSurvivor {
         this.bossesKilled = 0;
         this.nextBossSpawnTime = null;
         this.isPaused = false; // Ensure pause state is reset
+
+        // Reset touch controls to prevent stuck movement
+        if (this.touchControls && this.touchControls.joystick) {
+            this.touchControls.joystick.active = false;
+            this.touchControls.joystick.moveX = 0;
+            this.touchControls.joystick.moveY = 0;
+            this.touchControls.joystick.visible = false;
+            this.touchControls.joystick.touchId = null;
+        }
         
         // Reset player - start at world center
         this.player = {
@@ -5957,8 +5966,7 @@ class VibeSurvivor {
     }
 
     createBossDefeatAnimation(bossX, bossY, bossRadius) {
-        
-        
+
         // Show boss defeat notification during animation
         this.createToast("BOSS DEFEATED! DIFFICULTY INCREASED!", 'victory', 3000);
         
@@ -9131,8 +9139,16 @@ class VibeSurvivor {
     }
     
     bossDefeated() {
-        
-        
+
+        // Reset touch controls when victory screen opens to prevent stuck movement
+        if (this.touchControls && this.touchControls.joystick) {
+            this.touchControls.joystick.active = false;
+            this.touchControls.joystick.moveX = 0;
+            this.touchControls.joystick.moveY = 0;
+            this.touchControls.joystick.visible = false;
+            this.touchControls.joystick.touchId = null;
+        }
+
         // Set victory sequence state and pause game time
         this.bossVictoryInProgress = true;  // Mark victory screen active
         this.timePaused = true;             // Pause game time during victory
@@ -9434,7 +9450,16 @@ class VibeSurvivor {
     continueAfterBoss() {
         // Resume the game with increased difficulty after beating the boss
         this.gameRunning = true;
-        
+
+        // Reset touch controls to ensure clean state when continuing after boss defeat
+        if (this.touchControls && this.touchControls.joystick) {
+            this.touchControls.joystick.active = false;
+            this.touchControls.joystick.moveX = 0;
+            this.touchControls.joystick.moveY = 0;
+            this.touchControls.joystick.visible = false;
+            this.touchControls.joystick.touchId = null;
+        }
+
         // Clear any existing enemies and projectiles for fresh start
         this.enemies = [];
         this.projectiles = [];
