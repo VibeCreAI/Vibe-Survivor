@@ -2630,9 +2630,16 @@ class VibeSurvivor {
                 this.updateMenuSelection();
             }
         } else {
-            // Resume the game when help is closed
-            this.isPaused = false;
-            this.timePaused = false;
+            // Check if pause menu is still open before resuming the game
+            const pauseMenu = document.getElementById('pause-menu');
+            const pauseMenuOpen = pauseMenu && pauseMenu.style.display !== 'none';
+
+            // Only resume the game if the pause menu is not open
+            if (!pauseMenuOpen) {
+                this.isPaused = false;
+                this.timePaused = false;
+            }
+
             helpMenu.style.display = 'none';
 
             // Change help button back to ?
