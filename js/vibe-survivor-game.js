@@ -2446,7 +2446,12 @@ class VibeSurvivor {
         // Dash mechanic with Spacebar key or mobile dash button
         const shouldDash = this.keys[' '] || (this.isMobile && this.touchControls.dashButton.pressed);
         if (shouldDash && !this.player.dashCooldown) {
-            const dashDistance = 40;
+            let dashDistance = 40;
+            // Apply dash boost passive (+50% distance per stack)
+            if (this.player.passives.dash_boost) {
+                const dashStacks = typeof this.player.passives.dash_boost === 'number' ? this.player.passives.dash_boost : 1;
+                dashDistance *= (1 + 0.5 * dashStacks); // 50% increase per stack
+            }
             let dashX = 0, dashY = 0;
             
             // Use current movement direction for dash
@@ -5264,15 +5269,25 @@ class VibeSurvivor {
             { id: 'regeneration', name: 'Regeneration', description: 'Slowly heal over time', icon: '🔄' },
             { id: 'magnet', name: 'Magnet', description: 'Attract XP from further away', icon: '🧲' },
             { id: 'armor', name: 'Armor', description: 'Reduce damage taken by 15%', icon: '🛡️' },
-            { id: 'critical', name: 'Critical Strike', description: '15% chance for double damage', icon: '💥' }
+            { id: 'critical', name: 'Critical Strike', description: '15% chance for double damage', icon: '💥' },
+            { id: 'dash_boost', name: 'Dash Boost', description: '+50% Dash Distance', icon: '⚡' }
         ];
         
         passiveChoices.forEach(passive => {
-            // Allow health_boost and armor to be acquired multiple times
-            const canStack = ['health_boost', 'armor'].includes(passive.id);
+            // Allow health_boost, armor, critical, and dash_boost to be acquired multiple times
+            const canStack = ['health_boost', 'armor', 'critical', 'dash_boost'].includes(passive.id);
             const alreadyHas = this.player.passives[passive.id];
 
-            if (!alreadyHas || canStack) {
+            // Check for caps on stackable items
+            let canAcquire = true;
+            if (passive.id === 'critical' && typeof alreadyHas === 'number' && alreadyHas >= 3) {
+                canAcquire = false; // Critical is capped at 3 stacks
+            }
+            if (passive.id === 'dash_boost' && typeof alreadyHas === 'number' && alreadyHas >= 3) {
+                canAcquire = false; // Dash boost is capped at 3 stacks
+            }
+
+            if ((!alreadyHas || canStack) && canAcquire) {
                 // Update description for stackable items
                 let description = passive.description;
                 if (canStack && alreadyHas) {
@@ -5280,6 +5295,12 @@ class VibeSurvivor {
                         description = '+25 Max Health (Stackable)';
                     } else if (passive.id === 'armor') {
                         description = '+15% Damage Reduction (Stackable)';
+                    } else if (passive.id === 'critical') {
+                        const currentStacks = typeof alreadyHas === 'number' ? alreadyHas : 1;
+                        description = `+15% Crit Chance (${currentStacks}/3 Stacks)`;
+                    } else if (passive.id === 'dash_boost') {
+                        const currentStacks = typeof alreadyHas === 'number' ? alreadyHas : 1;
+                        description = `+50% Dash Distance (${currentStacks}/3 Stacks)`;
                     }
                 }
 
@@ -5909,12 +5930,25 @@ class VibeSurvivor {
                 }
                 break;
             case 'critical':
-                this.player.passives.critical = true;
+                // Track count for stackable passive (capped at 3)
+                if (typeof this.player.passives.critical === 'number') {
+                    this.player.passives.critical = Math.min(3, this.player.passives.critical + 1);
+                } else {
+                    this.player.passives.critical = 1;
+                }
+                break;
+            case 'dash_boost':
+                // Track count for stackable passive (capped at 3)
+                if (typeof this.player.passives.dash_boost === 'number') {
+                    this.player.passives.dash_boost = Math.min(3, this.player.passives.dash_boost + 1);
+                } else {
+                    this.player.passives.dash_boost = 1;
+                }
                 break;
         }
 
         // Only set to true for non-stackable passives
-        if (!['health_boost', 'armor'].includes(passiveId)) {
+        if (!['health_boost', 'armor', 'critical', 'dash_boost'].includes(passiveId)) {
             this.player.passives[passiveId] = true;
         }
     }
@@ -5956,10 +5990,14 @@ class VibeSurvivor {
                         projectile.hitCount = (projectile.hitCount || 0) + 1;
                     }
                     
-                    // Critical hit chance
-                    if (this.player.passives.critical && Math.random() < 0.15) {
-                        damage *= 2;
-                        this.createCriticalParticles(enemy.x, enemy.y);
+                    // Critical hit chance (15% per stack)
+                    if (this.player.passives.critical) {
+                        const criticalStacks = typeof this.player.passives.critical === 'number' ? this.player.passives.critical : 1;
+                        const criticalChance = 0.15 * criticalStacks; // 15% per stack
+                        if (Math.random() < criticalChance) {
+                            damage *= 2;
+                            this.createCriticalParticles(enemy.x, enemy.y);
+                        }
                     }
                     
                     enemy.health -= damage;
@@ -9171,7 +9209,8 @@ class VibeSurvivor {
             'regeneration': 'Regeneration (Auto-heal)',
             'magnet': 'Magnet (XP Attraction)',
             'armor': 'Armor (Damage Reduction)',
-            'critical': 'Critical (Critical Hits)'
+            'critical': 'Critical (Critical Hits)',
+            'dash_boost': 'Dash Boost (+50% Distance)'
         };
 
         const activePassives = Object.keys(this.player.passives).filter(key =>
@@ -9184,7 +9223,7 @@ class VibeSurvivor {
             let displayName = passiveNames[passive];
 
             // Add count for stackable passives
-            if (['health_boost', 'armor'].includes(passive)) {
+            if (['health_boost', 'armor', 'critical', 'dash_boost'].includes(passive)) {
                 const count = this.player.passives[passive];
                 if (typeof count === 'number' && count > 1) {
                     displayName += ` (x${count})`;
