@@ -1,5 +1,13 @@
 # Refactor Plan: Vibe Survivor Game Engine
 
+## EXECUTION INSTRUCTIONS FOR LLM
+**IMPLEMENT ALL 10 PHASES IN ONE EXECUTION CYCLE**
+- Read this entire plan carefully
+- Execute all phases sequentially without stopping for testing between phases
+- Create all required files and modify existing files as specified
+- Preserve all functionality, performance optimizations, and mobile features
+- Final human testing will occur after all phases are complete
+
 ## Objectives
 - Improve maintainability by decomposing the 9k-line `js/vibe-survivor-game.js` monolith into focused modules.
 - Clarify system boundaries so future contributors can navigate rendering, gameplay, audio, and UI code quickly.
@@ -237,119 +245,132 @@ Each modal will have its own dedicated file for better organization:
 - **Contribution Guidelines**: Clear guidelines for adding new features
 - **API Documentation**: Generated documentation for public module interfaces
 
-## Task Management Checklist
+## IMPLEMENTATION CHECKLIST - EXECUTE ALL PHASES
 
-### Phase 0: Analysis & Preparation ⏳
-- [ ] Create dependency map of monolith (what calls what)
-- [ ] Analyze circular dependencies and plan extraction order
-- [ ] Set up baseline performance benchmarks (FPS, memory, load time)
-- [ ] Document current touch control behavior
-- [ ] Document audio fallback mechanisms
-- [ ] Create smoke test for current functionality
-- **Testing**: Run current game to establish baseline ✅
+### Phase 0: Analysis & Preparation
+**EXECUTE IMMEDIATELY:**
+- [ ] Analyze the 9k-line monolith structure and identify key systems
+- [ ] Identify circular dependencies and plan extraction order
+- [ ] Note current touch control behavior and audio fallback mechanisms
+- [ ] Understand the current module loading and initialization pattern
 
-### Phase 1: Scaffolding & Module Setup ⏳
-- [ ] Convert `index.html` to use `type="module"`
+### Phase 1: Scaffolding & Module Setup
+**EXECUTE IMMEDIATELY:**
+- [ ] Convert `index.html` to use `<script type="module" src="js/vibe-survivor-game.js"></script>`
 - [ ] Preserve `window.VIBE_SURVIVOR_AUTO_INIT = false` pattern
-- [ ] Create directory structure (`core/`, `systems/`, `utils/`, `config/`)
-- [ ] Create placeholder modules with exported stubs
-- [ ] Implement feature flags system
-- [ ] Create module loader with fallback capability
-- [ ] Add ESLint configuration for modules
-- **Testing**: Game should still launch and run normally ✅
+- [ ] Create directory structure: `js/core/`, `js/systems/`, `js/utils/`, `js/config/`
+- [ ] Create all required subdirectories per the enhanced file structure
 
-### Phase 2: Core Infrastructure ⏳
+### Phase 2: Core Infrastructure
+**EXTRACT CORE UTILITIES:**
 - [ ] Extract `Vector2` class to `utils/vector2.js`
-- [ ] Create `utils/performance.js` with FPS/memory monitoring
-- [ ] Set up `config/constants.js` with current values
-- [ ] Set up `config/assets.js` with asset paths
+- [ ] Create `utils/performance.js` with FPS/memory monitoring utilities
+- [ ] Set up `config/constants.js` with all game constants and tuning values
+- [ ] Set up `config/assets.js` with asset paths and preload manifests
 - [ ] Create `core/state.js` with centralized state management
-- [ ] Establish standard error handling patterns
-- **Testing**: Game functionality unchanged, modules importable ✅
 
-### Phase 2.5: Interface Standardization ⏳
-- [ ] Define consistent method signatures (state, deltaTime, context)
-- [ ] Create shared contracts and JSDoc types
-- [ ] Implement standardized communication patterns
-- [ ] Document API contracts between systems
-- **Testing**: All modules follow consistent patterns ✅
+### Phase 2.5: Interface Standardization
+**ESTABLISH PATTERNS:**
+- [ ] Define consistent method signatures (state, deltaTime, context patterns)
+- [ ] Create shared contracts and JSDoc type definitions
+- [ ] Implement standardized communication patterns between modules
 
-### Phase 3: Core Systems Extraction ⏳
-- [ ] Extract engine bootstrap to `core/engine.js`
-- [ ] Move input handling to `core/events.js`
-- [ ] Create `systems/physics/collision.js`
-- [ ] Create `systems/physics/movement.js`
-- [ ] Update monolith to use new core modules with feature flags
-- **Testing**: Game controls and physics work normally ✅
+### Phase 3: Core Systems Extraction
+**EXTRACT ENGINE & PHYSICS:**
+- [ ] Extract engine bootstrap and main game loop to `core/engine.js`
+- [ ] Move input handling (keyboard/mouse/touch) to `core/events.js`
+- [ ] Create `systems/physics/collision.js` for collision detection
+- [ ] Create `systems/physics/movement.js` for movement calculations
 
-### Phase 4: Rendering System Migration ⏳
-- [ ] Extract canvas setup to `systems/rendering/canvas.js`
-- [ ] Move rendering pipeline to `systems/rendering/renderer.js`
-- [ ] Migrate particle system to `systems/rendering/particles.js`
+### Phase 4: Rendering System Migration
+**EXTRACT RENDERING PIPELINE:**
+- [ ] Extract canvas setup and coordinate transforms to `systems/rendering/canvas.js`
+- [ ] Move main rendering pipeline to `systems/rendering/renderer.js`
+- [ ] Migrate particle system to `systems/rendering/particles.js` (preserve object pooling)
 - [ ] Extract visual effects to `systems/rendering/effects.js`
-- [ ] Preserve object pooling optimizations
-- **Testing**: All visual elements render correctly, no performance regression ✅
 
-### Phase 5: Gameplay Systems Migration ⏳
+### Phase 5: Gameplay Systems Migration
+**EXTRACT ALL GAMEPLAY LOGIC:**
 - [ ] Move player logic to `systems/gameplay/player.js`
 - [ ] Create enemy base class in `systems/gameplay/enemies/enemy-base.js`
-- [ ] Extract behaviors to `systems/gameplay/enemies/behaviors.js`
-- [ ] Move spawn logic to `systems/gameplay/enemies/spawning.js`
-- [ ] Create weapon base in `systems/gameplay/weapons/weapon-base.js`
-- [ ] Extract projectiles to `systems/gameplay/weapons/projectiles.js`
+- [ ] Extract enemy behaviors to `systems/gameplay/enemies/behaviors.js`
+- [ ] Move wave/spawn logic to `systems/gameplay/enemies/spawning.js`
+- [ ] Create weapon base class in `systems/gameplay/weapons/weapon-base.js`
+- [ ] Extract projectile management to `systems/gameplay/weapons/projectiles.js`
 - [ ] Move XP system to `systems/gameplay/progression/xp-system.js`
-- [ ] Extract upgrades to `systems/gameplay/progression/upgrades.js`
-- [ ] Move pickups to `systems/gameplay/pickups.js`
-- **Testing**: All gameplay mechanics work (movement, shooting, enemies, XP, upgrades) ✅
+- [ ] Extract upgrade system to `systems/gameplay/progression/upgrades.js`
+- [ ] Move pickups (XP orbs, health, magnet) to `systems/gameplay/pickups.js`
 
-### Phase 6: UI System Migration ⏳
-- [ ] Create `systems/ui/modals/modal-base.js`
+### Phase 6: UI System Migration
+**EXTRACT ALL UI AND MODALS:**
+- [ ] Create modal base system in `systems/ui/modals/modal-base.js`
 - [ ] Extract start screen to `systems/ui/modals/start-screen.js`
 - [ ] Move pause menu to `systems/ui/modals/pause-modal.js`
-- [ ] Extract level-up to `systems/ui/modals/levelup-modal.js`
+- [ ] Extract level-up system to `systems/ui/modals/levelup-modal.js`
 - [ ] Move help screen to `systems/ui/modals/help-modal.js`
-- [ ] Extract game over to `systems/ui/modals/gameover-modal.js`
-- [ ] Move HUD to `systems/ui/hud.js`
-- [ ] Extract touch controls to `systems/ui/touch-controls.js`
-- **Testing**: All UI works (modals, navigation, touch controls, mobile responsiveness) ✅
+- [ ] Extract game over screen to `systems/ui/modals/gameover-modal.js`
+- [ ] Move HUD rendering to `systems/ui/hud.js`
+- [ ] **CRITICAL**: Extract touch controls to `systems/ui/touch-controls.js`
 
-### Phase 7: Audio System Migration ⏳
-- [ ] Move audio management to `systems/audio/audio-manager.js`
-- [ ] Preserve audio fallback mechanisms
-- [ ] Preserve lazy loading behavior
-- **Testing**: Audio plays correctly, fallbacks work ✅
+### Phase 7: Audio System Migration
+**EXTRACT AUDIO MANAGEMENT:**
+- [ ] Move sound and music management to `systems/audio/audio-manager.js`
+- [ ] Preserve all audio fallback mechanisms and lazy loading behavior
 
-### Phase 8: Integration & Testing ⏳
-- [ ] Wire all systems in `core/engine.js`
-- [ ] Run comprehensive functionality testing
-- [ ] Performance validation against baseline
-- [ ] Cross-browser compatibility testing
-- [ ] Mobile device testing
-- **Testing**: Complete game works flawlessly across all platforms ✅
+### Phase 8: Integration & Wiring
+**WIRE ALL SYSTEMS TOGETHER:**
+- [ ] Update `core/engine.js` to import and orchestrate all systems
+- [ ] Ensure proper initialization order and dependency management
+- [ ] Implement the main game loop using all extracted systems
+- [ ] Verify all imports/exports are correct
 
-### Phase 9: Cleanup & Documentation ⏳
-- [ ] Remove legacy code paths
-- [ ] Remove temporary feature flags
-- [ ] Minimize `js/vibe-survivor-game.js` to import/export bridge
-- [ ] Create architectural decision records (ADRs)
-- [ ] Document module communication patterns
-- [ ] Update README with new architecture
-- [ ] Create contribution guidelines
-- **Testing**: Final validation of complete refactored game ✅
+### Phase 9: Cleanup & Final Bridge
+**FINALIZE THE REFACTOR:**
+- [ ] Remove all legacy code from original monolith
+- [ ] Convert `js/vibe-survivor-game.js` to minimal import/export bridge
+- [ ] Ensure all functionality is preserved and working
+- [ ] Clean up any temporary code or comments
 
-## Testing Strategy Per Phase
+## FINAL HUMAN TESTING AFTER IMPLEMENTATION
 
-Each phase is designed to be **immediately testable** by running the game:
+**After all 10 phases are complete, the human will test:**
 
-1. **✅ Green Light**: Game runs normally, all features work
-2. **⚠️ Yellow Light**: Game runs but with known limitations (acceptable during transition)
-3. **🚫 Red Light**: Game broken, phase needs fixing before proceeding
+### ✅ **Core Functionality Test**
+- [ ] Game launches successfully from index.html
+- [ ] Start screen appears and responds to "Press Start"
+- [ ] Player can move with WASD/arrow keys
+- [ ] Mouse aiming and shooting works
+- [ ] Enemies spawn and behave correctly
+- [ ] Combat and damage systems work
+- [ ] XP collection and leveling up functions
+- [ ] Audio plays (music and sound effects)
 
-**Critical Testing Points:**
-- After each phase: Launch game and verify core functionality
-- UI-heavy phases (6): Test all modals and mobile controls
-- Performance phases (4,5): Monitor FPS and responsiveness
-- Final phase (9): Complete regression testing
+### ✅ **UI System Test**
+- [ ] All modals work correctly:
+  - Start screen modal
+  - Pause modal (ESC key)
+  - Level-up modal with weapon selection
+  - Help modal with scrolling
+  - Game over modal
+- [ ] HUD displays correctly (health, XP, stats)
+- [ ] Modal navigation works (keyboard/mouse)
 
-This approach ensures you never have a broken game for more than a single phase, making the refactor safe and incremental.
+### ✅ **Mobile/Touch Test**
+- [ ] Touch controls work on mobile devices
+- [ ] Virtual joystick responds correctly
+- [ ] Touch-friendly modal interactions
+- [ ] Responsive layout on small screens
+
+### ✅ **Performance Test**
+- [ ] Game runs at stable FPS (same as original)
+- [ ] No memory leaks or performance regressions
+- [ ] Smooth animations and transitions
+- [ ] Fast loading times
+
+### ✅ **Cross-Platform Test**
+- [ ] Works in multiple browsers (Chrome, Firefox, Safari, Edge)
+- [ ] Desktop and mobile compatibility
+- [ ] Audio fallbacks function properly
+
+**Success Criteria: All tests must pass for the refactor to be considered successful.**
 
