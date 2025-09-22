@@ -2782,6 +2782,12 @@ class VibeSurvivor {
         const helpBtn = document.getElementById('help-btn');
         if (!helpBtn) return;
 
+        // Hide help button during game over
+        if (!this.gameRunning && this.menuNavigationState.menuType === 'gameover') {
+            helpBtn.style.display = 'none';
+            return;
+        }
+
         // Always show help button - players should have access to merger recipes
         helpBtn.style.display = 'flex';
     }
@@ -9002,11 +9008,17 @@ class VibeSurvivor {
     
     gameOver() {
         this.gameRunning = false;
-        
+
         // Hide pause button during game over
         const pauseBtn = document.getElementById('pause-btn');
         if (pauseBtn) {
             pauseBtn.style.display = 'none';
+        }
+
+        // Hide help button during game over
+        const helpBtn = document.getElementById('help-btn');
+        if (helpBtn) {
+            helpBtn.style.display = 'none';
         }
     }
     
