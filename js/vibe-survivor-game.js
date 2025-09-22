@@ -242,6 +242,9 @@ class VibeSurvivor {
             menuButtons: [],
             keyboardUsed: false
         };
+
+        // Backup navigation state for help modal overlay scenarios
+        this.previousNavigationState = null;
         
         // Screen effects
         this.redFlash = {
@@ -2571,6 +2574,17 @@ class VibeSurvivor {
             // Enable touch scrolling for help content
             this.enableHelpScrolling();
 
+            // Save current navigation state before switching to help
+            if (this.menuNavigationState.active) {
+                this.previousNavigationState = {
+                    active: this.menuNavigationState.active,
+                    selectedIndex: this.menuNavigationState.selectedIndex,
+                    menuType: this.menuNavigationState.menuType,
+                    menuButtons: [...this.menuNavigationState.menuButtons],
+                    keyboardUsed: this.menuNavigationState.keyboardUsed
+                };
+            }
+
             // Initialize keyboard navigation for help menu
             const closeBtn = document.getElementById('close-help-btn');
             if (closeBtn) {
@@ -2595,8 +2609,19 @@ class VibeSurvivor {
             // Clean up help scrolling handlers
             this.disableHelpScrolling();
 
-            // Deactivate keyboard navigation
-            this.resetMenuNavigation();
+            // Restore previous navigation state if it exists
+            if (this.previousNavigationState) {
+                this.menuNavigationState.active = this.previousNavigationState.active;
+                this.menuNavigationState.selectedIndex = this.previousNavigationState.selectedIndex;
+                this.menuNavigationState.menuType = this.previousNavigationState.menuType;
+                this.menuNavigationState.menuButtons = [...this.previousNavigationState.menuButtons];
+                this.menuNavigationState.keyboardUsed = this.previousNavigationState.keyboardUsed;
+                this.updateMenuSelection();
+                this.previousNavigationState = null; // Clear the backup
+            } else {
+                // No previous state to restore, deactivate navigation
+                this.resetMenuNavigation();
+            }
         }
     }
 
@@ -2849,6 +2874,7 @@ class VibeSurvivor {
         this.menuNavigationState.menuType = null;
         this.menuNavigationState.menuButtons = [];
         this.menuNavigationState.keyboardUsed = false;
+        this.previousNavigationState = null; // Clear any backup state
     }
     
     exitToMenu() {
