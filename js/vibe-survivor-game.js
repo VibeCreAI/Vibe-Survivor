@@ -354,8 +354,8 @@ class VibeSurvivor {
                             
                             <!-- Game Title (shown when not in game) -->
                             <h2 id="game-title">VIBE SURVIVOR</h2>
-                            
-                            <button id="close-survivor" class="close-btn">×</button>
+
+                            <button id="help-btn" class="header-help-btn">?</button>
                         </div>
                         
                         <!-- Separate Start Screen Overlay -->
@@ -375,9 +375,6 @@ class VibeSurvivor {
                             <div id="mobile-dash-btn" class="mobile-dash-btn" style="display: none;">
                                 <span>DASH</span>
                             </div>
-                            
-                            <!-- Help Button (canvas overlay) -->
-                            <button id="help-btn" class="canvas-help-btn" style="display: none;">?</button>
                             
                             <!-- Pause Menu -->
                             <div id="pause-menu" class="pause-menu" style="display: none;">
@@ -666,7 +663,7 @@ class VibeSurvivor {
                     align-items: center;
                 }
                 
-                .pause-btn, .close-btn {
+                .pause-btn, .header-help-btn {
                     width: 32px !important;
                     height: 32px !important;
                     font-size: 16px !important;
@@ -732,7 +729,7 @@ class VibeSurvivor {
                     min-height: 75px; /* Increased for two-row layout */
                 }
                 
-                .pause-btn, .close-btn {
+                .pause-btn, .header-help-btn {
                     width: 35px !important;
                     height: 35px !important;
                     font-size: 17px !important;
@@ -842,17 +839,17 @@ class VibeSurvivor {
                 text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
             }
 
-            .close-btn {
-                background: rgba(255, 0, 255, 0.1);
-                border: 2px solid #ff00ff;
-                color: #ff00ff;
+            .header-help-btn {
+                background: rgba(0, 255, 255, 0.1);
+                border: 2px solid #00ffff;
+                color: #00ffff;
                 width: 40px;
                 height: 40px;
                 min-width: 40px;
                 min-height: 40px;
                 flex-shrink: 0;
                 border-radius: 50%;
-                font-size: 24px;
+                font-size: 20px;
                 font-weight: bold;
                 transition: all 0.3s ease;
                 position: absolute !important;
@@ -867,11 +864,16 @@ class VibeSurvivor {
                 cursor: pointer;
             }
 
-            .close-btn:hover {
-                background: #ff00ff;
-                color: #fff;
-                transform: rotate(90deg);
-                box-shadow: 0 0 20px rgba(255, 0, 255, 0.8);
+            .header-help-btn:hover {
+                background: rgba(0, 255, 255, 0.3);
+                transform: scale(1.1);
+                box-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+            }
+
+            .header-help-btn:active {
+                background: #00ffff;
+                color: #000;
+                transform: scale(0.9);
             }
             
             /* Position pause button on left */
@@ -1067,11 +1069,12 @@ class VibeSurvivor {
                 border-radius: 15px;
                 padding: 30px;
                 text-align: center;
-                max-width: 400px;
-                width: 90%;
+                max-width: 340px;
+                width: 85%;
                 max-height: 80vh;
                 overflow-y: auto;
                 -webkit-overflow-scrolling: touch;
+                transform: scale(0.85);
                 touch-action: pan-y;
             }
 
@@ -1374,41 +1377,6 @@ class VibeSurvivor {
                 border-color: #00ffff;
             }
 
-            .canvas-help-btn {
-                position: absolute;
-                top: 20px;
-                right: 20px;
-                width: 50px;
-                height: 50px;
-                background: rgba(0, 255, 255, 0.3);
-                border: 2px solid rgba(0, 255, 255, 0.6);
-                border-radius: 50%;
-                color: #00ffff;
-                font-size: 20px;
-                font-weight: bold;
-                cursor: pointer;
-                pointer-events: auto;
-                user-select: none;
-                transition: all 0.3s ease;
-                box-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
-                backdrop-filter: blur(3px);
-                z-index: 2000;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-
-            .canvas-help-btn:hover {
-                background: rgba(0, 255, 255, 0.5);
-                transform: scale(1.1);
-                box-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
-            }
-
-            .canvas-help-btn:active {
-                background: #00ffff;
-                color: #000;
-                transform: scale(0.9);
-            }
 
             .vibe-survivor-hidden {
                 display: none !important;
@@ -1448,13 +1416,13 @@ class VibeSurvivor {
                     bottom: auto !important;
                 }
                 
-                .close-btn { 
+                .header-help-btn {
                     position: absolute !important;
-                    top: 23px !important; 
-                    right: 15px !important; 
-                    width: 32px; 
-                    height: 32px; 
-                    font-size: 18px; 
+                    top: 23px !important;
+                    right: 15px !important;
+                    width: 32px;
+                    height: 32px;
+                    font-size: 16px;
                     margin: 0 !important;
                 }
                 
@@ -1555,10 +1523,6 @@ class VibeSurvivor {
     
     setupEventHandlers() {
         // Setting up event listeners
-        document.getElementById('close-survivor').addEventListener('click', () => {
-            this.closeGame();
-        });
-        
         document.getElementById('start-survivor').addEventListener('click', () => {
             this.resetMenuNavigation();
             this.startGame();
@@ -1915,6 +1879,7 @@ class VibeSurvivor {
             // Show title and hide stats during menu screens
             const title = document.getElementById('game-title');
             const stats = document.getElementById('header-stats');
+            const helpBtn = document.getElementById('help-btn');
 
             header.style.display = 'flex';
             if (title) {
@@ -1922,6 +1887,10 @@ class VibeSurvivor {
             }
             if (stats) {
                 stats.style.setProperty('display', 'none', 'important');
+            }
+            // Hide help button on start screen
+            if (helpBtn) {
+                helpBtn.style.display = 'none';
             }
             // Header shown for menu screens
         } else {
@@ -2577,12 +2546,18 @@ class VibeSurvivor {
     toggleHelp() {
         this.isHelpOpen = !this.isHelpOpen;
         const helpMenu = document.getElementById('help-menu');
+        const helpBtn = document.getElementById('help-btn');
 
         if (this.isHelpOpen) {
             // Pause the game when help is open
             this.isPaused = true;
             this.timePaused = true;
             helpMenu.style.display = 'flex';
+
+            // Change help button to X
+            if (helpBtn) {
+                helpBtn.textContent = '×';
+            }
 
             // Enable touch scrolling for help content
             this.enableHelpScrolling();
@@ -2602,6 +2577,11 @@ class VibeSurvivor {
             this.isPaused = false;
             this.timePaused = false;
             helpMenu.style.display = 'none';
+
+            // Change help button back to ?
+            if (helpBtn) {
+                helpBtn.textContent = '?';
+            }
 
             // Clean up help scrolling handlers
             this.disableHelpScrolling();
@@ -2726,7 +2706,7 @@ class VibeSurvivor {
     checkHelpButtonVisibility() {
         const helpBtn = document.getElementById('help-btn');
         if (!helpBtn) return;
-        
+
         // Always show help button - players should have access to merger recipes
         helpBtn.style.display = 'flex';
     }
@@ -2968,7 +2948,7 @@ class VibeSurvivor {
             const target = e.target;
             const isGameControl = target.closest('#survivor-canvas') ||
                                 target.closest('.mobile-controls') ||
-                                target.closest('.close-btn') ||
+                                target.closest('.header-help-btn') ||
                                 target.closest('.pause-btn') ||
                                 target.closest('.survivor-btn') ||
                                 target.closest('.upgrade-choice') ||
@@ -3110,7 +3090,7 @@ class VibeSurvivor {
         gameModal.addEventListener('touchstart', (e) => {
             // Only handle touches that aren't on interactive elements
             const target = e.target;
-            const isInteractiveElement = target.closest('.close-btn') ||
+            const isInteractiveElement = target.closest('.header-help-btn') ||
                                        target.closest('.pause-btn') ||
                                        target.closest('.survivor-btn') ||
                                        target.closest('.upgrade-choice') ||
