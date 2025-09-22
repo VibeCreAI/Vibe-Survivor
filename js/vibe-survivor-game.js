@@ -1632,9 +1632,11 @@ class VibeSurvivor {
                     case 'w':
                         e.preventDefault();
                         this.menuNavigationState.keyboardUsed = true;
-                        // Special scrolling behavior for help modal
+                        // Special scrolling behavior for help modal and game over
                         if (this.menuNavigationState.menuType === 'help') {
                             this.scrollHelpContent('up');
+                        } else if (this.menuNavigationState.menuType === 'gameover') {
+                            this.scrollGameOverContent('up');
                         } else {
                             this.navigateMenu('up');
                         }
@@ -1643,9 +1645,11 @@ class VibeSurvivor {
                     case 's':
                         e.preventDefault();
                         this.menuNavigationState.keyboardUsed = true;
-                        // Special scrolling behavior for help modal
+                        // Special scrolling behavior for help modal and game over
                         if (this.menuNavigationState.menuType === 'help') {
                             this.scrollHelpContent('down');
+                        } else if (this.menuNavigationState.menuType === 'gameover') {
+                            this.scrollGameOverContent('down');
                         } else {
                             this.navigateMenu('down');
                         }
@@ -2802,6 +2806,26 @@ class VibeSurvivor {
 
         // Clear the handler reference
         this.gameOverScrollHandler = null;
+    }
+
+    scrollGameOverContent(direction) {
+        const gameOverContent = document.querySelector('#survivor-game-over-overlay [style*="overflow-y: auto"]');
+        if (!gameOverContent) return;
+
+        // Scroll amount per key press (adjust as needed)
+        const scrollAmount = 50;
+
+        if (direction === 'up') {
+            gameOverContent.scrollBy({
+                top: -scrollAmount,
+                behavior: 'smooth'
+            });
+        } else if (direction === 'down') {
+            gameOverContent.scrollBy({
+                top: scrollAmount,
+                behavior: 'smooth'
+            });
+        }
     }
 
     scrollHelpContent(direction) {
@@ -5244,12 +5268,26 @@ class VibeSurvivor {
         ];
         
         passiveChoices.forEach(passive => {
-            if (!this.player.passives[passive.id]) {
+            // Allow health_boost and armor to be acquired multiple times
+            const canStack = ['health_boost', 'armor'].includes(passive.id);
+            const alreadyHas = this.player.passives[passive.id];
+
+            if (!alreadyHas || canStack) {
+                // Update description for stackable items
+                let description = passive.description;
+                if (canStack && alreadyHas) {
+                    if (passive.id === 'health_boost') {
+                        description = '+25 Max Health (Stackable)';
+                    } else if (passive.id === 'armor') {
+                        description = '+15% Damage Reduction (Stackable)';
+                    }
+                }
+
                 choices.push({
                     type: 'passive',
                     passiveId: passive.id,
                     name: passive.name,
-                    description: passive.description,
+                    description: description,
                     icon: passive.icon
                 });
             }
@@ -5845,9 +5883,16 @@ class VibeSurvivor {
             case 'health_boost':
                 this.player.maxHealth += 25;
                 this.player.health += 25;
+                // Track count for stackable passive
+                if (typeof this.player.passives.health_boost === 'number') {
+                    this.player.passives.health_boost++;
+                } else {
+                    this.player.passives.health_boost = 1;
+                }
                 break;
             case 'speed_boost':
                 this.player.speed *= 1.3;
+                this.player.passives[passiveId] = true;
                 break;
             case 'regeneration':
                 this.player.passives.regeneration = { timer: 0 };
@@ -5856,14 +5901,22 @@ class VibeSurvivor {
                 this.player.passives.magnet = true;
                 break;
             case 'armor':
-                this.player.passives.armor = true;
+                // Track count for stackable passive
+                if (typeof this.player.passives.armor === 'number') {
+                    this.player.passives.armor++;
+                } else {
+                    this.player.passives.armor = 1;
+                }
                 break;
             case 'critical':
                 this.player.passives.critical = true;
                 break;
         }
-        
-        this.player.passives[passiveId] = true;
+
+        // Only set to true for non-stackable passives
+        if (!['health_boost', 'armor'].includes(passiveId)) {
+            this.player.passives[passiveId] = true;
+        }
     }
     
     checkCollisions() {
@@ -5959,9 +6012,11 @@ class VibeSurvivor {
             if (distanceSquared < collisionRadiusSquared && !this.player.invulnerable) {
                 let damage = enemy.contactDamage;
                 
-                // Armor reduction
+                // Armor reduction (stacks multiplicatively, capped at 90% reduction)
                 if (this.player.passives.armor) {
-                    damage = Math.floor(damage * 0.85);
+                    const armorCount = typeof this.player.passives.armor === 'number' ? this.player.passives.armor : 1;
+                    const damageReduction = Math.min(0.9, 1 - Math.pow(0.85, armorCount)); // 15% per stack, capped at 90%
+                    damage = Math.floor(damage * (1 - damageReduction));
                 }
                 
                 this.player.health -= damage;
@@ -9125,17 +9180,29 @@ class VibeSurvivor {
 
         if (activePassives.length === 0) return '';
 
-        const passivesHtml = activePassives.map(passive => `
-            <div style="
-                display: flex;
-                justify-content: center;
-                margin: 4px 0;
-                font-size: 14px;
-                color: #ff00ff;
-            ">
-                ${passiveNames[passive]}
-            </div>
-        `).join('');
+        const passivesHtml = activePassives.map(passive => {
+            let displayName = passiveNames[passive];
+
+            // Add count for stackable passives
+            if (['health_boost', 'armor'].includes(passive)) {
+                const count = this.player.passives[passive];
+                if (typeof count === 'number' && count > 1) {
+                    displayName += ` (x${count})`;
+                }
+            }
+
+            return `
+                <div style="
+                    display: flex;
+                    justify-content: center;
+                    margin: 4px 0;
+                    font-size: 14px;
+                    color: #ff00ff;
+                ">
+                    ${displayName}
+                </div>
+            `;
+        }).join('');
 
         return `
             <div style="
