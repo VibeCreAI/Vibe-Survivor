@@ -5772,7 +5772,7 @@ class VibeSurvivor {
             'shotgun': { damage: 8, fireRate: 45, range: 150, projectileSpeed: 10 },
             'lightning': { damage: 20, fireRate: 100, range: 250, projectileSpeed: 0 },
             'flamethrower': { damage: 6, fireRate: 15, range: 120, projectileSpeed: 4 },
-            'railgun': { damage: 50, fireRate: 90, range: 500, projectileSpeed: 15, piercing: 999 },
+            'railgun': { damage: 50, fireRate: 120, range: 500, projectileSpeed: 12, piercing: 999 },
             'missiles': { damage: 35, fireRate: 120, range: 400, projectileSpeed: 5, homing: true, explosionRadius: 60 },
             'homing_laser': { damage: 20, fireRate: 100, range: 400, projectileSpeed: 8, homing: true, piercing: true, isMergeWeapon: true },
             'shockburst': { damage: 50, fireRate: 80, range: 300, projectileSpeed: 0, explosionRadius: 100, isMergeWeapon: true },
