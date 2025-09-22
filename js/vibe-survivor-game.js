@@ -878,6 +878,25 @@ class VibeSurvivor {
                 color: #000;
                 transform: scale(0.9);
             }
+
+            .header-help-btn:focus {
+                outline: none;
+                border: 2px solid #00ffff !important;
+                box-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
+            }
+
+            /* Ensure help button maintains cyan border in all states */
+            #help-btn {
+                border: 2px solid #00ffff !important;
+                border-color: #00ffff !important;
+            }
+
+            /* Override any menu selection styling that might affect the help button */
+            #help-btn:not(.menu-selected) {
+                border: 2px solid #00ffff !important;
+                border-color: #00ffff !important;
+                box-shadow: none !important;
+            }
             
             /* Position pause button on left */
             #pause-btn {
@@ -2757,13 +2776,19 @@ class VibeSurvivor {
     
     updateMenuSelection() {
         if (!this.menuNavigationState.active) return;
-        
+
         // Remove previous selection styling
         this.menuNavigationState.menuButtons.forEach((button, index) => {
             button.classList.remove('menu-selected');
             button.style.boxShadow = '';
             button.style.borderColor = '';
         });
+
+        // Ensure help button maintains its cyan border regardless of menu navigation
+        const helpBtn = document.getElementById('help-btn');
+        if (helpBtn) {
+            helpBtn.style.borderColor = '#00ffff';
+        }
         
         // Only show visual selection if keyboard has been used
         if (this.menuNavigationState.keyboardUsed) {
