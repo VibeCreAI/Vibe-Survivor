@@ -366,7 +366,8 @@ class VibeSurvivor {
                             <div class="survivor-title">
                                 <h1>VIBE SURVIVOR</h1>
                                 <p>Survive the endless waves!</p>
-                                <p class="controls-info">Use WASD to move, SPACEBAR to dash</p>
+                                <p class="controls-info">PC: WASD/Arrow Keys to move, SPACEBAR to dash</p>
+                                <p class="controls-info mobile-only">Mobile: Touch screen to move, tap DASH button</p>
                                 <button id="start-survivor" class="survivor-btn primary">START GAME</button>
                             </div>
                         </div>
@@ -837,7 +838,7 @@ class VibeSurvivor {
             .vibe-survivor-header h2 {
                 color: #00ffff;
                 margin: 0;
-                font-family: 'MinecraftFont', Arial, sans-serif;
+                font-family: 'Minecraft', Arial, sans-serif;
                 font-weight: bold;
                 text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
             }
@@ -969,22 +970,35 @@ class VibeSurvivor {
                 color: #00ffff;
                 font-size: 32px;
                 margin-bottom: 20px;
-                font-family: 'MinecraftFont', 'Arial Black', sans-serif;
+                font-family: 'Minecraft', 'Arial Black', sans-serif;
                 animation: neonPulse 2s ease-in-out infinite;
             }
 
             .survivor-title p {
                 color: rgba(255, 255, 255, 0.8);
-                margin-bottom: 30px;
+                margin-bottom: 10px;
                 font-size: 16px;
-                font-family: 'MinecraftFont', 'Courier New', monospace;
+                font-family: 'Minecraft', 'Courier New', monospace;
             }
 
             .controls-info {
                 color: rgba(255, 255, 255, 0.8) !important;
                 margin-top: 20px !important;
+                padding: 15px;
                 font-size: 16px !important;
-                font-family: 'MinecraftFont', 'Courier New', monospace !important;
+                font-family: 'Minecraft', 'Courier New', monospace !important;
+            }
+
+            /* Hide mobile controls text on desktop */
+            .mobile-only {
+                display: none;
+            }
+
+            /* Show mobile controls text on mobile devices */
+            @media screen and (max-width: 768px) {
+                .mobile-only {
+                    display: block;
+                }
             }
 
             .survivor-btn {
@@ -997,7 +1011,7 @@ class VibeSurvivor {
                 transition: all 0.3s ease;
                 text-transform: uppercase;
                 letter-spacing: 2px;
-                font-family: 'MinecraftFont', Arial, sans-serif;
+                font-family: 'Minecraft', Arial, sans-serif;
                 border-radius: 30px;
                 position: relative;
                 overflow: hidden;
@@ -1508,7 +1522,8 @@ class VibeSurvivor {
                 }
 
                 .survivor-title h1 {
-                    font-size: 24px;
+                    font-size: 36px;
+                    font-family: 'Minecraft', 'Arial Black', sans-serif;
                 }
                 
                 /* Duplicate rule removed - weapon display handled in main mobile section */
