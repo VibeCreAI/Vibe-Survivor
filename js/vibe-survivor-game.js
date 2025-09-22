@@ -2758,6 +2758,52 @@ class VibeSurvivor {
         this.levelUpScrollHandler = null;
     }
 
+    enableGameOverScrolling() {
+        const gameOverContent = document.querySelector('#survivor-game-over-overlay [style*="overflow-y: auto"]');
+        if (!gameOverContent) return;
+
+        // Remove any existing touch event listeners to avoid duplicates
+        if (this.gameOverScrollHandler) {
+            gameOverContent.removeEventListener('touchstart', this.gameOverScrollHandler.start, { passive: false });
+            gameOverContent.removeEventListener('touchmove', this.gameOverScrollHandler.move, { passive: false });
+            gameOverContent.removeEventListener('touchend', this.gameOverScrollHandler.end, { passive: false });
+        }
+
+        // Create touch scroll handlers that allow native scrolling
+        this.gameOverScrollHandler = {
+            start: (e) => {
+                // Don't prevent default - allow native touch scrolling
+                e.stopPropagation(); // Stop it from bubbling to modal
+            },
+            move: (e) => {
+                // Don't prevent default - allow native touch scrolling
+                e.stopPropagation(); // Stop it from bubbling to modal
+            },
+            end: (e) => {
+                // Don't prevent default - allow native touch scrolling
+                e.stopPropagation(); // Stop it from bubbling to modal
+            }
+        };
+
+        // Add touch event listeners that explicitly allow scrolling
+        gameOverContent.addEventListener('touchstart', this.gameOverScrollHandler.start, { passive: true });
+        gameOverContent.addEventListener('touchmove', this.gameOverScrollHandler.move, { passive: true });
+        gameOverContent.addEventListener('touchend', this.gameOverScrollHandler.end, { passive: true });
+    }
+
+    disableGameOverScrolling() {
+        const gameOverContent = document.querySelector('#survivor-game-over-overlay [style*="overflow-y: auto"]');
+        if (!gameOverContent || !this.gameOverScrollHandler) return;
+
+        // Remove touch event listeners
+        gameOverContent.removeEventListener('touchstart', this.gameOverScrollHandler.start, { passive: true });
+        gameOverContent.removeEventListener('touchmove', this.gameOverScrollHandler.move, { passive: true });
+        gameOverContent.removeEventListener('touchend', this.gameOverScrollHandler.end, { passive: true });
+
+        // Clear the handler reference
+        this.gameOverScrollHandler = null;
+    }
+
     scrollHelpContent(direction) {
         const helpContent = document.querySelector('.help-content');
         if (!helpContent) return;
@@ -9022,6 +9068,149 @@ class VibeSurvivor {
         }
     }
     
+    generateWeaponsSection() {
+        if (this.weapons.length === 0) return '';
+
+        const weaponsHtml = this.weapons.map(weapon => {
+            const isMergeWeapon = weapon.isMergeWeapon || false;
+            const mergeClass = isMergeWeapon ? 'style="color: #ffaa00 !important;"' : '';
+
+            return `
+                <div style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin: 4px 0;
+                    font-size: 14px;
+                    align-items: center;
+                ">
+                    <span ${mergeClass}>${this.getWeaponName(weapon.type)} LV.${weapon.level}</span>
+                    <span style="color: #888; font-size: 12px;">${weapon.damage} DMG</span>
+                </div>
+            `;
+        }).join('');
+
+        return `
+            <div style="
+                margin: 15px 0;
+                padding: 12px;
+                border: 1px solid #00ffff33;
+                border-radius: 8px;
+                background: rgba(0, 255, 255, 0.05);
+            ">
+                <div style="
+                    color: #00ffff;
+                    font-size: 16px;
+                    font-weight: bold;
+                    margin-bottom: 8px;
+                    text-align: center;
+                ">⚡ WEAPONS</div>
+                ${weaponsHtml}
+            </div>
+        `;
+    }
+
+    generatePassivesSection() {
+        const passiveNames = {
+            'health_boost': 'Health Boost (+25 Max HP)',
+            'speed_boost': 'Speed Boost (+30% Speed)',
+            'regeneration': 'Regeneration (Auto-heal)',
+            'magnet': 'Magnet (XP Attraction)',
+            'armor': 'Armor (Damage Reduction)',
+            'critical': 'Critical (Critical Hits)'
+        };
+
+        const activePassives = Object.keys(this.player.passives).filter(key =>
+            this.player.passives[key] && passiveNames[key]
+        );
+
+        if (activePassives.length === 0) return '';
+
+        const passivesHtml = activePassives.map(passive => `
+            <div style="
+                display: flex;
+                justify-content: center;
+                margin: 4px 0;
+                font-size: 14px;
+                color: #ff00ff;
+            ">
+                ${passiveNames[passive]}
+            </div>
+        `).join('');
+
+        return `
+            <div style="
+                margin: 15px 0;
+                padding: 12px;
+                border: 1px solid #ff00ff33;
+                border-radius: 8px;
+                background: rgba(255, 0, 255, 0.05);
+            ">
+                <div style="
+                    color: #ff00ff;
+                    font-size: 16px;
+                    font-weight: bold;
+                    margin-bottom: 8px;
+                    text-align: center;
+                ">🛡️ ABILITIES</div>
+                ${passivesHtml}
+            </div>
+        `;
+    }
+
+    generatePlayerStatsSection() {
+        const maxHealthBonus = this.player.maxHealth - 100; // Starting health is 100
+        const speedMultiplier = this.player.passives.speed_boost ? 1.3 : 1.0;
+        const totalUpgrades = this.player.level - 1; // Level 1 = 0 upgrades
+
+        return `
+            <div style="
+                margin: 15px 0;
+                padding: 12px;
+                border: 1px solid #ffff0033;
+                border-radius: 8px;
+                background: rgba(255, 255, 0, 0.05);
+            ">
+                <div style="
+                    color: #ffff00;
+                    font-size: 16px;
+                    font-weight: bold;
+                    margin-bottom: 8px;
+                    text-align: center;
+                ">📊 FINAL STATS</div>
+                <div style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin: 4px 0;
+                    font-size: 14px;
+                    color: #ffff00;
+                ">
+                    <span>Max Health:</span>
+                    <span>${this.player.maxHealth}${maxHealthBonus > 0 ? ` (+${maxHealthBonus})` : ''}</span>
+                </div>
+                <div style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin: 4px 0;
+                    font-size: 14px;
+                    color: #ffff00;
+                ">
+                    <span>Speed Multiplier:</span>
+                    <span>${speedMultiplier.toFixed(1)}x</span>
+                </div>
+                <div style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin: 4px 0;
+                    font-size: 14px;
+                    color: #ffff00;
+                ">
+                    <span>Total Upgrades:</span>
+                    <span>${totalUpgrades}</span>
+                </div>
+            </div>
+        `;
+    }
+
     showGameOverModal() {
         // Creating game over overlay
         
@@ -9053,18 +9242,26 @@ class VibeSurvivor {
             backdrop-filter: blur(5px) !important;
         `;
         
-        // Create game over content with neon theme
+        // Generate detailed sections
+        const weaponsSection = this.generateWeaponsSection();
+        const passivesSection = this.generatePassivesSection();
+        const playerStatsSection = this.generatePlayerStatsSection();
+
+        // Create game over content with neon theme and enhanced layout
         gameOverOverlay.innerHTML = `
             <div style="
                 background: linear-gradient(135deg, #0a0a1a, #1a0a2a) !important;
                 border: 2px solid #00ffff !important;
                 border-radius: 15px !important;
-                padding: 30px !important;
+                padding: 25px !important;
                 text-align: center !important;
                 color: white !important;
-                max-width: 400px !important;
+                max-width: 550px !important;
+                max-height: 80vh !important;
                 box-shadow: 0 0 30px rgba(0, 255, 255, 0.5) !important;
                 font-family: 'MinecraftFont', Arial, sans-serif !important;
+                display: flex !important;
+                flex-direction: column !important;
             ">
                 <div style="
                     color: #ff0066 !important;
@@ -9073,53 +9270,67 @@ class VibeSurvivor {
                     margin-bottom: 20px !important;
                     text-shadow: 0 0 15px rgba(255, 0, 102, 0.8) !important;
                 ">GAME OVER</div>
-                
-                <div style="margin-bottom: 25px !important;">
-                    <div style="
-                        display: flex;
-                        justify-content: space-between;
-                        margin: 8px 0;
-                        font-size: 18px;
-                        color: #00ffff;
-                    ">
-                        <span>Level:</span>
-                        <span style="color: #ff00ff; font-weight: bold;">${finalStats.level}</span>
+
+                <div style="
+                    overflow-y: auto !important;
+                    max-height: calc(80vh - 180px) !important;
+                    padding-right: 10px !important;
+                    margin-bottom: 20px !important;
+                    -webkit-overflow-scrolling: touch !important;
+                ">
+                    <!-- Basic Stats Section -->
+                    <div style="margin-bottom: 20px !important;">
+                        <div style="
+                            display: flex;
+                            justify-content: space-between;
+                            margin: 8px 0;
+                            font-size: 18px;
+                            color: #00ffff;
+                        ">
+                            <span>Level:</span>
+                            <span style="color: #ff00ff; font-weight: bold;">${finalStats.level}</span>
+                        </div>
+                        <div style="
+                            display: flex;
+                            justify-content: space-between;
+                            margin: 8px 0;
+                            font-size: 18px;
+                            color: #00ffff;
+                        ">
+                            <span>Time:</span>
+                            <span style="color: #ff00ff; font-weight: bold;">${finalStats.timeText}</span>
+                        </div>
+                        <div style="
+                            display: flex;
+                            justify-content: space-between;
+                            margin: 8px 0;
+                            font-size: 18px;
+                            color: #00ffff;
+                        ">
+                            <span>Enemies:</span>
+                            <span style="color: #ff00ff; font-weight: bold;">${finalStats.enemiesKilled}</span>
+                        </div>
+                        ${this.bossesKilled > 0 ? `
+                        <div style="
+                            display: flex;
+                            justify-content: space-between;
+                            margin: 8px 0;
+                            font-size: 18px;
+                            color: #00ffff;
+                        ">
+                            <span>Bosses Defeated:</span>
+                            <span style="color: #ff00ff; font-weight: bold;">${this.bossesKilled}</span>
+                        </div>
+                        ` : ''}
                     </div>
-                    <div style="
-                        display: flex;
-                        justify-content: space-between;
-                        margin: 8px 0;
-                        font-size: 18px;
-                        color: #00ffff;
-                    ">
-                        <span>Time:</span>
-                        <span style="color: #ff00ff; font-weight: bold;">${finalStats.timeText}</span>
-                    </div>
-                    <div style="
-                        display: flex;
-                        justify-content: space-between;
-                        margin: 8px 0;
-                        font-size: 18px;
-                        color: #00ffff;
-                    ">
-                        <span>Enemies:</span>
-                        <span style="color: #ff00ff; font-weight: bold;">${finalStats.enemiesKilled}</span>
-                    </div>
-                    ${this.bossesKilled > 0 ? `
-                    <div style="
-                        display: flex;
-                        justify-content: space-between;
-                        margin: 8px 0;
-                        font-size: 18px;
-                        color: #00ffff;
-                    ">
-                        <span>Bosses Defeated:</span>
-                        <span style="color: #ff00ff; font-weight: bold;">${this.bossesKilled}</span>
-                    </div>
-                    ` : ''}
+
+                    <!-- Detailed Stats Sections -->
+                    ${weaponsSection}
+                    ${passivesSection}
+                    ${playerStatsSection}
                 </div>
-                
-                <div style="display: flex; gap: 15px; justify-content: center;">
+
+                <div style="display: flex; gap: 15px; justify-content: center; margin-top: auto;">
                     <button id="overlay-retry-btn" style="
                         background: transparent !important;
                         border: 2px solid #00ffff !important;
@@ -9137,7 +9348,7 @@ class VibeSurvivor {
                         -webkit-user-select: none !important;
                         -webkit-tap-highlight-color: transparent !important;
                     ">RETRY</button>
-                    
+
                     <button id="overlay-exit-btn" style="
                         background: transparent !important;
                         border: 2px solid #ff00ff !important;
@@ -9178,6 +9389,9 @@ class VibeSurvivor {
         if (gameContainer) {
             gameContainer.appendChild(gameOverOverlay);
         }
+
+        // Enable touch scrolling for game over screen
+        this.enableGameOverScrolling();
         
         // Add event listeners with both click and touch support
         const retryBtn = document.getElementById('overlay-retry-btn');
@@ -9186,6 +9400,8 @@ class VibeSurvivor {
         const retryHandler = (e) => {
             e.preventDefault();
             e.stopPropagation();
+            // Disable touch scrolling
+            this.disableGameOverScrolling();
             // Reset menu navigation
             this.resetMenuNavigation();
             // Remove overlay
@@ -9198,6 +9414,8 @@ class VibeSurvivor {
         const exitHandler = (e) => {
             e.preventDefault();
             e.stopPropagation();
+            // Disable touch scrolling
+            this.disableGameOverScrolling();
             // Reset menu navigation
             this.resetMenuNavigation();
             // Remove overlay
