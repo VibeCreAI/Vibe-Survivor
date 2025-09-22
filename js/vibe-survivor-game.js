@@ -3478,7 +3478,7 @@ class VibeSurvivor {
         projectile.type = 'laser';
         projectile.color = '#E74C3C';
         projectile.size = 3;
-        projectile.piercing = true;
+        projectile.piercing = 999;
         
         this.projectiles.push(projectile);
     }
@@ -3851,10 +3851,10 @@ class VibeSurvivor {
         
         projectile.x = this.player.x;
         projectile.y = this.player.y;
-        projectile.vx = this.fastCos(angle) * weapon.projectileSpeed * 3;
-        projectile.vy = this.fastSin(angle) * weapon.projectileSpeed * 3;
+        projectile.vx = this.fastCos(angle) * weapon.projectileSpeed * 2;
+        projectile.vy = this.fastSin(angle) * weapon.projectileSpeed * 2;
         projectile.damage = weapon.damage;
-        projectile.life = 45;
+        projectile.life = 60;
         projectile.type = 'railgun';
         projectile.color = '#9B59B6';
         projectile.size = 3;
@@ -5767,7 +5767,7 @@ class VibeSurvivor {
     getWeaponConfig(weaponType) {
         const weaponConfigs = {
             'spread': { damage: 12, fireRate: 40, range: 200, projectileSpeed: 6 },
-            'laser': { damage: 25, fireRate: 60, range: 350, projectileSpeed: 12 },
+            'laser': { damage: 25, fireRate: 60, range: 350, projectileSpeed: 12, piercing: 999 },
             'plasma': { damage: 30, fireRate: 80, range: 300, projectileSpeed: 7 },
             'shotgun': { damage: 8, fireRate: 45, range: 150, projectileSpeed: 10 },
             'lightning': { damage: 20, fireRate: 100, range: 250, projectileSpeed: 0 },
