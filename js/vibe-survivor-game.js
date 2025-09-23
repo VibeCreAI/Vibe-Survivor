@@ -123,6 +123,7 @@ class VibeSurvivor {
         this.backgroundMusic = new Audio('sound/Vibe_Survivor.mp3');
         this.backgroundMusic.loop = true;
         this.backgroundMusic.volume = 0.3; // Adjust volume as needed
+        this.audioMuted = false; // Track mute state
 
         // Mobile touch controls
         this.isMobile = this.detectMobile();
@@ -387,6 +388,7 @@ class VibeSurvivor {
                                     <div class="pause-buttons">
                                         <button id="resume-btn" class="survivor-btn primary">RESUME</button>
                                         <button id="pause-restart-btn" class="survivor-btn">RESTART</button>
+                                        <button id="mute-btn" class="survivor-btn">MUTE</button>
                                         <button id="exit-to-menu-btn" class="survivor-btn">EXIT</button>
                                     </div>
                                     <p class="pause-hint">Press ESC to resume</p>
@@ -1597,10 +1599,14 @@ class VibeSurvivor {
             this.togglePause();
         });
         
+        document.getElementById('mute-btn').addEventListener('click', () => {
+            this.toggleAudioMute();
+        });
+
         document.getElementById('exit-to-menu-btn').addEventListener('click', () => {
             this.closeGame();
         });
-        
+
         document.getElementById('pause-restart-btn').addEventListener('click', () => {
             // Close pause menu first, then restart
             this.isPaused = false;
@@ -2164,6 +2170,8 @@ class VibeSurvivor {
         // Start background music when game actually begins
         try {
             this.backgroundMusic.currentTime = 0;
+            // Respect mute state
+            this.backgroundMusic.volume = this.audioMuted ? 0 : 0.3;
             this.backgroundMusic.play();
             // Background music started
         } catch (e) {
@@ -2565,9 +2573,15 @@ class VibeSurvivor {
             // Initialize keyboard navigation for pause menu
             const resumeBtn = document.getElementById('resume-btn');
             const restartBtn = document.getElementById('pause-restart-btn');
+            const muteBtn = document.getElementById('mute-btn');
             const exitBtn = document.getElementById('exit-to-menu-btn');
-            const pauseButtons = [resumeBtn, restartBtn, exitBtn].filter(btn => btn); // Filter out null buttons
-            
+            const pauseButtons = [resumeBtn, restartBtn, muteBtn, exitBtn].filter(btn => btn); // Filter out null buttons
+
+            // Update mute button text based on current state
+            if (muteBtn) {
+                muteBtn.textContent = this.audioMuted ? 'UNMUTE' : 'MUTE';
+            }
+
             if (pauseButtons.length > 0) {
                 this.menuNavigationState.active = true;
                 this.menuNavigationState.menuType = 'pause';
@@ -2591,10 +2605,27 @@ class VibeSurvivor {
             
             // Resume background music
             if (this.backgroundMusic && this.backgroundMusic.paused) {
+                // Respect mute state when resuming
+                this.backgroundMusic.volume = this.audioMuted ? 0 : 0.3;
                 this.backgroundMusic.play().catch(e => {
                     console.warn('Could not resume background music:', e);
                 });
             }
+        }
+    }
+
+    toggleAudioMute() {
+        this.audioMuted = !this.audioMuted;
+        const muteBtn = document.getElementById('mute-btn');
+
+        if (this.audioMuted) {
+            // Mute the audio
+            this.backgroundMusic.volume = 0;
+            if (muteBtn) muteBtn.textContent = 'UNMUTE';
+        } else {
+            // Unmute the audio
+            this.backgroundMusic.volume = 0.3;
+            if (muteBtn) muteBtn.textContent = 'MUTE';
         }
     }
 
