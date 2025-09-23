@@ -2220,7 +2220,7 @@ class VibeSurvivor {
             x: 0,
             y: 0,
             radius: 15,
-            speed: 2.0, // Fixed speed for consistent gameplay
+            speed: 2.875, // Fixed speed for consistent gameplay
             health: 100,
             maxHealth: 100,
             xp: 0,
