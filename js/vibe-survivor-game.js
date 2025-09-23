@@ -74,7 +74,7 @@ class VibeSurvivor {
             x: 0,
             y: 0,
             radius: 15,
-            speed: 2.5,
+            speed: 2.875,
             health: 100,
             maxHealth: 100,
             xp: 0,
@@ -2166,7 +2166,17 @@ class VibeSurvivor {
         }
         
         this.gameRunning = true;
-        
+
+        // Spawn starting XP orbs around player for easier early progression
+        const startingOrbCount = 14;
+        for (let i = 0; i < startingOrbCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 40 + Math.random() * 60; // Random distance between 40-100 pixels
+            const orbX = this.player.x + Math.cos(angle) * distance;
+            const orbY = this.player.y + Math.sin(angle) * distance;
+            this.createXPOrb(orbX, orbY);
+        }
+
         // Start background music when game actually begins
         try {
             this.backgroundMusic.currentTime = 0;
