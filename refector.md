@@ -1,5 +1,12 @@
 # Refactor Plan: Vibe Survivor Game Engine
 
+**UPDATED**: Plan updated to include new features added since original creation:
+- Complete translation system (English/Korean) with dynamic text switching
+- Options modal with language selection, audio controls, and dash button positioning
+- Enhanced stackable passive system with multiplicative speed boost
+- Expanded help menu with weapon tips and evolution guides
+- Weapon balance changes (homing laser damage reduction)
+
 ## EXECUTION INSTRUCTIONS FOR LLM
 **IMPLEMENT ALL 10 PHASES IN ONE EXECUTION CYCLE**
 - Read this entire plan carefully
@@ -9,11 +16,11 @@
 - Final human testing will occur after all phases are complete
 
 ## Objectives
-- Improve maintainability by decomposing the 9k-line `js/vibe-survivor-game.js` monolith into focused modules.
-- Clarify system boundaries so future contributors can navigate rendering, gameplay, audio, and UI code quickly.
+- Improve maintainability by decomposing the 11k+ line `js/vibe-survivor-game.js` monolith into focused modules.
+- Clarify system boundaries so future contributors can navigate rendering, gameplay, audio, UI, and i18n code quickly.
 - Introduce modern ES module structure without breaking the static deploy flow (served via simple http server).
 - Prepare groundwork for automated testing and targeted performance profiling.
-- Preserve mobile touch controls, audio fallbacks, and performance optimizations.
+- Preserve mobile touch controls, audio fallbacks, translation system (English/Korean), and performance optimizations.
 
 ## Guiding Principles
 - Maintain feature parity during refactor; no gameplay changes until modules are stable.
@@ -56,11 +63,13 @@ js/
       modals/
         modal-base.js      // Core modal system (create/show/hide/cleanup)
         start-screen.js    // Start screen modal
+        options-modal.js   // Options menu (language, audio, controls)
         pause-modal.js     // Pause menu modal
         levelup-modal.js   // Level-up and weapon selection modal
         help-modal.js      // Help screen with recipes/controls
         gameover-modal.js  // Game over screen modal
       hud.js               // Health/XP/stats display
+      i18n.js              // Translation system (English/Korean)
       touch-controls.js    // Mobile touch interface
     audio/
       audio-manager.js     // Sound and music management
@@ -83,6 +92,7 @@ Each modal will have its own dedicated file for better organization:
 
 - **`modal-base.js`**: Core modal infrastructure (DOM creation, show/hide logic, cleanup, event handling)
 - **`start-screen.js`**: Start screen with "Press Start" button and initial navigation
+- **`options-modal.js`**: Options menu with language selection, audio controls, and dash button positioning
 - **`pause-modal.js`**: Pause menu with resume/restart options and ESC key handling
 - **`levelup-modal.js`**: Complex level-up system with weapon selection, upgrade choices, and scrolling
 - **`help-modal.js`**: Help screen with game recipes, controls documentation, and scrolling behavior
@@ -153,10 +163,12 @@ Each modal will have its own dedicated file for better organization:
    - **Modal System**:
      - Create `systems/ui/modals/modal-base.js` with core modal functionality (creation, show/hide, cleanup)
      - Extract start screen to `systems/ui/modals/start-screen.js`
+     - Extract options menu to `systems/ui/modals/options-modal.js` (language selection, audio controls, dash positioning)
      - Move pause menu to `systems/ui/modals/pause-modal.js`
      - Extract level-up system to `systems/ui/modals/levelup-modal.js` (weapon selection, upgrade choices)
      - Move help screen to `systems/ui/modals/help-modal.js` (recipes, controls documentation)
      - Extract game over screen to `systems/ui/modals/gameover-modal.js`
+   - **Translation System**: Extract i18n system to `systems/ui/i18n.js` (English/Korean support, dynamic text updates)
    - Move HUD rendering to `systems/ui/hud.js` (health bar, XP bar, stats display)
    - **Critical**: Extract touch controls to `systems/ui/touch-controls.js` (preserve mobile functionality)
 
@@ -213,11 +225,17 @@ Each modal will have its own dedicated file for better organization:
   - Weapon systems and projectiles
   - **Modal System Testing**:
     - Start screen modal (game launch, navigation)
+    - Options modal (language switching, audio controls, dash button positioning)
     - Pause modal (ESC key, resume/restart functions)
     - Level-up modal (weapon selection, upgrade choices, scrolling)
     - Help modal (scrolling behavior, recipe display, close functionality)
     - Game over modal (score display, restart functionality)
     - Modal navigation (keyboard/controller support)
+  - **Translation System Testing**:
+    - English/Korean language switching functionality
+    - All UI elements update correctly when language changes
+    - Stackable passive descriptions display properly in both languages
+    - Help menu recipes and tips translate correctly
   - Audio playback and fallbacks
   - Mobile-specific features (touch controls, responsive modals)
 - **Performance Validation**: Compare before/after metrics for each phase
@@ -305,10 +323,12 @@ Each modal will have its own dedicated file for better organization:
 **EXTRACT ALL UI AND MODALS:**
 - [ ] Create modal base system in `systems/ui/modals/modal-base.js`
 - [ ] Extract start screen to `systems/ui/modals/start-screen.js`
+- [ ] Extract options menu to `systems/ui/modals/options-modal.js`
 - [ ] Move pause menu to `systems/ui/modals/pause-modal.js`
 - [ ] Extract level-up system to `systems/ui/modals/levelup-modal.js`
 - [ ] Move help screen to `systems/ui/modals/help-modal.js`
 - [ ] Extract game over screen to `systems/ui/modals/gameover-modal.js`
+- [ ] **CRITICAL**: Extract translation system to `systems/ui/i18n.js`
 - [ ] Move HUD rendering to `systems/ui/hud.js`
 - [ ] **CRITICAL**: Extract touch controls to `systems/ui/touch-controls.js`
 
@@ -348,10 +368,16 @@ Each modal will have its own dedicated file for better organization:
 ### ✅ **UI System Test**
 - [ ] All modals work correctly:
   - Start screen modal
+  - Options modal (language switching, audio controls, dash positioning)
   - Pause modal (ESC key)
   - Level-up modal with weapon selection
   - Help modal with scrolling
   - Game over modal
+- [ ] Translation system works correctly:
+  - English ⟷ Korean language switching
+  - All UI text updates when language changes
+  - Stackable passive descriptions show properly in both languages
+  - Help menu content translates correctly
 - [ ] HUD displays correctly (health, XP, stats)
 - [ ] Modal navigation works (keyboard/mouse)
 
