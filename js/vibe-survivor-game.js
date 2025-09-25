@@ -260,9 +260,12 @@ class VibeSurvivor {
             maxIntensity: 0.6,
             decay: 0.9
         };
-        
-        
-        
+
+        // Translation system
+        this.currentLanguage = 'en';
+        this.translations = this.initTranslations();
+        this.loadUserSettings();
+
         this.initGame();
     }
     
@@ -270,7 +273,12 @@ class VibeSurvivor {
         this.createGameModal();
         this.addStyles();
         this.setupEventHandlers();
-        
+
+        // Initialize translations after modal creation
+        setTimeout(() => {
+            this.updateAllText();
+        }, 100);
+
         // Initialize canvas after modal creation with proper timing
         setTimeout(() => {
             try {
@@ -374,10 +382,37 @@ class VibeSurvivor {
                                 <p>Survive the endless waves!</p>
                                 <p class="controls-info">PC: WASD/Arrow Keys to move, SPACEBAR to dash</p>
                                 <p class="controls-info mobile-only">Mobile: Touch screen to move, tap DASH button</p>
-                                <button id="start-survivor" class="survivor-btn primary">START GAME</button>
+                                <button id="start-survivor" class="survivor-btn primary">START</button>
+                                <button id="options-btn" class="survivor-btn">OPTIONS</button>
                             </div>
                         </div>
-                        
+
+                        <!-- Options Menu (at top level for start screen access) -->
+                        <div id="options-menu" class="options-menu" style="display: none;">
+                            <div class="options-content">
+                                <h2>OPTIONS</h2>
+                                <div class="options-settings">
+                                    <div class="option-item">
+                                        <label>Language</label>
+                                        <select id="language-select" class="option-select">
+                                            <option value="en">English</option>
+                                            <option value="ko">한국어</option>
+                                        </select>
+                                    </div>
+                                    <div class="option-item">
+                                        <label>Audio</label>
+                                        <button id="options-mute-btn" class="survivor-btn small">MUTE</button>
+                                    </div>
+                                    <div class="option-item">
+                                        <label>Dash Button Position</label>
+                                        <button id="options-dash-position-btn" class="survivor-btn small">RIGHT</button>
+                                    </div>
+                                </div>
+                                <button id="close-options-btn" class="survivor-btn primary">CLOSE</button>
+                                <p class="options-hint">Press ESC to close</p>
+                            </div>
+                        </div>
+
                         <div id="game-screen" class="vibe-survivor-screen" style="position: relative;">
                             <canvas id="survivor-canvas"></canvas>
                             
@@ -1363,6 +1398,135 @@ class VibeSurvivor {
                 box-shadow: 0 0 25px rgba(255, 136, 68, 0.5);
             }
 
+            /* Options Menu */
+            .options-menu {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.9);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 25000;
+            }
+
+            .options-content {
+                background: linear-gradient(135deg, #0a0a1a, #1a0a2a);
+                border: 2px solid #00ffff;
+                border-radius: 15px;
+                padding: 40px;
+                text-align: center;
+                box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+                max-width: 500px;
+                width: 90%;
+                max-height: 80vh;
+                overflow-y: auto;
+            }
+
+            .options-content h2 {
+                color: #00ffff;
+                font-size: 2rem;
+                margin: 0 0 30px 0;
+                text-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+                font-family: 'NeoDunggeunmoPro', 'Arial Black', sans-serif;
+            }
+
+            .options-settings {
+                display: flex;
+                flex-direction: column;
+                gap: 25px;
+                margin-bottom: 30px;
+            }
+
+            .option-item {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 15px 0;
+                border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+            }
+
+            .option-item:last-child {
+                border-bottom: none;
+            }
+
+            .option-item label {
+                color: #ffffff;
+                font-size: 1.1rem;
+                font-family: 'NeoDunggeunmoPro', Arial, sans-serif;
+                text-align: left;
+                flex: 1;
+            }
+
+            .option-select {
+                background: linear-gradient(135deg, #1a1a2a, #2a2a4a);
+                border: 2px solid #00ffff;
+                border-radius: 8px;
+                color: #ffffff;
+                font-family: 'NeoDunggeunmoPro', Arial, sans-serif;
+                font-size: 1rem;
+                padding: 8px 12px;
+                outline: none;
+                cursor: pointer;
+                min-width: 120px;
+                -webkit-appearance: none;
+                appearance: none;
+                touch-action: manipulation;
+                user-select: none;
+                -webkit-user-select: none;
+            }
+
+            .option-select:focus {
+                box-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+            }
+
+            .option-select:active,
+            .option-select:hover {
+                background: linear-gradient(135deg, #2a2a4a, #3a3a6a);
+                border-color: #00dddd;
+            }
+
+            /* Improve mobile touch targets */
+            @media (max-width: 768px) {
+                .option-select {
+                    font-size: 1.1rem;
+                    padding: 12px 16px;
+                    min-width: 140px;
+                    min-height: 44px;
+                }
+
+                .survivor-btn.small {
+                    font-size: 1rem;
+                    padding: 12px 20px;
+                    min-width: 120px;
+                    min-height: 44px;
+                }
+
+                .option-item {
+                    padding: 20px 0;
+                }
+            }
+
+            .option-select option {
+                background: #1a1a2a;
+                color: #ffffff;
+            }
+
+            .survivor-btn.small {
+                font-size: 0.9rem;
+                padding: 8px 16px;
+                min-width: 100px;
+            }
+
+            .options-hint {
+                color: #888;
+                font-size: 0.9rem;
+                margin: 0;
+                font-family: 'NeoDunggeunmoPro', Arial, sans-serif;
+            }
+
             .survivor-game-over {
                 text-align: center;
                 color: white;
@@ -1819,7 +1983,75 @@ class VibeSurvivor {
         document.getElementById('restart-confirm-no').addEventListener('click', () => {
             this.hideRestartConfirmation();
         });
-        
+
+        // Options menu event listeners
+        document.getElementById('options-btn').addEventListener('click', () => {
+            this.showOptionsMenu();
+        });
+
+        // Close options button with mobile support
+        const closeOptionsBtn = document.getElementById('close-options-btn');
+        closeOptionsBtn.addEventListener('click', () => {
+            this.hideOptionsMenu();
+        });
+
+        closeOptionsBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.hideOptionsMenu();
+        }, { passive: false });
+
+        // Language selection with mobile support
+        const langSelect = document.getElementById('language-select');
+        langSelect.addEventListener('change', (e) => {
+            this.setLanguage(e.target.value);
+        });
+
+        // Add touch support for language dropdown
+        langSelect.addEventListener('touchstart', (e) => {
+            e.stopPropagation();
+        }, { passive: true });
+
+        langSelect.addEventListener('touchend', (e) => {
+            e.stopPropagation();
+            // Force focus and trigger on mobile
+            langSelect.focus();
+            if (window.innerWidth <= 768) {
+                // Small delay to ensure focus is set
+                setTimeout(() => {
+                    langSelect.click();
+                }, 100);
+            }
+        }, { passive: true });
+
+        // Audio toggle in options with mobile support
+        const optionsMuteBtn = document.getElementById('options-mute-btn');
+        optionsMuteBtn.addEventListener('click', () => {
+            this.toggleAudioMute();
+            this.updateOptionsAudioButton();
+        });
+
+        optionsMuteBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.toggleAudioMute();
+            this.updateOptionsAudioButton();
+        }, { passive: false });
+
+        // Dash position toggle in options with mobile support
+        const optionsDashBtn = document.getElementById('options-dash-position-btn');
+        optionsDashBtn.addEventListener('click', () => {
+            this.toggleDashButtonPosition();
+            this.updateOptionsDashButton();
+        });
+
+        optionsDashBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.toggleDashButtonPosition();
+            this.updateOptionsDashButton();
+        }, { passive: false });
+
         // Help menu event listeners (both click and touch for mobile support)
         const closeHelpBtn = document.getElementById('close-help-btn');
         closeHelpBtn.addEventListener('click', (e) => {
@@ -1921,7 +2153,13 @@ class VibeSurvivor {
                 }
                 
                 if (e.key.toLowerCase() === 'escape') {
-                    this.togglePause();
+                    // Check if options menu is open first
+                    const optionsMenu = document.getElementById('options-menu');
+                    if (optionsMenu && optionsMenu.style.display === 'flex') {
+                        this.hideOptionsMenu();
+                    } else {
+                        this.togglePause();
+                    }
                 }
             }
         });
@@ -2799,7 +3037,7 @@ class VibeSurvivor {
 
             // Update mute button text based on current state
             if (muteBtn) {
-                muteBtn.textContent = this.audioMuted ? 'UNMUTE' : 'MUTE';
+                muteBtn.textContent = this.audioMuted ? this.t('unmute') : this.t('mute');
             }
 
             if (pauseButtons.length > 0) {
@@ -2937,8 +3175,9 @@ class VibeSurvivor {
         const dashPositionBtn = document.getElementById('dash-position-btn');
         if (!dashPositionBtn) return;
 
-        const positionLabel = (this.touchControls?.dashButton?.position === 'left') ? 'LEFT' : 'RIGHT';
-        dashPositionBtn.textContent = `DASH BUTTON: ${positionLabel}`;
+        const position = (this.touchControls?.dashButton?.position === 'left') ? 'left' : 'right';
+        const positionText = this.t(position).toUpperCase();
+        dashPositionBtn.textContent = `${this.t('dash').toUpperCase()} ${this.t('button', 'ui').toUpperCase()}: ${positionText}`;
     }
 
     loadSettings() {
@@ -10425,6 +10664,422 @@ class VibeSurvivor {
         }
         
         // Game state fully reset
+    }
+
+    // Translation System Methods
+    initTranslations() {
+        return {
+            en: {
+                ui: {
+                    // Landing page
+                    gameTitle: "VIBE SURVIVOR",
+                    gameTagline: "Survive the endless waves!",
+                    startGame: "START",
+                    options: "OPTIONS",
+
+                    // Options menu
+                    optionsTitle: "OPTIONS",
+                    language: "Language",
+                    audio: "Audio",
+                    dashPosition: "Dash Button Position",
+                    close: "CLOSE",
+                    optionsHint: "Press ESC to close",
+
+                    // Buttons
+                    resume: "RESUME",
+                    restart: "RESTART",
+                    mute: "MUTE",
+                    unmute: "UNMUTE",
+                    quitGame: "QUIT GAME",
+                    playAgain: "PLAY AGAIN",
+                    exit: "EXIT",
+                    left: "LEFT",
+                    right: "RIGHT",
+                    button: "BUTTON",
+
+                    // Modal titles
+                    gamePaused: "GAME PAUSED",
+                    gameOver: "GAME OVER",
+                    quitConfirm: "QUIT GAME?",
+                    restartConfirm: "RESTART GAME?",
+                    levelUp: "LEVEL UP!",
+
+                    // Confirmations
+                    quitWarning: "Are you sure you want to quit?<br>All progress will be lost!",
+                    restartWarning: "Are you sure you want to restart?<br>All current progress will be lost!",
+                    yesQuit: "YES, QUIT",
+                    yesRestart: "YES, RESTART",
+                    noContinue: "NO, CONTINUE",
+
+                    // Controls
+                    controlsPC: "PC: WASD/Arrow Keys to move, SPACEBAR to dash",
+                    controlsMobile: "Mobile: Touch screen to move, tap DASH button",
+                    pauseHint: "Press ESC to resume",
+                    helpHint: "Press ESC to close",
+                    dash: "DASH",
+                    dashButtonRight: "DASH BUTTON: RIGHT",
+                    dashButtonLeft: "DASH BUTTON: LEFT"
+                },
+                weapons: {
+                    // Base weapons
+                    basicMissile: "Basic Missile",
+                    rapidFire: "Rapid Fire",
+                    spreadShot: "Spread Shot",
+                    laserBeam: "Laser Beam",
+                    plasmaBolt: "Plasma Bolt",
+                    homingMissiles: "Homing Missiles",
+
+                    // Merged weapons
+                    homingLaser: "Homing Laser",
+                    shockburst: "Shockburst",
+                    gatlingGun: "Gatling Gun"
+                },
+                passives: {
+                    healthBoost: "Health Boost",
+                    speedBoost: "Speed Boost",
+                    regeneration: "Regeneration",
+                    magnet: "Magnet",
+                    armor: "Armor",
+                    criticalStrike: "Critical Strike",
+                    dashBoost: "Dash Boost",
+
+                    // Descriptions
+                    healthBoostDesc: "+25 Max Health",
+                    speedBoostDesc: "+30% Movement Speed",
+                    regenerationDesc: "Slowly heal over time",
+                    magnetDesc: "Attract XP from further away",
+                    armorDesc: "Reduce damage taken by 15%",
+                    criticalStrikeDesc: "15% chance for double damage",
+                    dashBoostDesc: "+50% Dash Distance"
+                },
+                help: {
+                    weaponMergers: "🔧 WEAPON MERGERS",
+                    homingLaserRecipe: "Laser lvl 3 + Homing Missiles lvl 3",
+                    homingLaserDesc: "Heat-seeking laser beams",
+                    shockburstRecipe: "Lightning lvl 3 + Plasma lvl 3",
+                    shockburstDesc: "Explosive energy bursts",
+                    gatlingGunRecipe: "Rapid Fire lvl 5 + Spread Shot lvl 3",
+                    gatlingGunDesc: "Multi-barrel rapid fire"
+                }
+            },
+            ko: {
+                ui: {
+                    // Landing page
+                    gameTitle: "바이브 서바이버",
+                    gameTagline: "끝없는 파도에서 살아남아라!",
+                    startGame: "게임 시작",
+                    options: "설정",
+
+                    // Options menu
+                    optionsTitle: "설정",
+                    language: "언어",
+                    audio: "오디오",
+                    dashPosition: "대시 버튼 위치",
+                    close: "닫기",
+                    optionsHint: "ESC를 눌러 닫기",
+
+                    // Buttons
+                    resume: "계속하기",
+                    restart: "다시 시작",
+                    mute: "음소거",
+                    unmute: "음소거 해제",
+                    quitGame: "게임 종료",
+                    playAgain: "다시 플레이",
+                    exit: "나가기",
+                    left: "왼쪽",
+                    right: "오른쪽",
+                    button: "버튼",
+
+                    // Modal titles
+                    gamePaused: "게임 일시정지",
+                    gameOver: "게임 오버",
+                    quitConfirm: "게임을 종료할까요?",
+                    restartConfirm: "게임을 다시 시작할까요?",
+                    levelUp: "레벨 업!",
+
+                    // Confirmations
+                    quitWarning: "정말로 종료하시겠습니까?<br>모든 진행상황이 사라집니다!",
+                    restartWarning: "정말로 다시 시작하시겠습니까?<br>현재 진행상황이 모두 사라집니다!",
+                    yesQuit: "네, 종료",
+                    yesRestart: "네, 다시 시작",
+                    noContinue: "아니오, 계속하기",
+
+                    // Controls
+                    controlsPC: "PC: WASD/방향키로 이동, 스페이스바로 대시",
+                    controlsMobile: "모바일: 화면을 터치해 이동, 대시 버튼을 눌러 대시",
+                    pauseHint: "ESC를 눌러 계속하기",
+                    helpHint: "ESC를 눌러 닫기",
+                    dash: "대시",
+                    dashButtonRight: "대시 버튼: 오른쪽",
+                    dashButtonLeft: "대시 버튼: 왼쪽"
+                },
+                weapons: {
+                    // Base weapons
+                    basicMissile: "기본 미사일",
+                    rapidFire: "속사",
+                    spreadShot: "산탄 사격",
+                    laserBeam: "레이저 빔",
+                    plasmaBolt: "플라즈마 볼트",
+                    homingMissiles: "유도 미사일",
+
+                    // Merged weapons
+                    homingLaser: "유도 레이저",
+                    shockburst: "충격파",
+                    gatlingGun: "개틀링 건"
+                },
+                passives: {
+                    healthBoost: "체력 강화",
+                    speedBoost: "속도 강화",
+                    regeneration: "재생",
+                    magnet: "자석",
+                    armor: "방어구",
+                    criticalStrike: "치명타",
+                    dashBoost: "대시 강화",
+
+                    // Descriptions
+                    healthBoostDesc: "+25 최대 체력",
+                    speedBoostDesc: "+30% 이동 속도",
+                    regenerationDesc: "시간에 따라 천천히 회복",
+                    magnetDesc: "더 멀리서 경험치 흡수",
+                    armorDesc: "받는 피해 15% 감소",
+                    criticalStrikeDesc: "15% 확률로 2배 피해",
+                    dashBoostDesc: "+50% 대시 거리"
+                },
+                help: {
+                    weaponMergers: "🔧 무기 합성",
+                    homingLaserRecipe: "레이저 레벨 3 + 유도 미사일 레벨 3",
+                    homingLaserDesc: "열추적 레이저 빔",
+                    shockburstRecipe: "번개 레벨 3 + 플라즈마 레벨 3",
+                    shockburstDesc: "폭발적 에너지 파동",
+                    gatlingGunRecipe: "속사 레벨 5 + 산탄 사격 레벨 3",
+                    gatlingGunDesc: "다총신 속사"
+                }
+            }
+        };
+    }
+
+    // Translation helper method
+    t(key, category = 'ui') {
+        const lang = this.translations[this.currentLanguage];
+        if (!lang || !lang[category]) {
+            return key; // Fallback to key if translation missing
+        }
+
+        const keys = key.split('.');
+        let result = lang[category];
+
+        for (const k of keys) {
+            if (result && typeof result === 'object' && result[k] !== undefined) {
+                result = result[k];
+            } else {
+                return key; // Fallback if path not found
+            }
+        }
+
+        return result || key;
+    }
+
+    // Change language and update all UI
+    setLanguage(lang) {
+        if (this.translations[lang]) {
+            this.currentLanguage = lang;
+            this.saveUserSettings();
+            this.updateAllText();
+        }
+    }
+
+    // Update all text elements with current language
+    updateAllText() {
+        // Start screen
+        const startTitle = document.querySelector('.survivor-title h1');
+        if (startTitle) startTitle.textContent = this.t('gameTitle');
+
+        const startTaglines = document.querySelectorAll('.survivor-title p');
+        if (startTaglines.length > 0) startTaglines[0].textContent = this.t('gameTagline');
+
+        // Control instructions
+        const controlsPC = document.querySelector('.controls-info:not(.mobile-only)');
+        if (controlsPC) controlsPC.textContent = this.t('controlsPC');
+
+        const controlsMobile = document.querySelector('.controls-info.mobile-only');
+        if (controlsMobile) controlsMobile.textContent = this.t('controlsMobile');
+
+        // Buttons
+        const startBtn = document.getElementById('start-survivor');
+        if (startBtn) startBtn.textContent = this.t('startGame');
+
+        const optionsBtn = document.getElementById('options-btn');
+        if (optionsBtn) optionsBtn.textContent = this.t('options');
+
+        // Pause menu
+        const pauseTitle = document.querySelector('#pause-menu h2');
+        if (pauseTitle) pauseTitle.textContent = this.t('gamePaused');
+
+        const resumeBtn = document.getElementById('resume-btn');
+        if (resumeBtn) resumeBtn.textContent = this.t('resume');
+
+        const restartBtn = document.getElementById('pause-restart-btn');
+        if (restartBtn) restartBtn.textContent = this.t('restart');
+
+        const muteBtn = document.getElementById('mute-btn');
+        if (muteBtn) muteBtn.textContent = this.audioMuted ? this.t('unmute') : this.t('mute');
+
+        const quitBtn = document.getElementById('exit-to-menu-btn');
+        if (quitBtn) quitBtn.textContent = this.t('quitGame');
+
+        // Confirmation modals
+        const exitTitle = document.querySelector('#exit-confirmation-modal h2');
+        if (exitTitle) exitTitle.textContent = this.t('quitConfirm');
+
+        const exitWarning = document.querySelector('#exit-confirmation-modal p');
+        if (exitWarning) exitWarning.innerHTML = this.t('quitWarning');
+
+        const exitYes = document.getElementById('exit-confirm-yes');
+        if (exitYes) exitYes.textContent = this.t('yesQuit');
+
+        const exitNo = document.getElementById('exit-confirm-no');
+        if (exitNo) exitNo.textContent = this.t('noContinue');
+
+        const restartTitle = document.querySelector('#restart-confirmation-modal h2');
+        if (restartTitle) restartTitle.textContent = this.t('restartConfirm');
+
+        const restartWarning = document.querySelector('#restart-confirmation-modal p');
+        if (restartWarning) restartWarning.innerHTML = this.t('restartWarning');
+
+        const restartYes = document.getElementById('restart-confirm-yes');
+        if (restartYes) restartYes.textContent = this.t('yesRestart');
+
+        const restartConfirmNo = document.getElementById('restart-confirm-no');
+        if (restartConfirmNo) restartConfirmNo.textContent = this.t('noContinue');
+
+        // Help menu
+        const helpTitle = document.querySelector('#help-menu h2');
+        if (helpTitle) helpTitle.textContent = this.t('weaponMergers', 'help');
+
+        const closeHelpBtn = document.getElementById('close-help-btn');
+        if (closeHelpBtn) closeHelpBtn.textContent = this.t('close');
+
+        const helpHint = document.querySelector('#help-menu .help-hint');
+        if (helpHint) helpHint.textContent = this.t('helpHint');
+
+        // Game over screen
+        const gameOverTitle = document.querySelector('#survivor-game-over-screen h2');
+        if (gameOverTitle) gameOverTitle.textContent = this.t('gameOver');
+
+        const playAgainBtn = document.getElementById('restart-survivor');
+        if (playAgainBtn) playAgainBtn.textContent = this.t('playAgain');
+
+        const exitGameBtn = document.getElementById('exit-survivor');
+        if (exitGameBtn) exitGameBtn.textContent = this.t('exit');
+
+        // Mobile dash button
+        const mobileDash = document.querySelector('#mobile-dash-btn span');
+        if (mobileDash) mobileDash.textContent = this.t('dash');
+
+        // Pause hint
+        const pauseHint = document.querySelector('.pause-hint');
+        if (pauseHint) pauseHint.textContent = this.t('pauseHint');
+
+        // Options menu
+        this.updateOptionsMenu();
+
+        // Update dash button position label
+        this.updateDashPositionButtonLabel();
+    }
+
+    // Update options menu text
+    updateOptionsMenu() {
+        const labels = document.querySelectorAll('.option-item label');
+        if (labels.length >= 3) {
+            labels[0].textContent = this.t('language');
+            labels[1].textContent = this.t('audio');
+            labels[2].textContent = this.t('dashPosition');
+        }
+
+        const closeBtn = document.getElementById('close-options-btn');
+        if (closeBtn) closeBtn.textContent = this.t('close');
+
+        const hint = document.querySelector('.options-hint');
+        if (hint) hint.textContent = this.t('optionsHint');
+
+        // Update the button texts immediately
+        this.updateOptionsAudioButton();
+        this.updateOptionsDashButton();
+    }
+
+    // Load user settings from localStorage
+    loadUserSettings() {
+        try {
+            const saved = localStorage.getItem('vibesurvior-settings');
+            if (saved) {
+                const settings = JSON.parse(saved);
+                this.currentLanguage = settings.language || 'en';
+                this.audioMuted = settings.audioMuted || false;
+                this.dashButtonPosition = settings.dashButtonPosition || 'right';
+            }
+        } catch (e) {
+            console.warn('Failed to load settings:', e);
+        }
+    }
+
+    // Save user settings to localStorage
+    saveUserSettings() {
+        try {
+            const settings = {
+                language: this.currentLanguage,
+                audioMuted: this.audioMuted,
+                dashButtonPosition: this.dashButtonPosition || 'right'
+            };
+            localStorage.setItem('vibesurvior-settings', JSON.stringify(settings));
+        } catch (e) {
+            console.warn('Failed to save settings:', e);
+        }
+    }
+
+    // Options Menu Methods
+    showOptionsMenu() {
+        const optionsMenu = document.getElementById('options-menu');
+        if (optionsMenu) {
+            optionsMenu.style.display = 'flex';
+            this.updateOptionsMenuState();
+        }
+    }
+
+    hideOptionsMenu() {
+        const optionsMenu = document.getElementById('options-menu');
+        if (optionsMenu) {
+            optionsMenu.style.display = 'none';
+        }
+    }
+
+    updateOptionsMenuState() {
+        // Set language dropdown
+        const langSelect = document.getElementById('language-select');
+        if (langSelect) {
+            langSelect.value = this.currentLanguage;
+        }
+
+        // Update audio button
+        this.updateOptionsAudioButton();
+
+        // Update dash button
+        this.updateOptionsDashButton();
+    }
+
+    updateOptionsAudioButton() {
+        const audioBtn = document.getElementById('options-mute-btn');
+        if (audioBtn) {
+            audioBtn.textContent = this.audioMuted ? this.t('unmute') : this.t('mute');
+        }
+    }
+
+    updateOptionsDashButton() {
+        const dashBtn = document.getElementById('options-dash-position-btn');
+        if (dashBtn) {
+            const position = this.touchControls?.dashButton?.position ||
+                           this.settings?.dashButtonPosition || 'right';
+            dashBtn.textContent = this.t(position).toUpperCase();
+        }
     }
 }
 
