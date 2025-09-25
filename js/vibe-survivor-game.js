@@ -10766,8 +10766,8 @@ class VibeSurvivor {
                 ui: {
                     // Landing page
                     gameTitle: "바이브 서바이버",
-                    gameTagline: "끝없는 파도에서 살아남아라!",
-                    startGame: "게임 시작",
+                    gameTagline: "끝없는 도형들의 공격에서 살아남아라!",
+                    startGame: "시작",
                     options: "설정",
 
                     // Options menu
@@ -10784,15 +10784,15 @@ class VibeSurvivor {
                     mute: "음소거",
                     unmute: "음소거 해제",
                     quitGame: "게임 종료",
-                    playAgain: "다시 플레이",
+                    playAgain: "다시하기",
                     exit: "나가기",
                     left: "왼쪽",
                     right: "오른쪽",
                     button: "버튼",
 
                     // Modal titles
-                    gamePaused: "게임 일시정지",
-                    gameOver: "게임 오버",
+                    gamePaused: "일시정지",
+                    gameOver: "게임오버",
                     quitConfirm: "게임을 종료할까요?",
                     restartConfirm: "게임을 다시 시작할까요?",
                     levelUp: "레벨 업!",
