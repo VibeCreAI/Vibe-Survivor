@@ -85,7 +85,7 @@ class VibeSurvivor {
             trail: [],
             passives: {},
             trailMultiplier: 1.0,
-            magnetBoost: 0 // Temporary magnet boost from magnet orbs (frames remaining)
+            magnetBoost: 0 // Magnet boost active flag (0 = off, >0 = active)
         };
         
         // Game properties
@@ -2400,9 +2400,9 @@ class VibeSurvivor {
         
         this.updatePlayer();
         
-        // Update magnet boost timer
-        if (this.player.magnetBoost > 0) {
-            this.player.magnetBoost--;
+        // Keep magnet boost active until field is clear of XP orbs
+        if (this.player.magnetBoost > 0 && this.xpOrbs.length === 0) {
+            this.player.magnetBoost = 0;
         }
         this.updatePassives();
         this.updateWeapons();
@@ -5088,8 +5088,8 @@ class VibeSurvivor {
             
             // Collect orb
             if (distanceSquared < 225) { // 15 * 15 = 225
-                // Give player temporary magnet boost (2 seconds = 120 frames)
-                this.player.magnetBoost = 120;
+                // Activate magnet boost until all XP orbs are absorbed
+                this.player.magnetBoost = 1;
                 
                 // Show magnet activation notification
                 this.showToastNotification(`🧲 MAGNET ACTIVATED!`, 'upgrade');
