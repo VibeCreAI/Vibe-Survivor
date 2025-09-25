@@ -2635,7 +2635,7 @@ class VibeSurvivor {
         const startingOrbCount = 14;
         for (let i = 0; i < startingOrbCount; i++) {
             const angle = Math.random() * Math.PI * 2;
-            const distance = 40 + Math.random() * 60; // Random distance between 40-100 pixels
+            const distance = 80 + Math.random() * 120; // Random distance between 80-200 pixels (doubled from 40-100)
             const orbX = this.player.x + Math.cos(angle) * distance;
             const orbY = this.player.y + Math.sin(angle) * distance;
             this.createXPOrb(orbX, orbY);
