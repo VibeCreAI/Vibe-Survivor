@@ -2890,7 +2890,8 @@ class VibeSurvivor {
     }
     
     updatePlayer() {
-        const speed = this.player.speed * (this.player.passives.speed_boost ? 1.3 : 1);
+        // Speed is now directly modified when speed_boost is acquired
+        const speed = this.player.speed;
         
         // Keyboard WASD movement
         let moveX = 0, moveY = 0;
@@ -5908,12 +5909,15 @@ class VibeSurvivor {
         ];
         
         passiveChoices.forEach(passive => {
-            // Allow health_boost, armor, critical, and dash_boost to be acquired multiple times
-            const canStack = ['health_boost', 'armor', 'critical', 'dash_boost'].includes(passive.id);
+            // Allow health_boost, speed_boost, armor, critical, and dash_boost to be acquired multiple times
+            const canStack = ['health_boost', 'speed_boost', 'armor', 'critical', 'dash_boost'].includes(passive.id);
             const alreadyHas = this.player.passives[passive.id];
 
             // Check for caps on stackable items
             let canAcquire = true;
+            if (passive.id === 'speed_boost' && typeof alreadyHas === 'number' && alreadyHas >= 3) {
+                canAcquire = false; // Speed boost is capped at 3 stacks
+            }
             if (passive.id === 'critical' && typeof alreadyHas === 'number' && alreadyHas >= 3) {
                 canAcquire = false; // Critical is capped at 3 stacks
             }
@@ -5927,14 +5931,20 @@ class VibeSurvivor {
                 if (canStack && alreadyHas) {
                     if (passive.id === 'health_boost') {
                         description = '+25 Max Health (Stackable)';
+                    } else if (passive.id === 'speed_boost') {
+                        const currentStacks = typeof alreadyHas === 'number' ? alreadyHas : 0;
+                        const nextStacks = Math.min(3, currentStacks + 1);
+                        description = `+10% Movement Speed (${nextStacks}/3 Stacks)`;
                     } else if (passive.id === 'armor') {
                         description = '+15% Damage Reduction (Stackable)';
                     } else if (passive.id === 'critical') {
-                        const currentStacks = typeof alreadyHas === 'number' ? alreadyHas : 1;
-                        description = `+15% Crit Chance (${currentStacks}/3 Stacks)`;
+                        const currentStacks = typeof alreadyHas === 'number' ? alreadyHas : 0;
+                        const nextStacks = Math.min(3, currentStacks + 1);
+                        description = `+15% Crit Chance (${nextStacks}/3 Stacks)`;
                     } else if (passive.id === 'dash_boost') {
-                        const currentStacks = typeof alreadyHas === 'number' ? alreadyHas : 1;
-                        description = `+50% Dash Distance (${currentStacks}/3 Stacks)`;
+                        const currentStacks = typeof alreadyHas === 'number' ? alreadyHas : 0;
+                        const nextStacks = Math.min(3, currentStacks + 1);
+                        description = `+50% Dash Distance (${nextStacks}/3 Stacks)`;
                     }
                 }
 
@@ -6440,7 +6450,7 @@ class VibeSurvivor {
             'flamethrower': { damage: 6, fireRate: 15, range: 120, projectileSpeed: 4 },
             'railgun': { damage: 50, fireRate: 90, range: 500, projectileSpeed: 15, piercing: 999 },
             'missiles': { damage: 35, fireRate: 120, range: 400, projectileSpeed: 5, homing: true, explosionRadius: 60 },
-            'homing_laser': { damage: 30, fireRate: 100, range: 400, projectileSpeed: 8, homing: true, piercing: true, isMergeWeapon: true },
+            'homing_laser': { damage: 24, fireRate: 100, range: 400, projectileSpeed: 8, homing: true, piercing: true, isMergeWeapon: true },
             'shockburst': { damage: 50, fireRate: 80, range: 300, projectileSpeed: 0, explosionRadius: 100, isMergeWeapon: true },
             'gatling_gun': { damage: 35, fireRate: 4, range: 450, projectileSpeed: 10, isMergeWeapon: true }
         };
@@ -6516,7 +6526,7 @@ class VibeSurvivor {
             'flamethrower': { damage: 6, fireRate: 15, range: 120, projectileSpeed: 4 },
             'railgun': { damage: 50, fireRate: 120, range: 500, projectileSpeed: 12, piercing: 999 },
             'missiles': { damage: 35, fireRate: 120, range: 400, projectileSpeed: 5, homing: true, explosionRadius: 60 },
-            'homing_laser': { damage: 20, fireRate: 100, range: 400, projectileSpeed: 8, homing: true, piercing: true, isMergeWeapon: true },
+            'homing_laser': { damage: 16, fireRate: 100, range: 400, projectileSpeed: 8, homing: true, piercing: true, isMergeWeapon: true },
             'shockburst': { damage: 50, fireRate: 80, range: 300, projectileSpeed: 0, explosionRadius: 100, isMergeWeapon: true },
             'gatling_gun': { damage: 35, fireRate: 4, range: 450, projectileSpeed: 10, isMergeWeapon: true }
         };
@@ -6536,8 +6546,14 @@ class VibeSurvivor {
                 }
                 break;
             case 'speed_boost':
-                this.player.speed *= 1.3;
-                this.player.passives[passiveId] = true;
+                // Apply multiplicative 10% speed boost to current speed
+                this.player.speed *= 1.1;
+                // Track count for stackable passive (capped at 3)
+                if (typeof this.player.passives.speed_boost === 'number') {
+                    this.player.passives.speed_boost = Math.min(3, this.player.passives.speed_boost + 1);
+                } else {
+                    this.player.passives.speed_boost = 1;
+                }
                 break;
             case 'regeneration':
                 this.player.passives.regeneration = { timer: 0 };
@@ -6572,7 +6588,7 @@ class VibeSurvivor {
         }
 
         // Only set to true for non-stackable passives
-        if (!['health_boost', 'armor', 'critical', 'dash_boost'].includes(passiveId)) {
+        if (!['health_boost', 'speed_boost', 'armor', 'critical', 'dash_boost'].includes(passiveId)) {
             this.player.passives[passiveId] = true;
         }
     }
@@ -9829,7 +9845,7 @@ class VibeSurvivor {
     generatePassivesSection() {
         const passiveNames = {
             'health_boost': 'Health Boost (+25 Max HP)',
-            'speed_boost': 'Speed Boost (+30% Speed)',
+            'speed_boost': 'Speed Boost (+10% Speed)',
             'regeneration': 'Regeneration (Auto-heal)',
             'magnet': 'Magnet (XP Attraction)',
             'armor': 'Armor (Damage Reduction)',
@@ -9847,7 +9863,7 @@ class VibeSurvivor {
             let displayName = passiveNames[passive];
 
             // Add count for stackable passives
-            if (['health_boost', 'armor', 'critical', 'dash_boost'].includes(passive)) {
+            if (['health_boost', 'speed_boost', 'armor', 'critical', 'dash_boost'].includes(passive)) {
                 const count = this.player.passives[passive];
                 if (typeof count === 'number' && count > 1) {
                     displayName += ` (x${count})`;
@@ -9889,7 +9905,7 @@ class VibeSurvivor {
 
     generatePlayerStatsSection() {
         const maxHealthBonus = this.player.maxHealth - 100; // Starting health is 100
-        const speedMultiplier = this.player.passives.speed_boost ? 1.3 : 1.0;
+        const speedMultiplier = this.player.speed / 2.3; // Calculate multiplier based on current speed vs base speed
         const totalUpgrades = this.player.level - 1; // Level 1 = 0 upgrades
 
         return `
@@ -10771,13 +10787,13 @@ class VibeSurvivor {
                     dashBoost: "Dash Boost",
 
                     // Descriptions
-                    healthBoostDesc: "+25 Max Health",
-                    speedBoostDesc: "+30% Movement Speed",
+                    healthBoostDesc: "+25 Max Health (Stackable)",
+                    speedBoostDesc: "+10% Movement Speed (Multiplicative, stackable up to 3 times)",
                     regenerationDesc: "Slowly heal over time",
                     magnetDesc: "Attract XP from further away",
-                    armorDesc: "Reduce damage taken by 15%",
-                    criticalStrikeDesc: "15% chance for double damage",
-                    dashBoostDesc: "+50% Dash Distance"
+                    armorDesc: "Reduce damage taken by 15% (Stackable up to 3 times)",
+                    criticalStrikeDesc: "15% chance for double damage (Stackable up to 3 times)",
+                    dashBoostDesc: "+50% Dash Distance (Stackable up to 3 times)"
                 },
                 help: {
                     weaponMergers: "🔧 WEAPON MERGERS",
@@ -10798,7 +10814,7 @@ class VibeSurvivor {
             ko: {
                 ui: {
                     // Landing page
-                    gameTitle: "바이브 서바이버",
+                    gameTitle: "바이브 서바이벌",
                     gameTagline: "끝없는 도형들의 공격에서 살아남아라!",
                     startGame: "시작",
                     options: "설정",
@@ -10854,7 +10870,7 @@ class VibeSurvivor {
                     // Base weapons
                     basicMissile: "기본 미사일",
                     rapidFire: "속사",
-                    spreadShot: "산탄 사격",
+                    spreadShot: "산탄 총총",
                     laserBeam: "레이저 빔",
                     plasmaBolt: "플라즈마 볼트",
                     homingMissiles: "유도 미사일",
@@ -10888,13 +10904,13 @@ class VibeSurvivor {
                     dashBoost: "대시 강화",
 
                     // Descriptions
-                    healthBoostDesc: "+25 최대 체력",
-                    speedBoostDesc: "+30% 이동 속도",
+                    healthBoostDesc: "+25 최대 체력 (중첩 가능)",
+                    speedBoostDesc: "+10% 이동 속도 (곱셈식, 최대 3번까지 중첩 가능)",
                     regenerationDesc: "시간에 따라 천천히 회복",
                     magnetDesc: "더 멀리서 경험치 흡수",
-                    armorDesc: "받는 피해 15% 감소",
-                    criticalStrikeDesc: "15% 확률로 2배 피해",
-                    dashBoostDesc: "+50% 대시 거리"
+                    armorDesc: "받는 피해 15% 감소 (최대 3번까지 중첩 가능)",
+                    criticalStrikeDesc: "15% 확률로 2배 피해 (최대 3번까지 중첩 가능)",
+                    dashBoostDesc: "+50% 대시 거리 (최대 3번까지 중첩 가능)"
                 },
                 help: {
                     weaponMergers: "🔧 무기 합성",
