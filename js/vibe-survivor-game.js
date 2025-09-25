@@ -128,6 +128,10 @@ class VibeSurvivor {
         // Mobile touch controls
         this.isMobile = this.detectMobile();
 
+        // Persistent player settings (e.g., mobile dash preference)
+        this.settings = this.loadSettings();
+        this.pauseScrollHandler = null;
+
         // Bind layout helpers that run from event listeners
         this.updateStartOverlayLayout = this.updateStartOverlayLayout.bind(this);
         
@@ -191,7 +195,8 @@ class VibeSurvivor {
                 touchId: null // Track specific touch ID
             },
             dashButton: {
-                pressed: false
+                pressed: false,
+                position: this.settings?.dashButtonPosition || 'right'
             }
         };
         
@@ -377,7 +382,7 @@ class VibeSurvivor {
                             <canvas id="survivor-canvas"></canvas>
                             
                             <!-- Mobile Dash Button (inside canvas area) -->
-                            <div id="mobile-dash-btn" class="mobile-dash-btn" style="display: none;">
+                            <div id="mobile-dash-btn" class="mobile-dash-btn mobile-dash-right" style="display: none;">
                                 <span>DASH</span>
                             </div>
                             
@@ -389,6 +394,7 @@ class VibeSurvivor {
                                         <button id="resume-btn" class="survivor-btn primary">RESUME</button>
                                         <button id="pause-restart-btn" class="survivor-btn">RESTART</button>
                                         <button id="mute-btn" class="survivor-btn">MUTE</button>
+                                        <button id="dash-position-btn" class="survivor-btn">DASH BUTTON: RIGHT</button>
                                         <button id="exit-to-menu-btn" class="survivor-btn">EXIT</button>
                                     </div>
                                     <p class="pause-hint">Press ESC to resume</p>
@@ -1181,6 +1187,10 @@ class VibeSurvivor {
                 padding: 40px;
                 text-align: center;
                 box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+                max-height: 80vh;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                touch-action: pan-y;
             }
 
             .pause-content h2 {
@@ -1387,7 +1397,6 @@ class VibeSurvivor {
             .mobile-dash-btn {
                 position: absolute;
                 bottom: 20px;
-                right: 20px;
                 width: 100px;
                 height: 100px;
                 background: rgba(0, 255, 255, 0.3);
@@ -1405,6 +1414,16 @@ class VibeSurvivor {
                 box-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
                 backdrop-filter: blur(3px);
                 z-index: 1000;
+            }
+
+            .mobile-dash-right {
+                right: 20px;
+                left: auto;
+            }
+
+            .mobile-dash-left {
+                left: 20px;
+                right: auto;
             }
 
             .mobile-dash-btn:active,
@@ -1603,6 +1622,20 @@ class VibeSurvivor {
             this.toggleAudioMute();
         });
 
+        const dashPositionBtn = document.getElementById('dash-position-btn');
+        if (dashPositionBtn) {
+            dashPositionBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.toggleDashButtonPosition();
+            });
+
+            dashPositionBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.toggleDashButtonPosition();
+            }, { passive: false });
+        }
+
         document.getElementById('exit-to-menu-btn').addEventListener('click', () => {
             this.closeGame();
         });
@@ -1612,6 +1645,7 @@ class VibeSurvivor {
             this.isPaused = false;
             const pauseMenu = document.getElementById('pause-menu');
             if (pauseMenu) pauseMenu.style.display = 'none';
+            this.disablePauseScrolling();
             this.resetMenuNavigation();
             this.restartGame();
         });
@@ -1627,7 +1661,9 @@ class VibeSurvivor {
             e.stopPropagation();
             this.toggleHelp();
         }, { passive: false });
-        
+
+        this.updateDashPositionButtonLabel();
+
         // Keyboard controls
         document.addEventListener('keydown', (e) => {
             // Menu navigation takes priority
@@ -2042,6 +2078,7 @@ class VibeSurvivor {
         if (pauseMenu) {
             pauseMenu.style.display = 'none';
         }
+        this.disablePauseScrolling();
         
         // CRITICAL FIX: Hide modal header during gameplay
         this.hideModalHeader();
@@ -2579,13 +2616,16 @@ class VibeSurvivor {
             // Update pause button to show play symbol
             if (pauseBtn) pauseBtn.textContent = '▶';
             pauseMenu.style.display = 'flex';
-            
+            this.enablePauseScrolling();
+
             // Initialize keyboard navigation for pause menu
             const resumeBtn = document.getElementById('resume-btn');
             const restartBtn = document.getElementById('pause-restart-btn');
             const muteBtn = document.getElementById('mute-btn');
+            const dashPositionBtn = document.getElementById('dash-position-btn');
             const exitBtn = document.getElementById('exit-to-menu-btn');
-            const pauseButtons = [resumeBtn, restartBtn, muteBtn, exitBtn].filter(btn => btn); // Filter out null buttons
+            this.updateDashPositionButtonLabel();
+            const pauseButtons = [resumeBtn, restartBtn, muteBtn, dashPositionBtn, exitBtn].filter(btn => btn); // Filter out null buttons
 
             // Update mute button text based on current state
             if (muteBtn) {
@@ -2609,10 +2649,11 @@ class VibeSurvivor {
             // Update pause button to show pause symbol
             if (pauseBtn) pauseBtn.textContent = '||';
             pauseMenu.style.display = 'none';
-            
+            this.disablePauseScrolling();
+
             // Deactivate keyboard navigation
             this.resetMenuNavigation();
-            
+
             // Resume background music
             if (this.backgroundMusic && this.backgroundMusic.paused) {
                 // Respect mute state when resuming
@@ -2636,6 +2677,95 @@ class VibeSurvivor {
             // Unmute the audio
             this.backgroundMusic.volume = 0.3;
             if (muteBtn) muteBtn.textContent = 'MUTE';
+        }
+    }
+
+    enablePauseScrolling() {
+        const pauseContent = document.querySelector('.pause-content');
+        if (!pauseContent) return;
+
+        if (this.pauseScrollHandler) {
+            pauseContent.removeEventListener('touchstart', this.pauseScrollHandler.start, { passive: false });
+            pauseContent.removeEventListener('touchmove', this.pauseScrollHandler.move, { passive: false });
+            pauseContent.removeEventListener('touchend', this.pauseScrollHandler.end, { passive: false });
+        }
+
+        this.pauseScrollHandler = {
+            start: (e) => {
+                e.stopPropagation();
+            },
+            move: (e) => {
+                e.stopPropagation();
+            },
+            end: (e) => {
+                e.stopPropagation();
+            }
+        };
+
+        pauseContent.addEventListener('touchstart', this.pauseScrollHandler.start, { passive: true });
+        pauseContent.addEventListener('touchmove', this.pauseScrollHandler.move, { passive: true });
+        pauseContent.addEventListener('touchend', this.pauseScrollHandler.end, { passive: true });
+    }
+
+    disablePauseScrolling() {
+        const pauseContent = document.querySelector('.pause-content');
+        if (!pauseContent || !this.pauseScrollHandler) return;
+
+        pauseContent.removeEventListener('touchstart', this.pauseScrollHandler.start, { passive: true });
+        pauseContent.removeEventListener('touchmove', this.pauseScrollHandler.move, { passive: true });
+        pauseContent.removeEventListener('touchend', this.pauseScrollHandler.end, { passive: true });
+        this.pauseScrollHandler = null;
+    }
+
+    toggleDashButtonPosition() {
+        if (!this.touchControls?.dashButton) return;
+
+        const newPosition = this.touchControls.dashButton.position === 'left' ? 'right' : 'left';
+        this.touchControls.dashButton.position = newPosition;
+        if (this.settings) {
+            this.settings.dashButtonPosition = newPosition;
+            this.saveSettings();
+        }
+
+        const dashBtn = document.getElementById('mobile-dash-btn');
+        if (dashBtn) {
+            this.ensureDashButtonInBounds(dashBtn);
+        }
+
+        this.updateDashPositionButtonLabel();
+    }
+
+    updateDashPositionButtonLabel() {
+        const dashPositionBtn = document.getElementById('dash-position-btn');
+        if (!dashPositionBtn) return;
+
+        const positionLabel = (this.touchControls?.dashButton?.position === 'left') ? 'LEFT' : 'RIGHT';
+        dashPositionBtn.textContent = `DASH BUTTON: ${positionLabel}`;
+    }
+
+    loadSettings() {
+        const defaults = { dashButtonPosition: 'right' };
+
+        try {
+            const stored = window.localStorage?.getItem('vibeSurvivorSettings');
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                return { ...defaults, ...parsed };
+            }
+        } catch (error) {
+            console.warn('Failed to load Vibe Survivor settings:', error);
+        }
+
+        return { ...defaults };
+    }
+
+    saveSettings() {
+        if (!this.settings) return;
+
+        try {
+            window.localStorage?.setItem('vibeSurvivorSettings', JSON.stringify(this.settings));
+        } catch (error) {
+            console.warn('Failed to save Vibe Survivor settings:', error);
         }
     }
 
@@ -3055,7 +3185,8 @@ class VibeSurvivor {
         if (pauseMenu) {
             pauseMenu.style.display = 'none';
         }
-        
+        this.disablePauseScrolling();
+
         // Show start screen
         this.showStartScreen();
         this.resetGame();
@@ -3182,8 +3313,9 @@ class VibeSurvivor {
             const target = e.target;
             const isHelpContent = target.closest('.help-content');
             const isLevelUpContent = target.closest('.upgrade-choices-container');
+            const isPauseContent = target.closest('.pause-content');
 
-            if (!isHelpContent && !isLevelUpContent) {
+            if (!isHelpContent && !isLevelUpContent && !isPauseContent) {
                 e.preventDefault();
                 e.stopPropagation();
             }
@@ -3228,10 +3360,15 @@ class VibeSurvivor {
     
     ensureDashButtonInBounds(dashBtn) {
         if (!dashBtn) return;
-        
-        // Always force consistent positioning - same as original CSS
-        dashBtn.style.right = '20px';
+
         dashBtn.style.bottom = '20px';
+        dashBtn.classList.remove('mobile-dash-left', 'mobile-dash-right');
+
+        const preferredPosition = this.touchControls?.dashButton?.position === 'left'
+            ? 'mobile-dash-left'
+            : 'mobile-dash-right';
+
+        dashBtn.classList.add(preferredPosition);
     }
     
     updateTouchControlsPositioning() {
@@ -9973,7 +10110,8 @@ class VibeSurvivor {
         // Stop game immediately to prevent any lingering processes
         this.gameRunning = false;
         this.isPaused = false;
-        
+        this.disablePauseScrolling();
+
         // Cancel any running game loop
         if (this.gameLoopId) {
             cancelAnimationFrame(this.gameLoopId);
