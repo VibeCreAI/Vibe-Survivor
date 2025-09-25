@@ -466,20 +466,30 @@ class VibeSurvivor {
                                     <h2>🔧 WEAPON MERGERS</h2>
                                     <div class="help-recipes">
                                         <div class="merge-recipe">
-                                            <h3>⚡ Homing Laser</h3>
-                                            <p>Laser lvl 3 + Homing Missiles lvl 3</p>
-                                            <span class="recipe-desc">Heat-seeking laser beams</span>
+                                            <h3 id="homing-laser-title">⚡ Homing Laser</h3>
+                                            <p id="homing-laser-recipe">Laser lvl 3 + Homing Missiles lvl 3</p>
+                                            <span id="homing-laser-desc" class="recipe-desc">Heat-seeking laser beams</span>
                                         </div>
                                         <div class="merge-recipe">
-                                            <h3>💥 Shockburst</h3>
-                                            <p>Lightning lvl 3 + Plasma lvl 3</p>
-                                            <span class="recipe-desc">Explosive energy bursts</span>
+                                            <h3 id="shockburst-title">💥 Shockburst</h3>
+                                            <p id="shockburst-recipe">Lightning lvl 3 + Plasma lvl 3</p>
+                                            <span id="shockburst-desc" class="recipe-desc">Explosive energy bursts</span>
                                         </div>
                                         <div class="merge-recipe">
-                                            <h3>🔫 Gatling Gun</h3>
-                                            <p>Rapid Fire lvl 5 + Spread Shot lvl 3</p>
-                                            <span class="recipe-desc">Multi-barrel rapid fire</span>
+                                            <h3 id="gatling-gun-title">🔫 Gatling Gun</h3>
+                                            <p id="gatling-gun-recipe">Rapid Fire lvl 5 + Spread Shot lvl 3</p>
+                                            <span id="gatling-gun-desc" class="recipe-desc">Multi-barrel rapid fire</span>
                                         </div>
+                                    </div>
+
+                                    <h2 id="weapon-tips-title">💡 WEAPON TIPS</h2>
+                                    <div class="help-section">
+                                        <p id="weapon-limit-tip">You can equip a maximum of 4 weapons, so choose wisely based on your playstyle.</p>
+                                    </div>
+
+                                    <h2 id="weapon-evolution-title">🔄 WEAPON EVOLUTION</h2>
+                                    <div class="help-section">
+                                        <p id="rapid-fire-evolution">Basic Missile evolves into Rapid Fire at level 5 - this creates a powerful automatic weapon with increased fire rate.</p>
                                     </div>
                                     <button id="close-help-btn" class="survivor-btn">CLOSE</button>
                                     <p class="help-hint">Press ESC to close</p>
@@ -1200,6 +1210,15 @@ class VibeSurvivor {
                 border-radius: 10px;
                 padding: 15px;
                 margin-bottom: 15px;
+                text-align: left;
+            }
+
+            .help-section {
+                background: rgba(0, 255, 255, 0.05);
+                border: 1px solid rgba(0, 255, 255, 0.2);
+                border-radius: 10px;
+                padding: 15px;
+                margin-bottom: 20px;
                 text-align: left;
             }
 
@@ -5840,13 +5859,13 @@ class VibeSurvivor {
         // Weapon upgrades for existing weapons
         this.weapons.forEach((weapon, index) => {
             if (weapon.level < 10) {
-                let description = `+${Math.floor(weapon.damage * 0.3)} damage, faster fire rate`;
-                
+                let description = `+${Math.floor(weapon.damage * 0.3)} ${this.t('damageFireRate')}`;
+
                 // Add projectile count info for level 2+ upgrades
                 if (weapon.level === 1) {
-                    description += ', +1 projectile';
+                    description += `, ${this.t('addProjectile')}`;
                 } else if (weapon.level >= 2 && weapon.level < 5) {
-                    description += ', +1 projectile';
+                    description += `, ${this.t('addProjectile')}`;
                 }
                 
                 choices.push({
@@ -5879,13 +5898,13 @@ class VibeSurvivor {
         
         // Passive abilities
         const passiveChoices = [
-            { id: 'health_boost', name: 'Health Boost', description: '+25 Max Health', icon: '❤️' },
-            { id: 'speed_boost', name: 'Speed Boost', description: '+30% Movement Speed', icon: '💨' },
-            { id: 'regeneration', name: 'Regeneration', description: 'Slowly heal over time', icon: '🔄' },
-            { id: 'magnet', name: 'Magnet', description: 'Attract XP from further away', icon: '🧲' },
-            { id: 'armor', name: 'Armor', description: 'Reduce damage taken by 15%', icon: '🛡️' },
-            { id: 'critical', name: 'Critical Strike', description: '15% chance for double damage', icon: '💥' },
-            { id: 'dash_boost', name: 'Dash Boost', description: '+50% Dash Distance', icon: '⚡' }
+            { id: 'health_boost', name: this.t('healthBoost', 'passives'), description: this.t('healthBoostDesc', 'passives'), icon: '❤️' },
+            { id: 'speed_boost', name: this.t('speedBoost', 'passives'), description: this.t('speedBoostDesc', 'passives'), icon: '💨' },
+            { id: 'regeneration', name: this.t('regeneration', 'passives'), description: this.t('regenerationDesc', 'passives'), icon: '🔄' },
+            { id: 'magnet', name: this.t('magnet', 'passives'), description: this.t('magnetDesc', 'passives'), icon: '🧲' },
+            { id: 'armor', name: this.t('armor', 'passives'), description: this.t('armorDesc', 'passives'), icon: '🛡️' },
+            { id: 'critical', name: this.t('criticalStrike', 'passives'), description: this.t('criticalStrikeDesc', 'passives'), icon: '💥' },
+            { id: 'dash_boost', name: this.t('dashBoost', 'passives'), description: this.t('dashBoostDesc', 'passives'), icon: '⚡' }
         ];
         
         passiveChoices.forEach(passive => {
@@ -5935,23 +5954,25 @@ class VibeSurvivor {
     }
     
     getWeaponName(type) {
-        const names = {
-            'basic': 'Basic Missile',
-            'rapid': 'Rapid Fire',
-            'spread': 'Spread Shot',
-            'spread_shot': 'Spread Shot',
-            'laser': 'Laser Beam',
-            'plasma': 'Plasma Bolt',
-            'shotgun': 'Shotgun',
-            'lightning': 'Lightning',
-            'flamethrower': 'Flamethrower',
-            'railgun': 'Railgun',
-            'missiles': 'Homing Missiles',
-            'homing_laser': 'Homing Laser',
-            'shockburst': 'Shockburst',
-            'gatling_gun': 'Gatling Gun'
+        const weaponNameMap = {
+            'basic': 'basicMissile',
+            'rapid': 'rapidFire',
+            'spread': 'spreadShot',
+            'spread_shot': 'spreadShot',
+            'laser': 'laserBeam',
+            'plasma': 'plasmaBolt',
+            'shotgun': 'shotgun',
+            'lightning': 'lightning',
+            'flamethrower': 'flamethrower',
+            'railgun': 'railgun',
+            'missiles': 'homingMissiles',
+            'homing_laser': 'homingLaser',
+            'shockburst': 'shockburst',
+            'gatling_gun': 'gatlingGun'
         };
-        return names[type] || 'Unknown Weapon';
+
+        const nameKey = weaponNameMap[type];
+        return nameKey ? this.t(nameKey, 'weapons') : 'Unknown Weapon';
     }
 
     getWeaponNameAfterUpgrade(weapon) {
@@ -5969,20 +5990,8 @@ class VibeSurvivor {
     }
     
     getWeaponDescription(type) {
-        const descriptions = {
-            'spread': 'Fires multiple projectiles in a spread pattern',
-            'laser': 'High-damage piercing beam',
-            'plasma': 'Explosive projectiles with area damage',
-            'shotgun': 'Close-range high damage spread',
-            'lightning': 'Chain lightning that jumps between enemies',
-            'flamethrower': 'Continuous flame stream with burning damage',
-            'railgun': 'Ultra high damage piercing shot',
-            'missiles': 'Homing missiles with explosive damage',
-            'homing_laser': 'Homing piercing laser beams with limited duration',
-            'shockburst': 'Explosive chain lightning that jumps between enemies',
-            'gatling_gun': 'Multi-barrel rapid-fire system - each level adds another barrel targeting different enemies'
-        };
-        return descriptions[type] || 'Unknown weapon type';
+        const descKey = type + 'Desc';
+        return this.t(descKey, 'weapons') || 'Unknown weapon type';
     }
     
     createLevelUpModal(choices) {
@@ -5994,7 +6003,7 @@ class VibeSurvivor {
         const modalHTML = `
             <div id="levelup-modal" class="levelup-modal levelup-modal-responsive">
                 <div class="levelup-content">
-                    <div class="levelup-title">LEVEL UP!</div>
+                    <div class="levelup-title">${this.t('levelUp')}</div>
                     <div class="upgrade-choices-container">
                         <div class="upgrade-choices">
                             ${choices.map((choice, index) => `
@@ -10718,7 +10727,11 @@ class VibeSurvivor {
                     helpHint: "Press ESC to close",
                     dash: "DASH",
                     dashButtonRight: "DASH BUTTON: RIGHT",
-                    dashButtonLeft: "DASH BUTTON: LEFT"
+                    dashButtonLeft: "DASH BUTTON: LEFT",
+
+                    // Upgrade descriptions
+                    damageFireRate: "damage, faster fire rate",
+                    addProjectile: "+1 projectile"
                 },
                 weapons: {
                     // Base weapons
@@ -10728,11 +10741,25 @@ class VibeSurvivor {
                     laserBeam: "Laser Beam",
                     plasmaBolt: "Plasma Bolt",
                     homingMissiles: "Homing Missiles",
+                    shotgun: "Shotgun",
+                    lightning: "Lightning",
+                    flamethrower: "Flamethrower",
+                    railgun: "Railgun",
 
                     // Merged weapons
                     homingLaser: "Homing Laser",
                     shockburst: "Shockburst",
-                    gatlingGun: "Gatling Gun"
+                    gatlingGun: "Gatling Gun",
+
+                    // Weapon descriptions
+                    spreadDesc: "Fires multiple projectiles in a spread pattern",
+                    laserDesc: "High-damage piercing beam",
+                    plasmaDesc: "Explosive projectiles with area damage",
+                    shotgunDesc: "Close-range high damage spread",
+                    lightningDesc: "Chain lightning that jumps between enemies",
+                    flamethrowerDesc: "Continuous flame stream with burning damage",
+                    railgunDesc: "Ultra high damage piercing shot",
+                    missilesDesc: "Homing missiles with explosive damage"
                 },
                 passives: {
                     healthBoost: "Health Boost",
@@ -10759,7 +10786,13 @@ class VibeSurvivor {
                     shockburstRecipe: "Lightning lvl 3 + Plasma lvl 3",
                     shockburstDesc: "Explosive energy bursts",
                     gatlingGunRecipe: "Rapid Fire lvl 5 + Spread Shot lvl 3",
-                    gatlingGunDesc: "Multi-barrel rapid fire"
+                    gatlingGunDesc: "Multi-barrel rapid fire",
+
+                    // Additional help content
+                    weaponTips: "💡 WEAPON TIPS",
+                    weaponLimitTip: "You can equip a maximum of 4 weapons, so choose wisely based on your playstyle.",
+                    weaponEvolution: "🔄 WEAPON EVOLUTION",
+                    rapidFireEvolution: "Basic Missile evolves into Rapid Fire at level 5 - this creates a powerful automatic weapon with increased fire rate."
                 }
             },
             ko: {
@@ -10811,7 +10844,11 @@ class VibeSurvivor {
                     helpHint: "ESC를 눌러 닫기",
                     dash: "대시",
                     dashButtonRight: "대시 버튼: 오른쪽",
-                    dashButtonLeft: "대시 버튼: 왼쪽"
+                    dashButtonLeft: "대시 버튼: 왼쪽",
+
+                    // Upgrade descriptions
+                    damageFireRate: "데미지, 더 빠른 발사 속도",
+                    addProjectile: "+1 발사체"
                 },
                 weapons: {
                     // Base weapons
@@ -10821,11 +10858,25 @@ class VibeSurvivor {
                     laserBeam: "레이저 빔",
                     plasmaBolt: "플라즈마 볼트",
                     homingMissiles: "유도 미사일",
+                    shotgun: "샷건",
+                    lightning: "번개",
+                    flamethrower: "화염방사기",
+                    railgun: "레일건",
 
                     // Merged weapons
                     homingLaser: "유도 레이저",
                     shockburst: "충격파",
-                    gatlingGun: "개틀링 건"
+                    gatlingGun: "개틀링 건",
+
+                    // Weapon descriptions
+                    spreadDesc: "산탄 형태로 다중 발사체를 발사",
+                    laserDesc: "고데미지 관통 빔",
+                    plasmaDesc: "광역 피해를 주는 폭발 발사체",
+                    shotgunDesc: "근거리 고데미지 산탄",
+                    lightningDesc: "적들 사이를 점프하는 연쇄 번개",
+                    flamethrowerDesc: "지속적인 화염 공격과 화상 데미지",
+                    railgunDesc: "초고데미지 관통 사격",
+                    missilesDesc: "폭발 피해를 주는 유도 미사일"
                 },
                 passives: {
                     healthBoost: "체력 강화",
@@ -10852,7 +10903,13 @@ class VibeSurvivor {
                     shockburstRecipe: "번개 레벨 3 + 플라즈마 레벨 3",
                     shockburstDesc: "폭발적 에너지 파동",
                     gatlingGunRecipe: "속사 레벨 5 + 산탄 사격 레벨 3",
-                    gatlingGunDesc: "다총신 속사"
+                    gatlingGunDesc: "다총신 속사",
+
+                    // Additional help content
+                    weaponTips: "💡 무기 팁",
+                    weaponLimitTip: "최대 4개의 무기만 장착할 수 있으므로 플레이 스타일에 따라 신중하게 선택하세요.",
+                    weaponEvolution: "🔄 무기 진화",
+                    rapidFireEvolution: "기본 미사일이 레벨 5에서 속사로 진화합니다 - 발사 속도가 크게 향상된 강력한 자동 무기가 됩니다."
                 }
             }
         };
@@ -10961,6 +11018,47 @@ class VibeSurvivor {
 
         const helpHint = document.querySelector('#help-menu .help-hint');
         if (helpHint) helpHint.textContent = this.t('helpHint');
+
+        // Help menu recipe details
+        const homingLaserTitle = document.getElementById('homing-laser-title');
+        if (homingLaserTitle) homingLaserTitle.textContent = `⚡ ${this.t('homingLaser', 'weapons')}`;
+
+        const homingLaserRecipe = document.getElementById('homing-laser-recipe');
+        if (homingLaserRecipe) homingLaserRecipe.textContent = this.t('homingLaserRecipe', 'help');
+
+        const homingLaserDesc = document.getElementById('homing-laser-desc');
+        if (homingLaserDesc) homingLaserDesc.textContent = this.t('homingLaserDesc', 'help');
+
+        const shockburstTitle = document.getElementById('shockburst-title');
+        if (shockburstTitle) shockburstTitle.textContent = `💥 ${this.t('shockburst', 'weapons')}`;
+
+        const shockburstRecipe = document.getElementById('shockburst-recipe');
+        if (shockburstRecipe) shockburstRecipe.textContent = this.t('shockburstRecipe', 'help');
+
+        const shockburstDesc = document.getElementById('shockburst-desc');
+        if (shockburstDesc) shockburstDesc.textContent = this.t('shockburstDesc', 'help');
+
+        const gatlingGunTitle = document.getElementById('gatling-gun-title');
+        if (gatlingGunTitle) gatlingGunTitle.textContent = `🔫 ${this.t('gatlingGun', 'weapons')}`;
+
+        const gatlingGunRecipe = document.getElementById('gatling-gun-recipe');
+        if (gatlingGunRecipe) gatlingGunRecipe.textContent = this.t('gatlingGunRecipe', 'help');
+
+        const gatlingGunDesc = document.getElementById('gatling-gun-desc');
+        if (gatlingGunDesc) gatlingGunDesc.textContent = this.t('gatlingGunDesc', 'help');
+
+        // Help menu additional sections
+        const weaponTipsTitle = document.getElementById('weapon-tips-title');
+        if (weaponTipsTitle) weaponTipsTitle.textContent = this.t('weaponTips', 'help');
+
+        const weaponLimitTip = document.getElementById('weapon-limit-tip');
+        if (weaponLimitTip) weaponLimitTip.textContent = this.t('weaponLimitTip', 'help');
+
+        const weaponEvolutionTitle = document.getElementById('weapon-evolution-title');
+        if (weaponEvolutionTitle) weaponEvolutionTitle.textContent = this.t('weaponEvolution', 'help');
+
+        const rapidFireEvolution = document.getElementById('rapid-fire-evolution');
+        if (rapidFireEvolution) rapidFireEvolution.textContent = this.t('rapidFireEvolution', 'help');
 
         // Game over screen
         const gameOverTitle = document.querySelector('#survivor-game-over-screen h2');
