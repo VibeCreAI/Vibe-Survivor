@@ -10918,7 +10918,7 @@ class VibeSurvivor {
                     homingLaserDesc: "열추적 레이저 빔",
                     shockburstRecipe: "번개 레벨 3 + 플라즈마 레벨 3",
                     shockburstDesc: "폭발적 에너지 파동",
-                    gatlingGunRecipe: "속사 레벨 5 + 산탄 사격 레벨 3",
+                    gatlingGunRecipe: "속사 레벨 5 + 산탄 총 레벨 3",
                     gatlingGunDesc: "다총신 속사",
 
                     // Additional help content
