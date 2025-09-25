@@ -401,6 +401,30 @@ class VibeSurvivor {
                                 </div>
                             </div>
 
+                            <!-- Exit Confirmation Modal -->
+                            <div id="exit-confirmation-modal" class="exit-confirmation-modal" style="display: none;">
+                                <div class="exit-confirmation-content">
+                                    <h2>QUIT GAME?</h2>
+                                    <p>Are you sure you want to quit?<br>All progress will be lost!</p>
+                                    <div class="exit-confirmation-buttons">
+                                        <button id="exit-confirm-yes" class="survivor-btn danger">YES, QUIT</button>
+                                        <button id="exit-confirm-no" class="survivor-btn primary">NO, CONTINUE</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Restart Confirmation Modal -->
+                            <div id="restart-confirmation-modal" class="restart-confirmation-modal" style="display: none;">
+                                <div class="restart-confirmation-content">
+                                    <h2>RESTART GAME?</h2>
+                                    <p>Are you sure you want to restart?<br>All current progress will be lost!</p>
+                                    <div class="restart-confirmation-buttons">
+                                        <button id="restart-confirm-yes" class="survivor-btn danger">YES, RESTART</button>
+                                        <button id="restart-confirm-no" class="survivor-btn primary">NO, CONTINUE</button>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Help Menu -->
                             <div id="help-menu" class="help-menu" style="display: none;">
                                 <div class="help-content">
@@ -991,8 +1015,10 @@ class VibeSurvivor {
 
             .controls-info {
                 color: rgba(255, 255, 255, 0.8) !important;
-                margin-top: 20px !important;
-                padding: 15px;
+                margin-top: 10px !important;
+                margin-left: 20px;
+                margin-right: 20px;
+                padding: 10px;
                 font-size: 16px !important;
                 font-family: 'NeoDunggeunmoPro', 'Courier New', monospace !important;
             }
@@ -1114,6 +1140,7 @@ class VibeSurvivor {
                 padding: 30px;
                 text-align: center;
                 width: 85%;
+                max-width: 400px;
                 max-height: 80vh;
                 overflow-y: auto;
                 -webkit-overflow-scrolling: touch;
@@ -1123,6 +1150,7 @@ class VibeSurvivor {
             .help-content h2 {
                 color: #00ffff;
                 margin-bottom: 20px;
+                margin-top: 30px;
                 font-size: 24px;
                 text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
             }
@@ -1209,6 +1237,130 @@ class VibeSurvivor {
                 color: #888;
                 font-size: 0.9rem;
                 margin: 0;
+            }
+
+            /* Exit Confirmation Modal */
+            .exit-confirmation-modal {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.9);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 30000;
+            }
+
+            .exit-confirmation-content {
+                background: linear-gradient(135deg, #1a0a0a, #2a0a1a);
+                border: 3px solid #ff4444;
+                border-radius: 15px;
+                padding: 40px;
+                text-align: center;
+                box-shadow: 0 0 40px rgba(255, 68, 68, 0.6);
+                max-width: 400px;
+            }
+
+            .exit-confirmation-content h2 {
+                color: #ff6666;
+                margin: 0 0 20px 0;
+                font-size: 1.8rem;
+                text-shadow: 0 0 10px rgba(255, 68, 68, 0.8);
+                font-family: 'NeoDunggeunmoPro', 'Arial Black', sans-serif;
+            }
+
+            .exit-confirmation-content p {
+                color: #cccccc;
+                margin: 0 0 30px 0;
+                font-size: 1rem;
+                line-height: 1.4;
+                font-family: 'NeoDunggeunmoPro', Arial, sans-serif;
+            }
+
+            .exit-confirmation-buttons {
+                display: flex;
+                gap: 15px;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+
+            .exit-confirmation-buttons .survivor-btn {
+                min-width: 120px;
+            }
+
+            .exit-confirmation-buttons .survivor-btn.danger {
+                background: linear-gradient(135deg, #ff4444, #cc2222);
+                border-color: #ff6666;
+                box-shadow: 0 0 15px rgba(255, 68, 68, 0.3);
+            }
+
+            .exit-confirmation-buttons .survivor-btn.danger:hover {
+                background: linear-gradient(135deg, #ff6666, #dd3333);
+                box-shadow: 0 0 25px rgba(255, 68, 68, 0.5);
+            }
+
+            /* Restart Confirmation Modal */
+            .restart-confirmation-modal {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.9);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 30000;
+            }
+
+            .restart-confirmation-content {
+                background: linear-gradient(135deg, #1a1a0a, #2a1a0a);
+                border: 3px solid #ff8844;
+                border-radius: 15px;
+                padding: 40px;
+                text-align: center;
+                box-shadow: 0 0 40px rgba(255, 136, 68, 0.6);
+                max-width: 400px;
+            }
+
+            .restart-confirmation-content h2 {
+                color: #ff9966;
+                margin: 0 0 20px 0;
+                font-size: 1.8rem;
+                text-shadow: 0 0 10px rgba(255, 136, 68, 0.8);
+                font-family: 'NeoDunggeunmoPro', 'Arial Black', sans-serif;
+            }
+
+            .restart-confirmation-content p {
+                color: #cccccc;
+                margin: 0 0 30px 0;
+                font-size: 1rem;
+                line-height: 1.4;
+                font-family: 'NeoDunggeunmoPro', Arial, sans-serif;
+            }
+
+            .restart-confirmation-buttons {
+                display: flex;
+                gap: 15px;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+
+            .restart-confirmation-buttons .survivor-btn {
+                min-width: 120px;
+            }
+
+            .restart-confirmation-buttons .survivor-btn.danger {
+                background: linear-gradient(135deg, #ff8844, #cc5522);
+                border-color: #ff9966;
+                box-shadow: 0 0 15px rgba(255, 136, 68, 0.3);
+            }
+
+            .restart-confirmation-buttons .survivor-btn.danger:hover {
+                background: linear-gradient(135deg, #ff9966, #dd6633);
+                box-shadow: 0 0 25px rgba(255, 136, 68, 0.5);
             }
 
             .survivor-game-over {
@@ -1635,10 +1787,26 @@ class VibeSurvivor {
         }
 
         document.getElementById('exit-to-menu-btn').addEventListener('click', () => {
+            this.showExitConfirmation();
+        });
+
+        // Exit confirmation handlers
+        document.getElementById('exit-confirm-yes').addEventListener('click', () => {
+            this.hideExitConfirmation();
             this.closeGame();
         });
 
+        document.getElementById('exit-confirm-no').addEventListener('click', () => {
+            this.hideExitConfirmation();
+        });
+
         document.getElementById('pause-restart-btn').addEventListener('click', () => {
+            this.showRestartConfirmation();
+        });
+
+        // Restart confirmation handlers
+        document.getElementById('restart-confirm-yes').addEventListener('click', () => {
+            this.hideRestartConfirmation();
             // Close pause menu first, then restart
             this.isPaused = false;
             const pauseMenu = document.getElementById('pause-menu');
@@ -1646,6 +1814,10 @@ class VibeSurvivor {
             this.disablePauseScrolling();
             this.resetMenuNavigation();
             this.restartGame();
+        });
+
+        document.getElementById('restart-confirm-no').addEventListener('click', () => {
+            this.hideRestartConfirmation();
         });
         
         // Help menu event listeners (both click and touch for mobile support)
@@ -2675,6 +2847,34 @@ class VibeSurvivor {
             // Unmute the audio
             this.backgroundMusic.volume = 0.3;
             if (muteBtn) muteBtn.textContent = 'MUTE';
+        }
+    }
+
+    showExitConfirmation() {
+        const exitModal = document.getElementById('exit-confirmation-modal');
+        if (exitModal) {
+            exitModal.style.display = 'flex';
+        }
+    }
+
+    hideExitConfirmation() {
+        const exitModal = document.getElementById('exit-confirmation-modal');
+        if (exitModal) {
+            exitModal.style.display = 'none';
+        }
+    }
+
+    showRestartConfirmation() {
+        const restartModal = document.getElementById('restart-confirmation-modal');
+        if (restartModal) {
+            restartModal.style.display = 'flex';
+        }
+    }
+
+    hideRestartConfirmation() {
+        const restartModal = document.getElementById('restart-confirmation-modal');
+        if (restartModal) {
+            restartModal.style.display = 'none';
         }
     }
 
