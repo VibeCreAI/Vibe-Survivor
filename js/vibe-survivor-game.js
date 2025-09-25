@@ -10870,7 +10870,7 @@ class VibeSurvivor {
                     // Base weapons
                     basicMissile: "기본 미사일",
                     rapidFire: "속사",
-                    spreadShot: "산탄 총총",
+                    spreadShot: "산탄 총",
                     laserBeam: "레이저 빔",
                     plasmaBolt: "플라즈마 볼트",
                     homingMissiles: "유도 미사일",
