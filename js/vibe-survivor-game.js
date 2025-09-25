@@ -395,7 +395,7 @@ class VibeSurvivor {
                                         <button id="pause-restart-btn" class="survivor-btn">RESTART</button>
                                         <button id="mute-btn" class="survivor-btn">MUTE</button>
                                         <button id="dash-position-btn" class="survivor-btn">DASH BUTTON: RIGHT</button>
-                                        <button id="exit-to-menu-btn" class="survivor-btn">EXIT</button>
+                                        <button id="exit-to-menu-btn" class="survivor-btn">QUIT GAME</button>
                                     </div>
                                     <p class="pause-hint">Press ESC to resume</p>
                                 </div>
@@ -846,7 +846,7 @@ class VibeSurvivor {
             .vibe-survivor-header h2 {
                 color: #00ffff;
                 margin: 0;
-                font-family: 'Minecraft', Arial, sans-serif;
+                font-family: 'NeoDunggeunmoPro', Arial, sans-serif;
                 font-weight: bold;
                 text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
             }
@@ -978,7 +978,7 @@ class VibeSurvivor {
                 color: #00ffff;
                 font-size: 32px;
                 margin-bottom: 20px;
-                font-family: 'Minecraft', 'Arial Black', sans-serif;
+                font-family: 'NeoDunggeunmoPro', 'Arial Black', sans-serif;
                 animation: neonPulse 2s ease-in-out infinite;
             }
 
@@ -986,7 +986,7 @@ class VibeSurvivor {
                 color: rgba(255, 255, 255, 0.8);
                 margin-bottom: 10px;
                 font-size: 16px;
-                font-family: 'Minecraft', 'Courier New', monospace;
+                font-family: 'NeoDunggeunmoPro', 'Courier New', monospace;
             }
 
             .controls-info {
@@ -994,7 +994,7 @@ class VibeSurvivor {
                 margin-top: 20px !important;
                 padding: 15px;
                 font-size: 16px !important;
-                font-family: 'Minecraft', 'Courier New', monospace !important;
+                font-family: 'NeoDunggeunmoPro', 'Courier New', monospace !important;
             }
 
             /* Hide mobile controls text on desktop */
@@ -1019,7 +1019,7 @@ class VibeSurvivor {
                 transition: all 0.3s ease;
                 text-transform: uppercase;
                 letter-spacing: 2px;
-                font-family: 'Minecraft', Arial, sans-serif;
+                font-family: 'NeoDunggeunmoPro', Arial, sans-serif;
                 border-radius: 30px;
                 position: relative;
                 overflow: hidden;
@@ -1113,12 +1113,10 @@ class VibeSurvivor {
                 border-radius: 15px;
                 padding: 30px;
                 text-align: center;
-                max-width: 340px;
                 width: 85%;
                 max-height: 80vh;
                 overflow-y: auto;
                 -webkit-overflow-scrolling: touch;
-                transform: scale(0.85);
                 touch-action: pan-y;
             }
 
@@ -1233,13 +1231,13 @@ class VibeSurvivor {
                 margin-bottom: 25px;
                 text-shadow: 0 0 20px rgba(255, 0, 102, 0.8),
                             0 0 40px rgba(255, 0, 102, 0.5);
-                font-family: 'MinecraftFont', 'Arial Black', sans-serif;
+                font-family: 'NeoDunggeunmoPro', 'Arial Black', sans-serif;
                 animation: neonPulse 2s ease-in-out infinite;
             }
 
             .final-stats {
                 margin: 20px 0 30px;
-                font-family: 'MinecraftFont', 'Courier New', monospace;
+                font-family: 'NeoDunggeunmoPro', 'Courier New', monospace;
             }
 
             .stat-row {
@@ -1544,7 +1542,7 @@ class VibeSurvivor {
 
                 .survivor-title h1 {
                     font-size: 36px;
-                    font-family: 'Minecraft', 'Arial Black', sans-serif;
+                    font-family: 'NeoDunggeunmoPro', 'Arial Black', sans-serif;
                 }
                 
                 /* Duplicate rule removed - weapon display handled in main mobile section */
@@ -5804,7 +5802,7 @@ class VibeSurvivor {
                 border: none !important;
                 padding: 15px !important;
                 color: #ffffff !important;
-                font-family: 'MinecraftFont', Arial, sans-serif !important;
+                font-family: 'NeoDunggeunmoPro', Arial, sans-serif !important;
                 text-align: center !important;
                 display: block !important;
                 pointer-events: auto !important;
@@ -7919,7 +7917,7 @@ class VibeSurvivor {
         this.ctx.fillRect(10, 10, 200, 120);
         
         this.ctx.fillStyle = '#00ff00';
-        this.ctx.font = '12px monospace';
+        this.ctx.font = '12px NeoDunggeunmoPro, monospace';
         
         const fps = Math.round(this.frameRateMonitor.currentFPS);
         const avgFps = Math.round(this.frameRateMonitor.averageFPS);
@@ -8950,7 +8948,7 @@ class VibeSurvivor {
             this.ctx.fillRect(orb.x - 20, orb.y - 20, 40, 40);
             
             // Heart emoji
-            this.ctx.font = '24px Arial';
+            this.ctx.font = '24px NeoDunggeunmoPro, Arial';
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
             this.ctx.fillStyle = '#FF0000';
@@ -8979,7 +8977,7 @@ class VibeSurvivor {
             this.ctx.fillRect(orb.x - 25, orb.y - 25, 50, 50);
             
             // Magnet emoji (render without fillStyle to avoid conflicts)
-            this.ctx.font = '24px Arial';
+            this.ctx.font = '24px NeoDunggeunmoPro, Arial';
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
             this.ctx.fillText('🧲', orb.x, orb.y);
@@ -9543,7 +9541,7 @@ class VibeSurvivor {
                 max-width: 550px !important;
                 max-height: 80vh !important;
                 box-shadow: 0 0 30px rgba(0, 255, 255, 0.5) !important;
-                font-family: 'MinecraftFont', Arial, sans-serif !important;
+                font-family: 'NeoDunggeunmoPro', Arial, sans-serif !important;
                 display: flex !important;
                 flex-direction: column !important;
             ">
@@ -9790,7 +9788,7 @@ class VibeSurvivor {
                 color: white !important;
                 max-width: 400px !important;
                 box-shadow: 0 0 30px rgba(0, 255, 0, 0.5) !important;
-                font-family: 'MinecraftFont', Arial, sans-serif !important;
+                font-family: 'NeoDunggeunmoPro', Arial, sans-serif !important;
             ">
                 <div style="
                     color: #00ff00 !important;

@@ -1,12 +1,6 @@
 @font-face {
-    font-family: 'Born2bSporty';
-    src: url('../fonts/Born2bSportyFS.otf') format('opentype');
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'Minecraft';
-    src: url('../fonts/MinecraftRegular.otf') format('opentype');
+    font-family: 'NeoDunggeunmoPro';
+    src: url('../fonts/NeoDunggeunmoPro-Regular.ttf') format('truetype');
     font-display: swap;
 }
 
@@ -35,7 +29,7 @@ body {
 body {
     display: flex;
     flex-direction: column;
-    font-family: 'Minecraft', 'Born2bSporty', sans-serif;
+    font-family: 'NeoDunggeunmoPro', sans-serif;
     position: relative;
     overflow-x: hidden;
 }
@@ -66,7 +60,7 @@ body::after {
     align-items: center;
     justify-content: center;
     padding: 1rem 1.5rem;
-    font-family: 'Minecraft', 'Born2bSporty', sans-serif;
+    font-family: 'NeoDunggeunmoPro', sans-serif;
     letter-spacing: 0.08em;
     font-size: 0.95rem;
     color: var(--color-text-muted);
@@ -143,7 +137,7 @@ body::after {
     background: rgba(70, 255, 226, 0.12);
     border: 1px solid rgba(70, 255, 226, 0.35);
     color: var(--color-accent);
-    font-family: 'Minecraft', 'Born2bSporty', sans-serif;
+    font-family: 'NeoDunggeunmoPro', sans-serif;
     font-size: 0.75rem;
     letter-spacing: 0.14em;
     text-transform: uppercase;
@@ -151,7 +145,7 @@ body::after {
 }
 
 .landing__title {
-    font-family: 'Born2bSporty', 'Minecraft', sans-serif;
+    font-family: 'NeoDunggeunmoPro', sans-serif;
     font-size: clamp(2.8rem, 6vw, 4rem);
     letter-spacing: 0.08em;
     margin: 0 0 1rem;
@@ -178,7 +172,7 @@ body::after {
     cursor: pointer;
     text-transform: uppercase;
     letter-spacing: 0.2em;
-    font-family: 'Minecraft', 'Born2bSporty', sans-serif;
+    font-family: 'NeoDunggeunmoPro', sans-serif;
     font-size: 1rem;
     box-shadow: 0 25px 40px rgba(124, 91, 255, 0.45);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -222,7 +216,7 @@ body::after {
     font-size: 0.9rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    font-family: 'Minecraft', 'Born2bSporty', sans-serif;
+    font-family: 'NeoDunggeunmoPro', sans-serif;
 }
 
 .footer-bar {
