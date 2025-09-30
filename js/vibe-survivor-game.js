@@ -1476,7 +1476,7 @@ class VibeSurvivor {
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                z-index: 25000;
+                z-index: 30000;
             }
 
             .options-content {
@@ -11267,6 +11267,11 @@ class VibeSurvivor {
         if (optionsMenu) {
             optionsMenu.style.display = 'flex';
             this.updateOptionsMenuState();
+
+            // Hide start screen bot when options menu is open
+            if (window.startScreenBot) {
+                window.startScreenBot.hide();
+            }
         }
     }
 
@@ -11274,6 +11279,11 @@ class VibeSurvivor {
         const optionsMenu = document.getElementById('options-menu');
         if (optionsMenu) {
             optionsMenu.style.display = 'none';
+
+            // Show start screen bot again if we're on the start screen
+            if (!this.gameRunning && window.startScreenBot) {
+                window.startScreenBot.show();
+            }
         }
     }
 
