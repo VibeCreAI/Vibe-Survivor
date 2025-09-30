@@ -9933,6 +9933,7 @@ class VibeSurvivor {
             `;
         }).join('');
 
+        const t = this.translations[this.currentLanguage].ui;
         return `
             <div style="
                 margin: 15px 0;
@@ -9947,21 +9948,22 @@ class VibeSurvivor {
                     font-weight: bold;
                     margin-bottom: 8px;
                     text-align: center;
-                ">⚡ WEAPONS</div>
+                ">⚡ ${t.weaponsResult}</div>
                 ${weaponsHtml}
             </div>
         `;
     }
 
     generatePassivesSection() {
+        const p = this.translations[this.currentLanguage].passives;
         const passiveNames = {
-            'health_boost': 'Health Boost (+25 Max HP)',
-            'speed_boost': 'Speed Boost (+10% Speed)',
-            'regeneration': 'Regeneration (Auto-heal)',
-            'magnet': 'Magnet (XP Attraction)',
-            'armor': 'Armor (Damage Reduction)',
-            'critical': 'Critical (Critical Hits)',
-            'dash_boost': 'Dash Boost (+50% Distance)'
+            'health_boost': p.healthBoost + ' (+25 Max HP)',
+            'speed_boost': p.speedBoost + ' (+10% Speed)',
+            'regeneration': p.regeneration + ' (Auto-heal)',
+            'magnet': p.magnet + ' (XP Attraction)',
+            'armor': p.armor + ' (Damage Reduction)',
+            'critical': p.criticalStrike + ' (Critical Hits)',
+            'dash_boost': p.dashBoost + ' (+50% Distance)'
         };
 
         const activePassives = Object.keys(this.player.passives).filter(key =>
@@ -9994,6 +9996,7 @@ class VibeSurvivor {
             `;
         }).join('');
 
+        const t = this.translations[this.currentLanguage].ui;
         return `
             <div style="
                 margin: 15px 0;
@@ -10008,7 +10011,7 @@ class VibeSurvivor {
                     font-weight: bold;
                     margin-bottom: 8px;
                     text-align: center;
-                ">🛡️ ABILITIES</div>
+                ">🛡️ ${t.passiveResult}</div>
                 ${passivesHtml}
             </div>
         `;
@@ -10018,6 +10021,11 @@ class VibeSurvivor {
         const maxHealthBonus = this.player.maxHealth - 100; // Starting health is 100
         const speedMultiplier = this.player.speed / 2.3; // Calculate multiplier based on current speed vs base speed
         const totalUpgrades = this.player.level - 1; // Level 1 = 0 upgrades
+
+        const t = this.translations[this.currentLanguage].ui;
+        const maxHealthLabel = this.currentLanguage === 'ko' ? '최대 체력:' : 'Max Health:';
+        const speedLabel = this.currentLanguage === 'ko' ? '속도 배율:' : 'Speed Multiplier:';
+        const upgradesLabel = this.currentLanguage === 'ko' ? '총 업그레이드:' : 'Total Upgrades:';
 
         return `
             <div style="
@@ -10033,7 +10041,7 @@ class VibeSurvivor {
                     font-weight: bold;
                     margin-bottom: 8px;
                     text-align: center;
-                ">📊 FINAL STATS</div>
+                ">📊 ${t.finalResult}</div>
                 <div style="
                     display: flex;
                     justify-content: space-between;
@@ -10041,7 +10049,7 @@ class VibeSurvivor {
                     font-size: 14px;
                     color: #ffff00;
                 ">
-                    <span>Max Health:</span>
+                    <span>${maxHealthLabel}</span>
                     <span>${this.player.maxHealth}${maxHealthBonus > 0 ? ` (+${maxHealthBonus})` : ''}</span>
                 </div>
                 <div style="
@@ -10051,7 +10059,7 @@ class VibeSurvivor {
                     font-size: 14px;
                     color: #ffff00;
                 ">
-                    <span>Speed Multiplier:</span>
+                    <span>${speedLabel}</span>
                     <span>${speedMultiplier.toFixed(1)}x</span>
                 </div>
                 <div style="
@@ -10061,7 +10069,7 @@ class VibeSurvivor {
                     font-size: 14px;
                     color: #ffff00;
                 ">
-                    <span>Total Upgrades:</span>
+                    <span>${upgradesLabel}</span>
                     <span>${totalUpgrades}</span>
                 </div>
             </div>
@@ -10104,6 +10112,9 @@ class VibeSurvivor {
         const passivesSection = this.generatePassivesSection();
         const playerStatsSection = this.generatePlayerStatsSection();
 
+        // Get translations
+        const t = this.translations[this.currentLanguage].ui;
+
         // Create game over content with neon theme and enhanced layout
         gameOverOverlay.innerHTML = `
             <div style="
@@ -10126,7 +10137,7 @@ class VibeSurvivor {
                     font-weight: bold !important;
                     margin-bottom: 20px !important;
                     text-shadow: 0 0 15px rgba(255, 0, 102, 0.8) !important;
-                ">GAME OVER</div>
+                ">${t.gameOver}</div>
 
                 <div style="
                     overflow-y: auto !important;
@@ -10144,7 +10155,7 @@ class VibeSurvivor {
                             font-size: 18px;
                             color: #00ffff;
                         ">
-                            <span>Level:</span>
+                            <span>${t.level}</span>
                             <span style="color: #ff00ff; font-weight: bold;">${finalStats.level}</span>
                         </div>
                         <div style="
@@ -10154,7 +10165,7 @@ class VibeSurvivor {
                             font-size: 18px;
                             color: #00ffff;
                         ">
-                            <span>Time:</span>
+                            <span>${t.time}</span>
                             <span style="color: #ff00ff; font-weight: bold;">${finalStats.timeText}</span>
                         </div>
                         <div style="
@@ -10164,7 +10175,7 @@ class VibeSurvivor {
                             font-size: 18px;
                             color: #00ffff;
                         ">
-                            <span>Enemies:</span>
+                            <span>${t.enemies}</span>
                             <span style="color: #ff00ff; font-weight: bold;">${finalStats.enemiesKilled}</span>
                         </div>
                         ${this.bossesKilled > 0 ? `
@@ -10175,7 +10186,7 @@ class VibeSurvivor {
                             font-size: 18px;
                             color: #00ffff;
                         ">
-                            <span>Bosses Defeated:</span>
+                            <span>${t.bossesDefeated}</span>
                             <span style="color: #ff00ff; font-weight: bold;">${this.bossesKilled}</span>
                         </div>
                         ` : ''}
@@ -10204,7 +10215,7 @@ class VibeSurvivor {
                         user-select: none !important;
                         -webkit-user-select: none !important;
                         -webkit-tap-highlight-color: transparent !important;
-                    ">RETRY</button>
+                    ">${t.retry}</button>
 
                     <button id="overlay-exit-btn" style="
                         background: transparent !important;
@@ -10222,7 +10233,7 @@ class VibeSurvivor {
                         user-select: none !important;
                         -webkit-user-select: none !important;
                         -webkit-tap-highlight-color: transparent !important;
-                    ">EXIT</button>
+                    ">${t.exit}</button>
                 </div>
             </div>
         `;
@@ -10858,7 +10869,17 @@ class VibeSurvivor {
 
                     // Upgrade descriptions
                     damageFireRate: "damage, faster fire rate",
-                    addProjectile: "+1 projectile"
+                    addProjectile: "+1 projectile",
+
+                    // Game over stats
+                    level: "Level:",
+                    time: "Time:",
+                    enemies: "Enemies:",
+                    bossesDefeated: "Bosses Defeated:",
+                    retry: "RETRY",
+                    weaponsResult: "Weapons Result",
+                    passiveResult: "Passive Result",
+                    finalResult: "Final Result"
                 },
                 weapons: {
                     // Base weapons
@@ -10975,7 +10996,17 @@ class VibeSurvivor {
 
                     // Upgrade descriptions
                     damageFireRate: "데미지, 더 빠른 발사 속도",
-                    addProjectile: "+1 발사체"
+                    addProjectile: "+1 발사체",
+
+                    // Game over stats
+                    level: "레벨:",
+                    time: "시간:",
+                    enemies: "처치한 적:",
+                    bossesDefeated: "처치한 보스:",
+                    retry: "다시하기",
+                    weaponsResult: "무기 결과",
+                    passiveResult: "패시브 결과",
+                    finalResult: "최종 결과"
                 },
                 weapons: {
                     // Base weapons
