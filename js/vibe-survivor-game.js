@@ -3153,12 +3153,15 @@ class VibeSurvivor {
         if (this.audioMuted) {
             // Mute the audio
             this.backgroundMusic.volume = 0;
-            if (muteBtn) muteBtn.textContent = 'UNMUTE';
+            if (muteBtn) muteBtn.textContent = this.t('unmute');
         } else {
             // Unmute the audio
             this.backgroundMusic.volume = 0.3;
-            if (muteBtn) muteBtn.textContent = 'MUTE';
+            if (muteBtn) muteBtn.textContent = this.t('mute');
         }
+
+        // Keep options menu button in sync with current locale
+        this.updateOptionsAudioButton();
     }
 
     showExitConfirmation() {
