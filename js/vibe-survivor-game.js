@@ -85,7 +85,11 @@ class VibeSurvivor {
             trail: [],
             passives: {},
             trailMultiplier: 1.0,
-            magnetBoost: 0 // Magnet boost active flag (0 = off, >0 = active)
+            magnetBoost: 0, // Magnet boost active flag (0 = off, >0 = active)
+            // Sprite animation properties
+            spriteFrame: 0,
+            spriteTimer: 0,
+            spriteDirection: 'idle'
         };
         
         // Game properties
@@ -124,6 +128,50 @@ class VibeSurvivor {
         this.backgroundMusic.loop = true;
         this.backgroundMusic.volume = 0.3; // Adjust volume as needed
         this.audioMuted = false; // Track mute state
+
+        // Player sprite animations
+        this.playerSprites = {
+            idle: new Image(),
+            up: new Image(),
+            down: new Image(),
+            left: new Image(),
+            right: new Image(),
+            loaded: 0,
+            total: 5
+        };
+
+        // Load sprite images
+        this.playerSprites.idle.src = 'images/AI BOT-IDLE.png';
+        this.playerSprites.up.src = 'images/AI BOT-UP.png';
+        this.playerSprites.down.src = 'images/AI BOT-DOWN.png';
+        this.playerSprites.left.src = 'images/AI BOT-LEFT.png';
+        this.playerSprites.right.src = 'images/AI BOT-RIGHT.png';
+
+        // Track sprite loading
+        const onSpriteLoad = () => {
+            this.playerSprites.loaded++;
+            // Calculate frame dimensions from first loaded sprite
+            if (this.spriteConfig.frameWidth === 0 && this.playerSprites.idle.complete) {
+                this.spriteConfig.frameWidth = this.playerSprites.idle.width / this.spriteConfig.cols;
+                this.spriteConfig.frameHeight = this.playerSprites.idle.height / this.spriteConfig.rows;
+                console.log('Sprite dimensions calculated:', this.spriteConfig.frameWidth, 'x', this.spriteConfig.frameHeight);
+            }
+        };
+        this.playerSprites.idle.onload = onSpriteLoad;
+        this.playerSprites.up.onload = onSpriteLoad;
+        this.playerSprites.down.onload = onSpriteLoad;
+        this.playerSprites.left.onload = onSpriteLoad;
+        this.playerSprites.right.onload = onSpriteLoad;
+
+        // Sprite sheet configuration (3 columns x 4 rows = 12 frames)
+        this.spriteConfig = {
+            frameWidth: 0,  // Will be calculated when image loads
+            frameHeight: 0, // Will be calculated when image loads
+            cols: 3,
+            rows: 4,
+            totalFrames: 12,
+            frameRate: 8    // 8 FPS for animation
+        };
 
         // Mobile touch controls
         this.isMobile = this.detectMobile();
@@ -2694,7 +2742,12 @@ class VibeSurvivor {
             dashCooldown: 0,
             trail: [],
             passives: {},
-            trailMultiplier: 1.0
+            trailMultiplier: 1.0,
+            magnetBoost: 0,
+            // Sprite animation properties
+            spriteFrame: 0,
+            spriteTimer: 0,
+            spriteDirection: 'idle'
         };
         
         // Reset weapons to single basic weapon
@@ -8691,7 +8744,90 @@ class VibeSurvivor {
             ctx.stroke();
         }
     }
-    
+
+    drawPlayerSprite() {
+        // Check if sprites are loaded
+        if (this.playerSprites.loaded < this.playerSprites.total) {
+            // Fallback to drawing a simple cyan circle if sprites not loaded
+            this.ctx.fillStyle = '#00ffff';
+            this.ctx.beginPath();
+            this.ctx.arc(0, 0, this.player.radius, 0, Math.PI * 2);
+            this.ctx.fill();
+            console.log('Sprites not loaded yet:', this.playerSprites.loaded, '/', this.playerSprites.total);
+            return;
+        }
+
+        // Debug: Log once that we're drawing sprites
+        if (!this._spriteDebugLogged) {
+            console.log('Drawing sprite:', this.player.spriteDirection, 'frame:', this.player.spriteFrame);
+            console.log('Sprite dimensions:', this.spriteConfig.frameWidth, 'x', this.spriteConfig.frameHeight);
+            console.log('Player object:', this.player);
+            this._spriteDebugLogged = true;
+        }
+
+        // Calculate frame dimensions if not yet calculated
+        if (this.spriteConfig.frameWidth === 0) {
+            this.spriteConfig.frameWidth = this.playerSprites.idle.width / this.spriteConfig.cols;
+            this.spriteConfig.frameHeight = this.playerSprites.idle.height / this.spriteConfig.rows;
+        }
+
+        // Update animation frame
+        this.player.spriteTimer++;
+        const framesPerSpriteFrame = Math.floor(60 / this.spriteConfig.frameRate); // 60 FPS / 8 FPS = ~7.5 frames
+        if (this.player.spriteTimer >= framesPerSpriteFrame) {
+            this.player.spriteTimer = 0;
+            this.player.spriteFrame = (this.player.spriteFrame + 1) % this.spriteConfig.totalFrames;
+        }
+
+        // Calculate sprite sheet position
+        const col = this.player.spriteFrame % this.spriteConfig.cols;
+        const row = Math.floor(this.player.spriteFrame / this.spriteConfig.cols);
+        const sx = col * this.spriteConfig.frameWidth;
+        const sy = row * this.spriteConfig.frameHeight;
+
+        // Select the appropriate sprite sheet based on direction
+        let spriteSheet = this.playerSprites[this.player.spriteDirection];
+
+        // Draw sprite with cyan color tint
+        const spriteSize = this.player.radius * 3; // Bot sprite at 1/4 scale (radius * 2 = 30px)
+
+        // Create temporary canvas for color tinting
+        if (!this.tempCanvas) {
+            this.tempCanvas = document.createElement('canvas');
+            this.tempCtx = this.tempCanvas.getContext('2d');
+            // Disable image smoothing for crisp pixel art
+            this.tempCtx.imageSmoothingEnabled = false;
+        }
+
+        // Disable smoothing on main context for pixel art
+        this.ctx.imageSmoothingEnabled = false;
+
+        this.tempCanvas.width = this.spriteConfig.frameWidth;
+        this.tempCanvas.height = this.spriteConfig.frameHeight;
+
+        // Apply cyan filter directly to context, then draw sprite (same as maze-bot-sprite.js)
+        this.ctx.save();
+
+        // Apply the exact filter from the working project
+        this.ctx.filter = 'brightness(0) saturate(100%) invert(89%) sepia(100%) saturate(3533%) hue-rotate(140deg) brightness(104%) contrast(105%)';
+
+        // Draw sprite directly with filter applied
+        this.ctx.drawImage(
+            spriteSheet,
+            sx, sy,
+            this.spriteConfig.frameWidth,
+            this.spriteConfig.frameHeight,
+            -spriteSize / 2,
+            -spriteSize / 2 - 10,
+            spriteSize,
+            spriteSize
+        );
+
+        // Reset filter
+        this.ctx.filter = 'none';
+        this.ctx.restore();
+    }
+
     drawPlayer() {
         this.ctx.save();
         
@@ -8744,8 +8880,30 @@ class VibeSurvivor {
         if (isMoving) {
             this.player.lastMovementAngle = movementAngle;
         }
-        
-        // Smooth angle transition
+
+        // Update sprite direction based on movement
+        if (!isMoving) {
+            this.player.spriteDirection = 'idle';
+        } else {
+            // Determine direction based on angle
+            // Angles: -90 = up, 90 = down, 0 = right, 180/-180 = left
+            // Prioritize horizontal directions for diagonals
+            if (movementAngle >= -112.5 && movementAngle < -67.5) {
+                // Pure up: -90° ± 22.5°
+                this.player.spriteDirection = 'up';
+            } else if (movementAngle >= -67.5 && movementAngle < 67.5) {
+                // Right quadrant: -67.5° to 67.5° (includes up-right and down-right)
+                this.player.spriteDirection = 'right';
+            } else if (movementAngle >= 67.5 && movementAngle < 112.5) {
+                // Pure down: 90° ± 22.5°
+                this.player.spriteDirection = 'down';
+            } else {
+                // Left quadrant: 112.5° to 180° and -180° to -112.5° (includes up-left and down-left)
+                this.player.spriteDirection = 'left';
+            }
+        }
+
+        // Smooth angle transition (kept for potential future use)
         if (this.player.angle === undefined) this.player.angle = 0;
         let angleDiff = movementAngle - this.player.angle;
         if (angleDiff > 180) angleDiff -= 360;
@@ -8772,24 +8930,7 @@ class VibeSurvivor {
         
         // Reset for player drawing
         this.ctx.globalAlpha = this.player.invulnerable > 0 ? 0.5 : 1;
-        
-        // Neon glow effect
-        const glowSize = 20 + this.fastSin(this.player.glow) * 5;
-        const gradient = this.ctx.createRadialGradient(
-            this.player.x, this.player.y, 0,
-            this.player.x, this.player.y, glowSize
-        );
-        gradient.addColorStop(0, 'rgba(0, 255, 255, 0.4)');
-        gradient.addColorStop(1, 'rgba(0, 255, 255, 0)');
-        
-        this.ctx.fillStyle = gradient;
-        this.ctx.fillRect(
-            this.player.x - glowSize,
-            this.player.y - glowSize,
-            glowSize * 2,
-            glowSize * 2
-        );
-        
+
         // Draw HP bar above player
         this.ctx.save();
         
@@ -8838,43 +8979,13 @@ class VibeSurvivor {
         
         this.ctx.restore();
 
-        // Draw arrow player
+        // Draw sprite player
         this.ctx.save();
         this.ctx.translate(this.player.x, this.player.y);
-        this.ctx.rotate(this.player.angle * Math.PI / 180);
-        
-        // Main glow effect
-        this.ctx.shadowBlur = 20;
-        this.ctx.shadowColor = '#00ffff';
-        
-        // Arrow body
-        this.ctx.strokeStyle = '#00ffff';
-        this.ctx.fillStyle = 'rgba(0, 255, 255, 0.2)';
-        this.ctx.lineWidth = 2;
-        
-        const size = this.player.radius;
-        this.ctx.beginPath();
-        this.ctx.moveTo(size, 0); // Arrow tip
-        this.ctx.lineTo(-size, -size);
-        this.ctx.lineTo(-size / 2, 0);
-        this.ctx.lineTo(-size, size);
-        this.ctx.closePath();
-        
-        this.ctx.fill();
-        this.ctx.stroke();
-        
-        // Inner glow
-        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-        this.ctx.lineWidth = 1;
-        this.ctx.shadowBlur = 5;
-        this.ctx.beginPath();
-        this.ctx.moveTo(size / 2, 0);
-        this.ctx.lineTo(-size / 2, -size / 2);
-        this.ctx.lineTo(-size / 4, 0);
-        this.ctx.lineTo(-size / 2, size / 2);
-        this.ctx.closePath();
-        this.ctx.stroke();
-        
+
+        // Draw the animated sprite
+        this.drawPlayerSprite();
+
         this.ctx.restore();
         this.ctx.restore();
     }
