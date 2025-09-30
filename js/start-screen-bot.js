@@ -35,7 +35,6 @@ class StartScreenBot {
         this.container.className = 'start-screen-bot-container';
         this.container.style.cssText = `
             position: fixed;
-            top: 250px;
             left: 50%;
             transform: translateX(-50%);
             width: ${this.displaySize}px;
@@ -136,9 +135,30 @@ class StartScreenBot {
             document.body.appendChild(this.container);
             console.log('Bot attached to body (fixed position)');
 
+            // Store reference to title container for position updates
+            this.titleContainer = startOverlay.querySelector('.survivor-title');
+
+            // Update position initially
+            this.updatePosition();
+
             // Watch for start overlay visibility changes
             this.observeStartOverlay(startOverlay);
+
+            // Update position on window resize
+            window.addEventListener('resize', () => this.updatePosition());
         }
+    }
+
+    updatePosition() {
+        if (!this.titleContainer || !this.container) return;
+
+        // Get the title container's position
+        const rect = this.titleContainer.getBoundingClientRect();
+
+        // Position bot above the title (rect.top - bot height - some margin)
+        const botTop = rect.top - this.displaySize + 10; // 20px margin below bot
+
+        this.container.style.top = `${botTop}px`;
     }
 
     observeStartOverlay(startOverlay) {
@@ -149,6 +169,8 @@ class StartScreenBot {
                     // Check if start overlay is active
                     const isActive = startOverlay.classList.contains('active');
                     if (isActive) {
+                        // Update position when showing (in case layout changed)
+                        this.updatePosition();
                         this.show();
                     } else {
                         this.hide();
@@ -165,6 +187,7 @@ class StartScreenBot {
 
         // Check initial state
         if (startOverlay.classList.contains('active')) {
+            this.updatePosition();
             this.show();
         } else {
             this.hide();
