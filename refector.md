@@ -6,6 +6,13 @@
 - Enhanced stackable passive system with multiplicative speed boost
 - Expanded help menu with weapon tips and evolution guides
 - Weapon balance changes (homing laser damage reduction)
+- AI bot character system - player changed from arrow to animated sprite character
+- Start screen bot animation system (already modular - serves as extraction template)
+- Player sprite animation system with 5 directional sprite sheets (idle, up, down, left, right)
+- Exit and restart confirmation modals
+- Boss progression system with scheduled spawning
+- Magnet boost passive and trail multiplier mechanics
+- NeoDunggeunmoPro pixel art font system
 
 ## EXECUTION INSTRUCTIONS FOR LLM
 **IMPLEMENT ALL 10 PHASES IN ONE EXECUTION CYCLE**
@@ -16,11 +23,11 @@
 - Final human testing will occur after all phases are complete
 
 ## Objectives
-- Improve maintainability by decomposing the 11k+ line `js/vibe-survivor-game.js` monolith into focused modules.
+- Improve maintainability by decomposing the **11,335 line (453KB)** `js/vibe-survivor-game.js` monolith into focused modules.
 - Clarify system boundaries so future contributors can navigate rendering, gameplay, audio, UI, and i18n code quickly.
 - Introduce modern ES module structure without breaking the static deploy flow (served via simple http server).
 - Prepare groundwork for automated testing and targeted performance profiling.
-- Preserve mobile touch controls, audio fallbacks, translation system (English/Korean), and performance optimizations.
+- Preserve mobile touch controls, audio fallbacks, translation system (English/Korean), player sprite animation system, and performance optimizations.
 
 ## Guiding Principles
 - Maintain feature parity during refactor; no gameplay changes until modules are stable.
@@ -45,7 +52,9 @@ js/
       canvas.js            // Canvas setup and coordinate transforms
       renderer.js          // Main rendering pipeline
       particles.js         // Particle system & pooling
-      effects.js           // Visual effects (screen flash, etc.)
+      effects.js           // Visual effects (screen flash, cyan tinting, etc.)
+      sprites.js           // Player sprite rendering and animation system
+      animation.js         // Animation frame management and timing
     gameplay/
       player.js            // Player entity and abilities
       enemies/
@@ -68,9 +77,12 @@ js/
         levelup-modal.js   // Level-up and weapon selection modal
         help-modal.js      // Help screen with recipes/controls
         gameover-modal.js  // Game over screen modal
+        exit-confirm.js    // Exit confirmation modal
+        restart-confirm.js // Restart confirmation modal
       hud.js               // Health/XP/stats display
       i18n.js              // Translation system (English/Korean)
       touch-controls.js    // Mobile touch interface
+      start-screen-bot.js  // Start screen AI bot animation (ALREADY MODULAR - use as template!)
     audio/
       audio-manager.js     // Sound and music management
   utils/
@@ -79,9 +91,10 @@ js/
     performance.js         // FPS monitoring, optimization helpers
   config/
     constants.js           // Game constants and tuning values
-    assets.js              // Asset paths and preloading
+    assets.js              // Asset paths, sprite sheet configs, and preloading
 
 js/main.js                 // Landing page wiring (preserve current logic)
+js/start-screen-bot.js     // Start screen bot animation (ALREADY EXTRACTED - keep as is!)
 js/vibe-survivor-game.js   // Temporary shim that re-exports new engine (migration bridge)
 ```
 
@@ -97,6 +110,8 @@ Each modal will have its own dedicated file for better organization:
 - **`levelup-modal.js`**: Complex level-up system with weapon selection, upgrade choices, and scrolling
 - **`help-modal.js`**: Help screen with game recipes, controls documentation, and scrolling behavior
 - **`gameover-modal.js`**: Game over screen with score display and restart functionality
+- **`exit-confirm.js`**: Exit confirmation modal to prevent accidental game exits
+- **`restart-confirm.js`**: Restart confirmation modal for destructive restart actions
 
 ### Benefits of This Structure
 1. **Easy Identification**: Each modal's UI, styling, and functionality is contained in its own file
@@ -113,6 +128,9 @@ Each modal will have its own dedicated file for better organization:
    - Analyze circular dependencies and plan extraction order
    - Set up basic smoke tests and performance benchmarks for baseline measurements
    - Document current touch control behavior and audio fallback mechanisms
+   - Study `js/start-screen-bot.js` as a reference for proper modular structure
+   - Document player sprite animation system (5 sprite sheets, 3×4 frame animation, 8 FPS)
+   - Catalog all sprite assets and their loading requirements (~290KB of sprite images)
 
 1. **Scaffolding & Module Setup**
    - Convert `index.html` to use `<script type="module" src="js/vibe-survivor-game.js"></script>` while preserving `window.VIBE_SURVIVOR_AUTO_INIT = false` pattern
@@ -125,6 +143,11 @@ Each modal will have its own dedicated file for better organization:
    - Extract `Vector2` class into `utils/vector2.js` (already well-defined in monolith)
    - Create `utils/performance.js` with FPS monitoring and memory tracking
    - Set up `config/constants.js` and `config/assets.js` with current values
+   - Add sprite sheet configurations to `config/assets.js`:
+     - Player sprite sheets (idle, up, down, left, right)
+     - Start screen bot sprite sheet (10×10, 100 frames)
+     - Sprite dimensions, frame counts, and animation speeds
+     - NeoDunggeunmoPro font path
    - Establish `core/state.js` with centralized state management and factory functions
    - Create standard interfaces and error handling patterns
 
@@ -143,7 +166,16 @@ Each modal will have its own dedicated file for better organization:
    - Extract canvas setup and coordinate transforms into `systems/rendering/canvas.js`
    - Move main rendering pipeline to `systems/rendering/renderer.js`
    - Migrate particle system to `systems/rendering/particles.js` (preserve object pooling)
-   - Extract visual effects to `systems/rendering/effects.js`
+   - Extract visual effects to `systems/rendering/effects.js` (screen flash, cyan tinting filter)
+   - Extract player sprite system to `systems/rendering/sprites.js`:
+     - Sprite sheet loading and caching system
+     - Direction-based sprite selection logic (5 directions)
+     - CSS filter-based cyan color tinting
+     - Fallback to cyan circle if sprites not loaded
+   - Extract animation frame management to `systems/rendering/animation.js`:
+     - Frame timing system (60 FPS game → 8 FPS animation)
+     - 3×4 frame sprite sheet handling (12 total frames)
+     - Animation state tracking (frame, timer, direction)
 
 5. **Gameplay Systems Migration (Iterative)**
    - **Player System**: Move player logic to `systems/gameplay/player.js`
@@ -168,9 +200,15 @@ Each modal will have its own dedicated file for better organization:
      - Extract level-up system to `systems/ui/modals/levelup-modal.js` (weapon selection, upgrade choices)
      - Move help screen to `systems/ui/modals/help-modal.js` (recipes, controls documentation)
      - Extract game over screen to `systems/ui/modals/gameover-modal.js`
+     - Extract exit confirmation to `systems/ui/modals/exit-confirm.js`
+     - Extract restart confirmation to `systems/ui/modals/restart-confirm.js`
    - **Translation System**: Extract i18n system to `systems/ui/i18n.js` (English/Korean support, dynamic text updates)
-   - Move HUD rendering to `systems/ui/hud.js` (health bar, XP bar, stats display)
+   - Move HUD rendering to `systems/ui/hud.js` (health bar, XP bar, stats display, boss counter)
    - **Critical**: Extract touch controls to `systems/ui/touch-controls.js` (preserve mobile functionality)
+   - **SPECIAL NOTE**: `js/start-screen-bot.js` is ALREADY modular and properly extracted!
+     - Keep this file as-is in `js/start-screen-bot.js`
+     - Use it as a reference/template for other extractions
+     - It demonstrates proper: class structure, lifecycle management, cleanup, DOM manipulation
 
 7. **Audio System Migration**
    - Move sound and music management to `systems/audio/audio-manager.js`
@@ -267,10 +305,14 @@ Each modal will have its own dedicated file for better organization:
 
 ### Phase 0: Analysis & Preparation
 **EXECUTE IMMEDIATELY:**
-- [ ] Analyze the 9k-line monolith structure and identify key systems
+- [ ] Analyze the **11,335-line (453KB)** monolith structure and identify key systems
 - [ ] Identify circular dependencies and plan extraction order
 - [ ] Note current touch control behavior and audio fallback mechanisms
 - [ ] Understand the current module loading and initialization pattern
+- [ ] Study `js/start-screen-bot.js` (226 lines) as modular extraction template
+- [ ] Document player sprite system (91 references throughout codebase)
+- [ ] Catalog sprite assets: 6 AI bot sprites (~290KB) + start screen sprite (217KB)
+- [ ] Document boss system, magnet boost passive, and trail multiplier mechanics
 
 ### Phase 1: Scaffolding & Module Setup
 **EXECUTE IMMEDIATELY:**
@@ -284,7 +326,12 @@ Each modal will have its own dedicated file for better organization:
 - [ ] Extract `Vector2` class to `utils/vector2.js`
 - [ ] Create `utils/performance.js` with FPS/memory monitoring utilities
 - [ ] Set up `config/constants.js` with all game constants and tuning values
-- [ ] Set up `config/assets.js` with asset paths and preload manifests
+- [ ] Set up `config/assets.js` with asset paths and preload manifests:
+  - [ ] Player sprite sheets (5 files: idle, up, down, left, right)
+  - [ ] Start screen bot sprite sheet (10×10 grid, 100 frames)
+  - [ ] Sprite configurations (frameWidth, frameHeight, cols, rows, frameRate)
+  - [ ] NeoDunggeunmoPro font path
+  - [ ] Sprite loading progress tracking system
 - [ ] Create `core/state.js` with centralized state management
 
 ### Phase 2.5: Interface Standardization
@@ -305,7 +352,22 @@ Each modal will have its own dedicated file for better organization:
 - [ ] Extract canvas setup and coordinate transforms to `systems/rendering/canvas.js`
 - [ ] Move main rendering pipeline to `systems/rendering/renderer.js`
 - [ ] Migrate particle system to `systems/rendering/particles.js` (preserve object pooling)
-- [ ] Extract visual effects to `systems/rendering/effects.js`
+- [ ] Extract visual effects to `systems/rendering/effects.js`:
+  - [ ] Screen flash effects
+  - [ ] CSS filter-based cyan tinting system
+  - [ ] Neon trail/glow effects
+- [ ] Extract player sprite rendering to `systems/rendering/sprites.js`:
+  - [ ] Sprite sheet loading system with progress tracking
+  - [ ] Direction-based sprite selection (idle, up, down, left, right)
+  - [ ] Angle-to-direction mapping logic (8 directional angles)
+  - [ ] Cyan color filter application
+  - [ ] Fallback to cyan circle rendering
+  - [ ] Sprite caching and preloading
+- [ ] Extract animation system to `systems/rendering/animation.js`:
+  - [ ] Frame timing (60 FPS → 8 FPS conversion)
+  - [ ] 3×4 sprite sheet frame management (12 total frames)
+  - [ ] Animation state (spriteFrame, spriteTimer, spriteDirection)
+  - [ ] Frame cycling and direction updates
 
 ### Phase 5: Gameplay Systems Migration
 **EXTRACT ALL GAMEPLAY LOGIC:**
@@ -328,9 +390,12 @@ Each modal will have its own dedicated file for better organization:
 - [ ] Extract level-up system to `systems/ui/modals/levelup-modal.js`
 - [ ] Move help screen to `systems/ui/modals/help-modal.js`
 - [ ] Extract game over screen to `systems/ui/modals/gameover-modal.js`
+- [ ] Extract exit confirmation to `systems/ui/modals/exit-confirm.js`
+- [ ] Extract restart confirmation to `systems/ui/modals/restart-confirm.js`
 - [ ] **CRITICAL**: Extract translation system to `systems/ui/i18n.js`
-- [ ] Move HUD rendering to `systems/ui/hud.js`
+- [ ] Move HUD rendering to `systems/ui/hud.js` (include boss counter display)
 - [ ] **CRITICAL**: Extract touch controls to `systems/ui/touch-controls.js`
+- [ ] **SPECIAL**: Keep `js/start-screen-bot.js` as-is (already properly modular!)
 
 ### Phase 7: Audio System Migration
 **EXTRACT AUDIO MANAGEMENT:**
@@ -357,29 +422,41 @@ Each modal will have its own dedicated file for better organization:
 
 ### ✅ **Core Functionality Test**
 - [ ] Game launches successfully from index.html
-- [ ] Start screen appears and responds to "Press Start"
+- [ ] Start screen appears with animated bot above title
+- [ ] Start screen bot animation loops correctly (100 frames)
+- [ ] Start screen responds to "Press Start"
+- [ ] Player appears as animated AI bot character (not arrow)
+- [ ] Player sprite animates correctly (12 frames, 8 FPS)
+- [ ] Player sprite changes direction based on movement (idle, up, down, left, right)
+- [ ] Player sprite has cyan color tint applied correctly
 - [ ] Player can move with WASD/arrow keys
 - [ ] Mouse aiming and shooting works
 - [ ] Enemies spawn and behave correctly
 - [ ] Combat and damage systems work
 - [ ] XP collection and leveling up functions
+- [ ] Boss spawning system works (first boss at 5 minutes)
+- [ ] Magnet boost passive activates and deactivates correctly
+- [ ] Trail multiplier scales with XP progress
 - [ ] Audio plays (music and sound effects)
 
 ### ✅ **UI System Test**
 - [ ] All modals work correctly:
-  - Start screen modal
+  - Start screen modal (with animated bot)
   - Options modal (language switching, audio controls, dash positioning)
   - Pause modal (ESC key)
   - Level-up modal with weapon selection
   - Help modal with scrolling
   - Game over modal
+  - Exit confirmation modal
+  - Restart confirmation modal
 - [ ] Translation system works correctly:
   - English ⟷ Korean language switching
   - All UI text updates when language changes
   - Stackable passive descriptions show properly in both languages
   - Help menu content translates correctly
-- [ ] HUD displays correctly (health, XP, stats)
+- [ ] HUD displays correctly (health, XP, stats, boss counter)
 - [ ] Modal navigation works (keyboard/mouse)
+- [ ] NeoDunggeunmoPro font loads and displays correctly throughout UI
 
 ### ✅ **Mobile/Touch Test**
 - [ ] Touch controls work on mobile devices
