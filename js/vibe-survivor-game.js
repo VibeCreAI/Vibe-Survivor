@@ -8751,8 +8751,8 @@ class VibeSurvivor {
     drawPlayerSprite() {
         // Check if sprites are loaded
         if (this.playerSprites.loaded < this.playerSprites.total) {
-            // Fallback to drawing a simple cyan circle if sprites not loaded
-            this.ctx.fillStyle = '#00ffff';
+            // Fallback to neutral circle so loading state keeps native colour scheme
+            this.ctx.fillStyle = '#ffffff';
             this.ctx.beginPath();
             this.ctx.arc(0, 0, this.player.radius, 0, Math.PI * 2);
             this.ctx.fill();
@@ -8791,30 +8791,14 @@ class VibeSurvivor {
         // Select the appropriate sprite sheet based on direction
         let spriteSheet = this.playerSprites[this.player.spriteDirection];
 
-        // Draw sprite with cyan color tint
+        // Draw sprite using native asset colours (no tinting filters)
         const spriteSize = this.player.radius * 3; // Bot sprite at 1/4 scale (radius * 2 = 30px)
 
-        // Create temporary canvas for color tinting
-        if (!this.tempCanvas) {
-            this.tempCanvas = document.createElement('canvas');
-            this.tempCtx = this.tempCanvas.getContext('2d');
-            // Disable image smoothing for crisp pixel art
-            this.tempCtx.imageSmoothingEnabled = false;
-        }
-
-        // Disable smoothing on main context for pixel art
+        // Temporarily disable smoothing to keep pixel art crisp
+        const previousSmoothing = this.ctx.imageSmoothingEnabled;
         this.ctx.imageSmoothingEnabled = false;
 
-        this.tempCanvas.width = this.spriteConfig.frameWidth;
-        this.tempCanvas.height = this.spriteConfig.frameHeight;
-
-        // Apply cyan filter directly to context, then draw sprite (same as maze-bot-sprite.js)
         this.ctx.save();
-
-        // Apply the exact filter from the working project
-        this.ctx.filter = 'brightness(0) saturate(100%) invert(89%) sepia(100%) saturate(3533%) hue-rotate(140deg) brightness(104%) contrast(105%)';
-
-        // Draw sprite directly with filter applied
         this.ctx.drawImage(
             spriteSheet,
             sx, sy,
@@ -8825,10 +8809,10 @@ class VibeSurvivor {
             spriteSize,
             spriteSize
         );
-
-        // Reset filter
-        this.ctx.filter = 'none';
         this.ctx.restore();
+
+        // Restore smoothing preference for any subsequent draws
+        this.ctx.imageSmoothingEnabled = previousSmoothing;
     }
 
     drawPlayer() {
