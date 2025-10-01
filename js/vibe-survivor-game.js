@@ -7053,7 +7053,18 @@ class VibeSurvivor {
     }
     
     showUpgradeNotification(title) {
-        this.showToastNotification(`${title} ACQUIRED!`, 'upgrade');
+        const acquiredText = this.t('acquiredSuffix');
+        let message;
+
+        if (acquiredText && acquiredText !== 'acquiredSuffix') {
+            message = acquiredText.includes('{title}')
+                ? acquiredText.replace('{title}', title)
+                : `${title} ${acquiredText}`.trim();
+        } else {
+            message = `${title} ACQUIRED!`;
+        }
+
+        this.showToastNotification(message, 'upgrade');
     }
     
     showBossNotification() {
@@ -10853,6 +10864,7 @@ class VibeSurvivor {
                     dash: "DASH",
                     dashButtonRight: "DASH BUTTON: RIGHT",
                     dashButtonLeft: "DASH BUTTON: LEFT",
+                    acquiredSuffix: "ACQUIRED!",
 
                     // Upgrade descriptions
                     damageFireRate: "damage, faster fire rate",
@@ -10980,6 +10992,7 @@ class VibeSurvivor {
                     dash: "대시",
                     dashButtonRight: "대시 버튼: 오른쪽",
                     dashButtonLeft: "대시 버튼: 왼쪽",
+                    acquiredSuffix: "획득!",
 
                     // Upgrade descriptions
                     damageFireRate: "데미지, 더 빠른 발사 속도",
