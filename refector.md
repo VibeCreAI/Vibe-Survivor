@@ -416,64 +416,413 @@ Each modal will have its own dedicated file for better organization:
 - [ ] Ensure all functionality is preserved and working
 - [ ] Clean up any temporary code or comments
 
-## FINAL HUMAN TESTING AFTER IMPLEMENTATION
 
-**After all 10 phases are complete, the human will test:**
 
-### ✅ **Core Functionality Test**
-- [ ] Game launches successfully from index.html
-- [ ] Start screen appears with animated bot above title
-- [ ] Start screen bot animation loops correctly (100 frames)
-- [ ] Start screen responds to "Press Start"
-- [ ] Player appears as animated AI bot character (not arrow)
-- [ ] Player sprite animates correctly (12 frames, 8 FPS)
-- [ ] Player sprite changes direction based on movement (idle, up, down, left, right)
-- [ ] Player sprite has cyan color tint applied correctly
-- [ ] Player can move with WASD/arrow keys
-- [ ] Mouse aiming and shooting works
-- [ ] Enemies spawn and behave correctly
-- [ ] Combat and damage systems work
-- [ ] XP collection and leveling up functions
-- [ ] Boss spawning system works (first boss at 5 minutes)
-- [ ] Magnet boost passive activates and deactivates correctly
-- [ ] Trail multiplier scales with XP progress
-- [ ] Audio plays (music and sound effects)
 
-### ✅ **UI System Test**
-- [ ] All modals work correctly:
-  - Start screen modal (with animated bot)
-  - Options modal (language switching, audio controls, dash positioning)
-  - Pause modal (ESC key)
-  - Level-up modal with weapon selection
-  - Help modal with scrolling
-  - Game over modal
-  - Exit confirmation modal
-  - Restart confirmation modal
-- [ ] Translation system works correctly:
-  - English ⟷ Korean language switching
-  - All UI text updates when language changes
-  - Stackable passive descriptions show properly in both languages
-  - Help menu content translates correctly
-- [ ] HUD displays correctly (health, XP, stats, boss counter)
-- [ ] Modal navigation works (keyboard/mouse)
-- [ ] NeoDunggeunmoPro font loads and displays correctly throughout UI
 
-### ✅ **Mobile/Touch Test**
-- [ ] Touch controls work on mobile devices
-- [ ] Virtual joystick responds correctly
-- [ ] Touch-friendly modal interactions
-- [ ] Responsive layout on small screens
+## TESTING AND EVALUATION PROTOCOL
 
-### ✅ **Performance Test**
-- [ ] Game runs at stable FPS (same as original)
-- [ ] No memory leaks or performance regressions
-- [ ] Smooth animations and transitions
-- [ ] Fast loading times
+This section contains two evaluation stages:
+1. **Human Testing**: Manual verification of all functionality
+2. **AI Judge Evaluation**: Objective scoring and comparison by an independent AI
 
-### ✅ **Cross-Platform Test**
-- [ ] Works in multiple browsers (Chrome, Firefox, Safari, Edge)
-- [ ] Desktop and mobile compatibility
-- [ ] Audio fallbacks function properly
+---
 
-**Success Criteria: All tests must pass for the refactor to be considered successful.**
+## STAGE 1: HUMAN TESTING AFTER IMPLEMENTATION
+
+**Test both implementations and record results:**
+
+### **Test Metrics**
+
+#### **A. Completion Metrics**
+- **Total Time Taken**: _____ hours/minutes
+- **Human Interventions Required**: _____ times
+  - (Count: bug fixes, corrections, clarifications, restarts needed)
+- **Completion Status**: One-shot ✅ / Multiple attempts ❌
+
+---
+
+#### **B. Functionality Tests** (Score each: ✅ PASS / ❌ FAIL)
+
+| # | Test Criteria | Implementation A | Implementation B |
+|---|---------------|------------------|------------------|
+| 1 | **Game Launch & Start Screen** - Game loads, start screen appears with animated bot, responds to "Press Start" | | |
+| 2 | **Player System** - Player sprite animates correctly, changes direction (5 directions), cyan tint applied, movement works (WASD/arrows/mouse) | | |
+| 3 | **Combat & Gameplay** - Enemies spawn and behave correctly, weapons fire, damage/XP/leveling work, boss system functions | | |
+| 4 | **Modal System** - All 9 modals work (start, options, pause, levelup, help, gameover, exit confirm, restart confirm) with proper navigation | | |
+| 5 | **Translation System** - English ⟷ Korean switching works, all UI text updates correctly in both languages | | |
+| 6 | **Audio System** - Music and sound effects play, audio controls work, fallbacks function | | |
+| 7 | **Mobile/Touch** - Touch controls work, virtual joystick responsive, modals work on mobile | | |
+| 8 | **Performance** - Game runs at stable FPS (same as original), no memory leaks, smooth animations | | |
+| 9 | **Cross-Browser** - Works in Chrome, Firefox, Safari, Edge without issues | | |
+| 10 | **Code Quality** - No console errors, clean code structure visible, easy to navigate files | | |
+
+---
+
+### **Human Testing Summary**
+
+**Implementation A (Tool: _____)**
+- Time Taken: _____
+- Interventions: _____
+- Tests Passed: ___/10
+- Overall: PASS ✅ / FAIL ❌
+
+**Implementation B (Tool: _____)**
+- Time Taken: _____
+- Interventions: _____
+- Tests Passed: ___/10
+- Overall: PASS ✅ / FAIL ❌
+
+**Notes:**
+- (Any specific issues, observations, or comments)**
+
+---
+
+## STAGE 2: AI JUDGE EVALUATION AND SCORING
+
+**Instructions for AI Judge:**
+You will receive two refactored codebases (Implementation A and Implementation B). Your task is to objectively evaluate and score both implementations based on the criteria below. You should examine the actual code, file structure, and implementation details to provide fair and accurate scoring.
+
+### EVALUATION CATEGORIES AND SCORING
+
+#### **0. COMPLETION EFFICIENCY** (20 points)
+
+**What to evaluate:**
+- Time taken to complete refactoring
+- Number of human interventions required
+- Ability to complete in one shot as requested
+
+**Scoring Rubric:**
+- **20 pts**: Completed in one shot, under 2 hours, zero interventions
+- **16 pts**: Completed in one shot, 2-4 hours, zero interventions
+- **12 pts**: Completed in one shot, 4-8 hours, zero interventions OR 1-2 minor interventions
+- **8 pts**: Multiple attempts needed, 3-5 interventions
+- **4 pts**: Multiple attempts, many interventions (6-10)
+- **0 pts**: Failed to complete or required excessive interventions (10+)
+
+**Evidence to provide:**
+- Total time taken
+- Count of human interventions with details
+- Whether one-shot completion was achieved
+- Efficiency comparison between implementations
+
+#### **1. CODE ORGANIZATION & STRUCTURE** (25 points)
+
+**What to evaluate:**
+- Adherence to the planned file structure
+- Logical separation of concerns
+- Proper module boundaries
+- Directory organization
+
+**Scoring Rubric:**
+- **25 pts**: Perfect adherence to plan, all modules properly separated, excellent organization
+- **20 pts**: Strong organization, minor deviations from plan, mostly proper separation
+- **15 pts**: Adequate organization, some modules mixed, several deviations
+- **10 pts**: Poor organization, many mixed concerns, significant deviations
+- **5 pts**: Minimal organization improvement over monolith
+- **0 pts**: No improvement or worse than original
+
+**Evidence to provide:**
+- Count of files created vs. planned
+- Examples of well-organized modules
+- Examples of any organizational issues
+- File size distribution analysis
+
+---
+
+#### **2. MODULE QUALITY & COHESION** (20 points)
+
+**What to evaluate:**
+- Single Responsibility Principle adherence
+- Module cohesion (related functionality grouped together)
+- Clear module interfaces and exports
+- Appropriate abstraction levels
+
+**Scoring Rubric:**
+- **20 pts**: Each module has clear single purpose, excellent cohesion, clean interfaces
+- **16 pts**: Most modules well-focused, good cohesion, mostly clean interfaces
+- **12 pts**: Some modules do too much, adequate cohesion, acceptable interfaces
+- **8 pts**: Many modules unfocused, poor cohesion, unclear interfaces
+- **4 pts**: Little improvement in module design
+- **0 pts**: Modules are poorly designed
+
+**Evidence to provide:**
+- Examples of well-designed modules
+- Examples of any modules violating SRP
+- Interface complexity analysis
+- Module size analysis (lines per file)
+
+---
+
+#### **3. CODE MAINTAINABILITY** (20 points)
+
+**What to evaluate:**
+- Code readability and clarity
+- Naming conventions consistency
+- Documentation quality (comments, JSDoc)
+- Ease of understanding for new developers
+
+**Scoring Rubric:**
+- **20 pts**: Excellent readability, consistent naming, comprehensive documentation
+- **16 pts**: Good readability, mostly consistent naming, adequate documentation
+- **12 pts**: Acceptable readability, some naming inconsistencies, basic documentation
+- **8 pts**: Poor readability, inconsistent naming, minimal documentation
+- **4 pts**: Difficult to read, unclear naming, no documentation
+- **0 pts**: Unmaintainable code
+
+**Evidence to provide:**
+- Examples of well-documented code sections
+- Examples of clear vs. unclear naming
+- Documentation coverage estimate (% of public functions/classes documented)
+- Complexity analysis of key functions
+
+---
+
+#### **4. DEPENDENCY MANAGEMENT** (15 points)
+
+**What to evaluate:**
+- Proper ES module imports/exports
+- No circular dependencies
+- Minimal coupling between modules
+- Clear dependency hierarchy
+
+**Scoring Rubric:**
+- **15 pts**: Perfect imports/exports, zero circular dependencies, minimal coupling
+- **12 pts**: Clean imports/exports, no critical circular deps, low coupling
+- **9 pts**: Mostly correct imports/exports, minor circular deps, moderate coupling
+- **6 pts**: Some import/export issues, several circular deps, tight coupling
+- **3 pts**: Many dependency problems
+- **0 pts**: Dependency chaos
+
+**Evidence to provide:**
+- Dependency graph analysis (if possible)
+- List any circular dependencies found
+- Examples of well-managed dependencies
+- Import/export pattern consistency
+
+---
+
+#### **5. FEATURE PRESERVATION** (15 points)
+
+**What to evaluate:**
+- All original features still work
+- No regressions introduced
+- Edge cases handled
+- Original behavior preserved
+
+**Scoring Rubric:**
+- **15 pts**: 100% feature preservation, all systems work perfectly
+- **12 pts**: 95%+ features work, minor issues only
+- **9 pts**: 90%+ features work, some noticeable issues
+- **6 pts**: 80%+ features work, several broken features
+- **3 pts**: Major features broken
+- **0 pts**: Critical failures, game unplayable
+
+**Evidence to provide:**
+- List of features tested and results
+- Any bugs or regressions found
+- Comparison with original functionality
+- Edge case handling assessment
+
+---
+
+#### **6. PERFORMANCE & OPTIMIZATION** (10 points)
+
+**What to evaluate:**
+- Performance same or better than original
+- Object pooling preserved where applicable
+- No memory leaks introduced
+- Efficient module loading
+
+**Scoring Rubric:**
+- **10 pts**: Performance improved or equal, optimizations preserved
+- **8 pts**: Performance equal, optimizations preserved
+- **6 pts**: Performance slightly worse, most optimizations preserved
+- **4 pts**: Noticeable performance degradation
+- **2 pts**: Significant performance problems
+- **0 pts**: Unplayable due to performance
+
+**Evidence to provide:**
+- Performance metrics comparison (if available)
+- Analysis of preserved optimizations
+- Any performance issues identified
+- Memory usage assessment
+
+---
+
+#### **7. ERROR HANDLING & ROBUSTNESS** (10 points)
+
+**What to evaluate:**
+- Proper error handling in modules
+- Graceful degradation
+- Input validation
+- Edge case handling
+
+**Scoring Rubric:**
+- **10 pts**: Comprehensive error handling, graceful degradation, robust
+- **8 pts**: Good error handling, mostly graceful, handles most edge cases
+- **6 pts**: Basic error handling, some graceful degradation
+- **4 pts**: Minimal error handling, brittle code
+- **2 pts**: Poor error handling, crashes easily
+- **0 pts**: No error handling
+
+**Evidence to provide:**
+- Examples of good error handling
+- Examples of missing error handling
+- Error message quality assessment
+- Robustness testing results
+
+---
+
+#### **8. CODE CLEANLINESS** (10 points)
+
+**What to evaluate:**
+- No dead code or unused imports
+- Consistent code style
+- No debugging artifacts (console.logs, comments like "TODO")
+- Clean git history (if applicable)
+
+**Scoring Rubric:**
+- **10 pts**: Spotlessly clean, production-ready code
+- **8 pts**: Very clean, minor artifacts only
+- **6 pts**: Mostly clean, some dead code or artifacts
+- **4 pts**: Noticeable clutter, many artifacts
+- **2 pts**: Messy code with significant dead code
+- **0 pts**: Code is a mess
+
+**Evidence to provide:**
+- Count of unused imports/dead code
+- Examples of any artifacts found
+- Code style consistency assessment
+- Overall cleanliness rating
+
+---
+
+#### **9. TESTING & TESTABILITY** (10 points)
+
+**What to evaluate:**
+- Code structure enables easy testing
+- Pure functions separated from side effects
+- Testable interfaces
+- Any tests actually written (bonus points)
+
+**Scoring Rubric:**
+- **10 pts**: Highly testable, tests included, excellent separation
+- **8 pts**: Very testable, good separation, no tests but easy to add
+- **6 pts**: Moderately testable, some separation
+- **4 pts**: Difficult to test, poor separation
+- **2 pts**: Nearly impossible to test
+- **0 pts**: Untestable
+
+**Evidence to provide:**
+- Testability analysis of key modules
+- Examples of testable vs. untestable code
+- Pure function identification
+- Any tests present
+
+---
+
+#### **10. BONUS POINTS** (up to +15 points)
+
+**Extra credit for:**
+- **+5 pts**: Excellent architectural documentation
+- **+5 pts**: Additional improvements beyond plan (if they enhance quality)
+- **+3 pts**: Particularly elegant solutions to complex problems
+- **+2 pts**: TypeScript types or comprehensive JSDoc
+- **Other**: Judge's discretion for exceptional work
+
+**Evidence to provide:**
+- Specific examples of bonus-worthy items
+- Explanation of why they deserve bonus points
+
+---
+
+### FINAL SCORING SUMMARY
+
+**Implementation A (Tool Name): ____/170 points (+____ bonus)**
+
+**Implementation B (Tool Name): ____/170 points (+____ bonus)**
+
+### SCORING BREAKDOWN TABLE
+
+| Category | Implementation A | Implementation B | Winner |
+|----------|------------------|------------------|--------|
+| 0. Completion Efficiency (20 pts) | | | |
+| 1. Code Organization (25 pts) | | | |
+| 2. Module Quality (20 pts) | | | |
+| 3. Maintainability (20 pts) | | | |
+| 4. Dependency Management (15 pts) | | | |
+| 5. Feature Preservation (15 pts) | | | |
+| 6. Performance (10 pts) | | | |
+| 7. Error Handling (10 pts) | | | |
+| 8. Code Cleanliness (10 pts) | | | |
+| 9. Testability (10 pts) | | | |
+| 10. Bonus Points (15 pts max) | | | |
+| **TOTAL** | **/170** | **/170** | |
+
+---
+
+### DETAILED ANALYSIS REPORT
+
+**AI Judge Instructions:** For each implementation, provide:
+
+#### **Implementation A (Tool: _____)**
+
+**Strengths:**
+- (List 3-5 major strengths with specific examples)
+
+**Weaknesses:**
+- (List 3-5 major weaknesses with specific examples)
+
+**Notable Observations:**
+- (Any interesting patterns, decisions, or approaches)
+
+**Code Examples:**
+- (1-2 examples of particularly good or bad code)
+
+---
+
+#### **Implementation B (Tool: _____)**
+
+**Strengths:**
+- (List 3-5 major strengths with specific examples)
+
+**Weaknesses:**
+- (List 3-5 major weaknesses with specific examples)
+
+**Notable Observations:**
+- (Any interesting patterns, decisions, or approaches)
+
+**Code Examples:**
+- (1-2 examples of particularly good or bad code)
+
+---
+
+### FINAL VERDICT
+
+**Winner: Implementation ____ (Tool: _____)**
+
+**Winning Margin: ____ points**
+
+**Summary:**
+(2-3 paragraphs explaining which implementation won and why, highlighting the key differentiators)
+
+**Recommendation:**
+(Which refactored codebase should be used going forward and why)
+
+---
+
+### JUDGE'S CERTIFICATION
+
+**I certify that:**
+- [ ] I examined both codebases thoroughly
+- [ ] I evaluated all criteria objectively
+- [ ] I provided specific evidence for all scores
+- [ ] My evaluation is fair and unbiased
+- [ ] I can defend all scoring decisions
+
+**AI Judge Signature:** _______________
+**Date:** _______________
+
+**Success Criteria: The implementation with the highest total score wins the showdown.**
 
