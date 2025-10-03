@@ -426,7 +426,7 @@ class VibeSurvivor {
                         <!-- Separate Start Screen Overlay -->
                         <div id="survivor-start-overlay" class="survivor-start-overlay active">
                             <div class="survivor-title">
-                                <h1>VIBE SURVIVOR</h1>
+                                <img src="images/Title.png" alt="VIBE SURVIVOR" class="title-logo">
                                 <p>Survive the endless waves!</p>
                                 <p class="controls-info">PC: WASD/Arrow Keys to move, SPACEBAR to dash</p>
                                 <p class="controls-info mobile-only">Mobile: Touch screen to move, tap DASH button</p>
@@ -1087,8 +1087,16 @@ class VibeSurvivor {
 
             .survivor-title {
                 text-align: center;
-                margin-bottom: 40px;
+                margin-bottom: 20px;
                 color: white;
+            }
+
+            .survivor-title .title-logo {
+                max-width: 80%;
+                height: auto;
+                image-rendering: pixelated;
+                filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.5));
+                animation: neonPulse 2s ease-in-out infinite;
             }
 
             .survivor-title h1 {
@@ -1921,6 +1929,10 @@ class VibeSurvivor {
                 .distance-value, .level-value {
                     font-size: 16px;
                     min-width: 60px;
+                }
+
+                .survivor-title .title-logo {
+                    max-width: 90%;
                 }
 
                 .survivor-title h1 {
