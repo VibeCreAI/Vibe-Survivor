@@ -1,4 +1,4 @@
-# Vibe Survivor Scaffold
+# Vibe Survivor
 
 This folder now contains an operational build of the Vibe Survivor game, detached from the main VibeCreAI site and ready to be pushed to its own repository.
 
