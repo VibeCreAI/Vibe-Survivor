@@ -432,6 +432,7 @@ class VibeSurvivor {
                                 <p class="controls-info mobile-only">Mobile: Touch screen to move, tap DASH button</p>
                                 <button id="start-survivor" class="survivor-btn primary">START</button>
                                 <button id="options-btn" class="survivor-btn">OPTIONS</button>
+                                <button id="about-btn" class="survivor-btn">ABOUT</button>
                             </div>
                         </div>
 
@@ -458,6 +459,64 @@ class VibeSurvivor {
                                 </div>
                                 <button id="close-options-btn" class="survivor-btn primary">CLOSE</button>
                                 <p class="options-hint">Press ESC to close</p>
+                            </div>
+                        </div>
+
+                        <!-- About Menu (at top level for start screen access) -->
+                        <div id="about-menu" class="about-menu" style="display: none;">
+                            <div class="about-content">
+                                <h2>ABOUT</h2>
+                                <div class="about-description">
+                                    <p class="vibe-coding-title">100% Made via Vibe Coding</p>
+                                    <p class="vibe-coding-subtitle">A complete game development journey using AI tools</p>
+                                </div>
+                                <div class="about-credits">
+                                    <div class="credit-item">
+                                        <span class="credit-label">Coding:</span>
+                                        <span class="credit-value">Claude Code & Codex</span>
+                                    </div>
+                                    <div class="credit-item">
+                                        <span class="credit-label">Music:</span>
+                                        <span class="credit-value">Suno AI</span>
+                                    </div>
+                                    <div class="credit-item">
+                                        <span class="credit-label">Sound Effects:</span>
+                                        <span class="credit-value">ElevenLabs</span>
+                                    </div>
+                                    <div class="credit-item">
+                                        <span class="credit-label">Artwork:</span>
+                                        <span class="credit-value">PixelLab</span>
+                                    </div>
+                                </div>
+                                <div class="social-links">
+                                    <h3>Connect With Us</h3>
+                                    <div class="social-items">
+                                        <a href="mailto:contact@vibecreai.com" class="social-item" target="_blank" rel="noopener noreferrer">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" style="fill: currentColor; vertical-align: middle;">
+                                                <path fill="currentColor" fill-rule="evenodd" d="M23 20V6l-11 9L1 6v14zm-11-8l10-8H2z"/>
+                                            </svg>
+                                            <span>Email</span>
+                                        </a>
+                                        <a href="https://www.youtube.com/@VibeCreAI" class="social-item" target="_blank" rel="noopener noreferrer">
+                                            <img src="https://api.iconify.design/tdesign:logo-youtube-filled.svg" width="24" height="24" style="vertical-align: middle; filter: brightness(0) invert(1);" alt="YouTube">
+                                            <span>YouTube</span>
+                                        </a>
+                                        <a href="https://www.twitch.tv/vibecreai" class="social-item" target="_blank" rel="noopener noreferrer">
+                                            <img src="https://api.iconify.design/mdi:twitch.svg" width="24" height="24" style="vertical-align: middle; filter: brightness(0) invert(1);" alt="Twitch">
+                                            <span>Twitch</span>
+                                        </a>
+                                        <a href="https://x.com/VibeCreAI" class="social-item" target="_blank" rel="noopener noreferrer">
+                                            <img src="https://api.iconify.design/ri:twitter-x-fill.svg" width="24" height="24" style="vertical-align: middle; filter: brightness(0) invert(1);" alt="X">
+                                            <span>Twitter</span>
+                                        </a>
+                                        <a href="https://discord.gg/QRd38zsMGw" class="social-item" target="_blank" rel="noopener noreferrer">
+                                            <img src="https://api.iconify.design/ic:baseline-discord.svg" width="24" height="24" style="vertical-align: middle; filter: brightness(0) invert(1);" alt="Discord">
+                                            <span>Discord</span>
+                                        </a>
+                                    </div>
+                                </div>
+                                <button id="close-about-btn" class="survivor-btn primary">CLOSE</button>
+                                <p class="about-hint">Press ESC to close</p>
                             </div>
                         </div>
 
@@ -1602,6 +1661,202 @@ class VibeSurvivor {
                 font-family: 'NeoDunggeunmoPro', Arial, sans-serif;
             }
 
+            /* About Menu */
+            .about-menu {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.9);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 30000;
+            }
+
+            .about-content {
+                background: linear-gradient(135deg, #0a0a1a, #1a0a2a);
+                border: 2px solid #00ffff;
+                border-radius: 15px;
+                padding: 40px;
+                text-align: center;
+                box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+                max-width: 600px;
+                width: 90%;
+                max-height: 80vh;
+                overflow-y: auto;
+            }
+
+            .about-content h2 {
+                color: #00ffff;
+                font-size: 2rem;
+                margin: 0 0 20px 0;
+                text-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+                font-family: 'NeoDunggeunmoPro', 'Arial Black', sans-serif;
+            }
+
+            .about-content h3 {
+                color: #00ffff;
+                font-size: 1.3rem;
+                margin: 0 0 15px 0;
+                text-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
+                font-family: 'NeoDunggeunmoPro', Arial, sans-serif;
+            }
+
+            .about-description {
+                margin-bottom: 30px;
+                padding: 20px;
+                background: rgba(0, 255, 255, 0.05);
+                border-radius: 10px;
+                border: 1px solid rgba(0, 255, 255, 0.2);
+            }
+
+            .vibe-coding-title {
+                color: #00ffff;
+                font-size: 1.3rem;
+                margin: 0 0 10px 0;
+                font-family: 'NeoDunggeunmoPro', Arial, sans-serif;
+                font-weight: bold;
+                text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+            }
+
+            .vibe-coding-subtitle {
+                color: #cccccc;
+                font-size: 1rem;
+                margin: 0;
+                font-family: 'NeoDunggeunmoPro', Arial, sans-serif;
+            }
+
+            .about-credits {
+                margin-bottom: 30px;
+                padding: 20px;
+                background: rgba(0, 0, 0, 0.3);
+                border-radius: 10px;
+            }
+
+            .credit-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 12px 0;
+                border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+                gap: 15px;
+            }
+
+            .credit-item:last-child {
+                border-bottom: none;
+            }
+
+            .credit-label {
+                color: #00ffff;
+                font-size: 1.1rem;
+                font-family: 'NeoDunggeunmoPro', Arial, sans-serif;
+                text-align: left;
+            }
+
+            .credit-value {
+                color: #ffffff;
+                font-size: 1rem;
+                font-family: 'NeoDunggeunmoPro', Arial, sans-serif;
+                text-align: right;
+            }
+
+            .social-links {
+                margin-bottom: 25px;
+                padding: 20px;
+                background: rgba(0, 0, 0, 0.3);
+                border-radius: 10px;
+            }
+
+            .social-items {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                margin-top: 15px;
+            }
+
+            .social-item {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 12px 15px;
+                background: rgba(0, 255, 255, 0.1);
+                border: 1px solid rgba(0, 255, 255, 0.3);
+                border-radius: 8px;
+                color: #ffffff;
+                text-decoration: none;
+                font-family: 'NeoDunggeunmoPro', Arial, sans-serif;
+                font-size: 1rem;
+                transition: all 0.3s ease;
+            }
+
+            .social-item:hover,
+            .social-item:focus {
+                background: rgba(0, 255, 255, 0.2);
+                border-color: #00ffff;
+                box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+                transform: translateX(5px);
+            }
+
+            .social-item svg,
+            .social-item img {
+                flex-shrink: 0;
+            }
+
+            .social-item span {
+                flex: 1;
+                text-align: left;
+            }
+
+            .about-hint {
+                color: #888;
+                font-size: 0.9rem;
+                margin: 15px 0 0 0;
+                font-family: 'NeoDunggeunmoPro', Arial, sans-serif;
+            }
+
+            /* Mobile responsiveness for About Menu */
+            @media (max-width: 768px) {
+                .about-content {
+                    padding: 25px 20px;
+                    max-height: 90vh;
+                }
+
+                .about-content h2 {
+                    font-size: 1.5rem;
+                }
+
+                .about-content h3 {
+                    font-size: 1.1rem;
+                }
+
+                .vibe-coding-title {
+                    font-size: 1.1rem;
+                }
+
+                .vibe-coding-subtitle {
+                    font-size: 0.9rem;
+                }
+
+                .credit-item {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 5px;
+                    padding: 15px 0;
+                }
+
+                .credit-label,
+                .credit-value {
+                    text-align: left;
+                }
+
+                .social-item {
+                    font-size: 0.95rem;
+                    padding: 14px;
+                }
+            }
+
             .survivor-game-over {
                 text-align: center;
                 color: white;
@@ -2080,6 +2335,23 @@ class VibeSurvivor {
             this.hideOptionsMenu();
         }, { passive: false });
 
+        // About menu event listeners
+        document.getElementById('about-btn').addEventListener('click', () => {
+            this.showAboutMenu();
+        });
+
+        // Close about button with mobile support
+        const closeAboutBtn = document.getElementById('close-about-btn');
+        closeAboutBtn.addEventListener('click', () => {
+            this.hideAboutMenu();
+        });
+
+        closeAboutBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.hideAboutMenu();
+        }, { passive: false });
+
         // Language selection with mobile support
         const langSelect = document.getElementById('language-select');
         langSelect.addEventListener('change', (e) => {
@@ -2232,12 +2504,18 @@ class VibeSurvivor {
                 }
                 
                 if (e.key.toLowerCase() === 'escape') {
-                    // Check if options menu is open first
-                    const optionsMenu = document.getElementById('options-menu');
-                    if (optionsMenu && optionsMenu.style.display === 'flex') {
-                        this.hideOptionsMenu();
+                    // Check if about menu is open first
+                    const aboutMenu = document.getElementById('about-menu');
+                    if (aboutMenu && aboutMenu.style.display === 'flex') {
+                        this.hideAboutMenu();
                     } else {
-                        this.togglePause();
+                        // Check if options menu is open
+                        const optionsMenu = document.getElementById('options-menu');
+                        if (optionsMenu && optionsMenu.style.display === 'flex') {
+                            this.hideOptionsMenu();
+                        } else {
+                            this.togglePause();
+                        }
                     }
                 }
             }
@@ -3509,6 +3787,48 @@ class VibeSurvivor {
         this.gameOverScrollHandler = null;
     }
 
+    enableAboutScrolling() {
+        const aboutContent = document.querySelector('.about-content');
+        if (!aboutContent) return;
+
+        // Remove any existing touch event listeners to avoid duplicates
+        if (this.aboutScrollHandler) {
+            aboutContent.removeEventListener('touchstart', this.aboutScrollHandler.start, { passive: false });
+            aboutContent.removeEventListener('touchmove', this.aboutScrollHandler.move, { passive: false });
+            aboutContent.removeEventListener('touchend', this.aboutScrollHandler.end, { passive: false });
+        }
+
+        this.aboutScrollHandler = {
+            start: (e) => {
+                e.stopPropagation();
+            },
+            move: (e) => {
+                e.stopPropagation();
+            },
+            end: (e) => {
+                e.stopPropagation();
+            }
+        };
+
+        // Add touch event listeners that explicitly allow scrolling
+        aboutContent.addEventListener('touchstart', this.aboutScrollHandler.start, { passive: true });
+        aboutContent.addEventListener('touchmove', this.aboutScrollHandler.move, { passive: true });
+        aboutContent.addEventListener('touchend', this.aboutScrollHandler.end, { passive: true });
+    }
+
+    disableAboutScrolling() {
+        const aboutContent = document.querySelector('.about-content');
+        if (!aboutContent || !this.aboutScrollHandler) return;
+
+        // Remove touch event listeners
+        aboutContent.removeEventListener('touchstart', this.aboutScrollHandler.start, { passive: true });
+        aboutContent.removeEventListener('touchmove', this.aboutScrollHandler.move, { passive: true });
+        aboutContent.removeEventListener('touchend', this.aboutScrollHandler.end, { passive: true });
+
+        // Clear the handler reference
+        this.aboutScrollHandler = null;
+    }
+
     scrollGameOverContent(direction) {
         const gameOverContent = document.querySelector('#survivor-game-over-overlay [style*="overflow-y: auto"]');
         if (!gameOverContent) return;
@@ -3839,8 +4159,9 @@ class VibeSurvivor {
             const isHelpContent = target.closest('.help-content');
             const isLevelUpContent = target.closest('.upgrade-choices-container');
             const isPauseContent = target.closest('.pause-content');
+            const isAboutContent = target.closest('.about-content');
 
-            if (!isHelpContent && !isLevelUpContent && !isPauseContent) {
+            if (!isHelpContent && !isLevelUpContent && !isPauseContent && !isAboutContent) {
                 e.preventDefault();
                 e.stopPropagation();
             }
@@ -10833,6 +11154,22 @@ class VibeSurvivor {
                     gameTagline: "Survive the endless waves!",
                     startGame: "START",
                     options: "OPTIONS",
+                    about: "ABOUT",
+
+                    // About menu
+                    aboutTitle: "ABOUT",
+                    vibeCodingTitle: "100% Made via Vibe Coding",
+                    vibeCodingSubtitle: "A complete game development journey using AI tools",
+                    codingLabel: "Coding:",
+                    codingValue: "Claude Code & Codex",
+                    musicLabel: "Music:",
+                    musicValue: "Suno AI",
+                    soundEffectsLabel: "Sound Effects:",
+                    soundEffectsValue: "ElevenLabs",
+                    artworkLabel: "Artwork:",
+                    artworkValue: "PixelLab",
+                    connectWithUs: "Connect With Us",
+                    aboutHint: "Press ESC to close",
 
                     // Options menu
                     optionsTitle: "OPTIONS",
@@ -10961,6 +11298,22 @@ class VibeSurvivor {
                     gameTagline: "끝없는 도형들의 공격에서 살아남아라!",
                     startGame: "시작",
                     options: "설정",
+                    about: "정보",
+
+                    // About menu
+                    aboutTitle: "정보",
+                    vibeCodingTitle: "100% 바이브 코딩으로 제작",
+                    vibeCodingSubtitle: "AI 도구를 사용한 완전한 게임 개발 여정",
+                    codingLabel: "코딩:",
+                    codingValue: "Claude Code & Codex",
+                    musicLabel: "음악:",
+                    musicValue: "Suno AI",
+                    soundEffectsLabel: "효과음:",
+                    soundEffectsValue: "ElevenLabs",
+                    artworkLabel: "아트워크:",
+                    artworkValue: "PixelLab",
+                    connectWithUs: "소셜 미디어",
+                    aboutHint: "ESC 키로 닫기",
 
                     // Options menu
                     optionsTitle: "설정",
@@ -11138,6 +11491,9 @@ class VibeSurvivor {
         const optionsBtn = document.getElementById('options-btn');
         if (optionsBtn) optionsBtn.textContent = this.t('options');
 
+        const aboutBtn = document.getElementById('about-btn');
+        if (aboutBtn) aboutBtn.textContent = this.t('about');
+
         // Pause menu
         const pauseTitle = document.querySelector('#pause-menu h2');
         if (pauseTitle) pauseTitle.textContent = this.t('gamePaused');
@@ -11251,6 +11607,9 @@ class VibeSurvivor {
         // Options menu
         this.updateOptionsMenu();
 
+        // About menu
+        this.updateAboutMenu();
+
         // Update dash button position label
         this.updateDashPositionButtonLabel();
     }
@@ -11273,6 +11632,41 @@ class VibeSurvivor {
         // Update the button texts immediately
         this.updateOptionsAudioButton();
         this.updateOptionsDashButton();
+    }
+
+    // Update about menu text
+    updateAboutMenu() {
+        const aboutTitle = document.querySelector('#about-menu h2');
+        if (aboutTitle) aboutTitle.textContent = this.t('aboutTitle');
+
+        const vibeCodingTitle = document.querySelector('.vibe-coding-title');
+        if (vibeCodingTitle) vibeCodingTitle.textContent = this.t('vibeCodingTitle');
+
+        const vibeCodingSubtitle = document.querySelector('.vibe-coding-subtitle');
+        if (vibeCodingSubtitle) vibeCodingSubtitle.textContent = this.t('vibeCodingSubtitle');
+
+        const creditLabels = document.querySelectorAll('.credit-label');
+        const creditValues = document.querySelectorAll('.credit-value');
+
+        if (creditLabels.length >= 4 && creditValues.length >= 4) {
+            creditLabels[0].textContent = this.t('codingLabel');
+            creditValues[0].textContent = this.t('codingValue');
+            creditLabels[1].textContent = this.t('musicLabel');
+            creditValues[1].textContent = this.t('musicValue');
+            creditLabels[2].textContent = this.t('soundEffectsLabel');
+            creditValues[2].textContent = this.t('soundEffectsValue');
+            creditLabels[3].textContent = this.t('artworkLabel');
+            creditValues[3].textContent = this.t('artworkValue');
+        }
+
+        const connectWithUs = document.querySelector('.social-links h3');
+        if (connectWithUs) connectWithUs.textContent = this.t('connectWithUs');
+
+        const closeAboutBtn = document.getElementById('close-about-btn');
+        if (closeAboutBtn) closeAboutBtn.textContent = this.t('close');
+
+        const aboutHint = document.querySelector('.about-hint');
+        if (aboutHint) aboutHint.textContent = this.t('aboutHint');
     }
 
     // Load user settings from localStorage
@@ -11357,6 +11751,37 @@ class VibeSurvivor {
             const position = this.touchControls?.dashButton?.position ||
                            this.settings?.dashButtonPosition || 'right';
             dashBtn.textContent = this.t(position).toUpperCase();
+        }
+    }
+
+    // About Menu Methods
+    showAboutMenu() {
+        const aboutMenu = document.getElementById('about-menu');
+        if (aboutMenu) {
+            aboutMenu.style.display = 'flex';
+
+            // Enable scrolling for mobile
+            this.enableAboutScrolling();
+
+            // Hide start screen bot when about menu is open
+            if (window.startScreenBot) {
+                window.startScreenBot.hide();
+            }
+        }
+    }
+
+    hideAboutMenu() {
+        const aboutMenu = document.getElementById('about-menu');
+        if (aboutMenu) {
+            aboutMenu.style.display = 'none';
+
+            // Disable scrolling handlers
+            this.disableAboutScrolling();
+
+            // Show start screen bot again if we're on the start screen
+            if (!this.gameRunning && window.startScreenBot) {
+                window.startScreenBot.show();
+            }
         }
     }
 }
