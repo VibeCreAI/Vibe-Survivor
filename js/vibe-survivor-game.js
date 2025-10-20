@@ -3365,8 +3365,49 @@ class VibeSurvivor {
         if (this.player.trail.length > maxTrailLength) {
             this.player.trail.shift();
         }
-        
+
         this.player.glow = (this.player.glow + 0.1) % (Math.PI * 2);
+
+        // Update sprite direction based on movement (must be in update loop for consistency)
+        let movementAngle = this.player.lastMovementAngle || 0;
+        let isMoving = false;
+
+        // Check for joystick movement first (takes priority for mobile)
+        if (this.isMobile && this.touchControls.joystick.active &&
+            (Math.abs(this.touchControls.joystick.moveX) > 0.1 || Math.abs(this.touchControls.joystick.moveY) > 0.1)) {
+            const joystickAngle = Math.atan2(this.touchControls.joystick.moveY, this.touchControls.joystick.moveX);
+            movementAngle = (joystickAngle * 180 / Math.PI);
+            isMoving = true;
+        }
+        // Check keyboard controls
+        else if (moveX !== 0 || moveY !== 0) {
+            movementAngle = Math.atan2(moveY, moveX) * 180 / Math.PI;
+            isMoving = true;
+        }
+
+        // Update sprite direction
+        if (!isMoving) {
+            this.player.spriteDirection = 'idle';
+        } else {
+            // Determine direction based on angle
+            if (movementAngle >= -112.5 && movementAngle < -67.5) {
+                this.player.spriteDirection = 'up';
+            } else if (movementAngle >= -67.5 && movementAngle < 67.5) {
+                this.player.spriteDirection = 'right';
+            } else if (movementAngle >= 67.5 && movementAngle < 112.5) {
+                this.player.spriteDirection = 'down';
+            } else {
+                this.player.spriteDirection = 'left';
+            }
+        }
+
+        // Update sprite animation (fixed timestep, independent of draw rate)
+        this.player.spriteTimer++;
+        const framesPerSpriteFrame = Math.floor(60 / this.spriteConfig.frameRate); // 60 FPS / 8 FPS
+        if (this.player.spriteTimer >= framesPerSpriteFrame) {
+            this.player.spriteTimer = 0;
+            this.player.spriteFrame = (this.player.spriteFrame + 1) % this.spriteConfig.totalFrames;
+        }
     }
     
     updatePassives() {
@@ -9200,19 +9241,19 @@ class VibeSurvivor {
             this.spriteConfig.frameHeight = Math.floor(this.playerSprites.idle.height / this.spriteConfig.rows);
         }
 
-        // Update animation frame
-        this.player.spriteTimer++;
-        const framesPerSpriteFrame = Math.floor(60 / this.spriteConfig.frameRate); // 60 FPS / 8 FPS = ~7.5 frames
-        if (this.player.spriteTimer >= framesPerSpriteFrame) {
-            this.player.spriteTimer = 0;
-            this.player.spriteFrame = (this.player.spriteFrame + 1) % this.spriteConfig.totalFrames;
-        }
+        // Animation timing is now handled in updatePlayer() for consistent speed across all devices
 
         // Calculate sprite sheet position (use Math.floor to prevent sub-pixel bleeding)
         const col = this.player.spriteFrame % this.spriteConfig.cols;
         const row = Math.floor(this.player.spriteFrame / this.spriteConfig.cols);
-        const sx = Math.floor(col * this.spriteConfig.frameWidth);
-        const sy = Math.floor(row * this.spriteConfig.frameHeight);
+
+        // Aggressive inset to prevent bleeding on high-DPI mobile screens
+        // Start 2px inside frame boundary and reduce size by 4px total (2px each side)
+        const inset = 2;
+        const sx = Math.floor(col * this.spriteConfig.frameWidth) + inset;
+        const sy = Math.floor(row * this.spriteConfig.frameHeight) + inset;
+        const safeFrameWidth = this.spriteConfig.frameWidth - (inset * 2);
+        const safeFrameHeight = this.spriteConfig.frameHeight - (inset * 2);
 
         // Select the appropriate sprite sheet based on direction
         let spriteSheet = this.playerSprites[this.player.spriteDirection];
@@ -9228,8 +9269,8 @@ class VibeSurvivor {
         this.ctx.drawImage(
             spriteSheet,
             sx, sy,
-            this.spriteConfig.frameWidth,
-            this.spriteConfig.frameHeight,
+            safeFrameWidth,
+            safeFrameHeight,
             -spriteSize / 2,
             -spriteSize / 2 - 10,
             spriteSize,
@@ -9243,85 +9284,8 @@ class VibeSurvivor {
 
     drawPlayer() {
         this.ctx.save();
-        
-        // Calculate movement direction for arrow orientation
-        // Support both WASD/arrow keys and virtual joystick
-        const up = this.keys.w || this.keys.ArrowUp;
-        const down = this.keys.s || this.keys.ArrowDown;
-        const left = this.keys.a || this.keys.ArrowLeft;
-        const right = this.keys.d || this.keys.ArrowRight;
-        
-        let movementAngle = this.player.lastMovementAngle || 0; // Use last direction as default
-        let isMoving = false;
-        
-        // Check for joystick movement first (takes priority for mobile)
-        if (this.isMobile && this.touchControls.joystick.active && 
-            (Math.abs(this.touchControls.joystick.moveX) > 0.1 || Math.abs(this.touchControls.joystick.moveY) > 0.1)) {
-            // Calculate angle from joystick movement (-1 to 1 range)
-            const joystickAngle = Math.atan2(this.touchControls.joystick.moveY, this.touchControls.joystick.moveX);
-            movementAngle = (joystickAngle * 180 / Math.PI); // Convert to degrees
-            isMoving = true;
-        }
-        // Fall back to keyboard controls if no joystick movement
-        else if (up && right) {
-            movementAngle = -45; // Up-right
-            isMoving = true;
-        } else if (up && left) {
-            movementAngle = -135; // Up-left
-            isMoving = true;
-        } else if (down && right) {
-            movementAngle = 45; // Down-right
-            isMoving = true;
-        } else if (down && left) {
-            movementAngle = 135; // Down-left
-            isMoving = true;
-        } else if (up) {
-            movementAngle = -90; // Up
-            isMoving = true;
-        } else if (down) {
-            movementAngle = 90; // Down
-            isMoving = true;
-        } else if (right) {
-            movementAngle = 0; // Right
-            isMoving = true;
-        } else if (left) {
-            movementAngle = 180; // Left
-            isMoving = true;
-        }
-        
-        // Remember the last movement direction
-        if (isMoving) {
-            this.player.lastMovementAngle = movementAngle;
-        }
 
-        // Update sprite direction based on movement
-        if (!isMoving) {
-            this.player.spriteDirection = 'idle';
-        } else {
-            // Determine direction based on angle
-            // Angles: -90 = up, 90 = down, 0 = right, 180/-180 = left
-            // Prioritize horizontal directions for diagonals
-            if (movementAngle >= -112.5 && movementAngle < -67.5) {
-                // Pure up: -90° ± 22.5°
-                this.player.spriteDirection = 'up';
-            } else if (movementAngle >= -67.5 && movementAngle < 67.5) {
-                // Right quadrant: -67.5° to 67.5° (includes up-right and down-right)
-                this.player.spriteDirection = 'right';
-            } else if (movementAngle >= 67.5 && movementAngle < 112.5) {
-                // Pure down: 90° ± 22.5°
-                this.player.spriteDirection = 'down';
-            } else {
-                // Left quadrant: 112.5° to 180° and -180° to -112.5° (includes up-left and down-left)
-                this.player.spriteDirection = 'left';
-            }
-        }
-
-        // Smooth angle transition (kept for potential future use)
-        if (this.player.angle === undefined) this.player.angle = 0;
-        let angleDiff = movementAngle - this.player.angle;
-        if (angleDiff > 180) angleDiff -= 360;
-        if (angleDiff < -180) angleDiff += 360;
-        this.player.angle += angleDiff * 0.2;
+        // Sprite direction and animation timing are now handled in updatePlayer() for consistent behavior
         
         // Draw trail with neon cyan segments (ALWAYS VISIBLE)
         if (this.player.trail.length > 1) {

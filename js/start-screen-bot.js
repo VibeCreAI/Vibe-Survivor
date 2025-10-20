@@ -103,13 +103,21 @@ class StartScreenBot {
         const col = this.currentFrame % this.cols;
         const row = Math.floor(this.currentFrame / this.cols);
 
+        // Aggressive inset to prevent bleeding on high-DPI mobile screens
+        // Start 2px inside frame boundary and reduce size by 4px total (2px each side)
+        const inset = 2;
+        const sx = Math.floor(col * this.frameWidth) + inset;
+        const sy = Math.floor(row * this.frameHeight) + inset;
+        const safeFrameWidth = this.frameWidth - (inset * 2);
+        const safeFrameHeight = this.frameHeight - (inset * 2);
+
         // Draw the frame
         this.ctx.drawImage(
             this.spriteSheet,
-            Math.floor(col * this.frameWidth),
-            Math.floor(row * this.frameHeight),
-            this.frameWidth,
-            this.frameHeight,
+            sx,
+            sy,
+            safeFrameWidth,
+            safeFrameHeight,
             0,
             0,
             this.canvas.width,
