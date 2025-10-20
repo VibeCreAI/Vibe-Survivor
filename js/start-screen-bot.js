@@ -14,7 +14,10 @@ class StartScreenBot {
         this.rows = 10;
         this.frameWidth = 320; // Each frame is 320x320px
         this.frameHeight = 320;
-        this.displaySize = 100; // Display size in pixels
+        this.displaySizePercent = 0.12; // Size as percentage of modal width (12%)
+        this.minDisplaySize = 60; // Minimum size in pixels
+        this.maxDisplaySize = 150; // Maximum size in pixels
+        this.displaySize = 100; // Will be calculated based on modal width
         this.animationSpeed = 60; // ms per frame
         this.isLoaded = false;
         this.animationFrameId = null;
@@ -138,6 +141,9 @@ class StartScreenBot {
             // Store reference to title container for position updates
             this.titleContainer = startOverlay.querySelector('.survivor-title');
 
+            // Calculate initial size based on modal width
+            this.updateSize();
+
             // Update position initially
             this.updatePosition();
 
@@ -149,8 +155,52 @@ class StartScreenBot {
         }
     }
 
+    calculateDisplaySize() {
+        // Get the modal content width to scale relative to it
+        const modal = document.querySelector('.vibe-survivor-content');
+        if (!modal) return this.displaySize;
+
+        const modalWidth = modal.offsetWidth;
+
+        // Calculate size as percentage of modal width
+        let newSize = Math.floor(modalWidth * this.displaySizePercent);
+
+        // Clamp between min and max
+        newSize = Math.max(this.minDisplaySize, Math.min(this.maxDisplaySize, newSize));
+
+        return newSize;
+    }
+
+    updateSize() {
+        const newSize = this.calculateDisplaySize();
+
+        if (newSize !== this.displaySize) {
+            this.displaySize = newSize;
+
+            // Update container size
+            if (this.container) {
+                this.container.style.width = `${this.displaySize}px`;
+                this.container.style.height = `${this.displaySize}px`;
+            }
+
+            // Update canvas size
+            if (this.canvas) {
+                this.canvas.width = this.displaySize;
+                this.canvas.height = this.displaySize;
+
+                // Redraw current frame at new size
+                if (this.isLoaded) {
+                    this.drawCurrentFrame();
+                }
+            }
+        }
+    }
+
     updatePosition() {
         if (!this.titleContainer || !this.container) return;
+
+        // Update size first
+        this.updateSize();
 
         // Get the title container's position
         const rect = this.titleContainer.getBoundingClientRect();
