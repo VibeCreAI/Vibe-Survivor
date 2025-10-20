@@ -322,6 +322,9 @@ class VibeSurvivor {
         this.addStyles();
         this.setupEventHandlers();
 
+        // Initialize the start screen (this will set up keyboard navigation)
+        this.showStartScreen();
+
         // Initialize translations after modal creation
         setTimeout(() => {
             this.updateAllText();
@@ -458,7 +461,7 @@ class VibeSurvivor {
                                     </div>
                                 </div>
                                 <button id="close-options-btn" class="survivor-btn primary">CLOSE</button>
-                                <p class="options-hint">Press ESC to close</p>
+                                <p class="options-hint">WASD/Arrows to navigate, Enter to select, ESC to close</p>
                             </div>
                         </div>
 
@@ -516,7 +519,7 @@ class VibeSurvivor {
                                     </div>
                                 </div>
                                 <button id="close-about-btn" class="survivor-btn primary">CLOSE</button>
-                                <p class="about-hint">Press ESC to close</p>
+                                <p class="about-hint">WASD/Arrows to navigate, Enter to select, ESC to close</p>
                             </div>
                         </div>
 
@@ -2472,17 +2475,41 @@ class VibeSurvivor {
                         if (this.menuNavigationState.menuType === 'levelup') {
                             // Can't escape level up menu
                         } else if (this.menuNavigationState.menuType === 'gameover') {
-                            // Can't escape game over menu  
+                            // Can't escape game over menu
                         } else if (this.menuNavigationState.menuType === 'pause') {
                             this.togglePause();
                         } else if (this.menuNavigationState.menuType === 'help') {
                             this.toggleHelp();
+                        } else if (this.menuNavigationState.menuType === 'options') {
+                            this.hideOptionsMenu();
+                        } else if (this.menuNavigationState.menuType === 'about') {
+                            this.hideAboutMenu();
+                        } else if (this.menuNavigationState.menuType === 'start') {
+                            // On start screen, ESC does nothing (can't close start screen)
+                            // Navigation state remains active for keyboard control
                         }
                         break;
                 }
                 return;
             }
-            
+
+            // Check if about or options menu is open (works both in-game and on start screen)
+            if (e.key.toLowerCase() === 'escape') {
+                const aboutMenu = document.getElementById('about-menu');
+                if (aboutMenu && aboutMenu.style.display === 'flex') {
+                    e.preventDefault();
+                    this.hideAboutMenu();
+                    return;
+                }
+
+                const optionsMenu = document.getElementById('options-menu');
+                if (optionsMenu && optionsMenu.style.display === 'flex') {
+                    e.preventDefault();
+                    this.hideOptionsMenu();
+                    return;
+                }
+            }
+
             // Regular game controls
             if (this.gameRunning) {
                 // Store both lowercase and original case for arrow keys
@@ -2504,19 +2531,9 @@ class VibeSurvivor {
                 }
                 
                 if (e.key.toLowerCase() === 'escape') {
-                    // Check if about menu is open first
-                    const aboutMenu = document.getElementById('about-menu');
-                    if (aboutMenu && aboutMenu.style.display === 'flex') {
-                        this.hideAboutMenu();
-                    } else {
-                        // Check if options menu is open
-                        const optionsMenu = document.getElementById('options-menu');
-                        if (optionsMenu && optionsMenu.style.display === 'flex') {
-                            this.hideOptionsMenu();
-                        } else {
-                            this.togglePause();
-                        }
-                    }
+                    // About/Options menu handling is done above (before gameRunning check)
+                    // Here we just handle pause toggle during gameplay
+                    this.togglePause();
                 }
             }
         });
@@ -2811,16 +2828,21 @@ class VibeSurvivor {
             
             // Add menu navigation styles
             this.addMenuNavigationStyles();
-            
+
             // Initialize keyboard navigation for start screen buttons
-            const startBtn = document.getElementById('start-survivor');
-            const restartBtn = document.getElementById('restart-survivor');
-            const exitBtn = document.getElementById('exit-survivor');
-            const startButtons = [startBtn, restartBtn, exitBtn].filter(btn => btn); // Filter out null buttons
-            
-            if (startButtons.length > 0) {
-                this.initializeMenuNavigation('start', startButtons);
-            }
+            // Use setTimeout to ensure DOM is fully ready
+            setTimeout(() => {
+                const startBtn = document.getElementById('start-survivor');
+                const optionsBtn = document.getElementById('options-btn');
+                const aboutBtn = document.getElementById('about-btn');
+                const restartBtn = document.getElementById('restart-survivor');
+                const exitBtn = document.getElementById('exit-survivor');
+                const startButtons = [startBtn, optionsBtn, aboutBtn, restartBtn, exitBtn].filter(btn => btn);
+
+                if (startButtons.length > 0) {
+                    this.initializeMenuNavigation('start', startButtons);
+                }
+            }, 100);
             
             
         } else {
@@ -3829,6 +3851,48 @@ class VibeSurvivor {
         this.aboutScrollHandler = null;
     }
 
+    enableOptionsScrolling() {
+        const optionsContent = document.querySelector('.options-content');
+        if (!optionsContent) return;
+
+        // Remove any existing touch event listeners to avoid duplicates
+        if (this.optionsScrollHandler) {
+            optionsContent.removeEventListener('touchstart', this.optionsScrollHandler.start, { passive: false });
+            optionsContent.removeEventListener('touchmove', this.optionsScrollHandler.move, { passive: false });
+            optionsContent.removeEventListener('touchend', this.optionsScrollHandler.end, { passive: false });
+        }
+
+        this.optionsScrollHandler = {
+            start: (e) => {
+                e.stopPropagation();
+            },
+            move: (e) => {
+                e.stopPropagation();
+            },
+            end: (e) => {
+                e.stopPropagation();
+            }
+        };
+
+        // Add touch event listeners that explicitly allow scrolling
+        optionsContent.addEventListener('touchstart', this.optionsScrollHandler.start, { passive: true });
+        optionsContent.addEventListener('touchmove', this.optionsScrollHandler.move, { passive: true });
+        optionsContent.addEventListener('touchend', this.optionsScrollHandler.end, { passive: true });
+    }
+
+    disableOptionsScrolling() {
+        const optionsContent = document.querySelector('.options-content');
+        if (!optionsContent || !this.optionsScrollHandler) return;
+
+        // Remove touch event listeners
+        optionsContent.removeEventListener('touchstart', this.optionsScrollHandler.start, { passive: true });
+        optionsContent.removeEventListener('touchmove', this.optionsScrollHandler.move, { passive: true });
+        optionsContent.removeEventListener('touchend', this.optionsScrollHandler.end, { passive: true });
+
+        // Clear the handler reference
+        this.optionsScrollHandler = null;
+    }
+
     scrollGameOverContent(direction) {
         const gameOverContent = document.querySelector('#survivor-game-over-overlay [style*="overflow-y: auto"]');
         if (!gameOverContent) return;
@@ -4005,10 +4069,27 @@ class VibeSurvivor {
     
     selectCurrentMenuItem() {
         if (!this.menuNavigationState.active) return;
-        
-        const selectedButton = this.menuNavigationState.menuButtons[this.menuNavigationState.selectedIndex];
-        if (selectedButton) {
-            selectedButton.click();
+
+        const selectedElement = this.menuNavigationState.menuButtons[this.menuNavigationState.selectedIndex];
+        if (selectedElement) {
+            // Handle different element types
+            if (selectedElement.tagName === 'SELECT') {
+                // For select dropdowns, cycle through options
+                const select = selectedElement;
+                const currentIndex = select.selectedIndex;
+                const nextIndex = (currentIndex + 1) % select.options.length;
+                select.selectedIndex = nextIndex;
+
+                // Trigger change event
+                const event = new Event('change', { bubbles: true });
+                select.dispatchEvent(event);
+            } else if (selectedElement.tagName === 'A') {
+                // For links, simulate click to open in new tab
+                selectedElement.click();
+            } else {
+                // For buttons, just click them
+                selectedElement.click();
+            }
         }
     }
     
@@ -4018,7 +4099,7 @@ class VibeSurvivor {
         this.menuNavigationState.menuType = null;
         this.menuNavigationState.menuButtons = [];
         this.menuNavigationState.keyboardUsed = false;
-        this.previousNavigationState = null; // Clear any backup state
+        // Note: We don't clear previousNavigationState here because it's used to restore state later
     }
     
     exitToMenu() {
@@ -4160,8 +4241,9 @@ class VibeSurvivor {
             const isLevelUpContent = target.closest('.upgrade-choices-container');
             const isPauseContent = target.closest('.pause-content');
             const isAboutContent = target.closest('.about-content');
+            const isOptionsContent = target.closest('.options-content');
 
-            if (!isHelpContent && !isLevelUpContent && !isPauseContent && !isAboutContent) {
+            if (!isHelpContent && !isLevelUpContent && !isPauseContent && !isAboutContent && !isOptionsContent) {
                 e.preventDefault();
                 e.stopPropagation();
             }
@@ -11702,8 +11784,33 @@ class VibeSurvivor {
     showOptionsMenu() {
         const optionsMenu = document.getElementById('options-menu');
         if (optionsMenu) {
+            // Preserve current navigation state if we're on the start screen
+            if (this.menuNavigationState.menuType === 'start') {
+                this.previousNavigationState = {
+                    active: this.menuNavigationState.active,
+                    selectedIndex: this.menuNavigationState.selectedIndex,
+                    menuType: this.menuNavigationState.menuType,
+                    menuButtons: [...this.menuNavigationState.menuButtons],
+                    keyboardUsed: this.menuNavigationState.keyboardUsed
+                };
+            }
+
             optionsMenu.style.display = 'flex';
             this.updateOptionsMenuState();
+
+            // Enable scrolling for mobile
+            this.enableOptionsScrolling();
+
+            // Initialize keyboard navigation for options menu
+            const languageSelect = document.getElementById('language-select');
+            const muteBtn = document.getElementById('options-mute-btn');
+            const dashPosBtn = document.getElementById('options-dash-position-btn');
+            const closeBtn = document.getElementById('close-options-btn');
+            const optionsButtons = [languageSelect, muteBtn, dashPosBtn, closeBtn].filter(btn => btn);
+
+            if (optionsButtons.length > 0) {
+                this.initializeMenuNavigation('options', optionsButtons);
+            }
 
             // Hide start screen bot when options menu is open
             if (window.startScreenBot) {
@@ -11716,6 +11823,20 @@ class VibeSurvivor {
         const optionsMenu = document.getElementById('options-menu');
         if (optionsMenu) {
             optionsMenu.style.display = 'none';
+
+            // Disable scrolling handlers
+            this.disableOptionsScrolling();
+
+            // Restore previous navigation state if it exists (from start screen)
+            if (this.previousNavigationState) {
+                this.menuNavigationState.active = this.previousNavigationState.active;
+                this.menuNavigationState.selectedIndex = this.previousNavigationState.selectedIndex;
+                this.menuNavigationState.menuType = this.previousNavigationState.menuType;
+                this.menuNavigationState.menuButtons = [...this.previousNavigationState.menuButtons];
+                this.menuNavigationState.keyboardUsed = this.previousNavigationState.keyboardUsed;
+                this.updateMenuSelection();
+                this.previousNavigationState = null;
+            }
 
             // Show start screen bot again if we're on the start screen
             if (!this.gameRunning && window.startScreenBot) {
@@ -11758,10 +11879,30 @@ class VibeSurvivor {
     showAboutMenu() {
         const aboutMenu = document.getElementById('about-menu');
         if (aboutMenu) {
+            // Preserve current navigation state if we're on the start screen
+            if (this.menuNavigationState.menuType === 'start') {
+                this.previousNavigationState = {
+                    active: this.menuNavigationState.active,
+                    selectedIndex: this.menuNavigationState.selectedIndex,
+                    menuType: this.menuNavigationState.menuType,
+                    menuButtons: [...this.menuNavigationState.menuButtons],
+                    keyboardUsed: this.menuNavigationState.keyboardUsed
+                };
+            }
+
             aboutMenu.style.display = 'flex';
 
             // Enable scrolling for mobile
             this.enableAboutScrolling();
+
+            // Initialize keyboard navigation for about menu
+            const socialLinks = Array.from(aboutMenu.querySelectorAll('.social-item'));
+            const closeBtn = document.getElementById('close-about-btn');
+            const aboutButtons = [...socialLinks, closeBtn].filter(btn => btn);
+
+            if (aboutButtons.length > 0) {
+                this.initializeMenuNavigation('about', aboutButtons);
+            }
 
             // Hide start screen bot when about menu is open
             if (window.startScreenBot) {
@@ -11777,6 +11918,17 @@ class VibeSurvivor {
 
             // Disable scrolling handlers
             this.disableAboutScrolling();
+
+            // Restore previous navigation state if it exists (from start screen)
+            if (this.previousNavigationState) {
+                this.menuNavigationState.active = this.previousNavigationState.active;
+                this.menuNavigationState.selectedIndex = this.previousNavigationState.selectedIndex;
+                this.menuNavigationState.menuType = this.previousNavigationState.menuType;
+                this.menuNavigationState.menuButtons = [...this.previousNavigationState.menuButtons];
+                this.menuNavigationState.keyboardUsed = this.previousNavigationState.keyboardUsed;
+                this.updateMenuSelection();
+                this.previousNavigationState = null;
+            }
 
             // Show start screen bot again if we're on the start screen
             if (!this.gameRunning && window.startScreenBot) {
