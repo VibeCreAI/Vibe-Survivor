@@ -99,15 +99,15 @@ class StartScreenBot {
         // Clear canvas
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        // Calculate frame position in sprite sheet (10x10 grid)
+        // Calculate frame position in sprite sheet (10x10 grid) - use Math.floor to prevent sub-pixel bleeding
         const col = this.currentFrame % this.cols;
         const row = Math.floor(this.currentFrame / this.cols);
 
         // Draw the frame
         this.ctx.drawImage(
             this.spriteSheet,
-            col * this.frameWidth,
-            row * this.frameHeight,
+            Math.floor(col * this.frameWidth),
+            Math.floor(row * this.frameHeight),
             this.frameWidth,
             this.frameHeight,
             0,

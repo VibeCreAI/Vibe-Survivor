@@ -150,10 +150,10 @@ class VibeSurvivor {
         // Track sprite loading
         const onSpriteLoad = () => {
             this.playerSprites.loaded++;
-            // Calculate frame dimensions from first loaded sprite
+            // Calculate frame dimensions from first loaded sprite (rounded to prevent sub-pixel issues)
             if (this.spriteConfig.frameWidth === 0 && this.playerSprites.idle.complete) {
-                this.spriteConfig.frameWidth = this.playerSprites.idle.width / this.spriteConfig.cols;
-                this.spriteConfig.frameHeight = this.playerSprites.idle.height / this.spriteConfig.rows;
+                this.spriteConfig.frameWidth = Math.floor(this.playerSprites.idle.width / this.spriteConfig.cols);
+                this.spriteConfig.frameHeight = Math.floor(this.playerSprites.idle.height / this.spriteConfig.rows);
                 console.log('Sprite dimensions calculated:', this.spriteConfig.frameWidth, 'x', this.spriteConfig.frameHeight);
             }
         };
@@ -9194,10 +9194,10 @@ class VibeSurvivor {
             this._spriteDebugLogged = true;
         }
 
-        // Calculate frame dimensions if not yet calculated
+        // Calculate frame dimensions if not yet calculated (rounded to prevent sub-pixel issues)
         if (this.spriteConfig.frameWidth === 0) {
-            this.spriteConfig.frameWidth = this.playerSprites.idle.width / this.spriteConfig.cols;
-            this.spriteConfig.frameHeight = this.playerSprites.idle.height / this.spriteConfig.rows;
+            this.spriteConfig.frameWidth = Math.floor(this.playerSprites.idle.width / this.spriteConfig.cols);
+            this.spriteConfig.frameHeight = Math.floor(this.playerSprites.idle.height / this.spriteConfig.rows);
         }
 
         // Update animation frame
@@ -9208,11 +9208,11 @@ class VibeSurvivor {
             this.player.spriteFrame = (this.player.spriteFrame + 1) % this.spriteConfig.totalFrames;
         }
 
-        // Calculate sprite sheet position
+        // Calculate sprite sheet position (use Math.floor to prevent sub-pixel bleeding)
         const col = this.player.spriteFrame % this.spriteConfig.cols;
         const row = Math.floor(this.player.spriteFrame / this.spriteConfig.cols);
-        const sx = col * this.spriteConfig.frameWidth;
-        const sy = row * this.spriteConfig.frameHeight;
+        const sx = Math.floor(col * this.spriteConfig.frameWidth);
+        const sy = Math.floor(row * this.spriteConfig.frameHeight);
 
         // Select the appropriate sprite sheet based on direction
         let spriteSheet = this.playerSprites[this.player.spriteDirection];
