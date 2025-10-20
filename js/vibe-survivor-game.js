@@ -11348,8 +11348,8 @@ class VibeSurvivor {
 
                     // About menu
                     aboutTitle: "정보",
-                    vibeCodingTitle: "100% 바이브 코딩으로 제작",
-                    vibeCodingSubtitle: "AI 도구를 사용한 완전한 게임 개발 여정",
+                    vibeCodingTitle: "100% 바이브 코딩으로만 제작 하였습니다.",
+                    vibeCodingSubtitle: "AI 도구를 사용한 완전한 게임 개발 여정 입니다.",
                     codingLabel: "코딩:",
                     codingValue: "Claude Code & Codex",
                     musicLabel: "음악:",
