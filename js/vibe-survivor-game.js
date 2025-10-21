@@ -5753,11 +5753,12 @@ class VibeSurvivor {
                     this.createHitParticles(enemy.x, enemy.y, '#FF0066'); // Red/pink for boss
                 }
 
-                // Teleport boss to random angle around player, outside viewport but in chase range
+                // Teleport boss in the direction the player ran FROM (behind the player)
+                // This is the direction from player to boss's current position
+                const [teleportDirX, teleportDirY] = Vector2.direction(playerX, playerY, enemy.x, enemy.y);
                 const teleportDistance = 400 + Math.random() * 100; // 400-500 units from player
-                const teleportAngle = Math.random() * Math.PI * 2;
-                enemy.x = playerX + this.fastCos(teleportAngle) * teleportDistance;
-                enemy.y = playerY + this.fastSin(teleportAngle) * teleportDistance;
+                enemy.x = playerX + teleportDirX * teleportDistance;
+                enemy.y = playerY + teleportDirY * teleportDistance;
 
                 // Create burst particles at new position after teleporting
                 for (let i = 0; i < 8; i++) {
