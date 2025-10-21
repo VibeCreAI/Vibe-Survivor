@@ -5743,7 +5743,31 @@ class VibeSurvivor {
             const bossHealthPercent = enemy.health / enemy.maxHealth;
             const [dirX, dirY] = Vector2.direction(enemy.x, enemy.y, playerX, playerY);
             const distanceSquared = Vector2.distanceSquared(enemy.x, enemy.y, playerX, playerY);
-            
+            const distance = this.cachedSqrt(distanceSquared);
+
+            // Boss teleportation - prevent player from escaping boss fight
+            const maxBossDistance = 800; // Teleport if boss gets this far (outside viewport)
+            if (distance > maxBossDistance) {
+                // Create burst particles at current position before teleporting
+                for (let i = 0; i < 8; i++) {
+                    this.createHitParticles(enemy.x, enemy.y, '#FF0066'); // Red/pink for boss
+                }
+
+                // Teleport boss to random angle around player, outside viewport but in chase range
+                const teleportDistance = 400 + Math.random() * 100; // 400-500 units from player
+                const teleportAngle = Math.random() * Math.PI * 2;
+                enemy.x = playerX + this.fastCos(teleportAngle) * teleportDistance;
+                enemy.y = playerY + this.fastSin(teleportAngle) * teleportDistance;
+
+                // Create burst particles at new position after teleporting
+                for (let i = 0; i < 8; i++) {
+                    this.createHitParticles(enemy.x, enemy.y, '#FF0066');
+                }
+
+                // Add screen shake for dramatic effect
+                this.cameraShake = 15;
+            }
+
             // Boss missile firing logic
             const missileInterval = 200; // Fire every 1.5 seconds at 60fps
             if (this.frameCount - enemy.lastMissileFrame >= missileInterval) {
@@ -5873,12 +5897,15 @@ class VibeSurvivor {
                 this.enemies.splice(i, 1);
             } else {
                 // Remove enemies that are too far from player (performance optimization)
-                const dx = enemy.x - this.player.x;
-                const dy = enemy.y - this.player.y;
-                const distanceFromPlayer = this.cachedSqrt(dx * dx + dy * dy);
-                
-                if (distanceFromPlayer > 1200) { // Remove enemies beyond this distance
-                    this.enemies.splice(i, 1);
+                // But NEVER remove bosses - they use teleportation instead
+                if (enemy.behavior !== 'boss') {
+                    const dx = enemy.x - this.player.x;
+                    const dy = enemy.y - this.player.y;
+                    const distanceFromPlayer = this.cachedSqrt(dx * dx + dy * dy);
+
+                    if (distanceFromPlayer > 1200) { // Remove enemies beyond this distance
+                        this.enemies.splice(i, 1);
+                    }
                 }
             }
         }
