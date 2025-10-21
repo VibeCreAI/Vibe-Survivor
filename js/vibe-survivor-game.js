@@ -844,6 +844,16 @@ class VibeSurvivor {
                 text-shadow: 0 0 5px rgba(255, 215, 0, 0.8) !important;
                 font-weight: bold !important;
             }
+
+            .header-weapon-empty {
+                background: rgba(0, 255, 255, 0.05);
+                border: 1px dashed rgba(0, 255, 255, 0.2);
+                border-radius: 4px;
+                padding: 3px 6px;
+                font-size: 11px;
+                color: rgba(0, 255, 255, 0.3);
+                text-shadow: none;
+            }
             
             /* Ultra-narrow mobile screens */
             @media screen and (max-width: 320px) {
@@ -10275,18 +10285,34 @@ class VibeSurvivor {
             headerTimeDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
         }
         
-        // Header Weapon display
+        // Header Weapon display - Always show 4 slots
         const headerWeaponDisplay = document.getElementById('header-weapon-display');
         if (headerWeaponDisplay) {
-            headerWeaponDisplay.innerHTML = this.weapons.map(weapon => {
-                const isMergeWeapon = weapon.isMergeWeapon || (weapon.type && weapon.type.includes('homing_laser'));
-                const mergeClass = isMergeWeapon ? ' header-weapon-merge' : '';
-                return `
-                    <div class="header-weapon-item${mergeClass}">
-                        ${this.getWeaponName(weapon.type)} ${weapon.level}
-                    </div>
-                `;
-            }).join('');
+            const maxWeaponSlots = 4;
+            const weaponSlots = [];
+
+            // Fill slots with acquired weapons
+            for (let i = 0; i < maxWeaponSlots; i++) {
+                if (i < this.weapons.length) {
+                    const weapon = this.weapons[i];
+                    const isMergeWeapon = weapon.isMergeWeapon || (weapon.type && weapon.type.includes('homing_laser'));
+                    const mergeClass = isMergeWeapon ? ' header-weapon-merge' : '';
+                    weaponSlots.push(`
+                        <div class="header-weapon-item${mergeClass}">
+                            ${this.getWeaponName(weapon.type)} ${weapon.level}
+                        </div>
+                    `);
+                } else {
+                    // Empty slot
+                    weaponSlots.push(`
+                        <div class="header-weapon-empty">
+                            ---
+                        </div>
+                    `);
+                }
+            }
+
+            headerWeaponDisplay.innerHTML = weaponSlots.join('');
         }
         
         // Header Boss counter (only show after first boss defeat)
