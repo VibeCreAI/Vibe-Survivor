@@ -839,6 +839,8 @@ class VibeSurvivor {
                 display: flex;
                 gap: 8px;
                 align-items: center;
+                flex-wrap: wrap; /* Allow weapons to wrap to second row when needed */
+                justify-content: center; /* Center weapons when wrapping */
             }
             
             .header-weapon-item {
@@ -952,8 +954,22 @@ class VibeSurvivor {
                     justify-content: center;
                     margin-top: 3px;
                 }
+
+                .header-weapon-item {
+                    padding: 1px 2px;
+                    font-size: 7px;
+                }
+
+                .header-weapon-icon {
+                    width: 10px;
+                    height: 10px;
+                }
+
+                .header-weapon-text {
+                    font-size: 7px;
+                }
             }
-            
+
             /* Narrow mobile screens */
             @media screen and (min-width: 321px) and (max-width: 400px) {
                 .vibe-survivor-header {
@@ -1026,17 +1042,23 @@ class VibeSurvivor {
             }
             
             /* Standard mobile screens */
-            @media screen and (min-width: 401px) and (max-width: 530px) {
+            @media screen and (min-width: 401px) and (max-width: 640px) {
                 .vibe-survivor-header {
                     padding: 10px 15px;
-                    min-height: 60px;
+                    min-height: 80px; /* Increased to accommodate weapon wrapping */
                 }
-                
+
                 .header-stats {
                     gap: 5px;
                     margin: 0 55px; /* 40px buttons + 15px clearance each side */
-                    overflow: hidden;
-                    flex-direction: row; /* Keep single row for standard mobile */
+                    overflow: visible; /* Allow weapons to wrap */
+                    flex-wrap: wrap; /* Allow content to wrap */
+                }
+
+                .header-weapons {
+                    width: 100%; /* Take full width to encourage wrapping */
+                    justify-content: center;
+                    margin-top: 3px; /* Add some space above when wrapped */
                 }
                 
                 .header-primary-stats {
@@ -1078,6 +1100,23 @@ class VibeSurvivor {
 
                 .header-weapon-text {
                     font-size: 10px;
+                }
+            }
+
+            /* Medium screens - ensure weapons can wrap */
+            @media screen and (min-width: 641px) and (max-width: 750px) {
+                .vibe-survivor-header {
+                    min-height: 90px; /* Allow space for potential weapon wrapping */
+                }
+
+                .header-stats {
+                    overflow: visible; /* Allow weapons to wrap */
+                    flex-wrap: wrap; /* Allow content to wrap */
+                }
+
+                .header-weapons {
+                    flex-wrap: wrap; /* Ensure weapons can wrap */
+                    max-width: 100%; /* Don't exceed container width */
                 }
             }
 
