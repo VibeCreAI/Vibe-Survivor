@@ -480,7 +480,7 @@ class VibeSurvivor {
                                     </div>
                                     <div class="credit-item">
                                         <span class="credit-label">Music:</span>
-                                        <span class="credit-value">Suno AI</span>
+                                        <span class="credit-value">ElevenLabs</span>
                                     </div>
                                     <div class="credit-item">
                                         <span class="credit-label">Sound Effects:</span>
@@ -500,15 +500,13 @@ class VibeSurvivor {
                                             </svg>
                                             <span>Website</span>
                                         </a>
-                                        <a href="mailto:contact@vibecreai.com" class="social-item" target="_blank" rel="noopener noreferrer">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" style="fill: currentColor; vertical-align: middle;">
-                                                <path fill="currentColor" fill-rule="evenodd" d="M23 20V6l-11 9L1 6v14zm-11-8l10-8H2z"/>
-                                            </svg>
-                                            <span>Email</span>
-                                        </a>
                                         <a href="https://www.youtube.com/@VibeCreAI" class="social-item" target="_blank" rel="noopener noreferrer">
                                             <img src="https://api.iconify.design/tdesign:logo-youtube-filled.svg?color=white" width="24" height="24" style="vertical-align: middle;" alt="YouTube">
                                             <span>YouTube</span>
+                                        </a>
+                                        <a href="https://discord.gg/QRd38zsMGw" class="social-item" target="_blank" rel="noopener noreferrer">
+                                            <img src="https://api.iconify.design/ic:baseline-discord.svg?color=white" width="24" height="24" style="vertical-align: middle;" alt="Discord">
+                                            <span>Discord</span>
                                         </a>
                                         <a href="https://www.twitch.tv/vibecreai" class="social-item" target="_blank" rel="noopener noreferrer">
                                             <img src="https://api.iconify.design/mdi:twitch.svg?color=white" width="24" height="24" style="vertical-align: middle;" alt="Twitch">
@@ -518,9 +516,11 @@ class VibeSurvivor {
                                             <img src="https://api.iconify.design/ri:twitter-x-fill.svg?color=white" width="24" height="24" style="vertical-align: middle;" alt="X">
                                             <span>Twitter</span>
                                         </a>
-                                        <a href="https://discord.gg/QRd38zsMGw" class="social-item" target="_blank" rel="noopener noreferrer">
-                                            <img src="https://api.iconify.design/ic:baseline-discord.svg?color=white" width="24" height="24" style="vertical-align: middle;" alt="Discord">
-                                            <span>Discord</span>
+                                        <a href="mailto:contact@vibecreai.com" class="social-item" target="_blank" rel="noopener noreferrer">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" style="fill: currentColor; vertical-align: middle;">
+                                                <path fill="currentColor" fill-rule="evenodd" d="M23 20V6l-11 9L1 6v14zm-11-8l10-8H2z"/>
+                                            </svg>
+                                            <span>Email</span>
                                         </a>
                                     </div>
                                 </div>
@@ -11275,7 +11275,7 @@ class VibeSurvivor {
                     codingLabel: "Coding:",
                     codingValue: "Claude Code & Codex",
                     musicLabel: "Music:",
-                    musicValue: "Suno AI",
+                    musicValue: "ElevenLabs",
                     soundEffectsLabel: "Sound Effects:",
                     soundEffectsValue: "ElevenLabs",
                     artworkLabel: "Artwork:",
@@ -11419,7 +11419,7 @@ class VibeSurvivor {
                     codingLabel: "코딩:",
                     codingValue: "Claude Code & Codex",
                     musicLabel: "음악:",
-                    musicValue: "Suno AI",
+                    musicValue: "ElevenLabs",
                     soundEffectsLabel: "효과음:",
                     soundEffectsValue: "ElevenLabs",
                     artworkLabel: "아트워크:",
