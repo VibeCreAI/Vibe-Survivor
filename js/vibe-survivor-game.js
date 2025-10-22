@@ -859,6 +859,23 @@ class VibeSurvivor {
                 font-weight: bold !important;
             }
 
+            .header-weapon-content {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+
+            .header-weapon-icon {
+                width: 16px;
+                height: 16px;
+                object-fit: contain;
+            }
+
+            .header-weapon-text {
+                font-size: 11px;
+                white-space: nowrap;
+            }
+
             .header-weapon-empty {
                 background: rgba(0, 255, 255, 0.05);
                 border: 1px dashed rgba(0, 255, 255, 0.2);
@@ -997,6 +1014,15 @@ class VibeSurvivor {
                     padding: 1px 3px;
                     font-size: 8px;
                 }
+
+                .header-weapon-icon {
+                    width: 12px;
+                    height: 12px;
+                }
+
+                .header-weapon-text {
+                    font-size: 8px;
+                }
             }
             
             /* Standard mobile screens */
@@ -1042,6 +1068,15 @@ class VibeSurvivor {
                 
                 .header-weapon-item {
                     padding: 2px 4px;
+                    font-size: 10px;
+                }
+
+                .header-weapon-icon {
+                    width: 14px;
+                    height: 14px;
+                }
+
+                .header-weapon-text {
                     font-size: 10px;
                 }
             }
@@ -6605,6 +6640,28 @@ class VibeSurvivor {
         return `<img src="images/weapons/${iconName}.png" alt="${type}" style="width: 48px; height: 48px; vertical-align: middle;">`;
     }
 
+    getWeaponIconForHeader(type) {
+        const weaponIconMap = {
+            'basic': 'basicMissile',
+            'rapid': 'rapidFire',
+            'spread': 'spreadShot',
+            'spread_shot': 'spreadShot',
+            'laser': 'laserBeam',
+            'plasma': 'plasmaBolt',
+            'shotgun': 'shotgun',
+            'lightning': 'lightning',
+            'flamethrower': 'flamethrower',
+            'railgun': 'railgun',
+            'missiles': 'homingMissiles',
+            'homing_laser': 'homingLaser',
+            'shockburst': 'shockburst',
+            'gatling_gun': 'gatlingGun'
+        };
+
+        const iconName = weaponIconMap[type] || 'basicMissile';
+        return `images/weapons/${iconName}.png`;
+    }
+
     getPassiveIcon(passiveId) {
         const passiveIconMap = {
             'health_boost': 'healthBoost',
@@ -10377,9 +10434,13 @@ class VibeSurvivor {
                     const weapon = this.weapons[i];
                     const isMergeWeapon = weapon.isMergeWeapon || (weapon.type && weapon.type.includes('homing_laser'));
                     const mergeClass = isMergeWeapon ? ' header-weapon-merge' : '';
+                    const weaponIcon = this.getWeaponIconForHeader(weapon.type);
                     weaponSlots.push(`
                         <div class="header-weapon-item${mergeClass}">
-                            ${this.getWeaponName(weapon.type)} ${weapon.level}
+                            <div class="header-weapon-content">
+                                <img src="${weaponIcon}" alt="${weapon.type}" class="header-weapon-icon">
+                                <span class="header-weapon-text">${this.getWeaponName(weapon.type)} ${weapon.level}</span>
+                            </div>
                         </div>
                     `);
                 } else {
