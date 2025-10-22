@@ -2074,6 +2074,29 @@ class VibeSurvivor {
                 opacity: 0.9;
             }
 
+            .upgrade-choice-merge {
+                background: rgba(255, 215, 0, 0.15) !important;
+                border: 2px solid rgba(255, 215, 0, 0.6) !important;
+                box-shadow: 0 0 10px rgba(255, 215, 0, 0.3) !important;
+            }
+
+            .upgrade-choice-merge:hover {
+                background: rgba(255, 215, 0, 0.3) !important;
+                border: 2px solid #FFD700 !important;
+                box-shadow: 0 0 25px rgba(255, 215, 0, 0.6) !important;
+                transform: scale(1.05) !important;
+            }
+
+            .upgrade-choice-merge:hover h3 {
+                text-shadow: 0 0 12px rgba(255, 215, 0, 1) !important;
+            }
+
+            .upgrade-choice-merge h3 {
+                color: #FFD700 !important;
+                text-shadow: 0 0 8px rgba(255, 215, 0, 0.8) !important;
+                font-weight: bold !important;
+            }
+
             /* Mobile Touch Controls */
             .mobile-controls {
                 position: absolute;
@@ -6527,7 +6550,8 @@ class VibeSurvivor {
                     weaponType: upgradeType,
                     name: `${this.getWeaponNameAfterUpgrade(weapon)} LV.${weapon.level + 1}`,
                     description: description,
-                    icon: this.getWeaponIcon(upgradeType)
+                    icon: this.getWeaponIcon(upgradeType),
+                    isMergeWeapon: weapon.isMergeWeapon || false
                 });
             }
         });
@@ -6728,12 +6752,14 @@ class VibeSurvivor {
                     <div class="levelup-title">${this.t('levelUp')}</div>
                     <div class="upgrade-choices-container">
                         <div class="upgrade-choices">
-                            ${choices.map((choice, index) => `
-                                <div class="upgrade-choice" data-choice="${index}">
+                            ${choices.map((choice, index) => {
+                                const mergeClass = choice.isMergeWeapon ? ' upgrade-choice-merge' : '';
+                                return `
+                                <div class="upgrade-choice${mergeClass}" data-choice="${index}">
                                     <h3>${choice.icon} ${choice.name}</h3>
                                     <p>${choice.description}</p>
                                 </div>
-                            `).join('')}
+                            `}).join('')}
                         </div>
                     </div>
                 </div>
@@ -6908,7 +6934,19 @@ class VibeSurvivor {
                 border: 2px solid #00ffff !important;
                 background: rgba(0, 255, 255, 0.15) !important;
             }
-            
+
+            .upgrade-choice-merge.menu-selected {
+                box-shadow: 0 0 25px rgba(255, 215, 0, 0.9) !important;
+                border: 2px solid #FFD700 !important;
+                background: rgba(255, 215, 0, 0.3) !important;
+                transform: scale(1.05) !important;
+            }
+
+            .upgrade-choice-merge.menu-selected h3 {
+                color: #FFD700 !important;
+                text-shadow: 0 0 12px rgba(255, 215, 0, 1) !important;
+            }
+
             #overlay-retry-btn.menu-selected,
             #overlay-exit-btn.menu-selected {
                 background: rgba(0, 255, 255, 0.2) !important;
