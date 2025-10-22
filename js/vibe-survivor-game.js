@@ -140,6 +140,14 @@ class VibeSurvivor {
             total: 5
         };
 
+        // Item pickup icons
+        this.itemIcons = {
+            health: new Image(),
+            magnet: new Image()
+        };
+        this.itemIcons.health.src = 'images/passives/healthBoost.png';
+        this.itemIcons.magnet.src = 'images/passives/magnet.png';
+
         // Load sprite images
         this.playerSprites.idle.src = 'images/AI BOT-IDLE.png';
         this.playerSprites.up.src = 'images/AI BOT-UP.png';
@@ -579,20 +587,20 @@ class VibeSurvivor {
                             <!-- Help Menu -->
                             <div id="help-menu" class="help-menu" style="display: none;">
                                 <div class="help-content">
-                                    <h2>🔧 WEAPON MERGERS</h2>
+                                    <h2>WEAPON MERGERS</h2>
                                     <div class="help-recipes">
                                         <div class="merge-recipe">
-                                            <h3 id="homing-laser-title">⚡ Homing Laser</h3>
+                                            <h3 id="homing-laser-title"><img src="images/weapons/homingLaser.png" alt="Homing Laser" style="width: 48px; height: 48px; vertical-align: middle;"> Homing Laser</h3>
                                             <p id="homing-laser-recipe">Laser lvl 3 + Homing Missiles lvl 3</p>
                                             <span id="homing-laser-desc" class="recipe-desc">Heat-seeking laser beams</span>
                                         </div>
                                         <div class="merge-recipe">
-                                            <h3 id="shockburst-title">💥 Shockburst</h3>
+                                            <h3 id="shockburst-title"><img src="images/weapons/shockburst.png" alt="Shockburst" style="width: 48px; height: 48px; vertical-align: middle;"> Shockburst</h3>
                                             <p id="shockburst-recipe">Lightning lvl 3 + Plasma lvl 3</p>
                                             <span id="shockburst-desc" class="recipe-desc">Explosive energy bursts</span>
                                         </div>
                                         <div class="merge-recipe">
-                                            <h3 id="gatling-gun-title">🔫 Gatling Gun</h3>
+                                            <h3 id="gatling-gun-title"><img src="images/weapons/gatlingGun.png" alt="Gatling Gun" style="width: 48px; height: 48px; vertical-align: middle;"> Gatling Gun</h3>
                                             <p id="gatling-gun-recipe">Rapid Fire lvl 5 + Spread Shot lvl 3</p>
                                             <span id="gatling-gun-desc" class="recipe-desc">Multi-barrel rapid fire</span>
                                         </div>
@@ -6204,7 +6212,7 @@ class VibeSurvivor {
                 
                 // Show healing notification if we actually healed
                 if (actualHeal > 0) {
-                    this.showToastNotification(`❤️ +${actualHeal} HP`, 'heal');
+                    this.showToastNotification(`+${actualHeal} HP`, 'heal');
                 }
                 
                 // Return to pool
@@ -6248,7 +6256,7 @@ class VibeSurvivor {
                 this.player.magnetBoost = 1;
                 
                 // Show magnet activation notification
-                this.showToastNotification(`🧲 MAGNET ACTIVATED!`, 'upgrade');
+                this.showToastNotification(`MAGNET ACTIVATED!`, 'magnet');
                 
                 // Return to pool
                 orb.active = false;
@@ -6431,12 +6439,21 @@ class VibeSurvivor {
                     description += `, ${this.t('addProjectile')}`;
                 }
                 
+                // Determine what type the weapon will be after upgrade
+                let upgradeType = weapon.type;
+                if (weapon.level + 1 === 5 && weapon.type === 'basic') {
+                    upgradeType = 'rapid';
+                } else if (weapon.level + 1 === 8 && weapon.type === 'spread_shot') {
+                    upgradeType = 'spread';
+                }
+
                 choices.push({
                     type: 'weapon_upgrade',
                     weaponIndex: index,
+                    weaponType: upgradeType,
                     name: `${this.getWeaponNameAfterUpgrade(weapon)} LV.${weapon.level + 1}`,
                     description: description,
-                    icon: '⚡'
+                    icon: this.getWeaponIcon(upgradeType)
                 });
             }
         });
@@ -6453,7 +6470,7 @@ class VibeSurvivor {
                         weaponType: weaponType,
                         name: this.getWeaponName(weaponType),
                         description: this.getWeaponDescription(weaponType),
-                        icon: '🔫'
+                        icon: this.getWeaponIcon(weaponType)
                     });
                 }
             });
@@ -6461,13 +6478,13 @@ class VibeSurvivor {
         
         // Passive abilities
         const passiveChoices = [
-            { id: 'health_boost', name: this.t('healthBoost', 'passives'), description: this.t('healthBoostDesc', 'passives'), icon: '❤️' },
-            { id: 'speed_boost', name: this.t('speedBoost', 'passives'), description: this.t('speedBoostDesc', 'passives'), icon: '💨' },
-            { id: 'regeneration', name: this.t('regeneration', 'passives'), description: this.t('regenerationDesc', 'passives'), icon: '🔄' },
-            { id: 'magnet', name: this.t('magnet', 'passives'), description: this.t('magnetDesc', 'passives'), icon: '🧲' },
-            { id: 'armor', name: this.t('armor', 'passives'), description: this.t('armorDesc', 'passives'), icon: '🛡️' },
-            { id: 'critical', name: this.t('criticalStrike', 'passives'), description: this.t('criticalStrikeDesc', 'passives'), icon: '💥' },
-            { id: 'dash_boost', name: this.t('dashBoost', 'passives'), description: this.t('dashBoostDesc', 'passives'), icon: '⚡' }
+            { id: 'health_boost', name: this.t('healthBoost', 'passives'), description: this.t('healthBoostDesc', 'passives'), icon: this.getPassiveIcon('health_boost') },
+            { id: 'speed_boost', name: this.t('speedBoost', 'passives'), description: this.t('speedBoostDesc', 'passives'), icon: this.getPassiveIcon('speed_boost') },
+            { id: 'regeneration', name: this.t('regeneration', 'passives'), description: this.t('regenerationDesc', 'passives'), icon: this.getPassiveIcon('regeneration') },
+            { id: 'magnet', name: this.t('magnet', 'passives'), description: this.t('magnetDesc', 'passives'), icon: this.getPassiveIcon('magnet') },
+            { id: 'armor', name: this.t('armor', 'passives'), description: this.t('armorDesc', 'passives'), icon: this.getPassiveIcon('armor') },
+            { id: 'critical', name: this.t('criticalStrike', 'passives'), description: this.t('criticalStrikeDesc', 'passives'), icon: this.getPassiveIcon('critical') },
+            { id: 'dash_boost', name: this.t('dashBoost', 'passives'), description: this.t('dashBoostDesc', 'passives'), icon: this.getPassiveIcon('dash_boost') }
         ];
         
         passiveChoices.forEach(passive => {
@@ -6564,6 +6581,43 @@ class VibeSurvivor {
     getWeaponDescription(type) {
         const descKey = type + 'Desc';
         return this.t(descKey, 'weapons') || 'Unknown weapon type';
+    }
+
+    getWeaponIcon(type) {
+        const weaponIconMap = {
+            'basic': 'basicMissile',
+            'rapid': 'rapidFire',
+            'spread': 'spreadShot',
+            'spread_shot': 'spreadShot',
+            'laser': 'laserBeam',
+            'plasma': 'plasmaBolt',
+            'shotgun': 'shotgun',
+            'lightning': 'lightning',
+            'flamethrower': 'flamethrower',
+            'railgun': 'railgun',
+            'missiles': 'homingMissiles',
+            'homing_laser': 'homingLaser',
+            'shockburst': 'shockburst',
+            'gatling_gun': 'gatlingGun'
+        };
+
+        const iconName = weaponIconMap[type] || 'basicMissile';
+        return `<img src="images/weapons/${iconName}.png" alt="${type}" style="width: 48px; height: 48px; vertical-align: middle;">`;
+    }
+
+    getPassiveIcon(passiveId) {
+        const passiveIconMap = {
+            'health_boost': 'healthBoost',
+            'speed_boost': 'speedBoost',
+            'regeneration': 'regeneration',
+            'magnet': 'magnet',
+            'armor': 'armor',
+            'critical': 'criticalStrike',
+            'dash_boost': 'dashBoost'
+        };
+
+        const iconName = passiveIconMap[passiveId] || 'upgrade';
+        return `<img src="images/passives/${iconName}.png" alt="${passiveId}" style="width: 48px; height: 48px; vertical-align: middle;">`;
     }
     
     createLevelUpModal(choices) {
@@ -6870,27 +6924,35 @@ class VibeSurvivor {
     }
 
     
-    createToast(message, type = 'upgrade', duration = 2500) {
+    createToast(message, type = 'upgrade', duration = 2500, customIcon = null) {
         const toastContainer = document.getElementById('toast-container');
         if (!toastContainer) {
             console.error('Toast container not found');
             return;
         }
-        
+
         // Create toast element
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
-        
-        // Get icon based on type
-        const icons = {
-            'boss': '⚠️',
-            'upgrade': '🔫',
-            'victory': '🎉'
-        };
-        
+
+        // Get icon based on type (or use custom icon if provided)
+        let iconHtml;
+        if (customIcon) {
+            iconHtml = customIcon;
+        } else {
+            const icons = {
+                'boss': '⚠️',
+                'upgrade': '<img src="images/passives/upgrade.png" alt="upgrade" style="width: 48px; height: 48px;">',
+                'victory': '🎉',
+                'heal': '<img src="images/passives/healthBoost.png" alt="heal" style="width: 48px; height: 48px;">',
+                'magnet': '<img src="images/passives/magnet.png" alt="magnet" style="width: 48px; height: 48px;">'
+            };
+            iconHtml = icons[type] || '📢';
+        }
+
         toast.innerHTML = `
             <div style="text-align: center;">
-                <div style="font-size: 32px; margin-bottom: 8px;">${icons[type] || '📢'}</div>
+                <div style="font-size: 32px; margin-bottom: 8px;">${iconHtml}</div>
                 <div style="font-size: 22px; font-weight: bold; color: white; text-shadow: 0 0 20px rgba(0,255,255,1), 0 0 40px rgba(0,255,255,0.8), 0 2px 4px rgba(0,0,0,0.9);">${message}</div>
             </div>
         `;
@@ -6934,16 +6996,17 @@ class VibeSurvivor {
         }, 600);
     }
     
-    showToastNotification(message, type = 'upgrade') {
+    showToastNotification(message, type = 'upgrade', customIcon = null) {
         // Shorter duration based on type and message importance
         const durations = {
             'boss': 3000,      // 3 seconds for boss notifications
             'victory': 3000,   // 3 seconds for victory
             'upgrade': 2500,   // 2.5 seconds for upgrades
-            'heal': 2000       // 2 seconds for healing notifications
+            'heal': 2000,      // 2 seconds for healing notifications
+            'magnet': 2500     // 2.5 seconds for magnet notifications
         };
-        
-        this.createToast(message, type, durations[type]);
+
+        this.createToast(message, type, durations[type], customIcon);
     }
 
     
@@ -6964,10 +7027,10 @@ class VibeSurvivor {
                 this.addPassiveAbility(choice.passiveId);
                 break;
         }
-        
+
         this.player.health = Math.min(this.player.maxHealth, this.player.health + 10);
-        this.showUpgradeNotification(choice.name);
-        
+        this.showUpgradeNotification(choice.name, choice.icon);
+
         // Check if help button should be shown
         this.checkHelpButtonVisibility();
     }
@@ -7074,7 +7137,7 @@ class VibeSurvivor {
         
         // Show merge notification with reduced delay since we have better stacking
         setTimeout(() => {
-            this.showUpgradeNotification(`${this.getWeaponName(mergeWeaponType)} - WEAPONS MERGED!`);
+            this.showUpgradeNotification(`${this.getWeaponName(mergeWeaponType)} - WEAPONS MERGED!`, this.getWeaponIcon(mergeWeaponType));
         }, 100); // Reduced from 200ms to 100ms delay
     }
     
@@ -7558,7 +7621,7 @@ class VibeSurvivor {
         // Particles removed for performance
     }
     
-    showUpgradeNotification(title) {
+    showUpgradeNotification(title, iconHtml = null) {
         const acquiredText = this.t('acquiredSuffix');
         let message;
 
@@ -7570,7 +7633,7 @@ class VibeSurvivor {
             message = `${title} ACQUIRED!`;
         }
 
-        this.showToastNotification(message, 'upgrade');
+        this.showToastNotification(message, 'upgrade', iconHtml);
     }
     
     showBossNotification() {
@@ -9948,14 +10011,19 @@ class VibeSurvivor {
             
             this.ctx.fillStyle = gradient;
             this.ctx.fillRect(orb.x - 20, orb.y - 20, 40, 40);
-            
-            // Heart emoji
-            this.ctx.font = '24px NeoDunggeunmoPro, Arial';
-            this.ctx.textAlign = 'center';
-            this.ctx.textBaseline = 'middle';
-            this.ctx.fillStyle = '#FF0000';
-            this.ctx.fillText('❤️', orb.x, orb.y);
-            
+
+            // Health icon
+            const iconSize = 32;
+            if (this.itemIcons.health.complete) {
+                this.ctx.drawImage(
+                    this.itemIcons.health,
+                    orb.x - iconSize / 2,
+                    orb.y - iconSize / 2,
+                    iconSize,
+                    iconSize
+                );
+            }
+
             this.ctx.restore();
         });
     }
@@ -9977,19 +10045,19 @@ class VibeSurvivor {
             
             this.ctx.fillStyle = gradient;
             this.ctx.fillRect(orb.x - 25, orb.y - 25, 50, 50);
-            
-            // Magnet emoji (render without fillStyle to avoid conflicts)
-            this.ctx.font = '24px NeoDunggeunmoPro, Arial';
-            this.ctx.textAlign = 'center';
-            this.ctx.textBaseline = 'middle';
-            this.ctx.fillText('🧲', orb.x, orb.y);
-            this.ctx.lineWidth = 1;
-            
-            this.ctx.beginPath();
-            this.ctx.arc(orb.x, orb.y, 5, 0, Math.PI * 2);
-            this.ctx.fill();
-            this.ctx.stroke();
-            
+
+            // Magnet icon
+            const iconSize = 32;
+            if (this.itemIcons.magnet.complete) {
+                this.ctx.drawImage(
+                    this.itemIcons.magnet,
+                    orb.x - iconSize / 2,
+                    orb.y - iconSize / 2,
+                    iconSize,
+                    iconSize
+                );
+            }
+
             this.ctx.restore();
         });
     }
@@ -10361,6 +10429,23 @@ class VibeSurvivor {
         const weaponsHtml = this.weapons.map(weapon => {
             const isMergeWeapon = weapon.isMergeWeapon || false;
             const mergeClass = isMergeWeapon ? 'style="color: #ffaa00 !important;"' : '';
+            const weaponIconMap = {
+                'basic': 'basicMissile',
+                'rapid': 'rapidFire',
+                'spread': 'spreadShot',
+                'spread_shot': 'spreadShot',
+                'laser': 'laserBeam',
+                'plasma': 'plasmaBolt',
+                'shotgun': 'shotgun',
+                'lightning': 'lightning',
+                'flamethrower': 'flamethrower',
+                'railgun': 'railgun',
+                'missiles': 'homingMissiles',
+                'homing_laser': 'homingLaser',
+                'shockburst': 'shockburst',
+                'gatling_gun': 'gatlingGun'
+            };
+            const iconName = weaponIconMap[weapon.type] || 'basicMissile';
 
             return `
                 <div style="
@@ -10369,8 +10454,12 @@ class VibeSurvivor {
                     margin: 4px 0;
                     font-size: 14px;
                     align-items: center;
+                    gap: 8px;
                 ">
-                    <span ${mergeClass}>${this.getWeaponName(weapon.type)} LV.${weapon.level}</span>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <img src="images/weapons/${iconName}.png" alt="${weapon.type}" style="width: 32px; height: 32px;">
+                        <span ${mergeClass}>${this.getWeaponName(weapon.type)} LV.${weapon.level}</span>
+                    </div>
                     <span style="color: #888; font-size: 12px;">${weapon.damage} DMG</span>
                 </div>
             `;
@@ -10391,7 +10480,11 @@ class VibeSurvivor {
                     font-weight: bold;
                     margin-bottom: 8px;
                     text-align: center;
-                ">⚡ ${t.weaponsResult}</div>
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 8px;
+                "><img src="images/passives/upgrade.png" alt="weapons" style="width: 32px; height: 32px;"> ${t.weaponsResult}</div>
                 ${weaponsHtml}
             </div>
         `;
@@ -10426,14 +10519,28 @@ class VibeSurvivor {
                 }
             }
 
+            const passiveIconMap = {
+                'health_boost': 'healthBoost',
+                'speed_boost': 'speedBoost',
+                'regeneration': 'regeneration',
+                'magnet': 'magnet',
+                'armor': 'armor',
+                'critical': 'criticalStrike',
+                'dash_boost': 'dashBoost'
+            };
+            const iconName = passiveIconMap[passive] || 'upgrade';
+
             return `
                 <div style="
                     display: flex;
                     justify-content: center;
+                    align-items: center;
                     margin: 4px 0;
                     font-size: 14px;
                     color: #ff00ff;
+                    gap: 8px;
                 ">
+                    <img src="images/passives/${iconName}.png" alt="${passive}" style="width: 32px; height: 32px;">
                     ${displayName}
                 </div>
             `;
@@ -11388,7 +11495,7 @@ class VibeSurvivor {
                     dashBoostDesc: "+50% Dash Distance (Stackable up to 3 times)"
                 },
                 help: {
-                    weaponMergers: "🔧 WEAPON MERGERS",
+                    weaponMergers: "<img src='images/passives/upgrade.png' alt='upgrade' style='width: 48px; height: 48px; vertical-align: middle;'> WEAPON MERGERS",
                     homingLaserRecipe: "Laser lvl 3 + Homing Missiles lvl 3",
                     homingLaserDesc: "Heat-seeking laser beams",
                     shockburstRecipe: "Lightning lvl 3 + Plasma lvl 3",
@@ -11532,7 +11639,7 @@ class VibeSurvivor {
                     dashBoostDesc: "+50% 대시 거리 (최대 3번까지 중첩 가능)"
                 },
                 help: {
-                    weaponMergers: "🔧 무기 합성",
+                    weaponMergers: "<img src='images/passives/upgrade.png' alt='upgrade' style='width: 48px; height: 48px; vertical-align: middle;'> 무기 합성",
                     homingLaserRecipe: "레이저 레벨 3 + 유도 미사일 레벨 3",
                     homingLaserDesc: "열추적 레이저 빔",
                     shockburstRecipe: "번개 레벨 3 + 플라즈마 레벨 3",
@@ -11649,7 +11756,7 @@ class VibeSurvivor {
 
         // Help menu
         const helpTitle = document.querySelector('#help-menu h2');
-        if (helpTitle) helpTitle.textContent = this.t('weaponMergers', 'help');
+        if (helpTitle) helpTitle.innerHTML = this.t('weaponMergers', 'help');
 
         const closeHelpBtn = document.getElementById('close-help-btn');
         if (closeHelpBtn) closeHelpBtn.textContent = this.t('close');
@@ -11659,7 +11766,7 @@ class VibeSurvivor {
 
         // Help menu recipe details
         const homingLaserTitle = document.getElementById('homing-laser-title');
-        if (homingLaserTitle) homingLaserTitle.textContent = `⚡ ${this.t('homingLaser', 'weapons')}`;
+        if (homingLaserTitle) homingLaserTitle.innerHTML = `<img src="images/weapons/homingLaser.png" alt="Homing Laser" style="width: 48px; height: 48px; vertical-align: middle;"> ${this.t('homingLaser', 'weapons')}`;
 
         const homingLaserRecipe = document.getElementById('homing-laser-recipe');
         if (homingLaserRecipe) homingLaserRecipe.textContent = this.t('homingLaserRecipe', 'help');
@@ -11668,7 +11775,7 @@ class VibeSurvivor {
         if (homingLaserDesc) homingLaserDesc.textContent = this.t('homingLaserDesc', 'help');
 
         const shockburstTitle = document.getElementById('shockburst-title');
-        if (shockburstTitle) shockburstTitle.textContent = `💥 ${this.t('shockburst', 'weapons')}`;
+        if (shockburstTitle) shockburstTitle.innerHTML = `<img src="images/weapons/shockburst.png" alt="Shockburst" style="width: 48px; height: 48px; vertical-align: middle;"> ${this.t('shockburst', 'weapons')}`;
 
         const shockburstRecipe = document.getElementById('shockburst-recipe');
         if (shockburstRecipe) shockburstRecipe.textContent = this.t('shockburstRecipe', 'help');
@@ -11677,7 +11784,7 @@ class VibeSurvivor {
         if (shockburstDesc) shockburstDesc.textContent = this.t('shockburstDesc', 'help');
 
         const gatlingGunTitle = document.getElementById('gatling-gun-title');
-        if (gatlingGunTitle) gatlingGunTitle.textContent = `🔫 ${this.t('gatlingGun', 'weapons')}`;
+        if (gatlingGunTitle) gatlingGunTitle.innerHTML = `<img src="images/weapons/gatlingGun.png" alt="Gatling Gun" style="width: 48px; height: 48px; vertical-align: middle;"> ${this.t('gatlingGun', 'weapons')}`;
 
         const gatlingGunRecipe = document.getElementById('gatling-gun-recipe');
         if (gatlingGunRecipe) gatlingGunRecipe.textContent = this.t('gatlingGunRecipe', 'help');
