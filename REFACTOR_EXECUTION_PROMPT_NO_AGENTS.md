@@ -17,7 +17,7 @@ Work through all phases sequentially, handling each task directly without delega
 ### PRE-EXECUTION (Phase 0: Analysis & Preparation)
 
 1. Read the complete `refector.md` file thoroughly
-2. Read the current `js/vibe-survivor-game.js` monolith (11,335 lines, 453KB)
+2. Read the current `js/vibe-survivor-game.js` monolith (12,164 lines, ~500KB)
 3. Analyze `js/start-screen-bot.js` as the reference for proper modular structure
 4. Create a comprehensive dependency map:
    - Identify all function calls and their dependencies
@@ -25,7 +25,7 @@ Work through all phases sequentially, handling each task directly without delega
    - Document all external references (DOM, audio, canvas)
    - Catalog all global state variables
 5. Document sprite animation system (91 references, 5 sprite sheets)
-6. Catalog all assets (6 AI bot sprites ~290KB + start screen sprite 217KB)
+6. Catalog all assets (6 AI bot sprites ~290KB + start screen sprite 217KB + weapon icons + passive icons)
 7. Create extraction order based on dependency analysis
 8. Set up smoke test baseline (current functionality checklist)
 
@@ -106,6 +106,9 @@ Extract in this exact order (to avoid circular dependencies):
      ```
    - Add audio paths
    - Add font path: 'fonts/NeoDunggeunmoPro-Regular.ttf'
+   - Add weapon icon configurations (13 weapon types with PNG images)
+   - Add passive icon configurations (8 passive types with PNG images)
+   - Add responsive icon scaling (16px desktop, 14px tablet, 12px mobile)
    - Add preload function
 
 4. **Extract `utils/math.js`**:
@@ -259,6 +262,7 @@ Extract in this order to minimize coupling:
    - Extract health pickup logic
    - Extract magnet orb logic
    - Extract magnet boost passive (triples attraction speed 4→12)
+   - Extract passive item icon system (8 passive types with PNG images)
 
 **Review**: Check for circular dependencies and proper separation of concerns before proceeding
 
@@ -296,6 +300,7 @@ Extract in this order to minimize coupling:
    - Extract XP bar rendering
    - Extract stats display (wave, kills, time)
    - Extract boss counter display
+   - Extract weapon header icon system with `getWeaponIconForHeader()` method
    - Export HUD render functions
 
 5. **Extract `systems/ui/touch-controls.js`**:

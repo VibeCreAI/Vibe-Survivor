@@ -13,6 +13,8 @@
 - Boss progression system with scheduled spawning
 - Magnet boost passive and trail multiplier mechanics
 - NeoDunggeunmoPro pixel art font system
+- Weapon header icons display system (small 16px icons alongside weapon names/levels)
+- Passive item icons for health and magnet pickups
 
 ## EXECUTION INSTRUCTIONS FOR LLM
 **IMPLEMENT ALL 10 PHASES IN ONE EXECUTION CYCLE**
@@ -23,7 +25,7 @@
 - Final human testing will occur after all phases are complete
 
 ## Objectives
-- Improve maintainability by decomposing the **11,335 line (453KB)** `js/vibe-survivor-game.js` monolith into focused modules.
+- Improve maintainability by decomposing the **12,164 line (~500KB)** `js/vibe-survivor-game.js` monolith into focused modules.
 - Clarify system boundaries so future contributors can navigate rendering, gameplay, audio, UI, and i18n code quickly.
 - Introduce modern ES module structure without breaking the static deploy flow (served via simple http server).
 - Prepare groundwork for automated testing and targeted performance profiling.
@@ -67,7 +69,7 @@ js/
       progression/
         xp-system.js       // XP and leveling
         upgrades.js        // Weapon/ability upgrades
-      pickups.js           // XP orbs, health, magnet orbs
+      pickups.js           // XP orbs, health, magnet orbs, passive items
     ui/
       modals/
         modal-base.js      // Core modal system (create/show/hide/cleanup)
@@ -79,7 +81,7 @@ js/
         gameover-modal.js  // Game over screen modal
         exit-confirm.js    // Exit confirmation modal
         restart-confirm.js // Restart confirmation modal
-      hud.js               // Health/XP/stats display
+      hud.js               // Health/XP/stats display (including weapon header icons)
       i18n.js              // Translation system (English/Korean)
       touch-controls.js    // Mobile touch interface
       start-screen-bot.js  // Start screen AI bot animation (ALREADY MODULAR - use as template!)
@@ -91,7 +93,7 @@ js/
     performance.js         // FPS monitoring, optimization helpers
   config/
     constants.js           // Game constants and tuning values
-    assets.js              // Asset paths, sprite sheet configs, and preloading
+    assets.js              // Asset paths, sprite sheet configs, weapon icons, and preloading
 
 js/main.js                 // Landing page wiring (preserve current logic)
 js/start-screen-bot.js     // Start screen bot animation (ALREADY EXTRACTED - keep as is!)
@@ -131,6 +133,8 @@ Each modal will have its own dedicated file for better organization:
    - Study `js/start-screen-bot.js` as a reference for proper modular structure
    - Document player sprite animation system (5 sprite sheets, 3×4 frame animation, 8 FPS)
    - Catalog all sprite assets and their loading requirements (~290KB of sprite images)
+   - Document weapon header icons system (16px icons with responsive scaling)
+   - Document passive item icons for pickup system
 
 1. **Scaffolding & Module Setup**
    - Convert `index.html` to use `<script type="module" src="js/vibe-survivor-game.js"></script>` while preserving `window.VIBE_SURVIVOR_AUTO_INIT = false` pattern
@@ -146,7 +150,10 @@ Each modal will have its own dedicated file for better organization:
    - Add sprite sheet configurations to `config/assets.js`:
      - Player sprite sheets (idle, up, down, left, right)
      - Start screen bot sprite sheet (10×10, 100 frames)
+     - Weapon icons (13 weapon types: basicMissile, rapidFire, spreadShot, laserBeam, plasmaBolt, shotgun, lightning, flamethrower, railgun, homingMissiles, homingLaser, shockburst, gatlingGun)
+     - Passive item icons (8 passive types: armor, criticalStrike, dashBoost, healthBoost, magnet, regeneration, speedBoost, upgrade)
      - Sprite dimensions, frame counts, and animation speeds
+     - Weapon icon dimensions and responsive scaling (16px desktop, 14px tablet, 12px mobile)
      - NeoDunggeunmoPro font path
    - Establish `core/state.js` with centralized state management and factory functions
    - Create standard interfaces and error handling patterns
@@ -203,7 +210,7 @@ Each modal will have its own dedicated file for better organization:
      - Extract exit confirmation to `systems/ui/modals/exit-confirm.js`
      - Extract restart confirmation to `systems/ui/modals/restart-confirm.js`
    - **Translation System**: Extract i18n system to `systems/ui/i18n.js` (English/Korean support, dynamic text updates)
-   - Move HUD rendering to `systems/ui/hud.js` (health bar, XP bar, stats display, boss counter)
+   - Move HUD rendering to `systems/ui/hud.js` (health bar, XP bar, stats display, boss counter, weapon header icons with `getWeaponIconForHeader()` method)
    - **Critical**: Extract touch controls to `systems/ui/touch-controls.js` (preserve mobile functionality)
    - **SPECIAL NOTE**: `js/start-screen-bot.js` is ALREADY modular and properly extracted!
      - Keep this file as-is in `js/start-screen-bot.js`
@@ -305,13 +312,15 @@ Each modal will have its own dedicated file for better organization:
 
 ### Phase 0: Analysis & Preparation
 **EXECUTE IMMEDIATELY:**
-- [ ] Analyze the **11,335-line (453KB)** monolith structure and identify key systems
+- [ ] Analyze the **12,164-line (~500KB)** monolith structure and identify key systems
 - [ ] Identify circular dependencies and plan extraction order
 - [ ] Note current touch control behavior and audio fallback mechanisms
 - [ ] Understand the current module loading and initialization pattern
 - [ ] Study `js/start-screen-bot.js` (226 lines) as modular extraction template
 - [ ] Document player sprite system (91 references throughout codebase)
 - [ ] Catalog sprite assets: 6 AI bot sprites (~290KB) + start screen sprite (217KB)
+- [ ] Document weapon icons: 13 weapon PNG icons in `images/weapons/` directory
+- [ ] Document passive icons: 8 passive PNG icons in `images/passives/` directory
 - [ ] Document boss system, magnet boost passive, and trail multiplier mechanics
 
 ### Phase 1: Scaffolding & Module Setup
@@ -395,6 +404,8 @@ Each modal will have its own dedicated file for better organization:
 - [ ] **CRITICAL**: Extract translation system to `systems/ui/i18n.js`
 - [ ] Move HUD rendering to `systems/ui/hud.js` (include boss counter display)
 - [ ] **CRITICAL**: Extract touch controls to `systems/ui/touch-controls.js`
+- [ ] Extract weapon header icon system to `systems/ui/hud.js` (preserve icon display functionality)
+- [ ] Extract passive item icon system to `systems/gameplay/pickups.js` (preserve pickup visuals)
 - [ ] **SPECIAL**: Keep `js/start-screen-bot.js` as-is (already properly modular!)
 
 ### Phase 7: Audio System Migration
