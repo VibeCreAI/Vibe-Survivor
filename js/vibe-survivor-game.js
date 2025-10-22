@@ -118,10 +118,14 @@ class VibeSurvivor {
             projectileSpeed: 4,
             lastFire: 0
         }];
+
+        // Track per-weapon cumulative damage
+        this.weaponStats = {};
         
         // Pause functionality
         this.isPaused = false;
         this.isHelpOpen = false;
+        this.activeHelpTab = 'guide';
         
         // Background music
         this.backgroundMusic = new Audio('sound/Vibe_Survivor.mp3');
@@ -589,35 +593,44 @@ class VibeSurvivor {
 
                             <!-- Help Menu -->
                             <div id="help-menu" class="help-menu" style="display: none;">
-                                <div class="help-content">
-                                    <h2>WEAPON MERGERS</h2>
-                                    <div class="help-recipes">
-                                        <div class="merge-recipe">
-                                            <h3 id="homing-laser-title"><img src="images/weapons/homingLaser.png" alt="Homing Laser" style="width: 48px; height: 48px; vertical-align: middle;"> Homing Laser</h3>
-                                            <p id="homing-laser-recipe">Laser lvl 3 + Homing Missiles lvl 3</p>
-                                            <span id="homing-laser-desc" class="recipe-desc">Heat-seeking laser beams</span>
+                                <div class="help-content" tabindex="0">
+                                    <div class="help-tabs">
+                                        <button id="help-tab-guide" class="help-tab active" data-tab="guide">GUIDE</button>
+                                        <button id="help-tab-status" class="help-tab" data-tab="status">STATUS</button>
+                                    </div>
+
+                                    <div id="help-guide" class="help-pane" style="display: block;">
+                                        <h2 id="help-guide-title">WEAPON MERGERS</h2>
+                                        <div class="help-recipes">
+                                            <div class="merge-recipe">
+                                                <h3 id="homing-laser-title"><img src="images/weapons/homingLaser.png" alt="Homing Laser" style="width: 48px; height: 48px; vertical-align: middle;"> Homing Laser</h3>
+                                                <p id="homing-laser-recipe">Laser lvl 3 + Homing Missiles lvl 3</p>
+                                                <span id="homing-laser-desc" class="recipe-desc">Heat-seeking laser beams</span>
+                                            </div>
+                                            <div class="merge-recipe">
+                                                <h3 id="shockburst-title"><img src="images/weapons/shockburst.png" alt="Shockburst" style="width: 48px; height: 48px; vertical-align: middle;"> Shockburst</h3>
+                                                <p id="shockburst-recipe">Lightning lvl 3 + Plasma lvl 3</p>
+                                                <span id="shockburst-desc" class="recipe-desc">Explosive energy bursts</span>
+                                            </div>
+                                            <div class="merge-recipe">
+                                                <h3 id="gatling-gun-title"><img src="images/weapons/gatlingGun.png" alt="Gatling Gun" style="width: 48px; height: 48px; vertical-align: middle;"> Gatling Gun</h3>
+                                                <p id="gatling-gun-recipe">Rapid Fire lvl 5 + Spread Shot lvl 3</p>
+                                                <span id="gatling-gun-desc" class="recipe-desc">Multi-barrel rapid fire</span>
+                                            </div>
                                         </div>
-                                        <div class="merge-recipe">
-                                            <h3 id="shockburst-title"><img src="images/weapons/shockburst.png" alt="Shockburst" style="width: 48px; height: 48px; vertical-align: middle;"> Shockburst</h3>
-                                            <p id="shockburst-recipe">Lightning lvl 3 + Plasma lvl 3</p>
-                                            <span id="shockburst-desc" class="recipe-desc">Explosive energy bursts</span>
+
+                                        <h2 id="weapon-tips-title">💡 WEAPON TIPS</h2>
+                                        <div class="help-section">
+                                            <p id="weapon-limit-tip">You can equip a maximum of 4 weapons, so choose wisely based on your playstyle.</p>
                                         </div>
-                                        <div class="merge-recipe">
-                                            <h3 id="gatling-gun-title"><img src="images/weapons/gatlingGun.png" alt="Gatling Gun" style="width: 48px; height: 48px; vertical-align: middle;"> Gatling Gun</h3>
-                                            <p id="gatling-gun-recipe">Rapid Fire lvl 5 + Spread Shot lvl 3</p>
-                                            <span id="gatling-gun-desc" class="recipe-desc">Multi-barrel rapid fire</span>
+
+                                        <h2 id="weapon-evolution-title">🔄 WEAPON EVOLUTION</h2>
+                                        <div class="help-section">
+                                            <p id="rapid-fire-evolution">Basic Missile evolves into Rapid Fire at level 5 - this creates a powerful automatic weapon with increased fire rate.</p>
                                         </div>
                                     </div>
 
-                                    <h2 id="weapon-tips-title">💡 WEAPON TIPS</h2>
-                                    <div class="help-section">
-                                        <p id="weapon-limit-tip">You can equip a maximum of 4 weapons, so choose wisely based on your playstyle.</p>
-                                    </div>
-
-                                    <h2 id="weapon-evolution-title">🔄 WEAPON EVOLUTION</h2>
-                                    <div class="help-section">
-                                        <p id="rapid-fire-evolution">Basic Missile evolves into Rapid Fire at level 5 - this creates a powerful automatic weapon with increased fire rate.</p>
-                                    </div>
+                                    <div id="help-status" class="help-pane" style="display: none;"></div>
                                     <button id="close-help-btn" class="survivor-btn">CLOSE</button>
                                     <p class="help-hint">Press ESC to close</p>
                                 </div>
@@ -1415,6 +1428,50 @@ class VibeSurvivor {
                 overflow-y: auto;
                 -webkit-overflow-scrolling: touch;
                 touch-action: pan-y;
+                outline: none;
+            }
+
+            .help-tabs {
+                display: flex;
+                justify-content: center;
+                gap: 12px;
+                margin-bottom: 20px;
+                flex-wrap: wrap;
+            }
+
+            .help-tab {
+                background: transparent;
+                border: 2px solid #00ffff;
+                color: #00ffff;
+                padding: 8px 18px;
+                border-radius: 999px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: bold;
+                transition: all 0.2s ease;
+                text-transform: uppercase;
+            }
+
+            .help-tab.active {
+                background: #00ffff;
+                color: #0a0a1a;
+                box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+            }
+
+            .help-tab:not(.active):hover {
+                background: rgba(0, 255, 255, 0.1);
+                box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+            }
+
+            .help-pane {
+                text-align: left;
+            }
+
+            .help-status-empty {
+                color: #888;
+                text-align: center;
+                margin-top: 20px;
+                font-size: 14px;
             }
 
             .help-content h2 {
@@ -1423,6 +1480,10 @@ class VibeSurvivor {
                 margin-top: 30px;
                 font-size: 24px;
                 text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+            }
+
+            .help-pane h2:first-of-type {
+                margin-top: 0;
             }
 
             .help-recipes {
@@ -2561,6 +2622,27 @@ class VibeSurvivor {
             this.toggleHelp();
         }, { passive: false });
 
+        const helpGuideTab = document.getElementById('help-tab-guide');
+        const helpStatusTab = document.getElementById('help-tab-status');
+        if (helpGuideTab && helpStatusTab) {
+            const guideHandler = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.switchHelpTab('guide');
+            };
+            const statusHandler = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.switchHelpTab('status');
+            };
+
+            helpGuideTab.addEventListener('click', guideHandler);
+            helpGuideTab.addEventListener('touchstart', guideHandler, { passive: false });
+
+            helpStatusTab.addEventListener('click', statusHandler);
+            helpStatusTab.addEventListener('touchstart', statusHandler, { passive: false });
+        }
+
         this.updateDashPositionButtonLabel();
 
         // Keyboard controls
@@ -2578,6 +2660,8 @@ class VibeSurvivor {
                             this.scrollHelpContent('up');
                         } else if (this.menuNavigationState.menuType === 'gameover') {
                             this.scrollGameOverContent('up');
+                        } else if (this.menuNavigationState.menuType === 'victory') {
+                            this.scrollVictoryContent('up');
                         } else {
                             this.navigateMenu('up');
                         }
@@ -2591,6 +2675,8 @@ class VibeSurvivor {
                             this.scrollHelpContent('down');
                         } else if (this.menuNavigationState.menuType === 'gameover') {
                             this.scrollGameOverContent('down');
+                        } else if (this.menuNavigationState.menuType === 'victory') {
+                            this.scrollVictoryContent('down');
                         } else {
                             this.navigateMenu('down');
                         }
@@ -3215,6 +3301,8 @@ class VibeSurvivor {
             projectileSpeed: 6,
             lastFire: 0
         }];
+
+        this.weaponStats = {};
         
         // Clear arrays
         this.enemies = [];
@@ -3789,6 +3877,29 @@ class VibeSurvivor {
             this.timePaused = true;
             helpMenu.style.display = 'flex';
 
+            this.switchHelpTab(this.activeHelpTab || 'guide');
+
+            const helpContent = document.querySelector('.help-content');
+            if (helpContent) {
+                helpContent.focus({ preventScroll: true });
+            }
+
+            if (!this.helpKeydownHandler) {
+                this.helpKeydownHandler = (event) => {
+                    if (!this.isHelpOpen) return;
+                    const key = event.key;
+                    if (key === 'ArrowUp' || key === 'ArrowDown' || key === 'Up' || key === 'Down' || key === 'w' || key === 'W' || key === 's' || key === 'S') {
+                        if (this.menuNavigationState.active && this.menuNavigationState.menuType === 'help') {
+                            return;
+                        }
+                        event.preventDefault();
+                        const direction = (key === 'ArrowUp' || key === 'Up' || key === 'w' || key === 'W') ? 'up' : 'down';
+                        this.scrollHelpContent(direction);
+                    }
+                };
+                document.addEventListener('keydown', this.helpKeydownHandler, { passive: false });
+            }
+
             // Change help button to X
             if (helpBtn) {
                 helpBtn.textContent = '×';
@@ -3839,6 +3950,11 @@ class VibeSurvivor {
             // Clean up help scrolling handlers
             this.disableHelpScrolling();
 
+            if (this.helpKeydownHandler) {
+                document.removeEventListener('keydown', this.helpKeydownHandler);
+                this.helpKeydownHandler = null;
+            }
+
             // Restore previous navigation state if it exists
             if (this.previousNavigationState) {
                 this.menuNavigationState.active = this.previousNavigationState.active;
@@ -3853,6 +3969,48 @@ class VibeSurvivor {
                 this.resetMenuNavigation();
             }
         }
+    }
+
+    switchHelpTab(tab) {
+        const guideBtn = document.getElementById('help-tab-guide');
+        const statusBtn = document.getElementById('help-tab-status');
+        const guidePane = document.getElementById('help-guide');
+        const statusPane = document.getElementById('help-status');
+
+        if (!guideBtn || !statusBtn || !guidePane || !statusPane) return;
+
+        if (tab === 'status') {
+            guidePane.style.display = 'none';
+            statusPane.style.display = 'block';
+            statusBtn.classList.add('active');
+            guideBtn.classList.remove('active');
+            this.renderHelpStatusTab();
+            this.activeHelpTab = 'status';
+        } else {
+            guidePane.style.display = 'block';
+            statusPane.style.display = 'none';
+            statusBtn.classList.remove('active');
+            guideBtn.classList.add('active');
+            this.activeHelpTab = 'guide';
+        }
+    }
+
+    renderHelpStatusTab() {
+        const statusPane = document.getElementById('help-status');
+        if (!statusPane) return;
+
+        const statusTitle = this.t('statusTab');
+        const weaponsSection = this.generateWeaponsSection();
+        const passivesSection = this.generatePassivesSection();
+        const playerStatsSection = this.generatePlayerStatsSection();
+
+        const sections = [weaponsSection, passivesSection, playerStatsSection].filter(Boolean).join('');
+
+        const emptyText = this.t('statusEmpty');
+        statusPane.innerHTML = `
+            <h2 id="help-status-title">${statusTitle}</h2>
+            ${sections || `<p class="help-status-empty">${emptyText}</p>`}
+        `;
     }
 
     enableHelpScrolling() {
@@ -3999,6 +4157,47 @@ class VibeSurvivor {
         this.gameOverScrollHandler = null;
     }
 
+    enableVictoryScrolling() {
+        const victoryContent = document.querySelector('#survivor-victory-overlay .victory-scroll-content');
+        if (!victoryContent) return;
+
+        if (this.victoryScrollHandler) {
+            victoryContent.removeEventListener('touchstart', this.victoryScrollHandler.start, { passive: true });
+            victoryContent.removeEventListener('touchmove', this.victoryScrollHandler.move, { passive: true });
+            victoryContent.removeEventListener('touchend', this.victoryScrollHandler.end, { passive: true });
+        }
+
+        this.victoryScrollHandler = {
+            start: (e) => {
+                if (e.target.closest('button')) return;
+                e.stopPropagation();
+            },
+            move: (e) => {
+                if (e.target.closest('button')) return;
+                e.stopPropagation();
+            },
+            end: (e) => {
+                if (e.target.closest('button')) return;
+                e.stopPropagation();
+            }
+        };
+
+        victoryContent.addEventListener('touchstart', this.victoryScrollHandler.start, { passive: true });
+        victoryContent.addEventListener('touchmove', this.victoryScrollHandler.move, { passive: true });
+        victoryContent.addEventListener('touchend', this.victoryScrollHandler.end, { passive: true });
+    }
+
+    disableVictoryScrolling() {
+        const victoryContent = document.querySelector('#survivor-victory-overlay .victory-scroll-content');
+        if (!victoryContent || !this.victoryScrollHandler) return;
+
+        victoryContent.removeEventListener('touchstart', this.victoryScrollHandler.start, { passive: true });
+        victoryContent.removeEventListener('touchmove', this.victoryScrollHandler.move, { passive: true });
+        victoryContent.removeEventListener('touchend', this.victoryScrollHandler.end, { passive: true });
+
+        this.victoryScrollHandler = null;
+    }
+
     enableAboutScrolling() {
         const aboutContent = document.querySelector('.about-content');
         if (!aboutContent) return;
@@ -4103,20 +4302,42 @@ class VibeSurvivor {
         }
     }
 
-    scrollHelpContent(direction) {
-        const helpContent = document.querySelector('.help-content');
-        if (!helpContent) return;
+    scrollVictoryContent(direction) {
+        const victoryContent = document.querySelector('#survivor-victory-overlay .victory-scroll-content');
+        if (!victoryContent) return;
 
-        // Scroll amount per key press (adjust as needed)
-        const scrollAmount = 50;
+        const scrollAmount = 60;
 
         if (direction === 'up') {
-            helpContent.scrollBy({
+            victoryContent.scrollBy({
                 top: -scrollAmount,
                 behavior: 'smooth'
             });
         } else if (direction === 'down') {
-            helpContent.scrollBy({
+            victoryContent.scrollBy({
+                top: scrollAmount,
+                behavior: 'smooth'
+            });
+        }
+    }
+
+    scrollHelpContent(direction) {
+        const helpContent = document.querySelector('.help-content');
+        if (!helpContent) return;
+
+        const activePane = Array.from(helpContent.querySelectorAll('.help-pane')).find(pane => pane.style.display !== 'none');
+        const target = (activePane && activePane.scrollHeight > activePane.clientHeight) ? activePane : helpContent;
+
+        // Scroll amount per key press (adjust as needed)
+        const scrollAmount = 60;
+
+        if (direction === 'up') {
+            target.scrollBy({
+                top: -scrollAmount,
+                behavior: 'smooth'
+            });
+        } else if (direction === 'down') {
+            target.scrollBy({
                 top: scrollAmount,
                 behavior: 'smooth'
             });
@@ -4412,8 +4633,9 @@ class VibeSurvivor {
             // Allow scrolling within help content and level up modal
             const isHelpContent = target.closest('.help-content');
             const isLevelUpContent = target.closest('.upgrade-choices-container');
+            const isVictoryContent = target.closest('.victory-scroll-content');
 
-            if (!isGameControl && !isHelpContent && !isLevelUpContent) {
+            if (!isGameControl && !isHelpContent && !isLevelUpContent && !isVictoryContent) {
                 e.preventDefault();
                 e.stopPropagation();
             }
@@ -4432,8 +4654,9 @@ class VibeSurvivor {
             const isPauseContent = target.closest('.pause-content');
             const isAboutContent = target.closest('.about-content');
             const isOptionsContent = target.closest('.options-content');
+            const isVictoryContent = target.closest('.victory-scroll-content');
 
-            if (!isHelpContent && !isLevelUpContent && !isPauseContent && !isAboutContent && !isOptionsContent) {
+            if (!isHelpContent && !isLevelUpContent && !isPauseContent && !isAboutContent && !isOptionsContent && !isVictoryContent) {
                 e.preventDefault();
                 e.stopPropagation();
             }
@@ -4819,6 +5042,7 @@ class VibeSurvivor {
         projectile.type = 'basic';
         projectile.color = '#9B59B6';
         projectile.size = 3;
+        projectile.sourceType = weapon.type;
         
         this.projectiles.push(projectile);
     }
@@ -4844,6 +5068,7 @@ class VibeSurvivor {
             projectile.type = 'spread';
             projectile.color = '#E67E22';
             projectile.size = 2.5;
+            projectile.sourceType = weapon.type;
             
             this.projectiles.push(projectile);
         }
@@ -4863,6 +5088,7 @@ class VibeSurvivor {
         projectile.color = '#E74C3C';
         projectile.size = 3;
         projectile.piercing = 999;
+        projectile.sourceType = weapon.type;
         
         this.projectiles.push(projectile);
     }
@@ -4881,6 +5107,7 @@ class VibeSurvivor {
         projectile.color = '#3498DB';
         projectile.size = 4;
         projectile.explosionRadius = 50;
+        projectile.sourceType = weapon.type;
         
         this.projectiles.push(projectile);
     }
@@ -4905,6 +5132,7 @@ class VibeSurvivor {
             projectile.type = 'shotgun';
             projectile.color = '#F39C12';
             projectile.size = 2;
+            projectile.sourceType = weapon.type;
             
             this.projectiles.push(projectile);
         }
@@ -4934,6 +5162,7 @@ class VibeSurvivor {
             while (currentTarget && chainCount < maxChains) {
                 hitEnemies.add(currentTarget);
                 currentTarget.health -= weapon.damage;
+                this.recordWeaponDamage(weapon.type, weapon.damage, currentTarget);
                 
                 // Store target position for rendering
                 chainTargets.push({
@@ -4973,6 +5202,7 @@ class VibeSurvivor {
             projectile.type = 'lightning';
             projectile.color = '#F1C40F';
             projectile.chainCount = chainCount;
+            projectile.sourceType = weapon.type;
             
             this.projectiles.push(projectile);
         }
@@ -5007,6 +5237,7 @@ class VibeSurvivor {
                 
                 // Deal lightning damage
                 currentTarget.health -= weapon.damage;
+                this.recordWeaponDamage(weapon.type, weapon.damage, currentTarget);
                 
                 // Store target position for rendering
                 chainTargets.push({
@@ -5022,6 +5253,7 @@ class VibeSurvivor {
                         const distance = this.cachedSqrt(dx * dx + dy * dy);
                         if (distance <= (weapon.explosionRadius || 100)) {
                             enemy.health -= weapon.damage * 1.0; // Explosion at full damage
+                            this.recordWeaponDamage(weapon.type, weapon.damage, enemy);
                             this.createHitParticles(enemy.x, enemy.y, '#00FFFF'); // Cyan particles
                         }
                     }
@@ -5058,7 +5290,8 @@ class VibeSurvivor {
                 life: 30,
                 type: 'shockburst',
                 color: '#00FFFF', // CYAN COLOR (main difference from lightning)
-                chainCount: chainCount
+                chainCount: chainCount,
+                sourceType: weapon.type
             };
             this.projectiles.push(projectile);
         }
@@ -5125,6 +5358,7 @@ class VibeSurvivor {
             projectile.type = 'gatling_gun';
             projectile.color = '#FFD700'; // Gold color for gatling bullets
             projectile.active = true;
+            projectile.sourceType = weapon.type;
             
             this.projectiles.push(projectile);
             
@@ -5193,6 +5427,7 @@ class VibeSurvivor {
         projectile.type = 'gatling_gun';
         projectile.color = '#FFD700';
         projectile.active = true;
+        projectile.sourceType = weapon.type;
         
         this.projectiles.push(projectile);
         
@@ -5224,6 +5459,7 @@ class VibeSurvivor {
             projectile.color = '#E74C3C';
             projectile.size = 3 + Math.random() * 2;
             projectile.dotDamage = weapon.damage * 0.1;
+            projectile.sourceType = weapon.type;
             
             this.projectiles.push(projectile);
         }
@@ -5243,6 +5479,7 @@ class VibeSurvivor {
         projectile.color = '#9B59B6';
         projectile.size = 3;
         projectile.piercing = 999;
+        projectile.sourceType = weapon.type;
         
         this.projectiles.push(projectile);
     }
@@ -5300,6 +5537,7 @@ class VibeSurvivor {
             projectile.explosionRadius = 60;
             projectile.speed = (weapon.projectileSpeed || 6);
             projectile.baseSpeed = weapon.projectileSpeed || 3;
+            projectile.sourceType = weapon.type;
             
             this.projectiles.push(projectile);
         }
@@ -5345,6 +5583,7 @@ class VibeSurvivor {
             projectile.maxHits = 10; // Limit to prevent infinite loops
             projectile.targetEnemy = targetEnemy; // Each laser gets its own target
             projectile.speed = weapon.projectileSpeed;
+            projectile.sourceType = weapon.type;
             
             this.projectiles.push(projectile);
         }
@@ -5996,6 +6235,9 @@ class VibeSurvivor {
                     enemy.burning = null;
                 } else if (this.frameCount % 20 === 0) { // Damage every 1/3 second
                     enemy.health -= enemy.burning.damage;
+                    if (enemy.burning.sourceType) {
+                        this.recordWeaponDamage(enemy.burning.sourceType, enemy.burning.damage, enemy);
+                    }
                     this.createHitParticles(enemy.x, enemy.y, '#ff6348');
                 }
             }
@@ -6210,7 +6452,7 @@ class VibeSurvivor {
             if (projectile.life <= 0 || (distanceFromPlayer > 800 && projectile.type !== 'boss-missile')) {
                     
                 if (projectile.type === 'missile' && projectile.explosionRadius) {
-                    this.createExplosion(projectile.x, projectile.y, projectile.explosionRadius, projectile.damage * 0.7);
+                    this.createExplosion(projectile.x, projectile.y, projectile.explosionRadius, projectile.damage * 0.7, projectile.sourceType);
                 }
                 
                 // Return projectile to pool instead of just removing it
@@ -6723,6 +6965,35 @@ class VibeSurvivor {
 
         const iconName = weaponIconMap[type] || 'basicMissile';
         return `<img src="images/weapons/${iconName}.png" alt="${type}" style="width: 48px; height: 48px; vertical-align: middle;">`;
+    }
+
+    ensureWeaponStats(type) {
+        if (!type) return null;
+        if (!this.weaponStats[type]) {
+            this.weaponStats[type] = { total: 0, enemies: 0, bosses: 0 };
+        }
+        return this.weaponStats[type];
+    }
+
+    recordWeaponDamage(sourceType, amount, enemy = null) {
+        if (!sourceType) return;
+        if (typeof amount !== 'number' || !Number.isFinite(amount) || amount <= 0) return;
+        const stats = this.ensureWeaponStats(sourceType);
+        if (!stats) return;
+        stats.total += amount;
+        if (enemy && enemy.behavior === 'boss') {
+            stats.bosses += amount;
+        } else {
+            stats.enemies += amount;
+        }
+    }
+
+    getWeaponDamageStats(type) {
+        const stats = this.weaponStats[type];
+        if (!stats) {
+            return { total: 0, enemies: 0, bosses: 0 };
+        }
+        return stats;
     }
 
     getWeaponIconForHeader(type) {
@@ -7422,16 +7693,19 @@ class VibeSurvivor {
                     }
                     
                     enemy.health -= damage;
+                    if (projectile.sourceType) {
+                        this.recordWeaponDamage(projectile.sourceType, damage, enemy);
+                    }
                     this.createHitParticles(enemy.x, enemy.y, projectile.color);
                     
                     // Special effects
                     if (projectile.type === 'plasma' && projectile.explosionRadius) {
-                        this.createExplosion(enemy.x, enemy.y, projectile.explosionRadius, projectile.damage * 0.5);
+                        this.createExplosion(enemy.x, enemy.y, projectile.explosionRadius, projectile.damage * 0.5, projectile.sourceType);
                     } else if (projectile.type === 'missile' && projectile.explosionRadius) {
-                        this.createExplosion(enemy.x, enemy.y, projectile.explosionRadius, projectile.damage * 0.7);
+                        this.createExplosion(enemy.x, enemy.y, projectile.explosionRadius, projectile.damage * 0.7, projectile.sourceType);
                         projectileHit = true;
                     } else if (projectile.type === 'flame' && projectile.dotDamage) {
-                        enemy.burning = { damage: projectile.dotDamage, duration: 180 };
+                        enemy.burning = { damage: projectile.dotDamage, duration: 180, sourceType: projectile.sourceType };
                     }
                     
                     // Check if projectile should be removed
@@ -7551,7 +7825,7 @@ class VibeSurvivor {
         }
     }
     
-    createExplosion(x, y, radius, damage) {
+    createExplosion(x, y, radius, damage, sourceType = null) {
         // Create visual explosion effect
         if (!this.explosions) this.explosions = [];
         
@@ -7592,16 +7866,23 @@ class VibeSurvivor {
             }
         }
         
-        // Damage enemies in radius
-        this.enemies.forEach(enemy => {
-            const dx = enemy.x - x;
-            const dy = enemy.y - y;
-            const distance = this.cachedSqrt(dx * dx + dy * dy);
-            
-            if (distance <= radius) {
-                enemy.health -= damage * (1 - distance / radius);
-            }
-        });
+        if (damage > 0 && radius > 0) {
+            this.enemies.forEach(enemy => {
+                const dx = enemy.x - x;
+                const dy = enemy.y - y;
+                const distance = this.cachedSqrt(dx * dx + dy * dy);
+                if (distance <= radius) {
+                    const falloff = 1 - (distance / radius);
+                    const appliedDamage = damage * Math.max(0, falloff);
+                    if (appliedDamage > 0) {
+                        enemy.health -= appliedDamage;
+                        if (sourceType) {
+                            this.recordWeaponDamage(sourceType, appliedDamage, enemy);
+                        }
+                    }
+                }
+            });
+        }
     }
 
     createBossDefeatAnimation(bossX, bossY, bossRadius) {
@@ -10586,6 +10867,8 @@ class VibeSurvivor {
     generateWeaponsSection() {
         if (this.weapons.length === 0) return '';
 
+        const t = this.translations[this.currentLanguage].ui;
+
         const weaponsHtml = this.weapons.map(weapon => {
             const isMergeWeapon = weapon.isMergeWeapon || false;
             const mergeClass = isMergeWeapon ? 'style="color: #ffaa00 !important;"' : '';
@@ -10606,6 +10889,10 @@ class VibeSurvivor {
                 'gatling_gun': 'gatlingGun'
             };
             const iconName = weaponIconMap[weapon.type] || 'basicMissile';
+            const damageStats = this.getWeaponDamageStats(weapon.type);
+            const totalDamage = Math.round(damageStats.total);
+            const bossDamage = Math.round(damageStats.bosses);
+            const enemyDamage = Math.round(damageStats.enemies);
 
             return `
                 <div style="
@@ -10615,17 +10902,21 @@ class VibeSurvivor {
                     font-size: 14px;
                     align-items: center;
                     gap: 8px;
+                    flex-wrap: wrap;
                 ">
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <img src="images/weapons/${iconName}.png" alt="${weapon.type}" style="width: 32px; height: 32px;">
                         <span ${mergeClass}>${this.getWeaponName(weapon.type)} LV.${weapon.level}</span>
                     </div>
-                    <span style="color: #888; font-size: 12px;">${weapon.damage} DMG</span>
+                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 3px; font-size: 12px;">
+                        <span style="color: #00ffff;">${t.currentDamage}: ${weapon.damage}</span>
+                        <span style="color: #888;">${t.totalDamage}: ${totalDamage}</span>
+                        <span style="color: #ff66ff;">${t.vsBosses}: ${bossDamage}</span>
+                        <span style="color: #66ff66;">${t.vsEnemies}: ${enemyDamage}</span>
+                    </div>
                 </div>
             `;
         }).join('');
-
-        const t = this.translations[this.currentLanguage].ui;
         return `
             <div style="
                 margin: 15px 0;
@@ -11073,18 +11364,32 @@ class VibeSurvivor {
             backdrop-filter: blur(5px) !important;
         `;
         
+        const t = this.translations[this.currentLanguage].ui;
+        const weaponsSection = this.generateWeaponsSection();
+        const passivesSection = this.generatePassivesSection();
+        const playerStatsSection = this.generatePlayerStatsSection();
+        const bossBanner = this.bossesKilled === 0
+            ? this.t('bossDefeatedBanner')
+            : this.t('bossLevelDefeated').replace('{level}', this.bossLevel);
+        const nextBossText = this.bossesKilled >= 1
+            ? this.t('nextBoss').replace('{level}', this.bossLevel + 1)
+            : '';
+
         // Create victory content with neon theme
         victoryOverlay.innerHTML = `
-            <div style="
+            <div class="victory-content" style="
                 background: linear-gradient(135deg, #0a1a0a, #1a2a0a) !important;
                 border: 2px solid #00ff00 !important;
                 border-radius: 15px !important;
                 padding: 30px !important;
                 text-align: center !important;
                 color: white !important;
-                max-width: 400px !important;
+                max-width: 550px !important;
+                max-height: 80vh !important;
                 box-shadow: 0 0 30px rgba(0, 255, 0, 0.5) !important;
                 font-family: 'NeoDunggeunmoPro', Arial, sans-serif !important;
+                display: flex !important;
+                flex-direction: column !important;
             ">
                 <div style="
                     color: #00ff00 !important;
@@ -11092,72 +11397,88 @@ class VibeSurvivor {
                     font-weight: bold !important;
                     margin-bottom: 20px !important;
                     text-shadow: 0 0 15px rgba(0, 255, 0, 0.8) !important;
-                ">VICTORY!</div>
+                ">${this.t('victoryTitle')}</div>
                 
                 <div style="
                     color: #ffff00 !important;
                     font-size: 18px !important;
                     font-weight: bold !important;
-                    margin-bottom: 25px !important;
+                    margin-bottom: 20px !important;
                     text-shadow: 0 0 10px rgba(255, 255, 0, 0.6) !important;
-                ">${this.bossesKilled === 0 ? 'BOSS DEFEATED' : `BOSS LEVEL ${this.bossLevel - 1} DEFEATED`}</div>
+                ">${bossBanner}</div>
                 
-                <div style="margin-bottom: 25px !important;">
-                    <div style="
-                        display: flex;
-                        justify-content: space-between;
-                        margin: 8px 0;
-                        font-size: 18px;
-                        color: #00ffff;
-                    ">
-                        <span>Level:</span>
-                        <span style="color: #00ff00; font-weight: bold;">${finalStats.level}</span>
+                <div class="victory-scroll-content" tabindex="0" style="
+                    overflow-y: auto !important;
+                    max-height: calc(80vh - 220px) !important;
+                    padding-right: 10px !important;
+                    margin-bottom: 20px !important;
+                    -webkit-overflow-scrolling: touch !important;
+                    text-align: left !important;
+                    outline: none !important;
+                ">
+                    <div style="margin-bottom: 20px !important;">
+                        <div style="
+                            display: flex;
+                            justify-content: space-between;
+                            margin: 8px 0;
+                            font-size: 18px;
+                            color: #00ffff;
+                        ">
+                            <span>${t.level}</span>
+                            <span style="color: #00ff00; font-weight: bold;">${finalStats.level}</span>
+                        </div>
+                        <div style="
+                            display: flex;
+                            justify-content: space-between;
+                            margin: 8px 0;
+                            font-size: 18px;
+                            color: #00ffff;
+                        ">
+                            <span>${t.time}</span>
+                            <span style="color: #00ff00; font-weight: bold;">${finalStats.timeText}</span>
+                        </div>
+                        <div style="
+                            display: flex;
+                            justify-content: space-between;
+                            margin: 8px 0;
+                            font-size: 18px;
+                            color: #00ffff;
+                        ">
+                            <span>${t.enemies}</span>
+                            <span style="color: #00ff00; font-weight: bold;">${finalStats.enemiesKilled}</span>
+                        </div>
+                        ${this.bossesKilled >= 1 ? `
+                        <div style="
+                            display: flex;
+                            justify-content: space-between;
+                            margin: 8px 0;
+                            font-size: 18px;
+                            color: #00ffff;
+                        ">
+                            <span>${t.bossesDefeated}</span>
+                            <span style="color: #ff00ff; font-weight: bold;">${this.bossesKilled}</span>
+                        </div>
+                        ` : ''}
+                        ${nextBossText ? `
+                        <div style="
+                            margin: 15px 0;
+                            font-size: 16px;
+                            color: #ffff00;
+                            text-align: center;
+                            font-weight: bold;
+                            text-shadow: 0 0 8px rgba(255, 255, 0, 0.8);
+                        ">
+                            ${nextBossText}
+                        </div>
+                        ` : ''}
                     </div>
-                    <div style="
-                        display: flex;
-                        justify-content: space-between;
-                        margin: 8px 0;
-                        font-size: 18px;
-                        color: #00ffff;
-                    ">
-                        <span>Survival Time:</span>
-                        <span style="color: #00ff00; font-weight: bold;">${finalStats.timeText}</span>
-                    </div>
-                    <div style="
-                        display: flex;
-                        justify-content: space-between;
-                        margin: 8px 0;
-                        font-size: 18px;
-                        color: #00ffff;
-                    ">
-                        <span>Enemies Defeated:</span>
-                        <span style="color: #00ff00; font-weight: bold;">${finalStats.enemiesKilled}</span>
-                    </div>
-                    ${this.bossesKilled >= 1 ? `
-                    <div style="
-                        display: flex;
-                        justify-content: space-between;
-                        margin: 8px 0;
-                        font-size: 18px;
-                        color: #00ffff;
-                    ">
-                        <span>Total Bosses Defeated:</span>
-                        <span style="color: #ff00ff; font-weight: bold;">${this.bossesKilled}</span>
-                    </div>
-                    <div style="
-                        margin: 15px 0;
-                        font-size: 16px;
-                        color: #ffff00;
-                        text-align: center;
-                        font-weight: bold;
-                        text-shadow: 0 0 8px rgba(255, 255, 0, 0.8);
-                    ">
-                        Next: Boss Level ${this.bossLevel}
-                    </div>
-                    ` : ''}
+
+                    ${weaponsSection}
+                    ${passivesSection}
+                    ${playerStatsSection}
                 </div>
                 
-                <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-top: auto;">
                     <button id="victory-continue-btn" style="
                         background: transparent !important;
                         border: 2px solid #ff00ff !important;
@@ -11174,7 +11495,7 @@ class VibeSurvivor {
                         user-select: none !important;
                         -webkit-user-select: none !important;
                         -webkit-tap-highlight-color: transparent !important;
-                    ">CONTINUE</button>
+                    ">${this.t('resume')}</button>
                     
                     <button id="victory-retry-btn" style="
                         background: transparent !important;
@@ -11192,7 +11513,7 @@ class VibeSurvivor {
                         user-select: none !important;
                         -webkit-user-select: none !important;
                         -webkit-tap-highlight-color: transparent !important;
-                    ">PLAY AGAIN</button>
+                    ">${t.playAgain}</button>
                     
                     <button id="victory-exit-btn" style="
                         background: transparent !important;
@@ -11210,7 +11531,7 @@ class VibeSurvivor {
                         user-select: none !important;
                         -webkit-user-select: none !important;
                         -webkit-tap-highlight-color: transparent !important;
-                    ">EXIT</button>
+                    ">${t.exit}</button>
                 </div>
             </div>
         `;
@@ -11247,7 +11568,26 @@ class VibeSurvivor {
         
         if (gameContainer) {
             gameContainer.appendChild(victoryOverlay);
-            
+            this.enableVictoryScrolling();
+            const victoryScrollContent = victoryOverlay.querySelector('.victory-scroll-content');
+            if (victoryScrollContent) {
+                victoryScrollContent.focus({ preventScroll: true });
+            }
+            if (!this.victoryKeydownHandler) {
+                this.victoryKeydownHandler = (event) => {
+                    const key = event.key;
+                    if (!document.getElementById('survivor-victory-overlay')) return;
+                    if (key === 'ArrowUp' || key === 'ArrowDown' || key === 'Up' || key === 'Down' || key === 'w' || key === 'W' || key === 's' || key === 'S') {
+                        if (this.menuNavigationState.active && this.menuNavigationState.menuType === 'victory') {
+                            return;
+                        }
+                        event.preventDefault();
+                        const direction = (key === 'ArrowUp' || key === 'Up' || key === 'w' || key === 'W') ? 'up' : 'down';
+                        this.scrollVictoryContent(direction);
+                    }
+                };
+                document.addEventListener('keydown', this.victoryKeydownHandler, { passive: false });
+            }
         } else {
             console.error('Could not find container for victory overlay');
         }
@@ -11262,6 +11602,11 @@ class VibeSurvivor {
             e.stopPropagation();
             // Reset menu navigation
             this.resetMenuNavigation();
+            this.disableVictoryScrolling();
+            if (this.victoryKeydownHandler) {
+                document.removeEventListener('keydown', this.victoryKeydownHandler);
+                this.victoryKeydownHandler = null;
+            }
             // Remove overlay
             victoryOverlay.remove();
             style.remove();
@@ -11283,6 +11628,11 @@ class VibeSurvivor {
             e.stopPropagation();
             // Reset menu navigation
             this.resetMenuNavigation();
+            this.disableVictoryScrolling();
+            if (this.victoryKeydownHandler) {
+                document.removeEventListener('keydown', this.victoryKeydownHandler);
+                this.victoryKeydownHandler = null;
+            }
             // Remove overlay
             victoryOverlay.remove();
             style.remove();
@@ -11299,6 +11649,11 @@ class VibeSurvivor {
             e.stopPropagation();
             // Reset menu navigation
             this.resetMenuNavigation();
+            this.disableVictoryScrolling();
+            if (this.victoryKeydownHandler) {
+                document.removeEventListener('keydown', this.victoryKeydownHandler);
+                this.victoryKeydownHandler = null;
+            }
             // Remove overlay
             victoryOverlay.remove();
             style.remove();
@@ -11589,6 +11944,9 @@ class VibeSurvivor {
                     controlsMobile: "Mobile: Touch screen to move, tap DASH button",
                     pauseHint: "Press ESC to resume",
                     helpHint: "Press ESC to close",
+                    guideTab: "Guide",
+                    statusTab: "Status",
+                    statusEmpty: "Keep playing to unlock detailed stats.",
                     dash: "DASH",
                     dashButtonRight: "DASH BUTTON: RIGHT",
                     dashButtonLeft: "DASH BUTTON: LEFT",
@@ -11606,7 +11964,15 @@ class VibeSurvivor {
                     retry: "RETRY",
                     weaponsResult: "Weapons Result",
                     passiveResult: "Passive Result",
-                    finalResult: "Final Result"
+                    finalResult: "Final Result",
+                    currentDamage: "Current",
+                    totalDamage: "Total",
+                    vsBosses: "Boss",
+                    vsEnemies: "Enemies",
+                    victoryTitle: "Victory!",
+                    bossDefeatedBanner: "Boss Defeated",
+                    bossLevelDefeated: "Boss Level {level} Defeated",
+                    nextBoss: "Next: Boss Level {level}"
                 },
                 weapons: {
                     // Base weapons
@@ -11733,6 +12099,9 @@ class VibeSurvivor {
                     controlsMobile: "모바일: 화면을 터치해 이동, 대시 버튼을 눌러 대시",
                     pauseHint: "ESC를 눌러 계속하기",
                     helpHint: "ESC를 눌러 닫기",
+                    guideTab: "가이드",
+                    statusTab: "상태",
+                    statusEmpty: "상세 통계를 확인하려면 계속 플레이하세요.",
                     dash: "대시",
                     dashButtonRight: "대시 버튼: 오른쪽",
                     dashButtonLeft: "대시 버튼: 왼쪽",
@@ -11750,7 +12119,15 @@ class VibeSurvivor {
                     retry: "다시하기",
                     weaponsResult: "무기 결과",
                     passiveResult: "패시브 결과",
-                    finalResult: "최종 결과"
+                    finalResult: "최종 결과",
+                    currentDamage: "현재",
+                    totalDamage: "총합",
+                    vsBosses: "보스",
+                    vsEnemies: "적",
+                    victoryTitle: "승리!",
+                    bossDefeatedBanner: "보스를 처치했습니다",
+                    bossLevelDefeated: "보스 레벨 {level} 처치",
+                    nextBoss: "다음: 보스 레벨 {level}"
                 },
                 weapons: {
                     // Base weapons
@@ -11915,8 +12292,14 @@ class VibeSurvivor {
         if (restartConfirmNo) restartConfirmNo.textContent = this.t('noContinue');
 
         // Help menu
-        const helpTitle = document.querySelector('#help-menu h2');
-        if (helpTitle) helpTitle.innerHTML = this.t('weaponMergers', 'help');
+        const helpGuideTab = document.getElementById('help-tab-guide');
+        if (helpGuideTab) helpGuideTab.textContent = this.t('guideTab');
+
+        const helpStatusTab = document.getElementById('help-tab-status');
+        if (helpStatusTab) helpStatusTab.textContent = this.t('statusTab');
+
+        const helpGuideTitle = document.getElementById('help-guide-title');
+        if (helpGuideTitle) helpGuideTitle.innerHTML = this.t('weaponMergers', 'help');
 
         const closeHelpBtn = document.getElementById('close-help-btn');
         if (closeHelpBtn) closeHelpBtn.textContent = this.t('close');
@@ -11964,6 +12347,8 @@ class VibeSurvivor {
 
         const rapidFireEvolution = document.getElementById('rapid-fire-evolution');
         if (rapidFireEvolution) rapidFireEvolution.textContent = this.t('rapidFireEvolution', 'help');
+
+        this.renderHelpStatusTab();
 
         // Game over screen
         const gameOverTitle = document.querySelector('#survivor-game-over-screen h2');
