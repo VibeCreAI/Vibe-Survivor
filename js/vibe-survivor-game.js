@@ -532,6 +532,9 @@ class VibeSurvivor {
                                         </a>
                                     </div>
                                 </div>
+                                <div class="about-copyright">
+                                    <p>&copy; <span id="about-copyright-year"></span> VibeCreAI</p>
+                                </div>
                                 <button id="close-about-btn" class="survivor-btn primary">CLOSE</button>
                                 <p class="about-hint">WASD/Arrows to navigate, Enter to select, ESC to close</p>
                             </div>
@@ -650,6 +653,12 @@ class VibeSurvivor {
         document.body.insertAdjacentHTML('beforeend', modalHTML);
 
         requestAnimationFrame(() => this.updateStartOverlayLayout());
+
+        // Populate copyright year
+        const copyrightYearElement = document.getElementById('about-copyright-year');
+        if (copyrightYearElement) {
+            copyrightYearElement.textContent = new Date().getFullYear();
+        }
 
         // Add toast notification styles
         this.addToastStyles();
@@ -1908,6 +1917,19 @@ class VibeSurvivor {
             .social-item span {
                 flex: 1;
                 text-align: left;
+            }
+
+            .about-copyright {
+                margin: 20px 0 15px 0;
+                padding: 15px 0;
+                border-top: 1px solid rgba(0, 255, 255, 0.2);
+            }
+
+            .about-copyright p {
+                color: #888;
+                font-size: 0.9rem;
+                margin: 0;
+                font-family: 'NeoDunggeunmoPro', Arial, sans-serif;
             }
 
             .about-hint {
