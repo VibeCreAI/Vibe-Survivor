@@ -3828,14 +3828,20 @@ class VibeSurvivor {
         // Create touch scroll handlers that allow native scrolling
         this.gameOverScrollHandler = {
             start: (e) => {
+                // Allow button touches to bubble normally
+                if (e.target.closest('button')) return;
                 // Don't prevent default - allow native touch scrolling
                 e.stopPropagation(); // Stop it from bubbling to modal
             },
             move: (e) => {
+                // Allow button touches to bubble normally
+                if (e.target.closest('button')) return;
                 // Don't prevent default - allow native touch scrolling
                 e.stopPropagation(); // Stop it from bubbling to modal
             },
             end: (e) => {
+                // Allow button touches to bubble normally
+                if (e.target.closest('button')) return;
                 // Don't prevent default - allow native touch scrolling
                 e.stopPropagation(); // Stop it from bubbling to modal
             }
