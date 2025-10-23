@@ -2134,7 +2134,7 @@ class VibeSurvivor {
                 border-radius: 15px;
                 padding: 30px;
                 text-align: center;
-                max-width: 90%;
+                width: min(400px, 92vw);
                 max-height: 80%;
                 overflow-y: auto;
                 box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
@@ -2151,8 +2151,8 @@ class VibeSurvivor {
 
             .upgrade-choices {
                 display: flex;
-                gap: 10px;
-                flex-wrap: wrap;
+                flex-direction: column;
+                gap: 12px;
                 justify-content: center;
             }
 
@@ -2160,10 +2160,32 @@ class VibeSurvivor {
                 background: rgba(0, 255, 255, 0.1);
                 border: 2px solid #00ffff;
                 border-radius: 10px;
-                padding: 10px;
-                width: 200px;
+                padding: 12px 16px;
+                width: 100%;
                 transition: all 0.3s ease;
                 text-align: center;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .upgrade-choice-icon {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 12px;
+                font-size: 24px;
+                width: 100%;
+            }
+
+            .upgrade-choice-icon-image {
+                width: 48px;
+                height: 48px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 48px;
             }
 
             .upgrade-choice:hover {
@@ -7120,7 +7142,10 @@ class VibeSurvivor {
                                 const mergeClass = choice.isMergeWeapon ? ' upgrade-choice-merge' : '';
                                 return `
                                 <div class="upgrade-choice${mergeClass}" data-choice="${index}">
-                                    <h3>${choice.icon} ${choice.name}</h3>
+                                    <div class="upgrade-choice-icon">
+                                        <span class="upgrade-choice-icon-image">${choice.icon}</span>
+                                        <h3>${choice.name}</h3>
+                                    </div>
                                     <p>${choice.description}</p>
                                 </div>
                             `}).join('')}
@@ -7181,97 +7206,62 @@ class VibeSurvivor {
     applyResponsiveModalStyles(modal, choiceCount, isMobile) {
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
-        
-        // Calculate optimal modal dimensions
-        let modalMaxWidth, modalMaxHeight, choiceWidth, choiceHeight;
-        
+
+        let contentWidth;
+        let modalMaxHeight;
+        let choiceWidth;
+
         if (isMobile) {
-            modalMaxWidth = Math.min(viewportWidth * 0.95, 400);
+            contentWidth = Math.min(viewportWidth * 0.95, 400);
             modalMaxHeight = viewportHeight * 0.85;
-            choiceWidth = modalMaxWidth - 60; // Account for padding
-            choiceHeight = 'auto';
+            choiceWidth = contentWidth - 60;
         } else {
-            modalMaxWidth = Math.min(viewportWidth * 0.9, 900);
+            contentWidth = Math.min(viewportWidth * 0.92, 400);
             modalMaxHeight = viewportHeight * 0.8;
-            choiceWidth = Math.min(200, (modalMaxWidth - 100) / Math.min(choiceCount, 3));
-            choiceHeight = 'auto';
+            const columns = Math.max(1, Math.min(choiceCount, 3));
+            choiceWidth = Math.min(220, (contentWidth - 100) / columns);
         }
-        
+
         // Apply styles to the modal content instead of the modal backdrop
         const modalContent = modal.querySelector('.levelup-content');
         if (modalContent) {
-            modalContent.style.cssText += `
-                max-width: ${modalMaxWidth}px !important;
-                max-height: ${modalMaxHeight}px !important;
-                width: auto !important;
-                height: auto !important;
-            `;
+            modalContent.style.setProperty('max-width', `${contentWidth}px`, 'important');
+            modalContent.style.setProperty('width', `${contentWidth}px`, 'important');
+            modalContent.style.setProperty('min-width', `${Math.min(contentWidth, 360)}px`, 'important');
+            modalContent.style.setProperty('max-height', `${modalMaxHeight}px`, 'important');
+            modalContent.style.setProperty('height', 'auto', 'important');
         }
         
         // Style the container for scrolling
         const container = modal.querySelector('.upgrade-choices-container');
         if (container) {
             // Let CSS handle responsive container sizing, only set scroll behavior
-            container.style.cssText = `
-                max-height: calc(${modalMaxHeight}px - 8rem);
-                padding: 0 10px;
-                margin: 10px -10px;
-                overflow-y: auto;
-                -webkit-overflow-scrolling: touch;
-                touch-action: pan-y;
-            `;
-
-            // Custom scrollbar for better mobile experience
-            container.style.cssText += `
-                scrollbar-width: thin;
-                scrollbar-color: #9B59B6 transparent;
-            `;
+            container.style.setProperty('max-height', `calc(${modalMaxHeight}px - 8rem)`, 'important');
+            container.style.setProperty('padding', '0 10px', 'important');
+            container.style.setProperty('margin', '10px -10px', 'important');
+            container.style.setProperty('overflow-y', 'auto', 'important');
+            container.style.setProperty('-webkit-overflow-scrolling', 'touch', 'important');
+            container.style.setProperty('touch-action', 'pan-y', 'important');
+            container.style.setProperty('scrollbar-width', 'thin', 'important');
+            container.style.setProperty('scrollbar-color', '#9B59B6 transparent', 'important');
         }
         
         // Style the choices grid
         const choicesGrid = modal.querySelector('.upgrade-choices');
         if (choicesGrid) {
-            if (isMobile) {
-                // Vertical layout for mobile
-                choicesGrid.style.cssText = `
-                    display: flex !important;
-                    flex-direction: column !important;
-                    gap: 15px !important;
-                    align-items: center !important;
-                `;
-            } else {
-                // Grid layout for desktop
-                choicesGrid.style.cssText = `
-                    display: grid !important;
-                    grid-template-columns: repeat(auto-fit, minmax(${choiceWidth}px, 1fr)) !important;
-                    gap: 5px !important;
-                    justify-content: center !important;
-                `;
-            }
+            choicesGrid.style.setProperty('display', 'flex', 'important');
+            choicesGrid.style.setProperty('flex-direction', 'column', 'important');
+            choicesGrid.style.setProperty('gap', '16px', 'important');
+            choicesGrid.style.setProperty('padding', '0', 'important');
         }
         
         // Style individual choices
         const choices = modal.querySelectorAll('.upgrade-choice');
         choices.forEach(choice => {
-            if (isMobile) {
-                choice.style.cssText = `
-                    width: ${choiceWidth}px !important;
-                    min-height: 100px !important;
-                    padding: 15px !important;
-                    font-size: 14px !important;
-                `;
-                
-                const h3 = choice.querySelector('h3');
-                if (h3) h3.style.fontSize = '16px !important';
-                
-                const p = choice.querySelector('p');
-                if (p) p.style.fontSize = '12px !important';
-            } else {
-                choice.style.cssText = `
-                    width: ${choiceWidth}px !important;
-                    min-height: auto !important;
-                `;
-            }
+            choice.style.setProperty('width', `100%`, 'important');
+            choice.style.setProperty('min-height', 'auto', 'important');
+            choice.style.setProperty('padding', '16px', 'important');
+            choice.style.setProperty('font-size', '14px', 'important');
         });
         
         
@@ -11205,6 +11195,7 @@ class VibeSurvivor {
                 text-align: center !important;
                 color: white !important;
                 max-width: 550px !important;
+                min-width: 400px !important;
                 max-height: 80vh !important;
                 box-shadow: 0 0 30px rgba(0, 255, 255, 0.5) !important;
                 font-family: 'NeoDunggeunmoPro', Arial, sans-serif !important;
