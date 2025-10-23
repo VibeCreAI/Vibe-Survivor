@@ -623,11 +623,6 @@ class VibeSurvivor {
                                             </div>
                                         </div>
 
-                                        <h2 id="weapon-tips-title">💡 WEAPON TIPS</h2>
-                                        <div class="help-section">
-                                            <p id="weapon-limit-tip">You can equip a maximum of 4 weapons, so choose wisely based on your playstyle.</p>
-                                        </div>
-
                                         <h2 id="weapon-evolution-title"><img src="images/passives/evolution.png" alt="Weapon Evolution" class="section-icon"> WEAPON EVOLUTION</h2>
                                         <div class="help-section">
                                             <p id="rapid-fire-evolution">Basic Missile evolves into Rapid Fire at level 5 - this creates a powerful automatic weapon with increased fire rate.</p>
@@ -4315,8 +4310,6 @@ class VibeSurvivor {
         if (!guidePane) return;
 
         const mergerTitle = this.t('weaponMergers', 'help');
-        const weaponTipsTitle = this.t('weaponTips', 'help');
-        const weaponLimitTip = this.t('weaponLimitTip', 'help');
         const evolutionTitle = this.t('weaponEvolution', 'help');
         const rapidEvolution = this.t('rapidFireEvolution', 'help');
 
@@ -4350,10 +4343,6 @@ class VibeSurvivor {
                     <p>${gatlingRecipe}</p>
                     <span class="recipe-desc">${gatlingDesc}</span>
                 </div>
-            </div>
-            <h2 class="levelup-guide-tips">${weaponTipsTitle}</h2>
-            <div class="help-section">
-                <p>${weaponLimitTip}</p>
             </div>
             <h2 class="levelup-guide-evolution"><img src="images/passives/evolution.png" alt="Weapon Evolution" class="section-icon"> ${evolutionTitle}</h2>
             <div class="help-section">
@@ -12371,8 +12360,6 @@ class VibeSurvivor {
                     gatlingGunDesc: "Multi-barrel rapid fire",
 
                     // Additional help content
-                    weaponTips: "💡 WEAPON TIPS",
-                    weaponLimitTip: "You can equip a maximum of 4 weapons, so choose wisely based on your playstyle.",
                     weaponEvolution: "WEAPON EVOLUTION",
                     rapidFireEvolution: "Basic Missile evolves into Rapid Fire at level 5 - this creates a powerful automatic weapon with increased fire rate."
                 }
@@ -12527,8 +12514,6 @@ class VibeSurvivor {
                     gatlingGunDesc: "다총신 속사",
 
                     // Additional help content
-                    weaponTips: "💡 무기 팁",
-                    weaponLimitTip: "최대 4개의 무기만 장착할 수 있으므로 플레이 스타일에 따라 신중하게 선택하세요.",
                     weaponEvolution: "무기 진화",
                     rapidFireEvolution: "기본 미사일이 레벨 5에서 속사로 진화합니다 - 발사 속도가 크게 향상된 강력한 자동 무기가 됩니다."
                 }
@@ -12694,10 +12679,10 @@ class VibeSurvivor {
 
         // Help menu additional sections
         const weaponTipsTitle = document.getElementById('weapon-tips-title');
-        if (weaponTipsTitle) weaponTipsTitle.textContent = this.t('weaponTips', 'help');
+        if (weaponTipsTitle) weaponTipsTitle.remove();
 
         const weaponLimitTip = document.getElementById('weapon-limit-tip');
-        if (weaponLimitTip) weaponLimitTip.textContent = this.t('weaponLimitTip', 'help');
+        if (weaponLimitTip) weaponLimitTip.parentElement?.removeChild(weaponLimitTip);
 
         const weaponEvolutionTitle = document.getElementById('weapon-evolution-title');
         if (weaponEvolutionTitle) weaponEvolutionTitle.innerHTML = `<img src="images/passives/evolution.png" alt="${this.t('weaponEvolution', 'help')}" class="section-icon"> ${this.t('weaponEvolution', 'help')}`;
