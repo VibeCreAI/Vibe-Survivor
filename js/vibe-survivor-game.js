@@ -1491,7 +1491,7 @@ class VibeSurvivor {
             .guide-pane .merge-recipe p,
             .guide-pane .merge-recipe span,
             .guide-pane .help-section span {
-                max-width: 420px;
+                max-width: none;
                 margin-left: auto;
                 margin-right: auto;
                 display: block;
@@ -1506,10 +1506,10 @@ class VibeSurvivor {
 
             .help-content h2 {
                 color: #00ffff;
-                margin-bottom: 20px;
-                margin-top: 30px;
-                font-size: 24px;
-                text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+                margin-bottom: 16px;
+                margin-top: 24px;
+                font-size: 20px;
+                text-shadow: 0 0 8px rgba(0, 255, 255, 0.4);
             }
 
             .help-pane h2:first-of-type {
@@ -1517,60 +1517,73 @@ class VibeSurvivor {
             }
 
             .help-recipes {
-                margin-bottom: 25px;
+                margin-bottom: 20px;
             }
 
             .merge-recipe {
-                background: linear-gradient(135deg, rgba(255, 170, 0, 0.25), rgba(255, 215, 0, 0.08));
-                border: 1px solid rgba(255, 215, 0, 0.5);
-                border-radius: 10px;
-                padding: 15px;
-                margin-bottom: 15px;
-                text-align: left;
-                box-shadow: 0 0 18px rgba(255, 200, 0, 0.2);
+                background: linear-gradient(135deg, rgba(255, 170, 0, 0.2), rgba(255, 215, 0, 0.06));
+                border: 1px solid rgba(255, 215, 0, 0.4);
+                border-radius: 8px;
+                margin-bottom: 12px;
+                text-align: center;
+                box-shadow: 0 0 14px rgba(255, 200, 0, 0.18);
             }
 
             .merge-recipe img {
-                width: 48px;
-                height: 48px;
-                margin-right: 10px;
+                width: 40px;
+                height: 40px;
+                margin-right: 0;
                 vertical-align: middle;
                 image-rendering: pixelated;
             }
 
             .section-icon {
-                width: 48px;
-                height: 48px;
+                width: 40px;
+                height: 40px;
                 margin-right: 8px;
                 vertical-align: middle;
                 image-rendering: pixelated;
             }
 
             .help-section {
-                background: rgba(0, 255, 255, 0.05);
-                border: 1px solid rgba(0, 255, 255, 0.2);
-                border-radius: 10px;
-                padding: 15px;
-                margin-bottom: 20px;
+                background: rgba(0, 255, 255, 0.04);
+                border: 1px solid rgba(0, 255, 255, 0.18);
+                border-radius: 8px;
+                padding: 12px;
+                margin-bottom: 16px;
                 text-align: left;
+            }
+
+            .guide-pane .help-section {
+                text-align: center !important;
+            }
+
+            .guide-pane .help-section p {
+                text-align: center;
             }
 
             .merge-recipe h3 {
                 color: #ffdf70;
-                margin-bottom: 8px;
-                font-size: 18px;
+                margin-bottom: 6px;
+                font-size: 16px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 12px;
             }
 
             .merge-recipe p {
                 color: #ffe8b0;
-                margin-bottom: 5px;
+                margin-bottom: 4px;
                 font-weight: bold;
+                font-size: 14px;
             }
 
             .recipe-desc {
                 color: #f9d97a;
                 font-style: italic;
-                font-size: 14px;
+                font-size: 13px;
+                margin-bottom: 12px;
             }
 
             .help-hint {
@@ -11231,32 +11244,46 @@ class VibeSurvivor {
 
                 return {
                     totalDamage,
-                    html: `
-                        <div style="
-                            display: flex;
-                            justify-content: space-between;
-                            margin: 4px 0;
-                            font-size: 14px;
-                            align-items: center;
-                            gap: 8px;
-                            flex-wrap: wrap;
-                        ">
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <img src="images/weapons/${iconName}.png" alt="${weapon.type}" style="width: 32px; height: 32px;">
-                                <span ${mergeClass}>${this.getWeaponName(weapon.type)} LV.${weapon.level}</span>
-                            </div>
-                            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 3px; font-size: 12px;">
-                                <span style="color: #00ffff;">${t.currentDamage}: ${weapon.damage}</span>
-                                <span style="color: #888;">${t.totalDamage}: ${totalDamage}</span>
-                                <span style="color: #ff66ff;">${t.vsBosses}: ${bossDamage}</span>
-                                <span style="color: #66ff66;">${t.vsEnemies}: ${enemyDamage}</span>
-                            </div>
-                        </div>
-                    `
+                    html: {
+                        iconName,
+                        mergeClass,
+                        weaponLevel: weapon.level,
+                        name: this.getWeaponName(weapon.type),
+                        weaponDamage: weapon.damage,
+                        bossDamage,
+                        enemyDamage,
+                        totalDamage
+                    }
                 };
             })
             .sort((a, b) => b.totalDamage - a.totalDamage)
-            .map(entry => entry.html)
+            .map((entry, index, arr) => {
+                const isLast = index === arr.length - 1;
+                const weaponInfo = entry.html;
+                return `
+                    <div style="
+                        display: flex;
+                        justify-content: space-between;
+                        padding: 8px 0;
+                        font-size: 14px;
+                        align-items: center;
+                        gap: 8px;
+                        flex-wrap: wrap;
+                        border-bottom: ${isLast ? 'none' : '1px solid rgba(0, 255, 255, 0.15)'};
+                    ">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <img src="images/weapons/${weaponInfo.iconName}.png" alt="${weaponInfo.name}" style="width: 32px; height: 32px;">
+                            <span ${weaponInfo.mergeClass}>${weaponInfo.name} LV.${weaponInfo.weaponLevel}</span>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 3px; font-size: 12px;">
+                            <span style="color: #00ffff;">${t.currentDamage}: ${weaponInfo.weaponDamage}</span>
+                            <span style="color: #ffff00;">${t.totalDamage}: ${weaponInfo.totalDamage}</span>
+                            <span style="color: #ff66ff;">${t.vsBosses}: ${weaponInfo.bossDamage}</span>
+                            <span style="color: #66ff66;">${t.vsEnemies}: ${weaponInfo.enemyDamage}</span>
+                        </div>
+                    </div>
+                `;
+            })
             .join('');
         return `
             <div style="
@@ -11276,7 +11303,7 @@ class VibeSurvivor {
                     align-items: center;
                     justify-content: center;
                     gap: 8px;
-                "><img src="images/passives/upgrade.png" alt="weapons" style="width: 32px; height: 32px;"> ${t.weaponsResult}</div>
+                "><img src="images/passives/upgrade.png" alt="weapons" style="width: 48px; height: 48px; image-rendering: pixelated;"> ${t.weaponsResult}</div>
                 ${weaponsHtml}
             </div>
         `;
@@ -11353,7 +11380,11 @@ class VibeSurvivor {
                     font-weight: bold;
                     margin-bottom: 8px;
                     text-align: center;
-                ">🛡️ ${t.passiveResult}</div>
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 10px;
+                "><img src="images/passives/passive.png" alt="Passive Result" style="width: 48px; height: 48px; image-rendering: pixelated;"> ${t.passiveResult}</div>
                 ${passivesHtml}
             </div>
         `;
@@ -12275,7 +12306,7 @@ class VibeSurvivor {
                     weaponsResult: "Weapons Result",
                     passiveResult: "Passive Result",
                     finalResult: "Stats Result",
-                    currentDamage: "Current",
+                    currentDamage: "Single Dmg",
                     totalDamage: "Total",
                     vsBosses: "Boss",
                     vsEnemies: "Enemies",
@@ -12331,7 +12362,7 @@ class VibeSurvivor {
                     dashBoostDesc: "+50% Dash Distance (Stackable up to 3 times)"
                 },
                 help: {
-                    weaponMergers: "<img src='images/passives/upgrade.png' alt='upgrade' style='width: 48px; height: 48px; vertical-align: middle;'> WEAPON MERGERS",
+                    weaponMergers: "<img src='images/passives/upgrade.png' alt='upgrade' class='section-icon'> WEAPON MERGERS",
                     homingLaserRecipe: "Laser lvl 3 + Homing Missiles lvl 3",
                     homingLaserDesc: "Heat-seeking laser beams",
                     shockburstRecipe: "Lightning lvl 3 + Plasma lvl 3",
@@ -12431,7 +12462,7 @@ class VibeSurvivor {
                     weaponsResult: "무기 결과",
                     passiveResult: "패시브 결과",
                     finalResult: "통계 결과",
-                    currentDamage: "현재",
+                    currentDamage: "단일 피해",
                     totalDamage: "총합",
                     vsBosses: "보스",
                     vsEnemies: "적",
@@ -12487,7 +12518,7 @@ class VibeSurvivor {
                     dashBoostDesc: "+50% 대시 거리 (최대 3번까지 중첩 가능)"
                 },
                 help: {
-                    weaponMergers: "<img src='images/passives/upgrade.png' alt='upgrade' style='width: 48px; height: 48px; vertical-align: middle;'> 무기 합성",
+                    weaponMergers: "<img src='images/passives/upgrade.png' alt='upgrade' class='section-icon'> 무기 합성",
                     homingLaserRecipe: "레이저 레벨 3 + 유도 미사일 레벨 3",
                     homingLaserDesc: "열추적 레이저 빔",
                     shockburstRecipe: "번개 레벨 3 + 플라즈마 레벨 3",
