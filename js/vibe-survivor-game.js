@@ -126,6 +126,7 @@ class VibeSurvivor {
         this.isPaused = false;
         this.isHelpOpen = false;
         this.activeHelpTab = 'guide';
+        this.overlayLocks = 0;
         
         // Background music
         this.backgroundMusic = new Audio('sound/Vibe_Survivor.mp3');
@@ -554,7 +555,7 @@ class VibeSurvivor {
                             
                             <!-- Pause Menu -->
                             <div id="pause-menu" class="pause-menu" style="display: none;">
-                                <div class="pause-content">
+                                <div class="pause-content" tabindex="0">
                                     <h2>GAME PAUSED</h2>
                                     <div class="pause-buttons">
                                         <button id="resume-btn" class="survivor-btn primary">RESUME</button>
@@ -599,7 +600,7 @@ class VibeSurvivor {
                                         <button id="help-tab-status" class="help-tab" data-tab="status">STATUS</button>
                                     </div>
 
-                                    <div id="help-guide" class="help-pane" style="display: block;">
+                                    <div id="help-guide" class="help-pane guide-pane" style="display: block;">
                                         <h2 id="help-guide-title">WEAPON MERGERS</h2>
                                         <div class="help-recipes">
                                             <div class="merge-recipe">
@@ -759,6 +760,14 @@ class VibeSurvivor {
                 overflow: hidden;
                 touch-action: none;
                 overscroll-behavior: none;
+            }
+
+            .vibe-survivor-content.overlay-active .pause-btn,
+            .vibe-survivor-content.overlay-active .header-help-btn {
+                opacity: 0;
+                pointer-events: none;
+                visibility: hidden;
+                transition: opacity 0.2s ease;
             }
 
             .vibe-survivor-header {
@@ -1403,17 +1412,16 @@ class VibeSurvivor {
             
 
             .help-menu {
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0, 0, 0, 0.8);
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.82);
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                z-index: 20000;
-                backdrop-filter: blur(5px);
+                z-index: 120000;
+                backdrop-filter: blur(6px);
+                -webkit-backdrop-filter: blur(6px);
+                pointer-events: auto;
             }
 
             .help-content {
@@ -1422,8 +1430,8 @@ class VibeSurvivor {
                 border-radius: 15px;
                 padding: 30px;
                 text-align: center;
-                width: 85%;
-                max-width: 400px;
+                width: 92%;
+                max-width: 550px;
                 max-height: 80vh;
                 overflow-y: auto;
                 -webkit-overflow-scrolling: touch;
@@ -1467,6 +1475,25 @@ class VibeSurvivor {
                 text-align: left;
             }
 
+            .guide-pane {
+                text-align: center;
+            }
+
+            .guide-pane .help-section,
+            .guide-pane .merge-recipe {
+                text-align: center;
+            }
+
+            .guide-pane .help-section p,
+            .guide-pane .merge-recipe p,
+            .guide-pane .merge-recipe span,
+            .guide-pane .help-section span {
+                max-width: 420px;
+                margin-left: auto;
+                margin-right: auto;
+                display: block;
+            }
+
             .help-status-empty {
                 color: #888;
                 text-align: center;
@@ -1491,12 +1518,13 @@ class VibeSurvivor {
             }
 
             .merge-recipe {
-                background: rgba(0, 255, 255, 0.05);
-                border: 1px solid rgba(0, 255, 255, 0.2);
+                background: linear-gradient(135deg, rgba(255, 170, 0, 0.25), rgba(255, 215, 0, 0.08));
+                border: 1px solid rgba(255, 215, 0, 0.5);
                 border-radius: 10px;
                 padding: 15px;
                 margin-bottom: 15px;
                 text-align: left;
+                box-shadow: 0 0 18px rgba(255, 200, 0, 0.2);
             }
 
             .help-section {
@@ -1509,19 +1537,19 @@ class VibeSurvivor {
             }
 
             .merge-recipe h3 {
-                color: #00ffff;
+                color: #ffdf70;
                 margin-bottom: 8px;
                 font-size: 18px;
             }
 
             .merge-recipe p {
-                color: #ffffff;
+                color: #ffe8b0;
                 margin-bottom: 5px;
                 font-weight: bold;
             }
 
             .recipe-desc {
-                color: #aaaaaa;
+                color: #f9d97a;
                 font-style: italic;
                 font-size: 14px;
             }
@@ -1533,30 +1561,32 @@ class VibeSurvivor {
             }
 
             .pause-menu {
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0, 0, 0, 0.8);
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.82);
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                z-index: 20000;
-                backdrop-filter: blur(5px);
+                z-index: 120000;
+                backdrop-filter: blur(6px);
+                -webkit-backdrop-filter: blur(6px);
+                pointer-events: auto;
             }
 
             .pause-content {
                 background: linear-gradient(135deg, #0a0a1a, #1a0a2a);
                 border: 2px solid #00ffff;
                 border-radius: 15px;
-                padding: 40px;
+                padding: 30px;
                 text-align: center;
                 box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+                width: 92%;
+                max-width: 550px;
                 max-height: 80vh;
                 overflow-y: auto;
                 -webkit-overflow-scrolling: touch;
                 touch-action: pan-y;
+                outline: none;
             }
 
             .pause-content h2 {
@@ -1581,16 +1611,15 @@ class VibeSurvivor {
 
             /* Exit Confirmation Modal */
             .exit-confirmation-modal {
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
+                position: fixed;
+                inset: 0;
                 background: rgba(0, 0, 0, 0.9);
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                z-index: 30000;
+                z-index: 140000;
+                backdrop-filter: blur(6px);
+                -webkit-backdrop-filter: blur(6px);
             }
 
             .exit-confirmation-content {
@@ -1643,16 +1672,15 @@ class VibeSurvivor {
 
             /* Restart Confirmation Modal */
             .restart-confirmation-modal {
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
+                position: fixed;
+                inset: 0;
                 background: rgba(0, 0, 0, 0.9);
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                z-index: 30000;
+                z-index: 140000;
+                backdrop-filter: blur(6px);
+                -webkit-backdrop-filter: blur(6px);
             }
 
             .restart-confirmation-content {
@@ -3303,6 +3331,8 @@ class VibeSurvivor {
         }];
 
         this.weaponStats = {};
+        this.overlayLocks = 0;
+        this.updateOverlayLockState();
         
         // Clear arrays
         this.enemies = [];
@@ -3681,7 +3711,13 @@ class VibeSurvivor {
             // Update pause button to show play symbol
             if (pauseBtn) pauseBtn.textContent = '▶';
             pauseMenu.style.display = 'flex';
+            this.incrementOverlayLock();
             this.enablePauseScrolling();
+
+            const pauseContent = document.querySelector('.pause-content');
+            if (pauseContent) {
+                pauseContent.focus({ preventScroll: true });
+            }
 
             // Initialize keyboard navigation for pause menu
             const resumeBtn = document.getElementById('resume-btn');
@@ -3715,6 +3751,7 @@ class VibeSurvivor {
             if (pauseBtn) pauseBtn.textContent = '||';
             pauseMenu.style.display = 'none';
             this.disablePauseScrolling();
+            this.decrementOverlayLock();
 
             // Deactivate keyboard navigation
             this.resetMenuNavigation();
@@ -3752,6 +3789,7 @@ class VibeSurvivor {
         const exitModal = document.getElementById('exit-confirmation-modal');
         if (exitModal) {
             exitModal.style.display = 'flex';
+            this.incrementOverlayLock();
         }
     }
 
@@ -3759,6 +3797,7 @@ class VibeSurvivor {
         const exitModal = document.getElementById('exit-confirmation-modal');
         if (exitModal) {
             exitModal.style.display = 'none';
+            this.decrementOverlayLock();
         }
     }
 
@@ -3766,6 +3805,7 @@ class VibeSurvivor {
         const restartModal = document.getElementById('restart-confirmation-modal');
         if (restartModal) {
             restartModal.style.display = 'flex';
+            this.incrementOverlayLock();
         }
     }
 
@@ -3773,6 +3813,7 @@ class VibeSurvivor {
         const restartModal = document.getElementById('restart-confirmation-modal');
         if (restartModal) {
             restartModal.style.display = 'none';
+            this.decrementOverlayLock();
         }
     }
 
@@ -3876,6 +3917,7 @@ class VibeSurvivor {
             this.isPaused = true;
             this.timePaused = true;
             helpMenu.style.display = 'flex';
+            this.incrementOverlayLock();
 
             this.switchHelpTab(this.activeHelpTab || 'guide');
 
@@ -3955,6 +3997,8 @@ class VibeSurvivor {
                 this.helpKeydownHandler = null;
             }
 
+            this.decrementOverlayLock();
+
             // Restore previous navigation state if it exists
             if (this.previousNavigationState) {
                 this.menuNavigationState.active = this.previousNavigationState.active;
@@ -3968,6 +4012,33 @@ class VibeSurvivor {
                 // No previous state to restore, deactivate navigation
                 this.resetMenuNavigation();
             }
+        }
+    }
+
+    incrementOverlayLock() {
+        if (typeof this.overlayLocks !== 'number') {
+            this.overlayLocks = 0;
+        }
+        this.overlayLocks += 1;
+        this.updateOverlayLockState();
+    }
+
+    decrementOverlayLock() {
+        if (typeof this.overlayLocks !== 'number') {
+            this.overlayLocks = 0;
+        }
+        this.overlayLocks = Math.max(0, this.overlayLocks - 1);
+        this.updateOverlayLockState();
+    }
+
+    updateOverlayLockState() {
+        const content = document.querySelector('.vibe-survivor-content');
+        if (!content) return;
+
+        if (this.overlayLocks > 0) {
+            content.classList.add('overlay-active');
+        } else {
+            content.classList.remove('overlay-active');
         }
     }
 
@@ -10869,54 +10940,62 @@ class VibeSurvivor {
 
         const t = this.translations[this.currentLanguage].ui;
 
-        const weaponsHtml = this.weapons.map(weapon => {
-            const isMergeWeapon = weapon.isMergeWeapon || false;
-            const mergeClass = isMergeWeapon ? 'style="color: #ffaa00 !important;"' : '';
-            const weaponIconMap = {
-                'basic': 'basicMissile',
-                'rapid': 'rapidFire',
-                'spread': 'spreadShot',
-                'spread_shot': 'spreadShot',
-                'laser': 'laserBeam',
-                'plasma': 'plasmaBolt',
-                'shotgun': 'shotgun',
-                'lightning': 'lightning',
-                'flamethrower': 'flamethrower',
-                'railgun': 'railgun',
-                'missiles': 'homingMissiles',
-                'homing_laser': 'homingLaser',
-                'shockburst': 'shockburst',
-                'gatling_gun': 'gatlingGun'
-            };
-            const iconName = weaponIconMap[weapon.type] || 'basicMissile';
-            const damageStats = this.getWeaponDamageStats(weapon.type);
-            const totalDamage = Math.round(damageStats.total);
-            const bossDamage = Math.round(damageStats.bosses);
-            const enemyDamage = Math.round(damageStats.enemies);
+        const weaponIconMap = {
+            'basic': 'basicMissile',
+            'rapid': 'rapidFire',
+            'spread': 'spreadShot',
+            'spread_shot': 'spreadShot',
+            'laser': 'laserBeam',
+            'plasma': 'plasmaBolt',
+            'shotgun': 'shotgun',
+            'lightning': 'lightning',
+            'flamethrower': 'flamethrower',
+            'railgun': 'railgun',
+            'missiles': 'homingMissiles',
+            'homing_laser': 'homingLaser',
+            'shockburst': 'shockburst',
+            'gatling_gun': 'gatlingGun'
+        };
 
-            return `
-                <div style="
-                    display: flex;
-                    justify-content: space-between;
-                    margin: 4px 0;
-                    font-size: 14px;
-                    align-items: center;
-                    gap: 8px;
-                    flex-wrap: wrap;
-                ">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <img src="images/weapons/${iconName}.png" alt="${weapon.type}" style="width: 32px; height: 32px;">
-                        <span ${mergeClass}>${this.getWeaponName(weapon.type)} LV.${weapon.level}</span>
-                    </div>
-                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 3px; font-size: 12px;">
-                        <span style="color: #00ffff;">${t.currentDamage}: ${weapon.damage}</span>
-                        <span style="color: #888;">${t.totalDamage}: ${totalDamage}</span>
-                        <span style="color: #ff66ff;">${t.vsBosses}: ${bossDamage}</span>
-                        <span style="color: #66ff66;">${t.vsEnemies}: ${enemyDamage}</span>
-                    </div>
-                </div>
-            `;
-        }).join('');
+        const weaponsHtml = this.weapons
+            .map(weapon => {
+                const damageStats = this.getWeaponDamageStats(weapon.type);
+                const totalDamage = Math.round(damageStats.total);
+                const bossDamage = Math.round(damageStats.bosses);
+                const enemyDamage = Math.round(damageStats.enemies);
+                const isMergeWeapon = weapon.isMergeWeapon || false;
+                const mergeClass = isMergeWeapon ? 'style="color: #ffaa00 !important;"' : '';
+                const iconName = weaponIconMap[weapon.type] || 'basicMissile';
+
+                return {
+                    totalDamage,
+                    html: `
+                        <div style="
+                            display: flex;
+                            justify-content: space-between;
+                            margin: 4px 0;
+                            font-size: 14px;
+                            align-items: center;
+                            gap: 8px;
+                            flex-wrap: wrap;
+                        ">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <img src="images/weapons/${iconName}.png" alt="${weapon.type}" style="width: 32px; height: 32px;">
+                                <span ${mergeClass}>${this.getWeaponName(weapon.type)} LV.${weapon.level}</span>
+                            </div>
+                            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 3px; font-size: 12px;">
+                                <span style="color: #00ffff;">${t.currentDamage}: ${weapon.damage}</span>
+                                <span style="color: #888;">${t.totalDamage}: ${totalDamage}</span>
+                                <span style="color: #ff66ff;">${t.vsBosses}: ${bossDamage}</span>
+                                <span style="color: #66ff66;">${t.vsEnemies}: ${enemyDamage}</span>
+                            </div>
+                        </div>
+                    `
+                };
+            })
+            .sort((a, b) => b.totalDamage - a.totalDamage)
+            .map(entry => entry.html)
+            .join('');
         return `
             <div style="
                 margin: 15px 0;
@@ -11122,7 +11201,7 @@ class VibeSurvivor {
                 background: linear-gradient(135deg, #0a0a1a, #1a0a2a) !important;
                 border: 2px solid #00ffff !important;
                 border-radius: 15px !important;
-                padding: 25px !important;
+                padding: 30px !important;
                 text-align: center !important;
                 color: white !important;
                 max-width: 550px !important;
@@ -11257,6 +11336,7 @@ class VibeSurvivor {
         const gameContainer = document.getElementById('vibe-survivor-container');
         if (gameContainer) {
             gameContainer.appendChild(gameOverOverlay);
+            this.incrementOverlayLock();
         }
 
         // Enable touch scrolling for game over screen
@@ -11276,6 +11356,7 @@ class VibeSurvivor {
             // Remove overlay
             gameOverOverlay.remove();
             style.remove();
+            this.decrementOverlayLock();
             // Restart game
             this.startGame();
         };
@@ -11290,6 +11371,7 @@ class VibeSurvivor {
             // Remove overlay
             gameOverOverlay.remove();
             style.remove();
+            this.decrementOverlayLock();
             // Close game
             this.closeGame();
         };
@@ -11495,26 +11577,8 @@ class VibeSurvivor {
                         user-select: none !important;
                         -webkit-user-select: none !important;
                         -webkit-tap-highlight-color: transparent !important;
-                    ">${this.t('resume')}</button>
-                    
-                    <button id="victory-retry-btn" style="
-                        background: transparent !important;
-                        border: 2px solid #00ff00 !important;
-                        color: #00ff00 !important;
-                        padding: 12px 25px !important;
-                        font-size: 16px !important;
-                        border-radius: 25px !important;
-                        font-weight: bold !important;
-                        transition: all 0.3s ease !important;
-                        cursor: pointer !important;
-                        touch-action: manipulation !important;
-                        min-width: 44px !important;
-                        min-height: 44px !important;
-                        user-select: none !important;
-                        -webkit-user-select: none !important;
-                        -webkit-tap-highlight-color: transparent !important;
-                    ">${t.playAgain}</button>
-                    
+                    ">${this.t('continueButton')}</button>
+
                     <button id="victory-exit-btn" style="
                         background: transparent !important;
                         border: 2px solid #ffff00 !important;
@@ -11543,10 +11607,6 @@ class VibeSurvivor {
                 background: rgba(255, 0, 255, 0.1) !important;
                 box-shadow: 0 0 15px rgba(255, 0, 255, 0.5) !important;
             }
-            #victory-retry-btn:hover {
-                background: rgba(0, 255, 0, 0.1) !important;
-                box-shadow: 0 0 15px rgba(0, 255, 0, 0.5) !important;
-            }
             #victory-exit-btn:hover {
                 background: rgba(255, 255, 0, 0.1) !important;
                 box-shadow: 0 0 15px rgba(255, 255, 0, 0.5) !important;
@@ -11568,6 +11628,7 @@ class VibeSurvivor {
         
         if (gameContainer) {
             gameContainer.appendChild(victoryOverlay);
+            this.incrementOverlayLock();
             this.enableVictoryScrolling();
             const victoryScrollContent = victoryOverlay.querySelector('.victory-scroll-content');
             if (victoryScrollContent) {
@@ -11594,7 +11655,6 @@ class VibeSurvivor {
         
         // Add event listeners with both click and touch support
         const victoryContinueBtn = document.getElementById('victory-continue-btn');
-        const victoryRetryBtn = document.getElementById('victory-retry-btn');
         const victoryExitBtn = document.getElementById('victory-exit-btn');
         
         const victoryContinueHandler = (e) => {
@@ -11610,6 +11670,7 @@ class VibeSurvivor {
             // Remove overlay
             victoryOverlay.remove();
             style.remove();
+            this.decrementOverlayLock();
             
             
             
@@ -11621,27 +11682,6 @@ class VibeSurvivor {
                 
                 this.continueAfterBoss();
             }
-        };
-        
-        const victoryRetryHandler = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            // Reset menu navigation
-            this.resetMenuNavigation();
-            this.disableVictoryScrolling();
-            if (this.victoryKeydownHandler) {
-                document.removeEventListener('keydown', this.victoryKeydownHandler);
-                this.victoryKeydownHandler = null;
-            }
-            // Remove overlay
-            victoryOverlay.remove();
-            style.remove();
-            // Clear any pending level ups since we're restarting
-            this.pendingLevelUps = 0;
-            this.bossVictoryInProgress = false;
-            this.timePaused = false;
-            // Restart game
-            this.startGame();
         };
         
         const victoryExitHandler = (e) => {
@@ -11657,6 +11697,7 @@ class VibeSurvivor {
             // Remove overlay
             victoryOverlay.remove();
             style.remove();
+            this.decrementOverlayLock();
             // Clear any pending level ups since we're exiting
             this.pendingLevelUps = 0;
             this.bossVictoryInProgress = false;
@@ -11668,8 +11709,6 @@ class VibeSurvivor {
         // Add both click and touch events for better mobile support
         victoryContinueBtn.addEventListener('click', victoryContinueHandler);
         victoryContinueBtn.addEventListener('touchend', victoryContinueHandler);
-        victoryRetryBtn.addEventListener('click', victoryRetryHandler);
-        victoryRetryBtn.addEventListener('touchend', victoryRetryHandler);
         victoryExitBtn.addEventListener('click', victoryExitHandler);
         victoryExitBtn.addEventListener('touchend', victoryExitHandler);
         
@@ -11677,7 +11716,7 @@ class VibeSurvivor {
         this.addMenuNavigationStyles();
         
         // Initialize keyboard navigation for victory buttons
-        const victoryButtons = [victoryContinueBtn, victoryRetryBtn, victoryExitBtn];
+        const victoryButtons = [victoryContinueBtn, victoryExitBtn];
         this.initializeMenuNavigation('victory', victoryButtons);
         
         // Victory overlay ready
@@ -11760,6 +11799,8 @@ class VibeSurvivor {
         this.gameRunning = false;
         this.isPaused = false;
         this.disablePauseScrolling();
+        this.overlayLocks = 0;
+        this.updateOverlayLockState();
 
         // Cancel any running game loop
         if (this.gameLoopId) {
@@ -11915,6 +11956,7 @@ class VibeSurvivor {
 
                     // Buttons
                     resume: "RESUME",
+                    continueButton: "Continue",
                     restart: "RESTART",
                     mute: "MUTE",
                     unmute: "UNMUTE",
@@ -12070,6 +12112,7 @@ class VibeSurvivor {
 
                     // Buttons
                     resume: "계속하기",
+                    continueButton: "계속하기",
                     restart: "다시 시작",
                     mute: "음소거",
                     unmute: "음소거 해제",
