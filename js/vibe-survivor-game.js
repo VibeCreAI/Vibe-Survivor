@@ -126,6 +126,7 @@ class VibeSurvivor {
         this.isPaused = false;
         this.isHelpOpen = false;
         this.activeHelpTab = 'guide';
+        this.activeLevelUpTab = 'levelup';
         this.overlayLocks = 0;
         
         // Background music
@@ -192,6 +193,8 @@ class VibeSurvivor {
         // Persistent player settings (e.g., mobile dash preference)
         this.settings = this.loadSettings();
         this.pauseScrollHandler = null;
+        this.levelUpScrollHandler = null;
+        this.levelUpScrollContainers = [];
 
         // Bind layout helpers that run from event listeners
         this.updateStartOverlayLayout = this.updateStartOverlayLayout.bind(this);
@@ -604,17 +607,17 @@ class VibeSurvivor {
                                         <h2 id="help-guide-title">WEAPON MERGERS</h2>
                                         <div class="help-recipes">
                                             <div class="merge-recipe">
-                                                <h3 id="homing-laser-title"><img src="images/weapons/homingLaser.png" alt="Homing Laser" style="width: 48px; height: 48px; vertical-align: middle;"> Homing Laser</h3>
+                                                <h3 id="homing-laser-title"><img src="images/weapons/homingLaser.png" alt="Homing Laser"> Homing Laser</h3>
                                                 <p id="homing-laser-recipe">Laser lvl 3 + Homing Missiles lvl 3</p>
                                                 <span id="homing-laser-desc" class="recipe-desc">Heat-seeking laser beams</span>
                                             </div>
                                             <div class="merge-recipe">
-                                                <h3 id="shockburst-title"><img src="images/weapons/shockburst.png" alt="Shockburst" style="width: 48px; height: 48px; vertical-align: middle;"> Shockburst</h3>
+                                                <h3 id="shockburst-title"><img src="images/weapons/shockburst.png" alt="Shockburst"> Shockburst</h3>
                                                 <p id="shockburst-recipe">Lightning lvl 3 + Plasma lvl 3</p>
                                                 <span id="shockburst-desc" class="recipe-desc">Explosive energy bursts</span>
                                             </div>
                                             <div class="merge-recipe">
-                                                <h3 id="gatling-gun-title"><img src="images/weapons/gatlingGun.png" alt="Gatling Gun" style="width: 48px; height: 48px; vertical-align: middle;"> Gatling Gun</h3>
+                                                <h3 id="gatling-gun-title"><img src="images/weapons/gatlingGun.png" alt="Gatling Gun"> Gatling Gun</h3>
                                                 <p id="gatling-gun-recipe">Rapid Fire lvl 5 + Spread Shot lvl 3</p>
                                                 <span id="gatling-gun-desc" class="recipe-desc">Multi-barrel rapid fire</span>
                                             </div>
@@ -625,7 +628,7 @@ class VibeSurvivor {
                                             <p id="weapon-limit-tip">You can equip a maximum of 4 weapons, so choose wisely based on your playstyle.</p>
                                         </div>
 
-                                        <h2 id="weapon-evolution-title">🔄 WEAPON EVOLUTION</h2>
+                                        <h2 id="weapon-evolution-title"><img src="images/passives/evolution.png" alt="Weapon Evolution" class="section-icon"> WEAPON EVOLUTION</h2>
                                         <div class="help-section">
                                             <p id="rapid-fire-evolution">Basic Missile evolves into Rapid Fire at level 5 - this creates a powerful automatic weapon with increased fire rate.</p>
                                         </div>
@@ -1527,6 +1530,22 @@ class VibeSurvivor {
                 box-shadow: 0 0 18px rgba(255, 200, 0, 0.2);
             }
 
+            .merge-recipe img {
+                width: 48px;
+                height: 48px;
+                margin-right: 10px;
+                vertical-align: middle;
+                image-rendering: pixelated;
+            }
+
+            .section-icon {
+                width: 48px;
+                height: 48px;
+                margin-right: 8px;
+                vertical-align: middle;
+                image-rendering: pixelated;
+            }
+
             .help-section {
                 background: rgba(0, 255, 255, 0.05);
                 border: 1px solid rgba(0, 255, 255, 0.2);
@@ -2115,17 +2134,15 @@ class VibeSurvivor {
             }
 
             .levelup-modal {
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0, 0, 0, 0.8);
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.82);
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                z-index: 1000;
-                backdrop-filter: blur(5px);
+                z-index: 120000;
+                backdrop-filter: blur(6px);
+                -webkit-backdrop-filter: blur(6px);
             }
 
             .levelup-content {
@@ -2139,6 +2156,54 @@ class VibeSurvivor {
                 overflow-y: auto;
                 box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
                 backdrop-filter: blur(10px);
+                outline: none;
+            }
+
+            .levelup-tabs {
+                display: flex;
+                justify-content: center;
+                gap: 12px;
+                margin-bottom: 18px;
+                flex-wrap: wrap;
+            }
+
+            .levelup-tab {
+                background: transparent;
+                border: 2px solid #00ffff;
+                color: #00ffff;
+                padding: 8px 18px;
+                border-radius: 999px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: bold;
+                transition: all 0.2s ease;
+                text-transform: uppercase;
+            }
+
+            .levelup-tab.active {
+                background: #00ffff;
+                color: #0a0a1a;
+                box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+            }
+
+            .levelup-tab:not(.active):hover {
+                background: rgba(0, 255, 255, 0.1);
+                box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+            }
+
+            .levelup-pane {
+                display: none;
+                text-align: left;
+            }
+
+            .levelup-pane.active {
+                display: block;
+            }
+
+            .levelup-pane .levelup-scroll {
+                overflow-y: auto;
+                padding: 0 10px;
+                margin: 0;
             }
 
             .levelup-title {
@@ -2186,6 +2251,12 @@ class VibeSurvivor {
                 align-items: center;
                 justify-content: center;
                 font-size: 48px;
+            }
+
+            .upgrade-choice-title {
+                font-size: 20px;
+                font-weight: bold;
+                color: #00ffff;
             }
 
             .upgrade-choice:hover {
@@ -2712,6 +2783,8 @@ class VibeSurvivor {
                             this.scrollGameOverContent('up');
                         } else if (this.menuNavigationState.menuType === 'victory') {
                             this.scrollVictoryContent('up');
+                        } else if (this.menuNavigationState.menuType === 'levelup' && this.activeLevelUpTab !== 'levelup') {
+                            this.scrollLevelUpContent('up');
                         } else {
                             this.navigateMenu('up');
                         }
@@ -2727,6 +2800,8 @@ class VibeSurvivor {
                             this.scrollGameOverContent('down');
                         } else if (this.menuNavigationState.menuType === 'victory') {
                             this.scrollVictoryContent('down');
+                        } else if (this.menuNavigationState.menuType === 'levelup' && this.activeLevelUpTab !== 'levelup') {
+                            this.scrollLevelUpContent('down');
                         } else {
                             this.navigateMenu('down');
                         }
@@ -2735,13 +2810,21 @@ class VibeSurvivor {
                     case 'a':
                         e.preventDefault();
                         this.menuNavigationState.keyboardUsed = true;
-                        this.navigateMenu('left');
+                        if (this.menuNavigationState.menuType === 'levelup' && this.activeLevelUpTab !== 'levelup') {
+                            this.cycleLevelUpTab(-1);
+                        } else {
+                            this.navigateMenu('left');
+                        }
                         break;
                     case 'arrowright':
                     case 'd':
                         e.preventDefault();
                         this.menuNavigationState.keyboardUsed = true;
-                        this.navigateMenu('right');
+                        if (this.menuNavigationState.menuType === 'levelup' && this.activeLevelUpTab !== 'levelup') {
+                            this.cycleLevelUpTab(1);
+                        } else {
+                            this.navigateMenu('right');
+                        }
                         break;
                     case 'enter':
                         e.preventDefault();
@@ -3354,6 +3437,7 @@ class VibeSurvivor {
 
         this.weaponStats = {};
         this.overlayLocks = 0;
+        this.activeLevelUpTab = 'levelup';
         this.updateOverlayLockState();
         
         // Clear arrays
@@ -4153,49 +4237,192 @@ class VibeSurvivor {
     }
 
     enableLevelUpScrolling() {
-        const levelUpContent = document.querySelector('.upgrade-choices-container');
-        if (!levelUpContent) return;
+        const containers = document.querySelectorAll('#levelup-modal .levelup-scroll');
+        if (!containers.length) return;
 
-        // Remove any existing touch event listeners to avoid duplicates
-        if (this.levelUpScrollHandler) {
-            levelUpContent.removeEventListener('touchstart', this.levelUpScrollHandler.start, { passive: false });
-            levelUpContent.removeEventListener('touchmove', this.levelUpScrollHandler.move, { passive: false });
-            levelUpContent.removeEventListener('touchend', this.levelUpScrollHandler.end, { passive: false });
-        }
+        // Clear previous listeners
+        this.disableLevelUpScrolling();
 
-        // Create touch scroll handlers that allow native scrolling
         this.levelUpScrollHandler = {
             start: (e) => {
-                // Don't prevent default - allow native touch scrolling
-                e.stopPropagation(); // Stop it from bubbling to modal
+                e.stopPropagation();
             },
             move: (e) => {
-                // Don't prevent default - allow native touch scrolling
-                e.stopPropagation(); // Stop it from bubbling to modal
+                e.stopPropagation();
             },
             end: (e) => {
-                // Don't prevent default - allow native touch scrolling
-                e.stopPropagation(); // Stop it from bubbling to modal
+                e.stopPropagation();
             }
         };
 
-        // Add touch event listeners that explicitly allow scrolling
-        levelUpContent.addEventListener('touchstart', this.levelUpScrollHandler.start, { passive: true });
-        levelUpContent.addEventListener('touchmove', this.levelUpScrollHandler.move, { passive: true });
-        levelUpContent.addEventListener('touchend', this.levelUpScrollHandler.end, { passive: true });
+        this.levelUpScrollContainers = Array.from(containers);
+
+        this.levelUpScrollContainers.forEach(container => {
+            container.addEventListener('touchstart', this.levelUpScrollHandler.start, { passive: true });
+            container.addEventListener('touchmove', this.levelUpScrollHandler.move, { passive: true });
+            container.addEventListener('touchend', this.levelUpScrollHandler.end, { passive: true });
+        });
     }
 
     disableLevelUpScrolling() {
-        const levelUpContent = document.querySelector('.upgrade-choices-container');
-        if (!levelUpContent || !this.levelUpScrollHandler) return;
+        if (!this.levelUpScrollHandler || !this.levelUpScrollContainers) return;
 
-        // Remove touch event listeners
-        levelUpContent.removeEventListener('touchstart', this.levelUpScrollHandler.start, { passive: true });
-        levelUpContent.removeEventListener('touchmove', this.levelUpScrollHandler.move, { passive: true });
-        levelUpContent.removeEventListener('touchend', this.levelUpScrollHandler.end, { passive: true });
+        this.levelUpScrollContainers.forEach(container => {
+            container.removeEventListener('touchstart', this.levelUpScrollHandler.start, { passive: true });
+            container.removeEventListener('touchmove', this.levelUpScrollHandler.move, { passive: true });
+            container.removeEventListener('touchend', this.levelUpScrollHandler.end, { passive: true });
+        });
 
-        // Clear the handler reference
+        this.levelUpScrollContainers = [];
         this.levelUpScrollHandler = null;
+    }
+
+    getActiveLevelUpScrollContainer() {
+        const modal = document.getElementById('levelup-modal');
+        if (!modal) return null;
+        if (this.activeLevelUpTab === 'guide') {
+            return modal.querySelector('#levelup-pane-guide .levelup-scroll');
+        }
+        if (this.activeLevelUpTab === 'status') {
+            return modal.querySelector('#levelup-pane-status .levelup-scroll');
+        }
+        return modal.querySelector('#levelup-pane-levelup .levelup-scroll');
+    }
+
+    scrollLevelUpContent(direction) {
+        const container = this.getActiveLevelUpScrollContainer();
+        if (!container) return;
+        const scrollAmount = 120;
+        const delta = direction === 'up' ? -scrollAmount : scrollAmount;
+        container.scrollBy({ top: delta, behavior: 'smooth' });
+    }
+
+    renderLevelUpGuidePane() {
+        const guidePane = document.querySelector('.levelup-guide-pane');
+        if (!guidePane) return;
+
+        const mergerTitle = this.t('weaponMergers', 'help');
+        const weaponTipsTitle = this.t('weaponTips', 'help');
+        const weaponLimitTip = this.t('weaponLimitTip', 'help');
+        const evolutionTitle = this.t('weaponEvolution', 'help');
+        const rapidEvolution = this.t('rapidFireEvolution', 'help');
+
+        const homingLaserName = this.t('homingLaser', 'weapons');
+        const homingLaserRecipe = this.t('homingLaserRecipe', 'help');
+        const homingLaserDesc = this.t('homingLaserDesc', 'help');
+
+        const shockburstName = this.t('shockburst', 'weapons');
+        const shockburstRecipe = this.t('shockburstRecipe', 'help');
+        const shockburstDesc = this.t('shockburstDesc', 'help');
+
+        const gatlingName = this.t('gatlingGun', 'weapons');
+        const gatlingRecipe = this.t('gatlingGunRecipe', 'help');
+        const gatlingDesc = this.t('gatlingGunDesc', 'help');
+
+        guidePane.innerHTML = `
+            <h2 class="levelup-guide-title">${mergerTitle}</h2>
+            <div class="help-recipes">
+                <div class="merge-recipe">
+                    <h3><img src="images/weapons/homingLaser.png" alt="Homing Laser"> ${homingLaserName}</h3>
+                    <p>${homingLaserRecipe}</p>
+                    <span class="recipe-desc">${homingLaserDesc}</span>
+                </div>
+                <div class="merge-recipe">
+                    <h3><img src="images/weapons/shockburst.png" alt="Shockburst"> ${shockburstName}</h3>
+                    <p>${shockburstRecipe}</p>
+                    <span class="recipe-desc">${shockburstDesc}</span>
+                </div>
+                <div class="merge-recipe">
+                    <h3><img src="images/weapons/gatlingGun.png" alt="Gatling Gun"> ${gatlingName}</h3>
+                    <p>${gatlingRecipe}</p>
+                    <span class="recipe-desc">${gatlingDesc}</span>
+                </div>
+            </div>
+            <h2 class="levelup-guide-tips">${weaponTipsTitle}</h2>
+            <div class="help-section">
+                <p>${weaponLimitTip}</p>
+            </div>
+            <h2 class="levelup-guide-evolution"><img src="images/passives/evolution.png" alt="Weapon Evolution" class="section-icon"> ${evolutionTitle}</h2>
+            <div class="help-section">
+                <p>${rapidEvolution}</p>
+            </div>
+        `;
+    }
+
+    renderLevelUpStatusPane() {
+        const statusPane = document.querySelector('.levelup-status-pane');
+        if (!statusPane) return;
+
+        const weaponsSection = this.generateWeaponsSection();
+        const passivesSection = this.generatePassivesSection();
+        const playerStatsSection = this.generatePlayerStatsSection();
+        const sections = [weaponsSection, passivesSection, playerStatsSection].filter(Boolean).join('');
+
+        statusPane.innerHTML = `
+            <h2 class="levelup-status-title">${this.t('statusTab')}</h2>
+            ${sections || `<p class="help-status-empty">${this.t('statusEmpty')}</p>`}
+        `;
+    }
+
+    switchLevelUpTab(tab) {
+        const modal = document.getElementById('levelup-modal');
+        if (!modal) return;
+
+        const validTabs = ['levelup', 'guide', 'status'];
+        if (!validTabs.includes(tab)) {
+            tab = 'levelup';
+        }
+
+        const tabButtons = {
+            levelup: modal.querySelector('[data-tab="levelup"]'),
+            guide: modal.querySelector('[data-tab="guide"]'),
+            status: modal.querySelector('[data-tab="status"]')
+        };
+
+        const panes = {
+            levelup: modal.querySelector('#levelup-pane-levelup'),
+            guide: modal.querySelector('#levelup-pane-guide'),
+            status: modal.querySelector('#levelup-pane-status')
+        };
+
+        Object.values(tabButtons).forEach(btn => btn && btn.classList.remove('active'));
+        Object.values(panes).forEach(pane => pane && pane.classList.remove('active'));
+
+        if (tabButtons[tab]) tabButtons[tab].classList.add('active');
+        if (panes[tab]) panes[tab].classList.add('active');
+
+        this.activeLevelUpTab = tab;
+
+        if (tab === 'guide') {
+            this.renderLevelUpGuidePane();
+        } else if (tab === 'status') {
+            this.renderLevelUpStatusPane();
+        }
+
+        // Update menu navigation buttons/highlights
+        const choiceButtons = Array.from(modal.querySelectorAll('.upgrade-choice'));
+        choiceButtons.forEach(btn => btn.classList.remove('menu-selected'));
+
+        if (tab === 'levelup') {
+            this.initializeMenuNavigation('levelup', choiceButtons);
+        } else {
+            this.resetMenuNavigation();
+            this.menuNavigationState.active = true;
+            this.menuNavigationState.menuType = 'levelup';
+            this.menuNavigationState.selectedIndex = 0;
+            this.menuNavigationState.menuButtons = [];
+            this.menuNavigationState.keyboardUsed = false;
+        }
+
+        this.enableLevelUpScrolling();
+    }
+
+    cycleLevelUpTab(direction) {
+        const order = ['levelup', 'guide', 'status'];
+        let index = order.indexOf(this.activeLevelUpTab);
+        if (index === -1) index = 0;
+        index = (index + direction + order.length) % order.length;
+        this.switchLevelUpTab(order[index]);
     }
 
     enableGameOverScrolling() {
@@ -4725,7 +4952,7 @@ class VibeSurvivor {
 
             // Allow scrolling within help content and level up modal
             const isHelpContent = target.closest('.help-content');
-            const isLevelUpContent = target.closest('.upgrade-choices-container');
+            const isLevelUpContent = target.closest('.levelup-scroll');
             const isVictoryContent = target.closest('.victory-scroll-content');
 
             if (!isGameControl && !isHelpContent && !isLevelUpContent && !isVictoryContent) {
@@ -4743,7 +4970,7 @@ class VibeSurvivor {
         modal.addEventListener('wheel', (e) => {
             const target = e.target;
             const isHelpContent = target.closest('.help-content');
-            const isLevelUpContent = target.closest('.upgrade-choices-container');
+            const isLevelUpContent = target.closest('.levelup-scroll');
             const isPauseContent = target.closest('.pause-content');
             const isAboutContent = target.closest('.about-content');
             const isOptionsContent = target.closest('.options-content');
@@ -7134,60 +7361,97 @@ class VibeSurvivor {
         
         const modalHTML = `
             <div id="levelup-modal" class="levelup-modal levelup-modal-responsive">
-                <div class="levelup-content">
-                    <div class="levelup-title">${this.t('levelUp')}</div>
-                    <div class="upgrade-choices-container">
-                        <div class="upgrade-choices">
-                            ${choices.map((choice, index) => {
-                                const mergeClass = choice.isMergeWeapon ? ' upgrade-choice-merge' : '';
-                                return `
-                                <div class="upgrade-choice${mergeClass}" data-choice="${index}">
-                                    <div class="upgrade-choice-icon">
-                                        <span class="upgrade-choice-icon-image">${choice.icon}</span>
-                                        <h3>${choice.name}</h3>
+                <div class="levelup-content" tabindex="-1">
+                    <div class="levelup-tabs">
+                        <button id="levelup-tab-main" class="levelup-tab active" data-tab="levelup">${this.t('levelUp')}</button>
+                        <button id="levelup-tab-guide" class="levelup-tab" data-tab="guide">${this.t('guideTab')}</button>
+                        <button id="levelup-tab-status" class="levelup-tab" data-tab="status">${this.t('statusTab')}</button>
+                    </div>
+                    <div id="levelup-pane-levelup" class="levelup-pane active">
+                        <div class="levelup-title">${this.t('levelUp')}</div>
+                        <div class="levelup-scroll upgrade-choices-container">
+                            <div class="upgrade-choices">
+                                ${choices.map((choice, index) => {
+                                    const mergeClass = choice.isMergeWeapon ? ' upgrade-choice-merge' : '';
+                                    return `
+                                    <div class="upgrade-choice${mergeClass}" data-choice="${index}">
+                                        <div class="upgrade-choice-icon">
+                                            <span class="upgrade-choice-icon-image">${choice.icon}</span>
+                                            <span class="upgrade-choice-title">${choice.name}</span>
+                                        </div>
+                                        <p>${choice.description}</p>
                                     </div>
-                                    <p>${choice.description}</p>
-                                </div>
-                            `}).join('')}
+                                `}).join('')}
+                            </div>
                         </div>
+                    </div>
+                    <div id="levelup-pane-guide" class="levelup-pane">
+                        <div class="levelup-scroll levelup-guide-pane guide-pane"></div>
+                    </div>
+                    <div id="levelup-pane-status" class="levelup-pane">
+                        <div class="levelup-scroll levelup-status-pane help-pane"></div>
                     </div>
                 </div>
             </div>
         `;
         
+        this.activeLevelUpTab = 'levelup';
+
         document.getElementById('game-screen').insertAdjacentHTML('beforeend', modalHTML);
         
         // Apply responsive positioning and sizing after insertion
         const modal = document.getElementById('levelup-modal');
         if (modal) {
+            this.incrementOverlayLock();
             this.applyResponsiveModalStyles(modal, choices.length, isMobile);
         }
 
-        // Enable touch scrolling for level up modal
-        this.enableLevelUpScrolling();
+        const levelupContent = modal?.querySelector('.levelup-content');
+        if (levelupContent) {
+            levelupContent.setAttribute('tabindex', '-1');
+            levelupContent.focus({ preventScroll: true });
+        }
+
+        // Wire tab buttons
+        const tabButtons = modal?.querySelectorAll('.levelup-tab') || [];
+        tabButtons.forEach(btn => {
+            const targetTab = btn.getAttribute('data-tab');
+            const handler = (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                this.switchLevelUpTab(targetTab);
+            };
+            btn.addEventListener('click', handler);
+            btn.addEventListener('touchstart', handler, { passive: false });
+        });
 
         // Add menu navigation styles
         this.addMenuNavigationStyles();
-        
-        // Collect upgrade choice buttons for keyboard navigation
-        const upgradeButtons = [];
-        choices.forEach((choice, index) => {
-            const button = document.querySelector(`[data-choice="${index}"]`);
-            upgradeButtons.push(button);
-        });
-        
-        // Initialize keyboard navigation
-        this.initializeMenuNavigation('levelup', upgradeButtons);
-        
+
+        // Initialize first render for guide/status panes
+        this.renderLevelUpGuidePane();
+        this.renderLevelUpStatusPane();
+
+        // Activate default tab
+        this.switchLevelUpTab('levelup');
+
         // Add event listeners to choices
         choices.forEach((choice, index) => {
-            document.querySelector(`[data-choice="${index}"]`).addEventListener('click', () => {
+            const choiceElement = document.querySelector(`[data-choice="${index}"]`);
+            if (!choiceElement) return;
+            choiceElement.addEventListener('click', () => {
                 this.resetMenuNavigation();
                 this.selectUpgrade(choice);
 
                 // Clean up level up scrolling handlers before removing modal
                 this.disableLevelUpScrolling();
-                document.getElementById('levelup-modal').remove();
+                this.decrementOverlayLock();
+                this.activeLevelUpTab = 'levelup';
+
+                const modalElement = document.getElementById('levelup-modal');
+                if (modalElement) {
+                    modalElement.remove();
+                }
                 
                 
                 
@@ -7245,6 +7509,14 @@ class VibeSurvivor {
             container.style.setProperty('scrollbar-width', 'thin', 'important');
             container.style.setProperty('scrollbar-color', '#9B59B6 transparent', 'important');
         }
+
+        const additionalScrollAreas = modal.querySelectorAll('.levelup-scroll');
+        additionalScrollAreas.forEach(area => {
+            area.style.setProperty('max-height', `calc(${modalMaxHeight}px - 8rem)`, 'important');
+            area.style.setProperty('overflow-y', 'auto', 'important');
+            area.style.setProperty('-webkit-overflow-scrolling', 'touch', 'important');
+            area.style.setProperty('touch-action', 'pan-y', 'important');
+        });
         
         // Style the choices grid
         const choicesGrid = modal.querySelector('.upgrade-choices');
@@ -11111,7 +11383,12 @@ class VibeSurvivor {
                     font-weight: bold;
                     margin-bottom: 8px;
                     text-align: center;
-                ">📊 ${t.finalResult}</div>
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 10px;
+                    width: 100%;
+                "><img src="images/passives/stats.png" alt="Final stats" style="width: 48px; height: 48px; image-rendering: pixelated;"> ${t.finalResult}</div>
                 <div style="
                     display: flex;
                     justify-content: space-between;
@@ -11997,7 +12274,7 @@ class VibeSurvivor {
                     retry: "RETRY",
                     weaponsResult: "Weapons Result",
                     passiveResult: "Passive Result",
-                    finalResult: "Final Result",
+                    finalResult: "Stats Result",
                     currentDamage: "Current",
                     totalDamage: "Total",
                     vsBosses: "Boss",
@@ -12065,7 +12342,7 @@ class VibeSurvivor {
                     // Additional help content
                     weaponTips: "💡 WEAPON TIPS",
                     weaponLimitTip: "You can equip a maximum of 4 weapons, so choose wisely based on your playstyle.",
-                    weaponEvolution: "🔄 WEAPON EVOLUTION",
+                    weaponEvolution: "WEAPON EVOLUTION",
                     rapidFireEvolution: "Basic Missile evolves into Rapid Fire at level 5 - this creates a powerful automatic weapon with increased fire rate."
                 }
             },
@@ -12153,7 +12430,7 @@ class VibeSurvivor {
                     retry: "다시하기",
                     weaponsResult: "무기 결과",
                     passiveResult: "패시브 결과",
-                    finalResult: "최종 결과",
+                    finalResult: "통계 결과",
                     currentDamage: "현재",
                     totalDamage: "총합",
                     vsBosses: "보스",
@@ -12221,7 +12498,7 @@ class VibeSurvivor {
                     // Additional help content
                     weaponTips: "💡 무기 팁",
                     weaponLimitTip: "최대 4개의 무기만 장착할 수 있으므로 플레이 스타일에 따라 신중하게 선택하세요.",
-                    weaponEvolution: "🔄 무기 진화",
+                    weaponEvolution: "무기 진화",
                     rapidFireEvolution: "기본 미사일이 레벨 5에서 속사로 진화합니다 - 발사 속도가 크게 향상된 강력한 자동 무기가 됩니다."
                 }
             }
@@ -12332,6 +12609,21 @@ class VibeSurvivor {
         const helpStatusTab = document.getElementById('help-tab-status');
         if (helpStatusTab) helpStatusTab.textContent = this.t('statusTab');
 
+        const levelUpModal = document.getElementById('levelup-modal');
+        if (levelUpModal) {
+            const levelUpTabBtn = levelUpModal.querySelector('[data-tab="levelup"]');
+            const levelUpGuideTabBtn = levelUpModal.querySelector('[data-tab="guide"]');
+            const levelUpStatusTabBtn = levelUpModal.querySelector('[data-tab="status"]');
+
+            if (levelUpTabBtn) levelUpTabBtn.textContent = this.t('levelUp');
+            if (levelUpGuideTabBtn) levelUpGuideTabBtn.textContent = this.t('guideTab');
+            if (levelUpStatusTabBtn) levelUpStatusTabBtn.textContent = this.t('statusTab');
+
+            this.renderLevelUpGuidePane();
+            this.renderLevelUpStatusPane();
+            this.enableLevelUpScrolling();
+        }
+
         const helpGuideTitle = document.getElementById('help-guide-title');
         if (helpGuideTitle) helpGuideTitle.innerHTML = this.t('weaponMergers', 'help');
 
@@ -12343,7 +12635,7 @@ class VibeSurvivor {
 
         // Help menu recipe details
         const homingLaserTitle = document.getElementById('homing-laser-title');
-        if (homingLaserTitle) homingLaserTitle.innerHTML = `<img src="images/weapons/homingLaser.png" alt="Homing Laser" style="width: 48px; height: 48px; vertical-align: middle;"> ${this.t('homingLaser', 'weapons')}`;
+        if (homingLaserTitle) homingLaserTitle.innerHTML = `<img src="images/weapons/homingLaser.png" alt="Homing Laser"> ${this.t('homingLaser', 'weapons')}`;
 
         const homingLaserRecipe = document.getElementById('homing-laser-recipe');
         if (homingLaserRecipe) homingLaserRecipe.textContent = this.t('homingLaserRecipe', 'help');
@@ -12352,7 +12644,7 @@ class VibeSurvivor {
         if (homingLaserDesc) homingLaserDesc.textContent = this.t('homingLaserDesc', 'help');
 
         const shockburstTitle = document.getElementById('shockburst-title');
-        if (shockburstTitle) shockburstTitle.innerHTML = `<img src="images/weapons/shockburst.png" alt="Shockburst" style="width: 48px; height: 48px; vertical-align: middle;"> ${this.t('shockburst', 'weapons')}`;
+        if (shockburstTitle) shockburstTitle.innerHTML = `<img src="images/weapons/shockburst.png" alt="Shockburst"> ${this.t('shockburst', 'weapons')}`;
 
         const shockburstRecipe = document.getElementById('shockburst-recipe');
         if (shockburstRecipe) shockburstRecipe.textContent = this.t('shockburstRecipe', 'help');
@@ -12361,7 +12653,7 @@ class VibeSurvivor {
         if (shockburstDesc) shockburstDesc.textContent = this.t('shockburstDesc', 'help');
 
         const gatlingGunTitle = document.getElementById('gatling-gun-title');
-        if (gatlingGunTitle) gatlingGunTitle.innerHTML = `<img src="images/weapons/gatlingGun.png" alt="Gatling Gun" style="width: 48px; height: 48px; vertical-align: middle;"> ${this.t('gatlingGun', 'weapons')}`;
+        if (gatlingGunTitle) gatlingGunTitle.innerHTML = `<img src="images/weapons/gatlingGun.png" alt="Gatling Gun"> ${this.t('gatlingGun', 'weapons')}`;
 
         const gatlingGunRecipe = document.getElementById('gatling-gun-recipe');
         if (gatlingGunRecipe) gatlingGunRecipe.textContent = this.t('gatlingGunRecipe', 'help');
@@ -12377,7 +12669,7 @@ class VibeSurvivor {
         if (weaponLimitTip) weaponLimitTip.textContent = this.t('weaponLimitTip', 'help');
 
         const weaponEvolutionTitle = document.getElementById('weapon-evolution-title');
-        if (weaponEvolutionTitle) weaponEvolutionTitle.textContent = this.t('weaponEvolution', 'help');
+        if (weaponEvolutionTitle) weaponEvolutionTitle.innerHTML = `<img src="images/passives/evolution.png" alt="${this.t('weaponEvolution', 'help')}" class="section-icon"> ${this.t('weaponEvolution', 'help')}`;
 
         const rapidFireEvolution = document.getElementById('rapid-fire-evolution');
         if (rapidFireEvolution) rapidFireEvolution.textContent = this.t('rapidFireEvolution', 'help');
