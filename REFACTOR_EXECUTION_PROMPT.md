@@ -29,7 +29,7 @@ Execute the complete refactoring plan outlined in `refector.md` autonomously thr
 **Agent: search-specialist + context-manager**
 
 1. Read the complete `refector.md` file thoroughly
-2. Read the current `js/vibe-survivor-game.js` monolith (12,164 lines, ~500KB)
+2. Read the current `js/vibe-survivor-game.js` monolith (12,990 lines, ~520KB)
 3. Analyze `js/start-screen-bot.js` as the reference for proper modular structure
 4. Use `search-specialist` to create a comprehensive dependency map:
    - Identify all function calls and their dependencies
@@ -76,7 +76,7 @@ Execute the complete refactoring plan outlined in `refector.md` autonomously thr
    - Export stubs with TODO comments
    - JSDoc type definitions
    - Empty class/function structures matching their intended purpose
-4. Keep `js/start-screen-bot.js` untouched (already modular)
+4. Keep `js/start-screen-bot.js` untouched (already modular - 284 lines, no extraction needed)
 5. Add `// MIGRATION PHASE X - [description]` comments to each file
 
 **Deliverable**: Complete module structure with placeholder files
@@ -333,7 +333,7 @@ Extract in this order to minimize coupling:
    - Extract touch coordinate mapping
    - **CRITICAL**: Test extensively on mobile after extraction
 
-6. **Keep `js/start-screen-bot.js` untouched** - already properly modular!
+6. **Keep `js/start-screen-bot.js` untouched** - already properly modular! (284 lines, no extraction needed)
 
 **Use documentation-expert agent**: Document each modal's purpose and usage
 

@@ -25,7 +25,7 @@
 - Final human testing will occur after all phases are complete
 
 ## Objectives
-- Improve maintainability by decomposing the **12,164 line (~500KB)** `js/vibe-survivor-game.js` monolith into focused modules.
+- Improve maintainability by decomposing the **12,990 line (~520KB)** `js/vibe-survivor-game.js` monolith into focused modules.
 - Clarify system boundaries so future contributors can navigate rendering, gameplay, audio, UI, and i18n code quickly.
 - Introduce modern ES module structure without breaking the static deploy flow (served via simple http server).
 - Prepare groundwork for automated testing and targeted performance profiling.
@@ -312,16 +312,16 @@ Each modal will have its own dedicated file for better organization:
 
 ### Phase 0: Analysis & Preparation
 **EXECUTE IMMEDIATELY:**
-- [ ] Analyze the **12,164-line (~500KB)** monolith structure and identify key systems
+- [ ] Analyze the **12,990-line (~520KB)** monolith structure and identify key systems
 - [ ] Identify circular dependencies and plan extraction order
 - [ ] Note current touch control behavior and audio fallback mechanisms
 - [ ] Understand the current module loading and initialization pattern
-- [ ] Study `js/start-screen-bot.js` (226 lines) as modular extraction template
+- [ ] Study `js/start-screen-bot.js` (284 lines) as modular extraction template (ALREADY MODULAR)
 - [ ] Document player sprite system (91 references throughout codebase)
-- [ ] Catalog sprite assets: 6 AI bot sprites (~290KB) + start screen sprite (217KB)
-- [ ] Document weapon icons: 13 weapon PNG icons in `images/weapons/` directory
-- [ ] Document passive icons: 8 passive PNG icons in `images/passives/` directory
-- [ ] Document boss system, magnet boost passive, and trail multiplier mechanics
+- [ ] Catalog sprite assets: 5 AI bot sprites (~290KB) + start screen sprite (217KB)
+- [ ] Document weapon icons: 13 weapon PNG icons in `images/weapons/` directory (ALREADY IMPLEMENTED)
+- [ ] Document passive icons: 8 passive PNG icons in `images/passives/` directory (ALREADY IMPLEMENTED)
+- [ ] Document boss system (ALREADY IMPLEMENTED), magnet boost passive (ALREADY IMPLEMENTED), and trail multiplier mechanics (ALREADY IMPLEMENTED)
 
 ### Phase 1: Scaffolding & Module Setup
 **EXECUTE IMMEDIATELY:**
@@ -406,7 +406,7 @@ Each modal will have its own dedicated file for better organization:
 - [ ] **CRITICAL**: Extract touch controls to `systems/ui/touch-controls.js`
 - [ ] Extract weapon header icon system to `systems/ui/hud.js` (preserve icon display functionality)
 - [ ] Extract passive item icon system to `systems/gameplay/pickups.js` (preserve pickup visuals)
-- [ ] **SPECIAL**: Keep `js/start-screen-bot.js` as-is (already properly modular!)
+- [x] **SPECIAL**: Keep `js/start-screen-bot.js` as-is (already properly modular! - 284 lines, no extraction needed)
 
 ### Phase 7: Audio System Migration
 **EXTRACT AUDIO MANAGEMENT:**
@@ -823,17 +823,5 @@ You will receive two refactored codebases (Implementation A and Implementation B
 
 ---
 
-### JUDGE'S CERTIFICATION
 
-**I certify that:**
-- [ ] I examined both codebases thoroughly
-- [ ] I evaluated all criteria objectively
-- [ ] I provided specific evidence for all scores
-- [ ] My evaluation is fair and unbiased
-- [ ] I can defend all scoring decisions
-
-**AI Judge Signature:** _______________
-**Date:** _______________
-
-**Success Criteria: The implementation with the highest total score wins the showdown.**
 

@@ -17,7 +17,7 @@ Work through all phases sequentially, handling each task directly without delega
 ### PRE-EXECUTION (Phase 0: Analysis & Preparation)
 
 1. Read the complete `refector.md` file thoroughly
-2. Read the current `js/vibe-survivor-game.js` monolith (12,164 lines, ~500KB)
+2. Read the current `js/vibe-survivor-game.js` monolith (12,990 lines, ~520KB)
 3. Analyze `js/start-screen-bot.js` as the reference for proper modular structure
 4. Create a comprehensive dependency map:
    - Identify all function calls and their dependencies
@@ -25,7 +25,8 @@ Work through all phases sequentially, handling each task directly without delega
    - Document all external references (DOM, audio, canvas)
    - Catalog all global state variables
 5. Document sprite animation system (91 references, 5 sprite sheets)
-6. Catalog all assets (6 AI bot sprites ~290KB + start screen sprite 217KB + weapon icons + passive icons)
+6. Catalog all assets (5 AI bot sprites ~290KB + start screen sprite 217KB + weapon icons + passive icons)
+   - Note: Weapon icons and passive icons already implemented in monolith, just need extraction
 7. Create extraction order based on dependency analysis
 8. Set up smoke test baseline (current functionality checklist)
 
@@ -62,7 +63,7 @@ Work through all phases sequentially, handling each task directly without delega
    - Export stubs with TODO comments
    - JSDoc type definitions
    - Empty class/function structures matching their intended purpose
-4. Keep `js/start-screen-bot.js` untouched (already modular)
+4. Keep `js/start-screen-bot.js` untouched (already modular - 284 lines, no extraction needed)
 5. Add `// MIGRATION PHASE X - [description]` comments to each file
 
 **Deliverable**: Complete module structure with placeholder files
@@ -309,7 +310,7 @@ Extract in this order to minimize coupling:
    - Extract touch coordinate mapping
    - **CRITICAL**: Test extensively on mobile after extraction
 
-6. **Keep `js/start-screen-bot.js` untouched** - already properly modular!
+6. **Keep `js/start-screen-bot.js` untouched** - already properly modular! (284 lines, no extraction needed)
 
 **Document**: Document each modal's purpose and usage as you extract
 
