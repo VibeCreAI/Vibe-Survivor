@@ -223,6 +223,17 @@ body::after {
 
 .footer-bar {
     font-size: 0.85rem;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    z-index: 10001;
+    background: transparent;
+    text-shadow:
+        -2px -2px 0 #000,
+         2px -2px 0 #000,
+        -2px  2px 0 #000,
+         2px  2px 0 #000,
+         0 0 10px rgba(0, 0, 0, 0.9);
 }
 
 @keyframes pulseGlow {
@@ -249,9 +260,5 @@ body::after {
     .start-button {
         width: 100%;
     }
-}
-
-.footer-bar {
-    margin-top: auto;
 }
 
