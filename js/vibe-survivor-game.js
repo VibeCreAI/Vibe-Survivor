@@ -333,13 +333,119 @@ class VibeSurvivor {
         this.initGame();
     }
     
+    async preloadAssets() {
+        const loadingScreen = document.getElementById('loading-screen');
+        const loadingFill = loadingScreen?.querySelector('.loading-fill');
+        const loadingPercent = loadingScreen?.querySelector('.loading-percent');
+        const loadingLabel = loadingScreen?.querySelector('.loading-label');
+        const loadingText = loadingScreen?.querySelector('.loading-text');
+        const loadingTrack = loadingScreen?.querySelector('.loading-track');
+
+        if (!loadingScreen) return;
+
+        const phases = [
+            { percent: 0, title: 'BOOTING', label: 'Initializing systems…' },
+            { percent: 25, title: 'LOADING', label: 'Loading sprites…' },
+            { percent: 50, title: 'LOADING', label: 'Loading sounds…' },
+            { percent: 75, title: 'LOADING', label: 'Preparing game world…' },
+            { percent: 100, title: 'READY', label: 'Ready to survive!' }
+        ];
+
+        const updateProgress = (percent, phaseIndex) => {
+            if (loadingFill) loadingFill.style.width = `${percent}%`;
+            if (loadingPercent) loadingPercent.textContent = `${Math.round(percent)}%`;
+
+            if (phaseIndex !== undefined && phases[phaseIndex]) {
+                const phase = phases[phaseIndex];
+                if (loadingText && loadingText.firstChild) {
+                    loadingText.firstChild.textContent = phase.title;
+                }
+                if (loadingLabel) loadingLabel.textContent = phase.label;
+            }
+        };
+
+        // Start with phase 0
+        updateProgress(0, 0);
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        // Phase 1: Load sprites (25%)
+        updateProgress(25, 1);
+        const spritePromises = [
+            ...Object.values(this.playerSprites).filter(img => img instanceof Image).map(img => {
+                if (!img.src) {
+                    return new Promise(resolve => {
+                        img.onload = resolve;
+                        img.onerror = resolve;
+                    });
+                }
+                return Promise.resolve();
+            }),
+            ...Object.values(this.itemIcons).map(img => {
+                if (img instanceof Image && !img.complete) {
+                    return new Promise(resolve => {
+                        img.onload = resolve;
+                        img.onerror = resolve;
+                    });
+                }
+                return Promise.resolve();
+            })
+        ];
+        await Promise.all(spritePromises);
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        // Phase 2: Load sounds (50%)
+        updateProgress(50, 2);
+        if (this.backgroundMusic && this.backgroundMusic.readyState < 2) {
+            await new Promise(resolve => {
+                this.backgroundMusic.addEventListener('canplaythrough', resolve, { once: true });
+                this.backgroundMusic.addEventListener('error', resolve, { once: true });
+                setTimeout(resolve, 1000); // Timeout after 1s
+            });
+        }
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        // Phase 3: Prepare game world (75%)
+        updateProgress(75, 3);
+        await new Promise(resolve => setTimeout(resolve, 400));
+
+        // Phase 4: Complete (100%)
+        updateProgress(100, 4);
+        if (loadingTrack) loadingTrack.classList.add('flash');
+        await new Promise(resolve => setTimeout(resolve, 350));
+
+        // Fade out loading screen
+        loadingScreen.style.opacity = '0';
+        loadingScreen.style.transition = 'opacity 0.6s ease-out';
+        await new Promise(resolve => setTimeout(resolve, 600));
+        loadingScreen.style.display = 'none';
+
+        // Show footer and start screen bot after loading
+        const footer = document.querySelector('.footer-bar');
+        if (footer) {
+            footer.classList.add('loaded');
+        }
+
+        // Show start screen bot
+        if (window.startScreenBot && typeof window.startScreenBot.show === 'function') {
+            window.startScreenBot.show();
+        }
+    }
+
     initGame() {
         this.createGameModal();
         this.addStyles();
         this.setupEventHandlers();
 
-        // Initialize the start screen (this will set up keyboard navigation)
-        this.showStartScreen();
+        // Preload assets with loading screen
+        setTimeout(() => {
+            this.preloadAssets().then(() => {
+                // Initialize the start screen after loading completes
+                this.showStartScreen();
+            });
+        }, 100);
+
+        // Initialize the start screen (will be hidden by loading screen initially)
+        // this.showStartScreen(); // Moved to after preloadAssets
 
         // Initialize translations after modal creation
         setTimeout(() => {
@@ -402,6 +508,23 @@ class VibeSurvivor {
         const modalHTML = `
             <div id="vibe-survivor-modal" class="vibe-survivor-modal">
                 <div class="vibe-survivor-content">
+                    <!-- Loading Screen -->
+                    <div id="loading-screen" class="loading-screen">
+                        <div class="loading-content">
+                            <div class="loading-text">BOOTING<span class="loading-cursor">_</span></div>
+                            <div class="loading-gauge">
+                                <div class="loading-track">
+                                    <div class="loading-fill"></div>
+                                    <div class="loading-cap"></div>
+                                </div>
+                                <div class="loading-metrics">
+                                    <span class="loading-percent">0%</span>
+                                    <span class="loading-label">Initializing systems…</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div id="vibe-survivor-container" class="vibe-survivor-container">
                         <div class="vibe-survivor-header">
                             <button id="pause-btn" class="pause-btn">||</button>
@@ -698,7 +821,129 @@ class VibeSurvivor {
                 0%, 100% { opacity: 1; }
                 50% { opacity: 0.8; }
             }
-            
+
+            @keyframes blinkCursor {
+                0%, 50% { opacity: 1; }
+                51%, 100% { opacity: 0; }
+            }
+
+            /* Loading Screen Styles */
+            .loading-screen {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: #000;
+                z-index: 99999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-direction: column;
+                gap: 40px;
+            }
+
+            .loading-content {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 24px;
+            }
+
+            .loading-text {
+                font-family: 'NeoDunggeunmoPro', 'Courier New', monospace;
+                font-size: 3rem;
+                color: #ffffff;
+                text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+                letter-spacing: 0.2em;
+            }
+
+            .loading-cursor {
+                animation: blinkCursor 1s infinite;
+            }
+
+            .loading-gauge {
+                width: clamp(240px, 60vw, 420px);
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .loading-track {
+                --gauge-height: 20px;
+                position: relative;
+                height: var(--gauge-height);
+                border-radius: calc(var(--gauge-height) / 2);
+                background:
+                    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 0 12px, transparent 12px) 0 0 / 16px 100%,
+                    rgba(255, 255, 255, 0.08);
+                box-shadow:
+                    inset 0 0 15px rgba(0, 0, 0, 0.8),
+                    0 0 12px rgba(0, 255, 255, 0.15);
+                overflow: hidden;
+            }
+
+            .loading-track.flash {
+                box-shadow:
+                    inset 0 0 15px rgba(0, 0, 0, 0.8),
+                    0 0 16px rgba(0, 255, 255, 0.4),
+                    0 0 32px rgba(0, 255, 255, 0.25);
+            }
+
+            .loading-fill {
+                position: absolute;
+                inset: 2px;
+                border-radius: calc(var(--gauge-height) / 2);
+                background: #00ffff;
+                width: 0%;
+                transition: width 0.3s ease-out;
+            }
+
+            .loading-cap {
+                position: absolute;
+                top: 50%;
+                right: 4px;
+                transform: translateY(-50%);
+                width: 12px;
+                height: calc(var(--gauge-height) - 6px);
+                border-radius: 999px;
+                opacity: 0.2;
+                background: rgba(255, 255, 255, 0.4);
+            }
+
+            .loading-metrics {
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                font-family: 'NeoDunggeunmoPro', 'Courier New', monospace;
+                font-size: 0.8rem;
+                letter-spacing: 0.08em;
+                color: rgba(255, 255, 255, 0.85);
+            }
+
+            .loading-percent {
+                font-family: 'NeoDunggeunmoPro', 'Courier New', monospace;
+                font-size: 1.3rem;
+                color: #00ffff;
+            }
+
+            .loading-label {
+                opacity: 0.8;
+                text-transform: uppercase;
+                display: inline-block;
+                text-align: right;
+                line-height: 1.1;
+            }
+
+            @media (max-width: 480px) {
+                .loading-text {
+                    font-size: 2rem;
+                }
+                .loading-gauge {
+                    width: 80vw;
+                }
+            }
+
             @keyframes glowPulse {
                 0%, 100% { 
                     box-shadow: 0 0 20px rgba(0, 255, 255, 0.8),
@@ -1320,9 +1565,8 @@ class VibeSurvivor {
                 max-width: 80%;
                 height: auto;
                 image-rendering: pixelated;
-                filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.6))
-                        drop-shadow(3px 3px 6px rgba(0, 0, 0, 0.9))
-                        drop-shadow(-2px -2px 4px rgba(0, 0, 0, 0.7));
+                filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.7))
+                        drop-shadow(-2px -2px 3px rgba(0, 0, 0, 0.4));
             }
 
             .survivor-title h1 {

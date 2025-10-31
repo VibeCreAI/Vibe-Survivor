@@ -69,7 +69,8 @@ class StartScreenBot {
             console.log('Start screen bot sprite loaded successfully');
             this.isLoaded = true;
             this.startAnimation();
-            this.show();
+            // Don't show immediately - wait for loading screen to finish
+            // this.show();
         };
         this.spriteSheet.onerror = () => {
             console.error('Failed to load start screen bot sprite');
@@ -271,10 +272,11 @@ class StartScreenBot {
             attributeFilter: ['class']
         });
 
-        // Check initial state
+        // Check initial state - but don't show until loading finishes
         if (startOverlay.classList.contains('active')) {
             this.updatePosition();
-            this.show();
+            // Don't show yet - wait for loading screen
+            // this.show();
         } else {
             this.hide();
         }
