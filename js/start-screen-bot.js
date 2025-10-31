@@ -213,8 +213,9 @@ class StartScreenBot {
         // Get the title container's position
         const rect = this.titleContainer.getBoundingClientRect();
 
-        // Position bot above the title (rect.top - bot height - some margin)
-        const botTop = rect.top - this.displaySize + 10; // 20px margin below bot
+        // Position bot above the title (rect.top - bot height - margin)
+        const margin = 0; // 20px margin between bot and title
+        const botTop = rect.top - this.displaySize - margin;
 
         this.container.style.top = `${botTop}px`;
     }

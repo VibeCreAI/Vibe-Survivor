@@ -1320,10 +1320,9 @@ class VibeSurvivor {
                 max-width: 80%;
                 height: auto;
                 image-rendering: pixelated;
-                filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.5))
+                filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.6))
                         drop-shadow(3px 3px 6px rgba(0, 0, 0, 0.9))
                         drop-shadow(-2px -2px 4px rgba(0, 0, 0, 0.7));
-                animation: neonPulse 2s ease-in-out infinite;
             }
 
             .survivor-title h1 {
