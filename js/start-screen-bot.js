@@ -152,11 +152,29 @@ class StartScreenBot {
             // Calculate initial size based on modal width
             this.updateSize();
 
-            // Update position initially
-            this.updatePosition();
+            // Update position with multiple attempts to ensure layout is settled
+            const updateWithRetry = (attempts = 0) => {
+                this.updatePosition();
+
+                // Retry position calculation a few times to handle layout settling
+                if (attempts < 5) {
+                    requestAnimationFrame(() => updateWithRetry(attempts + 1));
+                }
+            };
+
+            // Start position updates after a brief delay
+            setTimeout(() => updateWithRetry(), 100);
 
             // Watch for start overlay visibility changes
             this.observeStartOverlay(startOverlay);
+
+            // Watch for title container size/position changes
+            if (this.titleContainer) {
+                const resizeObserver = new ResizeObserver(() => {
+                    this.updatePosition();
+                });
+                resizeObserver.observe(this.titleContainer);
+            }
 
             // Update position on window resize
             window.addEventListener('resize', () => this.updatePosition());
@@ -213,11 +231,20 @@ class StartScreenBot {
         // Get the title container's position
         const rect = this.titleContainer.getBoundingClientRect();
 
+        // Safety check - ensure title has valid dimensions
+        if (rect.height === 0 || rect.top === 0) {
+            // Layout not ready yet, skip this update
+            return;
+        }
+
         // Position bot above the title (rect.top - bot height - margin)
-        const margin = 0; // 20px margin between bot and title
+        const margin = 10; // 10px margin between bot and title for safety
         const botTop = rect.top - this.displaySize - margin;
 
-        this.container.style.top = `${botTop}px`;
+        // Only update if position is reasonable (not negative or too far up)
+        if (botTop > 0) {
+            this.container.style.top = `${botTop}px`;
+        }
     }
 
     observeStartOverlay(startOverlay) {
