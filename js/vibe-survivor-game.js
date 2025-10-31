@@ -1629,7 +1629,8 @@ class VibeSurvivor {
             }
 
             .survivor-title .title-logo {
-                max-width: 80%;
+                max-width: min(80%, 680px);
+                width: 100%;
                 height: auto;
                 image-rendering: pixelated;
                 filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.7))
@@ -2883,7 +2884,7 @@ class VibeSurvivor {
                 }
 
                 .survivor-title .title-logo {
-                    max-width: 90%;
+                    max-width: min(90%, 680px);
                 }
 
                 .survivor-title h1 {
