@@ -368,29 +368,93 @@ class VibeSurvivor {
         updateProgress(0, 0);
         await new Promise(resolve => setTimeout(resolve, 300));
 
-        // Phase 1: Load sprites (25%)
+        // Phase 1: Load sprites and icons (25%)
         updateProgress(25, 1);
-        const spritePromises = [
+
+        // All weapon icons
+        const weaponIcons = [
+            'basicMissile', 'rapidFire', 'spreadShot', 'laserBeam', 'plasmaBolt',
+            'shotgun', 'lightning', 'flamethrower', 'railgun', 'homingMissiles',
+            'homingLaser', 'shockburst', 'gatlingGun'
+        ];
+
+        // All passive icons
+        const passiveIcons = [
+            'healthBoost', 'speedBoost', 'regeneration', 'magnet', 'armor',
+            'criticalStrike', 'dashBoost', 'upgrade', 'evolution', 'passive', 'stats'
+        ];
+
+        // Create image preload promises
+        const imagePromises = [
+            // Player sprites
             ...Object.values(this.playerSprites).filter(img => img instanceof Image).map(img => {
-                if (!img.src) {
+                if (!img.complete && img.src) {
                     return new Promise(resolve => {
                         img.onload = resolve;
                         img.onerror = resolve;
+                        setTimeout(resolve, 2000); // Timeout
                     });
                 }
                 return Promise.resolve();
             }),
+            // Item pickup icons
             ...Object.values(this.itemIcons).map(img => {
                 if (img instanceof Image && !img.complete) {
                     return new Promise(resolve => {
                         img.onload = resolve;
                         img.onerror = resolve;
+                        setTimeout(resolve, 2000);
                     });
                 }
                 return Promise.resolve();
+            }),
+            // Weapon icons
+            ...weaponIcons.map(iconName => {
+                const img = new Image();
+                return new Promise(resolve => {
+                    img.onload = resolve;
+                    img.onerror = resolve;
+                    setTimeout(resolve, 2000);
+                    img.src = `images/weapons/${iconName}.png`;
+                });
+            }),
+            // Passive icons
+            ...passiveIcons.map(iconName => {
+                const img = new Image();
+                return new Promise(resolve => {
+                    img.onload = resolve;
+                    img.onerror = resolve;
+                    setTimeout(resolve, 2000);
+                    img.src = `images/passives/${iconName}.png`;
+                });
+            }),
+            // Title image
+            new Promise(resolve => {
+                const img = new Image();
+                img.onload = resolve;
+                img.onerror = resolve;
+                setTimeout(resolve, 2000);
+                img.src = 'images/Title.png';
+            }),
+            // Background image
+            new Promise(resolve => {
+                const img = new Image();
+                img.onload = resolve;
+                img.onerror = resolve;
+                setTimeout(resolve, 2000);
+                img.src = 'images/background.png';
+            }),
+            // Start screen bot sprite
+            new Promise(resolve => {
+                const img = new Image();
+                img.onload = resolve;
+                img.onerror = resolve;
+                setTimeout(resolve, 2000);
+                img.src = 'images/AI BOT.png';
             })
         ];
-        await Promise.all(spritePromises);
+
+        await Promise.all(imagePromises);
         await new Promise(resolve => setTimeout(resolve, 300));
 
         // Phase 2: Load sounds (50%)
@@ -419,11 +483,14 @@ class VibeSurvivor {
         await new Promise(resolve => setTimeout(resolve, 600));
         loadingScreen.style.display = 'none';
 
-        // Show footer and start screen bot after loading
+        // Show footer, background, and start screen bot after loading
         const footer = document.querySelector('.footer-bar');
         if (footer) {
             footer.classList.add('loaded');
         }
+
+        // Show background
+        document.body.classList.add('loaded');
 
         // Show start screen bot
         if (window.startScreenBot && typeof window.startScreenBot.show === 'function') {
