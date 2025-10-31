@@ -11,14 +11,125 @@ This plan refactors Vibe Survivor from a monolithic structure to a clean modular
 - Each phase is independently testable
 - Test and git actions will be done by human unless asked to AI to test.
 
-**Total Phases**: 10 phases over ~2-3 days
-**Estimated Time per Phase**: 30-60 minutes
-**Testing Time per Phase**: 10-15 minutes
+**Total Phases**: 14 phases (includes validation, splits, and checkpoints) over ~2-3 days
+**Estimated Implementation Time**: ~9.5 hours
+**Estimated Testing Time**: ~3.5 hours
+**Total Estimated Time**: ~13 hours
 
 
 ---
 
-## Phase 0: Setup New Directory Structure
+## Master Progress Checklist
+
+Track your progress through the refactoring. Check off each phase as you complete it:
+
+### Pre-Work
+- [ ] **Phase 0**: Pre-Refactor Validation (15 min) - Verify baseline
+- [ ] **Phase 1**: Setup Directory Structure (5 min) - Create empty folders
+
+### Foundation Layer (Phases 2-3) - ~80 min
+- [ ] **Phase 2**: Extract Utilities (40 min) - Vector2, Math, Performance
+- [ ] **Phase 3**: Extract Configuration (40 min) - Constants, Assets
+
+### Core Layer (Phases 4-6) - ~200 min + Checkpoint #1
+- [ ] **Phase 4a**: State Management Part 1 (40 min) - Player & Camera
+- [ ] **Phase 4b**: State Management Part 2 (40 min) - Enemies, Weapons, Pickups
+- [ ] **Checkpoint #1**: Integration Test (15 min) - Core systems working
+- [ ] **Phase 5**: Input Handling (60 min) - Keyboard, Mouse, Touch
+- [ ] **Phase 6**: Physics System (60 min) - Collision, Movement
+
+### Rendering Layer (Phases 7a-7b) - ~115 min + Checkpoint #2
+- [ ] **Phase 7a**: Rendering Core (55 min) - Canvas, Camera, Sprites
+- [ ] **Phase 7b**: Rendering Effects (60 min) - Animation, Particles, Effects
+- [ ] **Checkpoint #2**: Integration Test (15 min) - Rendering working
+
+### Gameplay Layer (Phases 8-10) - ~240 min + Checkpoint #3
+- [ ] **Phase 8**: Gameplay Entities (80 min) - Player, Enemies, Pickups
+- [ ] **Phase 9**: Weapons & Progression (80 min) - Weapons, XP, Upgrades
+- [ ] **Phase 10**: UI Systems (80 min) - HUD, Modals (9 types), Touch Controls
+- [ ] **Checkpoint #3**: Integration Test (15 min) - Full game working
+
+### Final Integration (Phase 11) - ~75 min
+- [ ] **Phase 11**: Game Engine & Audio (75 min) - Final orchestration
+
+### Post-Refactoring
+- [ ] **Cleanup**: Remove old monolith code
+- [ ] **Documentation**: Update README, ARCHITECTURE
+- [ ] **Final Testing**: Complete smoke test on multiple browsers
+- [ ] **Git**: Commit final state and tag release
+
+**Progress Tracking:**
+- Phases Completed: ____ / 14
+- Checkpoints Passed: ____ / 3
+- Estimated Time Remaining: ____
+- Actual Time Spent: ____
+
+---
+
+## Phase 0: Pre-Refactor Validation
+
+**Goal**: Verify current codebase structure and create baseline
+
+**Time**: 15 minutes (10 min implementation + 5 min testing)
+
+**Risk Level**: 🟢 Low (just validation)
+
+### Steps
+
+1. **Run the game and complete smoke test**
+   - Load index.html in browser
+   - Click "Press Start" button
+   - Verify game loads and player can move
+   - Play for 1-2 minutes to ensure core systems work
+
+2. **Inspect the monolith**
+   - Open `js/vibe-survivor-game.js`
+   - Count actual lines (should be ~9300+)
+   - Identify Vector2 class location
+   - Locate constants/config sections
+   - Find state management code
+
+3. **Browser Console Check**
+   - Open DevTools (F12)
+   - Verify no errors in Console tab
+   - Check Network tab for asset loading
+
+4. **Take baseline screenshots**
+   - Game running normally
+   - Player movement
+   - Enemy spawning
+   - HUD display
+
+5. **Document current structure**
+   - List global variables/classes to be extracted
+   - Note any unusual dependencies
+   - Check for TypeScript or build steps (should be none)
+
+### Testing Checklist
+
+**STOP - Do NOT proceed to Phase 1 until ALL checks pass:**
+
+- [ ] Game loads without errors in console
+- [ ] Player can move with WASD/arrow keys
+- [ ] Enemies spawn and move toward player
+- [ ] Weapons fire and hit enemies
+- [ ] XP orbs drop when enemies die
+- [ ] Health bar displays correctly
+- [ ] Audio plays (or gracefully fails)
+- [ ] No console errors or warnings
+- [ ] Screenshots saved for comparison
+- [ ] Monolith structure matches expectations (~9300 lines)
+
+### Success Criteria
+
+- [ ] Baseline validated and documented
+- [ ] Ready to begin extraction
+- [ ] Git tag created (optional, if you want: `pre-refactor-baseline`)
+
+
+---
+
+## Phase 1: Setup New Directory Structure
 
 **Goal**: Create empty directories without moving any code yet
 
@@ -98,17 +209,17 @@ js/
 └── vibe-survivor-game.js # Main game export wrapper
 
 
-## Phase 1: Extract Utility Layer
+## Phase 2: Extract Utility Layer
 
 **Goal**: Extract standalone utility modules (no dependencies)
 
-**Time**: 30 minutes
+**Time**: 40 minutes (30 min implementation + 10 min testing)
 
 **Risk Level**: 🟢 Low (utilities have no dependencies)
 
 ### Files to Create
 
-#### 1.1 Create `js/utils/vector2.js`
+#### 2.1 Create `js/utils/vector2.js`
 
 Extract Vector2 class from monolith:
 - `Vector2` class
@@ -117,7 +228,7 @@ Extract Vector2 class from monolith:
 
 **Test**: Import in browser console and verify vector operations work
 
-#### 1.2 Create `js/utils/math.js`
+#### 2.2 Create `js/utils/math.js`
 
 Extract math utilities:
 - `distance(x1, y1, x2, y2)`
@@ -128,7 +239,7 @@ Extract math utilities:
 
 **Test**: Verify math functions return correct values
 
-#### 1.3 Create `js/utils/performance.js`
+#### 2.3 Create `js/utils/performance.js`
 
 Extract performance monitoring:
 - FPS counter logic
@@ -150,22 +261,31 @@ import { PerformanceMonitor } from './utils/performance.js';
 2. Replace all inline vector/math operations with utility calls
 
 ### Testing Checklist
+
+**STOP - Do NOT proceed to Phase 3 until ALL checks pass:**
+
 - [ ] Game loads without errors
 - [ ] Player movement works (uses Vector2)
 - [ ] Enemies move correctly (uses Vector2)
 - [ ] Distance calculations work (collision detection)
 - [ ] FPS counter displays and updates
 - [ ] No console errors
+- [ ] Browser console shows no warnings about missing modules
 
+**If ANY test fails:**
+- Document the failure
+- Check import/export syntax
+- Verify file paths are correct
+- Fix issue before proceeding
 
 
 ---
 
-## Phase 2: Extract Configuration Layer
+## Phase 3: Extract Configuration Layer
 
 **Goal**: Extract all configuration and constants
 
-**Time**: 30 minutes
+**Time**: 40 minutes (30 min implementation + 10 min testing)
 
 **Risk Level**: 🟢 Low (no logic, just data)
 
@@ -173,7 +293,7 @@ import { PerformanceMonitor } from './utils/performance.js';
 
 ### Files to Create
 
-#### 2.1 Create `js/config/constants.js`
+#### 3.1 Create `js/config/constants.js`
 
 Extract all game constants:
 - `PLAYER` config (speed, size, health, etc.)
@@ -217,7 +337,7 @@ export const GAME_CONFIG = {
 };
 ```
 
-#### 2.2 Create `js/config/assets.js`
+#### 3.2 Create `js/config/assets.js`
 
 Extract asset management:
 - Image paths
@@ -271,33 +391,38 @@ import { ASSET_PATHS, SPRITE_CONFIGS, loadAssets } from './config/assets.js';
 Replace all hardcoded values with constant references.
 
 ### Testing Checklist
+
+**STOP - Do NOT proceed to Phase 4 until ALL checks pass:**
+
 - [ ] Game loads without errors
 - [ ] All constants accessible
 - [ ] Player stats correct (speed, health, size)
-- [ ] Enemy stats correct
-- [ ] Weapon stats correct
+- [ ] Enemy stats correct (health, damage, speed)
+- [ ] Weapon stats correct (damage, cooldown, range)
 - [ ] Assets load successfully
 - [ ] Sprites render correctly
-- [ ] Audio plays correctly
+- [ ] Audio plays correctly (or fails gracefully)
+- [ ] No console errors
+- [ ] No hardcoded magic numbers remaining in visible gameplay
 
 
 ---
 
-## Phase 3: Extract Core State Management
+## Phase 4a: Extract Core State Management (Part 1 - Player & Camera)
 
-**Goal**: Centralize all game state
+**Goal**: Centralize player and camera state (smaller, safer scope)
 
-**Time**: 45 minutes
+**Time**: 40 minutes (30 min implementation + 10 min testing)
 
-**Risk Level**: 🟡 Medium (touches all game state)
+**Risk Level**: 🟡 Medium (core gameplay state)
 
 **Dependencies**: config, utils
 
 ### Files to Create
 
-#### 3.1 Create `js/core/state.js`
+#### 4a.1 Create `js/core/state.js` (Partial - Player & Camera only)
 
-Extract and centralize all game state:
+Extract and centralize player and camera state:
 
 **Structure**:
 ```javascript
@@ -334,6 +459,79 @@ export function createEnemyState(type, x, y) {
 }
 
 /**
+ * Creates initial camera state
+ */
+export function createCameraState() {
+    return {
+        x: 0,
+        y: 0,
+        zoom: 1
+    };
+}
+
+/**
+ * Creates partial game state (Phase 4a - Player & Camera only)
+ */
+export function createGameState() {
+    return {
+        // Player
+        player: createPlayerState(),
+
+        // Camera
+        camera: createCameraState()
+
+        // NOTE: Enemies, weapons, pickups, etc. will be added in Phase 4b
+    };
+}
+```
+
+### Integration
+
+Update monolith:
+```javascript
+import { createGameState, createPlayerState, createCameraState } from './core/state.js';
+
+// Replace scattered player and camera variables with centralized state
+const state = createGameState();
+
+// Update player-related code to use state.player
+// Update camera-related code to use state.camera
+```
+
+### Testing Checklist
+
+**STOP - Do NOT proceed to Phase 4b until ALL checks pass:**
+
+- [ ] Game initializes with player state
+- [ ] Player properties accessible via `state.player`
+- [ ] Player position, health, velocity work correctly
+- [ ] Camera properties accessible via `state.camera`
+- [ ] Player movement still works
+- [ ] Game runs without errors
+- [ ] No console errors
+
+
+---
+
+## Phase 4b: Extract Core State Management (Part 2 - Enemies, Weapons, Pickups)
+
+**Goal**: Add remaining state (enemies, weapons, pickups, UI, game state)
+
+**Time**: 40 minutes (30 min implementation + 10 min testing)
+
+**Risk Level**: 🟡 Medium (completes state system)
+
+**Dependencies**: Phase 4a
+
+### Files to Modify
+
+#### 4b.1 Expand `js/core/state.js`
+
+Add remaining state factory functions and expand `createGameState()`:
+
+**Add these functions**:
+```javascript
+/**
  * Creates initial weapon state
  */
 export function createWeaponState(type) {
@@ -345,16 +543,19 @@ export function createWeaponState(type) {
         // ... all weapon properties
     };
 }
+```
 
-/**
- * Creates complete game state
- */
+**Update createGameState() to include all state**:
+```javascript
 export function createGameState() {
     return {
-        // Player
+        // Player (already exists from 4a)
         player: createPlayerState(),
 
-        // Enemies
+        // Camera (already exists from 4a)
+        camera: createCameraState(),
+
+        // Enemies (NEW)
         enemies: {
             chasers: [],
             dodgers: [],
@@ -364,21 +565,21 @@ export function createGameState() {
             bosses: []
         },
 
-        // Weapons and projectiles
+        // Weapons and projectiles (NEW)
         weapons: [],
         projectiles: [],
 
-        // Pickups
+        // Pickups (NEW)
         pickups: {
             xpOrbs: [],
             healthPacks: [],
             magnets: []
         },
 
-        // Particles
+        // Particles (NEW)
         particles: [],
 
-        // UI state
+        // UI state (NEW)
         ui: {
             showStartScreen: true,
             showPauseMenu: false,
@@ -386,7 +587,7 @@ export function createGameState() {
             // ... all UI flags
         },
 
-        // Game state
+        // Game state (NEW)
         game: {
             score: 0,
             level: 1,
@@ -396,14 +597,6 @@ export function createGameState() {
             isPaused: false,
             isGameOver: false,
             // ... all game flags
-        },
-
-        // Camera
-        camera: {
-            x: 0,
-            y: 0,
-            zoom: 1,
-            // ... camera properties
         }
     };
 }
@@ -411,39 +604,61 @@ export function createGameState() {
 
 ### Integration
 
-Update monolith:
+Update monolith to use all state:
 ```javascript
-import { createGameState, createPlayerState, createEnemyState } from './core/state.js';
-
-// Replace scattered state variables with centralized state
-const state = createGameState();
-
 // All functions now receive state as parameter
 function update(deltaTime) {
     updatePlayer(state, deltaTime);
     updateEnemies(state, deltaTime);
+    updateWeapons(state, deltaTime);
+    updatePickups(state, deltaTime);
     // ...
 }
 ```
 
 ### Testing Checklist
-- [ ] Game initializes with correct state
-- [ ] Player properties accessible via `state.player`
+
+**STOP - Do NOT proceed to Phase 5 until ALL checks pass:**
+
+- [ ] Game initializes with complete state structure
 - [ ] Enemy arrays accessible via `state.enemies`
 - [ ] Weapons accessible via `state.weapons`
-- [ ] UI state toggles work
-- [ ] Game state updates correctly
+- [ ] Pickups accessible via `state.pickups`
+- [ ] UI state toggles work (pause, modals)
+- [ ] Game state updates correctly (score, XP, level)
+- [ ] All game systems still function
 - [ ] No console errors
-
 
 
 ---
 
-## Phase 4: Extract Input Handling (Events)
+## Integration Checkpoint #1
+
+**Goal**: Verify all core systems work together
+
+**Time**: 15 minutes
+
+**Test all core functionality before proceeding:**
+
+- [ ] Game loads and initializes correctly
+- [ ] Player can move in all directions
+- [ ] Enemies spawn and move toward player
+- [ ] Player can take damage
+- [ ] Health bar updates
+- [ ] XP bar functions
+- [ ] State management working correctly
+- [ ] No console errors or warnings
+
+**If ANY test fails, go back and fix before proceeding to Phase 5!**
+
+
+---
+
+## Phase 5: Extract Input Handling (Events)
 
 **Goal**: Centralize all input handling
 
-**Time**: 45 minutes
+**Time**: 60 minutes (45 min implementation + 15 min testing)
 
 **Risk Level**: 🟡 Medium (critical for gameplay)
 
@@ -451,7 +666,7 @@ function update(deltaTime) {
 
 ### Files to Create
 
-#### 4.1 Create `js/core/events.js`
+#### 5.1 Create `js/core/events.js`
 
 Extract all input handling:
 
@@ -556,21 +771,31 @@ function updatePlayer(state, deltaTime) {
 ```
 
 ### Testing Checklist
+
+**STOP - Do NOT proceed to Phase 6 until ALL checks pass:**
+
 - [ ] Keyboard controls work (WASD, arrows)
+- [ ] Simultaneous key presses work (W+D for diagonal movement)
+- [ ] Rapid key toggling works correctly
 - [ ] Mouse movement tracked correctly
 - [ ] Mouse clicks registered
+- [ ] Focus loss/gain works (click outside game then back)
 - [ ] Touch controls work (if implemented)
 - [ ] Pause key (ESC) works
 - [ ] All keyboard shortcuts work
 - [ ] No console errors
 
+**Additional edge case testing:**
+- [ ] Holding multiple keys doesn't break movement
+- [ ] Releasing one key while holding another works correctly
+
 ---
 
-## Phase 5: Extract Physics System
+## Phase 6: Extract Physics System
 
 **Goal**: Isolate collision and movement physics
 
-**Time**: 45 minutes
+**Time**: 60 minutes (45 min implementation + 15 min testing)
 
 **Risk Level**: 🟡 Medium (affects gameplay feel)
 
@@ -578,7 +803,7 @@ function updatePlayer(state, deltaTime) {
 
 ### Files to Create
 
-#### 5.1 Create `js/systems/physics/collision.js`
+#### 6.1 Create `js/systems/physics/collision.js`
 
 Extract collision detection:
 
@@ -671,7 +896,7 @@ export function checkPlayerPickupCollisions(state) {
 }
 ```
 
-#### 5.2 Create `js/systems/physics/movement.js`
+#### 6.2 Create `js/systems/physics/movement.js`
 
 Extract movement calculations:
 
@@ -752,6 +977,9 @@ function update(state, deltaTime) {
 ```
 
 ### Testing Checklist
+
+**STOP - Do NOT proceed to Phase 7a until ALL checks pass:**
+
 - [ ] Player movement smooth and correct
 - [ ] Enemy collisions detected
 - [ ] Projectile hits register
@@ -760,13 +988,19 @@ function update(state, deltaTime) {
 - [ ] No jittering or physics bugs
 - [ ] No console errors
 
+**Edge case testing:**
+- [ ] Projectiles hitting multiple enemies simultaneously
+- [ ] Player collision while invulnerable
+- [ ] Pickup magnetization near screen edges
+
+
 ---
 
-## Phase 6: Extract Rendering System
+## Phase 7a: Extract Rendering System (Part 1 - Core Rendering)
 
-**Goal**: Isolate all rendering logic
+**Goal**: Extract canvas, camera, and sprites (foundation for rendering)
 
-**Time**: 60 minutes
+**Time**: 55 minutes (45 min implementation + 10 min testing)
 
 **Risk Level**: 🟡 Medium (visual bugs possible)
 
@@ -774,7 +1008,7 @@ function update(state, deltaTime) {
 
 ### Files to Create
 
-#### 6.1 Create `js/systems/rendering/canvas.js`
+#### 7a.1 Create `js/systems/rendering/canvas.js`
 
 **Structure**:
 ```javascript
@@ -822,7 +1056,7 @@ export class Camera {
 }
 ```
 
-#### 6.2 Create `js/systems/rendering/sprites.js`
+#### 7a.2 Create `js/systems/rendering/sprites.js`
 
 **Structure**:
 ```javascript
@@ -881,7 +1115,51 @@ export class SpriteManager {
 }
 ```
 
-#### 6.3 Create `js/systems/rendering/animation.js`
+### Integration
+
+Update monolith:
+```javascript
+import { initCanvas, Camera } from './systems/rendering/canvas.js';
+import { SpriteManager } from './systems/rendering/sprites.js';
+
+const { canvas, context } = initCanvas('gameCanvas', 1200, 800);
+const camera = new Camera();
+const spriteManager = new SpriteManager();
+await spriteManager.loadAllSprites(assetPaths);
+
+// In game loop
+camera.follow(state.player.position);
+```
+
+### Testing Checklist
+
+**STOP - Do NOT proceed to Phase 7b until ALL checks pass:**
+
+- [ ] Game renders correctly
+- [ ] Canvas initializes at correct size
+- [ ] Camera follows player smoothly
+- [ ] Sprites load successfully
+- [ ] Player sprite displays (or fallback if sprites not loaded)
+- [ ] Enemies render correctly
+- [ ] No visual glitches
+- [ ] No console errors
+
+
+---
+
+## Phase 7b: Extract Rendering System (Part 2 - Animation, Particles, Effects)
+
+**Goal**: Add animations, particle system, and visual effects
+
+**Time**: 60 minutes (45 min implementation + 15 min testing)
+
+**Risk Level**: 🟡 Medium (complex visual systems)
+
+**Dependencies**: Phase 7a
+
+### Files to Create
+
+#### 7b.1 Create `js/systems/rendering/animation.js`
 
 **Structure**:
 ```javascript
@@ -917,7 +1195,7 @@ export class AnimationController {
 }
 ```
 
-#### 6.4 Create `js/systems/rendering/particles.js`
+#### 7b.2 Create `js/systems/rendering/particles.js`
 
 **Structure**:
 ```javascript
@@ -999,7 +1277,7 @@ export class ParticleSystem {
 }
 ```
 
-#### 6.5 Create `js/systems/rendering/effects.js`
+#### 7b.3 Create `js/systems/rendering/effects.js`
 
 **Structure**:
 ```javascript
@@ -1076,114 +1354,68 @@ export class EffectsManager {
 }
 ```
 
-#### 6.6 Create `js/systems/rendering/renderer.js`
-
-Main rendering pipeline:
-
-**Structure**:
-```javascript
-import { Camera } from './canvas.js';
-import { SpriteManager } from './sprites.js';
-import { ParticleSystem } from './particles.js';
-import { EffectsManager } from './effects.js';
-
-/**
- * Main renderer - orchestrates all rendering
- */
-export class Renderer {
-    constructor(canvas, context) {
-        this.canvas = canvas;
-        this.context = context;
-        this.camera = new Camera();
-        this.sprites = new SpriteManager();
-        this.particles = new ParticleSystem();
-        this.effects = new EffectsManager();
-    }
-
-    async init(assetPaths) {
-        await this.sprites.loadAllSprites(assetPaths);
-    }
-
-    render(state) {
-        const ctx = this.context;
-        const width = this.canvas.width;
-        const height = this.canvas.height;
-
-        // Clear canvas
-        ctx.fillStyle = '#1a1a2e';
-        ctx.fillRect(0, 0, width, height);
-
-        // Update camera to follow player
-        this.camera.follow(state.player.position);
-
-        // Render game world
-        this.renderBackground(state, ctx, width, height);
-        this.renderPickups(state, ctx, width, height);
-        this.renderEnemies(state, ctx, width, height);
-        this.renderPlayer(state, ctx, width, height);
-        this.renderProjectiles(state, ctx, width, height);
-        this.particles.render(ctx, this.camera, width, height);
-
-        // Render effects
-        this.effects.renderScreenFlash(ctx, width, height);
-    }
-
-    renderPlayer(state, ctx, width, height) {
-        const player = state.player;
-        const screen = this.camera.worldToScreen(player.position.x, player.position.y, width, height);
-
-        // Try to render sprite, fallback to circle
-        if (this.sprites.loaded) {
-            this.sprites.drawSprite(ctx, 'playerIdle', screen.x, screen.y, player.animationFrame);
-        } else {
-            ctx.fillStyle = '#00ffff';
-            ctx.beginPath();
-            ctx.arc(screen.x, screen.y, player.size, 0, Math.PI * 2);
-            ctx.fill();
-        }
-    }
-
-    // ... other render methods
-}
-```
-
 ### Integration
 
 Update monolith:
 ```javascript
-import { initCanvas } from './systems/rendering/canvas.js';
-import { Renderer } from './systems/rendering/renderer.js';
+import { AnimationController } from './systems/rendering/animation.js';
+import { ParticleSystem } from './systems/rendering/particles.js';
+import { EffectsManager } from './systems/rendering/effects.js';
 
-const { canvas, context } = initCanvas('gameCanvas', 1200, 800);
-const renderer = new Renderer(canvas, context);
-await renderer.init(assetPaths);
+const particleSystem = new ParticleSystem();
+const effects = new EffectsManager();
 
 // In game loop
-function render() {
-    renderer.render(state);
-}
+particleSystem.update(deltaTime);
+effects.update(deltaTime, camera);
+particleSystem.render(context, camera, width, height);
+effects.renderScreenFlash(context, width, height);
 ```
 
 ### Testing Checklist
-- [ ] Game renders correctly
-- [ ] Player sprite displays (or fallback circle)
-- [ ] Enemies render correctly
-- [ ] Projectiles visible
-- [ ] Particles work
-- [ ] Camera follows player smoothly
-- [ ] Screen flash works
-- [ ] Camera shake works
+
+**STOP - Do NOT proceed to Integration Checkpoint #2 until ALL checks pass:**
+
+- [ ] Particles spawn and animate correctly
+- [ ] Particle object pooling works (no memory leaks)
+- [ ] Sprite animations play smoothly
+- [ ] Screen flash works when damage taken
+- [ ] Camera shake works on impacts
+- [ ] Visual effects don't cause lag
 - [ ] No visual glitches
 - [ ] No console errors
 
 
 ---
 
-## Phase 7: Extract Gameplay Systems (Part 1 - Entities)
+## Integration Checkpoint #2
+
+**Goal**: Verify complete rendering pipeline
+
+**Time**: 15 minutes
+
+**Test full rendering system before proceeding:**
+
+- [ ] Game renders at 60 FPS
+- [ ] All entities render correctly
+- [ ] Camera follows player smoothly
+- [ ] Sprites and animations work
+- [ ] Particles display correctly
+- [ ] Visual effects work (flash, shake)
+- [ ] No rendering glitches
+- [ ] No console errors or warnings
+- [ ] Game still playable and responsive
+
+**If ANY test fails, go back and fix before proceeding to Phase 8!**
+
+
+---
+
+## Phase 8: Extract Gameplay Systems (Part 1 - Entities)
 
 **Goal**: Extract player and enemy systems
 
-**Time**: 60 minutes
+**Time**: 80 minutes (60 min implementation + 20 min testing)
 
 **Risk Level**: 🟠 Medium-High (core gameplay)
 
@@ -1191,7 +1423,7 @@ function render() {
 
 ### Files to Create
 
-#### 7.1 Create `js/systems/gameplay/player.js`
+#### 8.1 Create `js/systems/gameplay/player.js`
 
 **Structure**:
 ```javascript
@@ -1271,7 +1503,7 @@ export class Player {
 }
 ```
 
-#### 7.2 Create `js/systems/gameplay/pickups.js`
+#### 8.2 Create `js/systems/gameplay/pickups.js`
 
 **Structure**:
 ```javascript
@@ -1329,7 +1561,7 @@ export class PickupManager {
 }
 ```
 
-#### 7.3 Create `js/systems/gameplay/enemies/enemy-base.js`
+#### 8.3 Create `js/systems/gameplay/enemies/enemy-base.js`
 
 **Structure**:
 ```javascript
@@ -1364,7 +1596,7 @@ export class Enemy {
 }
 ```
 
-#### 7.4 Create `js/systems/gameplay/enemies/behaviors.js`
+#### 8.4 Create `js/systems/gameplay/enemies/behaviors.js`
 
 **Structure**:
 ```javascript
@@ -1405,7 +1637,7 @@ export class DodgerEnemy extends Enemy {
 // TankEnemy, FlyerEnemy, TeleporterEnemy, BossEnemy...
 ```
 
-#### 7.5 Create `js/systems/gameplay/enemies/spawning.js`
+#### 8.5 Create `js/systems/gameplay/enemies/spawning.js`
 
 **Structure**:
 ```javascript
@@ -1499,92 +1731,456 @@ function update(deltaTime) {
 ```
 
 ### Testing Checklist
+
+**STOP - Do NOT proceed to Phase 9 until ALL checks pass:**
+
 - [ ] Player moves and animates correctly
 - [ ] Player dash ability works
 - [ ] Player can take damage
-- [ ] Enemies spawn regularly
+- [ ] Player invulnerability works after damage
+- [ ] Enemies spawn regularly (every 2 seconds)
 - [ ] Enemies move toward player
-- [ ] Enemy behaviors work (chase, dodge, etc.)
+- [ ] Each enemy type behaves correctly:
+  - [ ] Chasers move straight toward player
+  - [ ] Dodgers attempt to avoid projectiles
+  - [ ] Tanks move slowly but have high health
+- [ ] Boss spawns at 2-minute mark
 - [ ] XP orbs spawn when enemies die
 - [ ] XP orbs magnetize toward player
-- [ ] Health packs spawn and work
+- [ ] Health packs spawn and heal player
 - [ ] No console errors
+
+**Edge case testing:**
+- [ ] Multiple enemy types in same wave
+- [ ] Enemy spawning off-screen
+- [ ] XP orb magnetization with many orbs
 
 
 ---
 
-## Phase 8: Extract Gameplay Systems (Part 2 - Weapons & Progression)
+## Phase 9: Extract Gameplay Systems (Part 2 - Weapons & Progression)
 
 **Goal**: Extract weapon and progression systems
 
-**Time**: 60 minutes
+**Time**: 80 minutes (60 min implementation + 20 min testing)
 
 **Risk Level**: 🟠 Medium-High (complex systems)
 
-**Dependencies**: Phase 7
+**Dependencies**: Phase 8
 
 ### Files to Create
 
-#### 8.1 Create `js/systems/gameplay/weapons/weapon-base.js`
-#### 8.2 Create `js/systems/gameplay/weapons/projectiles.js`
-#### 8.3 Create `js/systems/gameplay/progression/xp-system.js`
-#### 8.4 Create `js/systems/gameplay/progression/upgrades.js`
+#### 9.1 Create `js/systems/gameplay/weapons/weapon-base.js`
 
-(Similar detailed structure as Phase 7)
+**Structure**:
+```javascript
+import { WEAPONS } from '../../../config/constants.js';
+
+export class Weapon {
+    constructor(type) {
+        const config = WEAPONS[type];
+
+        this.type = type;
+        this.level = 1;
+        this.cooldown = 0;
+        this.cooldownMax = config.cooldown;
+        this.damage = config.damage;
+        this.range = config.range;
+        this.projectileSpeed = config.projectileSpeed;
+        this.piercing = config.piercing || 0;
+    }
+
+    update(deltaTime) {
+        if (this.cooldown > 0) {
+            this.cooldown -= deltaTime;
+        }
+    }
+
+    canFire() {
+        return this.cooldown <= 0;
+    }
+
+    fire(playerPos, targetPos) {
+        if (!this.canFire()) return null;
+
+        this.cooldown = this.cooldownMax;
+        return this.createProjectile(playerPos, targetPos);
+    }
+
+    createProjectile(fromPos, toPos) {
+        // Override in specific weapon types
+    }
+
+    levelUp() {
+        this.level++;
+        // Increase stats based on weapon type
+    }
+}
+```
+
+#### 9.2 Create `js/systems/gameplay/weapons/projectiles.js`
+
+**Structure**:
+```javascript
+export class Projectile {
+    constructor(x, y, vx, vy, damage, size = 5, piercing = 0) {
+        this.x = x;
+        this.y = y;
+        this.vx = vx;
+        this.vy = vy;
+        this.damage = damage;
+        this.size = size;
+        this.piercing = piercing;
+        this.piercedEnemies = [];
+        this.lifetime = 3; // seconds
+        this.age = 0;
+    }
+
+    update(deltaTime) {
+        this.x += this.vx * deltaTime;
+        this.y += this.vy * deltaTime;
+        this.age += deltaTime;
+    }
+
+    isExpired() {
+        return this.age >= this.lifetime;
+    }
+
+    canHit(enemy) {
+        return !this.piercedEnemies.includes(enemy);
+    }
+
+    hit(enemy) {
+        this.piercedEnemies.push(enemy);
+        return this.piercedEnemies.length > this.piercing;
+    }
+}
+
+export class ProjectileManager {
+    constructor() {
+        this.projectiles = [];
+    }
+
+    spawn(projectile) {
+        this.projectiles.push(projectile);
+    }
+
+    update(deltaTime) {
+        for (let i = this.projectiles.length - 1; i >= 0; i--) {
+            const projectile = this.projectiles[i];
+            projectile.update(deltaTime);
+
+            if (projectile.isExpired()) {
+                this.projectiles.splice(i, 1);
+            }
+        }
+    }
+
+    clear() {
+        this.projectiles = [];
+    }
+}
+```
+
+#### 9.3 Create `js/systems/gameplay/progression/xp-system.js`
+
+**Structure**:
+```javascript
+export class XPSystem {
+    constructor() {
+        this.xp = 0;
+        this.level = 1;
+        this.xpToNextLevel = 100;
+        this.levelUpCallbacks = [];
+    }
+
+    addXP(amount) {
+        this.xp += amount;
+
+        if (this.xp >= this.xpToNextLevel) {
+            this.levelUp();
+        }
+    }
+
+    levelUp() {
+        this.level++;
+        this.xp -= this.xpToNextLevel;
+        this.xpToNextLevel = Math.floor(this.xpToNextLevel * 1.5);
+
+        // Trigger level-up callbacks
+        this.levelUpCallbacks.forEach(callback => callback(this.level));
+    }
+
+    onLevelUp(callback) {
+        this.levelUpCallbacks.push(callback);
+    }
+
+    getProgress() {
+        return this.xp / this.xpToNextLevel;
+    }
+
+    reset() {
+        this.xp = 0;
+        this.level = 1;
+        this.xpToNextLevel = 100;
+    }
+}
+```
+
+#### 9.4 Create `js/systems/gameplay/progression/upgrades.js`
+
+**Structure**:
+```javascript
+export class UpgradeSystem {
+    constructor() {
+        this.availableWeapons = [];
+        this.availablePassives = [];
+        this.selectedWeapons = [];
+        this.selectedPassives = [];
+    }
+
+    getUpgradeChoices(count = 3) {
+        const choices = [];
+        const allOptions = [
+            ...this.availableWeapons.map(w => ({ type: 'weapon', ...w })),
+            ...this.availablePassives.map(p => ({ type: 'passive', ...p }))
+        ];
+
+        // Randomly select choices
+        while (choices.length < count && allOptions.length > 0) {
+            const index = Math.floor(Math.random() * allOptions.length);
+            choices.push(allOptions.splice(index, 1)[0]);
+        }
+
+        return choices;
+    }
+
+    selectUpgrade(choice) {
+        if (choice.type === 'weapon') {
+            this.selectedWeapons.push(choice);
+        } else if (choice.type === 'passive') {
+            this.selectedPassives.push(choice);
+            this.applyPassive(choice);
+        }
+    }
+
+    applyPassive(passive) {
+        // Apply passive effects to player/game state
+    }
+
+    canMergeWeapons(weapon1, weapon2) {
+        // Check if weapons can be merged into evolved weapon
+        return false; // Implement weapon merging logic
+    }
+}
+```
+
+### Integration
+
+Update monolith:
+```javascript
+import { Weapon } from './systems/gameplay/weapons/weapon-base.js';
+import { ProjectileManager } from './systems/gameplay/weapons/projectiles.js';
+import { XPSystem } from './systems/gameplay/progression/xp-system.js';
+import { UpgradeSystem } from './systems/gameplay/progression/upgrades.js';
+
+const projectileManager = new ProjectileManager();
+const xpSystem = new XPSystem();
+const upgradeSystem = new UpgradeSystem();
+
+// Level-up callback
+xpSystem.onLevelUp((level) => {
+    state.ui.showLevelUpModal = true;
+    state.ui.upgradeChoices = upgradeSystem.getUpgradeChoices(3);
+});
+```
 
 ### Testing Checklist
+
+**STOP - Do NOT proceed to Phase 10 until ALL checks pass:**
+
 - [ ] Weapons fire correctly
 - [ ] Projectiles spawn and move
-- [ ] Projectiles hit enemies
+- [ ] Projectiles hit enemies and deal damage
+- [ ] Projectile lifetime works (despawn after 3 seconds)
+- [ ] Piercing projectiles work correctly
+- [ ] Weapon cooldowns work
 - [ ] Weapon upgrades work
-- [ ] Weapon merging works
+- [ ] Weapon merging works (if implemented)
 - [ ] XP collection works
-- [ ] Level-up triggers correctly
-- [ ] Upgrade choices appear
-- [ ] Passive abilities work
+- [ ] XP bar fills correctly
+- [ ] Level-up triggers at correct XP threshold
+- [ ] Level-up modal appears
+- [ ] Upgrade choices display (3 options)
+- [ ] Selecting upgrade works
+- [ ] Passive abilities apply correctly
+- [ ] No console errors
+
+**Edge case testing:**
+- [ ] Multiple projectiles from same weapon
+- [ ] Projectile hitting multiple enemies
+- [ ] Rapid level-ups (multiple in quick succession)
 
 
 ---
 
-## Phase 9: Extract UI Systems
+## Phase 10: Extract UI Systems
 
-**Goal**: Extract all UI components
+**Goal**: Extract all UI components and modals
 
-**Time**: 60 minutes
+**Time**: 80 minutes (60 min implementation + 20 min testing)
 
-**Risk Level**: 🟡 Medium (visual issues possible)
+**Risk Level**: 🟡 Medium (visual issues possible, many components)
+
+**Dependencies**: All gameplay systems
 
 ### Files to Create
 
-#### 9.1 Create `js/systems/ui/i18n.js`
-#### 9.2 Create `js/systems/ui/hud.js`
-#### 9.3 Create `js/systems/ui/touch-controls.js`
-#### 9.4 Create `js/systems/ui/modals/modal-base.js`
-#### 9.5 Create all 9 modal implementations
+#### 10.1 Create `js/systems/ui/hud.js`
+
+HUD (Heads-Up Display) for health, XP, time, etc.
+
+#### 10.2 Create `js/systems/ui/touch-controls.js`
+
+Touch controls and virtual joystick for mobile.
+
+#### 10.3 Create `js/systems/ui/modals/modal-base.js`
+
+Base class for all modals.
+
+#### 10.4 Create all 9 modal implementations:
+
+1. **`js/systems/ui/modals/start-screen.js`** - Initial "Press Start" screen
+2. **`js/systems/ui/modals/pause-menu.js`** - Pause overlay (ESC key)
+3. **`js/systems/ui/modals/level-up.js`** - Level-up upgrade selection
+4. **`js/systems/ui/modals/game-over.js`** - Death screen with stats
+5. **`js/systems/ui/modals/settings.js`** - Settings (audio, controls, etc.)
+6. **`js/systems/ui/modals/help.js`** - Controls and game help
+7. **`js/systems/ui/modals/weapon-info.js`** - Weapon details and stats
+8. **`js/systems/ui/modals/stats.js`** - Player statistics modal
+9. **`js/systems/ui/modals/victory.js`** - Victory/boss defeated screen (if applicable)
+
+**Base Modal Structure**:
+```javascript
+export class Modal {
+    constructor(id) {
+        this.id = id;
+        this.element = document.getElementById(id);
+        this.visible = false;
+    }
+
+    show() {
+        this.visible = true;
+        this.element.style.display = 'block';
+        this.onShow();
+    }
+
+    hide() {
+        this.visible = false;
+        this.element.style.display = 'none';
+        this.onHide();
+    }
+
+    onShow() {
+        // Override in subclasses
+    }
+
+    onHide() {
+        // Override in subclasses
+    }
+}
+```
+
+#### 10.5 Create `js/systems/ui/i18n.js` (Optional - if internationalization needed)
+
+Translation system for multiple languages.
+
+### Integration
+
+Update monolith:
+```javascript
+import { HUD } from './systems/ui/hud.js';
+import { TouchControls } from './systems/ui/touch-controls.js';
+import { PauseMenu } from './systems/ui/modals/pause-menu.js';
+import { LevelUpModal } from './systems/ui/modals/level-up.js';
+// ... import all modals
+
+const hud = new HUD();
+const touchControls = new TouchControls();
+const pauseMenu = new PauseMenu('pause-menu');
+const levelUpModal = new LevelUpModal('level-up-modal');
+
+// Wire up modal events
+```
 
 ### Testing Checklist
+
+**STOP - Do NOT proceed to Integration Checkpoint #3 until ALL checks pass:**
+
 - [ ] HUD displays correctly
-- [ ] Health bar updates
-- [ ] XP bar updates
+- [ ] Health bar updates in real-time
+- [ ] XP bar updates and fills correctly
 - [ ] Weapon icons display
-- [ ] All modals open/close
-- [ ] Translation system works
-- [ ] Touch controls work on mobile
-- [ ] Language switching works
+- [ ] Timer displays elapsed time
+- [ ] All 9 modals can be opened
+- [ ] All 9 modals can be closed
+- [ ] Modal transitions smooth
+- [ ] Touch controls work on mobile (test on phone/tablet if available)
+- [ ] Virtual joystick functional
+- [ ] Language switching works (if i18n implemented)
+- [ ] No UI glitches or overlaps
+- [ ] No console errors
+
+**Test each modal specifically:**
+- [ ] Start screen appears on load
+- [ ] Pause menu (ESC key)
+- [ ] Level-up modal shows 3 upgrade choices
+- [ ] Game-over modal shows final stats
+- [ ] Settings modal allows changes
+- [ ] Help modal displays controls
+- [ ] Weapon info shows weapon details
+- [ ] Stats modal shows player statistics
+- [ ] Victory modal (if applicable)
+
 
 ---
 
-## Phase 10: Extract Game Engine & Audio
+## Integration Checkpoint #3
+
+**Goal**: Verify complete game systems integration
+
+**Time**: 15 minutes
+
+**Full game test before final phase:**
+
+- [ ] Game loads and starts correctly
+- [ ] All gameplay systems function
+- [ ] Combat works (weapons, enemies, damage)
+- [ ] Progression works (XP, leveling, upgrades)
+- [ ] All UI elements display
+- [ ] All modals work
+- [ ] Game runs at stable 60 FPS
+- [ ] No console errors
+- [ ] Game feels complete and playable
+
+**If ANY test fails, go back and fix before proceeding to Phase 11!**
+
+
+---
+
+## Phase 11: Extract Game Engine & Audio
 
 **Goal**: Create main engine orchestrator and audio system
 
-**Time**: 45 minutes
+**Time**: 75 minutes (45 min implementation + 30 min testing)
 
 **Risk Level**: 🟡 Medium (final integration)
 
+**Dependencies**: ALL previous phases
+
 ### Files to Create
 
-#### 10.1 Create `js/core/engine.js`
+#### 11.1 Create `js/core/engine.js`
 
 Main game loop orchestrator:
 
@@ -1679,9 +2275,99 @@ export class GameEngine {
 }
 ```
 
-#### 10.2 Create `js/systems/audio/audio-manager.js`
+#### 11.2 Create `js/systems/audio/audio-manager.js`
 
-#### 10.3 Update `js/vibe-survivor-game.js`
+**Structure**:
+```javascript
+export class AudioManager {
+    constructor() {
+        this.sounds = new Map();
+        this.music = null;
+        this.musicVolume = 0.3;
+        this.sfxVolume = 0.5;
+        this.muted = false;
+    }
+
+    async init() {
+        // Load background music
+        try {
+            this.music = new Audio('sound/Vibe_Survivor.mp3');
+            this.music.loop = true;
+            this.music.volume = this.musicVolume;
+        } catch (error) {
+            console.warn('Failed to load background music:', error);
+        }
+    }
+
+    playMusic() {
+        if (this.music && !this.muted) {
+            this.music.play().catch(e => console.warn('Music playback failed:', e));
+        }
+    }
+
+    stopMusic() {
+        if (this.music) {
+            this.music.pause();
+            this.music.currentTime = 0;
+        }
+    }
+
+    pauseMusic() {
+        if (this.music) {
+            this.music.pause();
+        }
+    }
+
+    resumeMusic() {
+        if (this.music && !this.muted) {
+            this.music.play().catch(e => console.warn('Music resume failed:', e));
+        }
+    }
+
+    loadSound(name, path) {
+        const audio = new Audio(path);
+        audio.volume = this.sfxVolume;
+        this.sounds.set(name, audio);
+    }
+
+    playSound(name) {
+        if (this.muted) return;
+
+        const sound = this.sounds.get(name);
+        if (sound) {
+            // Clone audio for overlapping sounds
+            const clone = sound.cloneNode();
+            clone.volume = this.sfxVolume;
+            clone.play().catch(e => console.warn(`Sound ${name} playback failed:`, e));
+        }
+    }
+
+    setMusicVolume(volume) {
+        this.musicVolume = Math.max(0, Math.min(1, volume));
+        if (this.music) {
+            this.music.volume = this.musicVolume;
+        }
+    }
+
+    setSFXVolume(volume) {
+        this.sfxVolume = Math.max(0, Math.min(1, volume));
+        this.sounds.forEach(sound => {
+            sound.volume = this.sfxVolume;
+        });
+    }
+
+    toggleMute() {
+        this.muted = !this.muted;
+        if (this.muted) {
+            this.pauseMusic();
+        } else {
+            this.resumeMusic();
+        }
+    }
+}
+```
+
+#### 11.3 Update `js/vibe-survivor-game.js`
 
 Simplify to just export GameEngine:
 
@@ -1689,7 +2375,7 @@ Simplify to just export GameEngine:
 export { GameEngine } from './core/engine.js';
 ```
 
-#### 10.4 Update `js/main.js`
+#### 11.4 Update `js/main.js`
 
 Use new engine:
 
@@ -1705,14 +2391,31 @@ startButton.addEventListener('click', async () => {
 ```
 
 ### Testing Checklist
-- [ ] Game initializes correctly
-- [ ] Game loop runs at 60 FPS
-- [ ] All systems work together
-- [ ] Audio plays correctly
-- [ ] Pause/resume works
-- [ ] Game over works
-- [ ] Restart works
-- [ ] Full smoke test passes
+
+**CRITICAL - This is the final integration test. Do NOT proceed to Post-Refactoring until ALL checks pass:**
+
+- [ ] Game initializes correctly via main.js
+- [ ] Game loop runs at consistent 60 FPS
+- [ ] All systems orchestrated correctly by engine
+- [ ] Audio system initializes
+- [ ] Background music plays (or fails gracefully)
+- [ ] Sound effects work
+- [ ] Volume controls work
+- [ ] Mute toggle works
+- [ ] Pause/resume works correctly
+- [ ] Game over triggers and displays correctly
+- [ ] Restart functionality works
+- [ ] Full gameplay session completes without errors
+- [ ] Memory usage stable (no leaks)
+- [ ] No console errors or warnings
+
+**Complete Smoke Test:**
+- [ ] Play game for 5+ minutes
+- [ ] Reach level 5
+- [ ] Test all weapons
+- [ ] Test all enemy types
+- [ ] Test death and restart
+- [ ] Game remains stable and responsive
 
 
 ---
@@ -1802,24 +2505,35 @@ startButton.addEventListener('click', async () => {
 
 ## Timeline Estimate
 
-| Phase | Time | Cumulative |
-|-------|------|------------|
-| Phase 0 | 5 min | 5 min |
-| Phase 1 | 30 min | 35 min |
-| Phase 2 | 30 min | 65 min |
-| Phase 3 | 45 min | 110 min |
-| Phase 4 | 45 min | 155 min |
-| Phase 5 | 45 min | 200 min |
-| Phase 6 | 60 min | 260 min |
-| Phase 7 | 60 min | 320 min |
-| Phase 8 | 60 min | 380 min |
-| Phase 9 | 60 min | 440 min |
-| Phase 10 | 45 min | 485 min |
-| **Total** | **~8 hours** | **8 hours** |
+| Phase | Description | Implementation | Testing | Total | Cumulative |
+|-------|-------------|----------------|---------|-------|------------|
+| Phase 0 | Pre-Refactor Validation | 10 min | 5 min | 15 min | 15 min |
+| Phase 1 | Setup Directory Structure | 5 min | - | 5 min | 20 min |
+| Phase 2 | Extract Utilities | 30 min | 10 min | 40 min | 60 min |
+| Phase 3 | Extract Configuration | 30 min | 10 min | 40 min | 100 min |
+| Phase 4a | State Management (Player & Camera) | 30 min | 10 min | 40 min | 140 min |
+| Phase 4b | State Management (Rest) | 30 min | 10 min | 40 min | 180 min |
+| **Checkpoint #1** | **Integration Checkpoint** | - | **15 min** | **15 min** | **195 min** |
+| Phase 5 | Extract Input Handling | 45 min | 15 min | 60 min | 255 min |
+| Phase 6 | Extract Physics | 45 min | 15 min | 60 min | 315 min |
+| Phase 7a | Rendering (Core) | 45 min | 10 min | 55 min | 370 min |
+| Phase 7b | Rendering (Particles & Effects) | 45 min | 15 min | 60 min | 430 min |
+| **Checkpoint #2** | **Integration Checkpoint** | - | **15 min** | **15 min** | **445 min** |
+| Phase 8 | Gameplay (Entities) | 60 min | 20 min | 80 min | 525 min |
+| Phase 9 | Gameplay (Weapons & Progression) | 60 min | 20 min | 80 min | 605 min |
+| Phase 10 | UI Systems & Modals | 60 min | 20 min | 80 min | 685 min |
+| **Checkpoint #3** | **Integration Checkpoint** | - | **15 min** | **15 min** | **700 min** |
+| Phase 11 | Game Engine & Audio | 45 min | 30 min | 75 min | 775 min |
+| **Total** | **14 phases + 3 checkpoints** | **~9.5 hours** | **~3.5 hours** | **~13 hours** | **~13 hours** |
 
-Add 2-3 hours for testing and documentation = **10-11 hours total**
+**Realistic Estimate: 13-14 hours total**
 
 Can be spread over 2-3 days with breaks.
+
+**Time Breakdown:**
+- Implementation: ~570 minutes (~9.5 hours)
+- Testing: ~205 minutes (~3.5 hours)
+- Total: ~775 minutes (~13 hours)
 
 ---
 

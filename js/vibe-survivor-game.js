@@ -729,12 +729,12 @@ class VibeSurvivor {
             
             .vibe-survivor-modal {
                 position: fixed;
-                top: 10px;
+                top: 0;
                 left: 0;
                 width: 100%;
-                height: calc(100dvh - 40px);
+                height: 100vh;
                 background: transparent;
-                backdrop-filter: blur(10px);
+                backdrop-filter: none;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -743,21 +743,37 @@ class VibeSurvivor {
                 overscroll-behavior: none;
             }
 
+            .vibe-survivor-modal.game-active {
+                top: 10px;
+                height: calc(100dvh - 40px);
+                backdrop-filter: blur(10px);
+            }
+
             .vibe-survivor-content {
-                background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2a 100%);
-                border-radius: 20px;
+                background: transparent;
+                border-radius: 0;
                 padding: 0;
-                width: 95%;
-                max-width: 900px;
-                height: calc(100dvh - 100px);
+                width: 100%;
+                max-width: none;
+                height: 100vh;
                 display: flex;
                 flex-direction: column;
-                border: 2px solid #00ffff;
-                box-shadow: 0 0 40px rgba(0, 255, 255, 0.3),
-                           inset 0 0 20px rgba(0, 255, 255, 0.1);
+                border: none;
+                box-shadow: none;
                 overflow: hidden;
                 touch-action: none;
                 overscroll-behavior: none;
+            }
+
+            .vibe-survivor-content.game-active {
+                background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2a 100%);
+                border-radius: 20px;
+                width: 95%;
+                max-width: 900px;
+                height: calc(100dvh - 100px);
+                border: 2px solid #00ffff;
+                box-shadow: 0 0 40px rgba(0, 255, 255, 0.3),
+                           inset 0 0 20px rgba(0, 255, 255, 0.1);
             }
 
             .vibe-survivor-content.overlay-active .pause-btn,
@@ -771,16 +787,22 @@ class VibeSurvivor {
             .vibe-survivor-header {
                 padding: 15px 20px;
                 border-bottom: 2px solid rgba(0, 255, 255, 0.3);
-                display: flex !important;
+                display: none !important;
                 justify-content: space-between;
                 align-items: center;
                 position: relative !important;
                 pointer-events: auto !important;
-                visibility: visible !important;
-                opacity: 1 !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
                 background: rgba(0, 20, 40, 0.8);
                 height: 90px;
                 flex-wrap: nowrap;
+            }
+
+            .vibe-survivor-content.game-active .vibe-survivor-header {
+                display: flex !important;
+                visibility: visible !important;
+                opacity: 1 !important;
             }
             
             .header-stats {
@@ -1244,28 +1266,42 @@ class VibeSurvivor {
                 overflow: hidden !important;
             }
             
-            /* Separate Start Screen Overlay - Contained within modal */
+            /* Separate Start Screen Overlay - Full screen over landing page */
             .survivor-start-overlay {
-                position: relative;
-                flex: 1 1 auto;
-                max-width: 900px;
-                max-height: 100%;
-                align-self: stretch;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100vh;
                 display: none !important;
                 align-items: center !important;
                 justify-content: center !important;
                 flex-direction: column !important;
                 z-index: 150 !important;
-                background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2a 100%);
-                backdrop-filter: blur(5px) !important;
+                background: transparent;
                 overflow: hidden !important;
-                border-radius: inherit;
             }
-            
+
             .survivor-start-overlay.active {
                 display: flex !important;
                 visibility: visible !important;
                 opacity: 1 !important;
+            }
+
+            .vibe-survivor-screen {
+                position: relative;
+                flex: 1;
+                display: none !important;
+                flex-direction: column;
+                overflow: hidden;
+            }
+
+            .vibe-survivor-screen.active {
+                display: flex !important;
+            }
+
+            .vibe-survivor-content.game-active #game-screen {
+                display: flex !important;
             }
 
             .vibe-survivor-screen.active {
@@ -1284,7 +1320,9 @@ class VibeSurvivor {
                 max-width: 80%;
                 height: auto;
                 image-rendering: pixelated;
-                filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.5));
+                filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.5))
+                        drop-shadow(3px 3px 6px rgba(0, 0, 0, 0.9))
+                        drop-shadow(-2px -2px 4px rgba(0, 0, 0, 0.7));
                 animation: neonPulse 2s ease-in-out infinite;
             }
 
@@ -1297,16 +1335,28 @@ class VibeSurvivor {
             }
 
             .survivor-title p {
-                color: rgba(255, 255, 255, 0.8);
+                color: rgba(255, 255, 255, 0.95);
                 margin-bottom: 10px;
                 font-size: 16px;
                 font-family: 'NeoDunggeunmoPro', 'Courier New', monospace;
+                text-shadow:
+                    -2px -2px 0 #000,
+                     2px -2px 0 #000,
+                    -2px  2px 0 #000,
+                     2px  2px 0 #000,
+                     0 0 10px rgba(0, 0, 0, 0.8);
             }
 
             .controls-info {
-                color: rgba(255, 255, 255, 0.8) !important;
+                color: rgba(255, 255, 255, 0.95) !important;
                 margin-top: 10px !important;
                 margin-left: 20px;
+                text-shadow:
+                    -2px -2px 0 #000,
+                     2px -2px 0 #000,
+                    -2px  2px 0 #000,
+                     2px  2px 0 #000,
+                     0 0 10px rgba(0, 0, 0, 0.8);
                 margin-right: 20px;
                 padding: 10px;
                 font-size: 16px !important;
@@ -1327,7 +1377,7 @@ class VibeSurvivor {
 
             .survivor-btn {
                 padding: 12px 40px;
-                background: transparent;
+                background: rgba(0, 0, 0, 0.7);
                 border: 2px solid #00ffff;
                 color: #00ffff;
                 font-weight: bold;
@@ -1365,14 +1415,14 @@ class VibeSurvivor {
             }
 
             .survivor-btn.primary {
-                background: transparent;
+                background: rgba(0, 0, 0, 0.7);
                 border: 2px solid #ff00ff;
                 color: #ff00ff;
                 box-shadow: 0 0 15px rgba(255, 0, 255, 0.3);
             }
 
             .survivor-btn.primary:hover {
-                background: rgba(255, 0, 255, 0.1);
+                background: rgba(255, 0, 255, 0.3);
                 box-shadow: 0 0 20px rgba(255, 0, 255, 0.8);
             }
 
@@ -3173,15 +3223,25 @@ class VibeSurvivor {
     }
 
     showStartScreen() {
-        // Show modal header for start screen
-        this.showModalHeader();
+        // Remove game-active class to show start screen over landing page
+        const modal = document.getElementById('vibe-survivor-modal');
+        const content = document.querySelector('.vibe-survivor-content');
+        if (modal) {
+            modal.classList.remove('game-active');
+        }
+        if (content) {
+            content.classList.remove('game-active');
+        }
+
+        // Hide modal header for start screen (minimal overlay look)
+        this.hideModalHeader();
 
         // Ensure game screen (canvas container) is visible behind start screen
         const gameScreen = document.getElementById('game-screen');
         if (gameScreen) {
             gameScreen.style.display = 'flex';
         }
-        
+
         document.querySelectorAll('.vibe-survivor-screen').forEach(screen => screen.classList.remove('active'));
         const startOverlay = document.getElementById('survivor-start-overlay');
         if (startOverlay) {
@@ -3222,10 +3282,20 @@ class VibeSurvivor {
     
     startGame() {
         // Starting game with complete reinitialization
-        
+
         // Reset death flag
         this.playerDead = false;
-        
+
+        // Add game-active class to show the game container
+        const modal = document.getElementById('vibe-survivor-modal');
+        const content = document.querySelector('.vibe-survivor-content');
+        if (modal) {
+            modal.classList.add('game-active');
+        }
+        if (content) {
+            content.classList.add('game-active');
+        }
+
         // Add body class to prevent terminal height changes during gameplay
         document.body.classList.add('game-modal-open');
         
