@@ -444,6 +444,14 @@ class VibeSurvivor {
                 setTimeout(resolve, 2000);
                 img.src = 'images/background.png';
             }),
+            // VibeCreAI Logo
+            new Promise(resolve => {
+                const img = new Image();
+                img.onload = resolve;
+                img.onerror = resolve;
+                setTimeout(resolve, 2000);
+                img.src = 'images/VibeCreAI_Logo.png';
+            }),
             // Start screen bot sprite
             new Promise(resolve => {
                 const img = new Image();
@@ -578,6 +586,7 @@ class VibeSurvivor {
                     <!-- Loading Screen -->
                     <div id="loading-screen" class="loading-screen">
                         <div class="loading-content">
+                            <img src="images/VibeCreAI_Logo.png" alt="VibeCreAI" class="loading-logo">
                             <div class="loading-text">BOOTING<span class="loading-cursor">_</span></div>
                             <div class="loading-gauge">
                                 <div class="loading-track">
@@ -915,6 +924,14 @@ class VibeSurvivor {
                 flex-direction: column;
                 align-items: center;
                 gap: 24px;
+            }
+
+            .loading-logo {
+                max-width: min(80%, 500px);
+                width: 100%;
+                height: auto;
+                margin-bottom: 20px;
+                image-rendering: pixelated;
             }
 
             .loading-text {
