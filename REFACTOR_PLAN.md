@@ -43,10 +43,10 @@ Track your progress through the refactoring. Check off each phase as you complet
 - [ ] **Phase 7b**: Rendering Effects (60 min) - Animation, Particles, Effects
 - [ ] **Checkpoint #2**: Integration Test (15 min) - Rendering working
 
-### Gameplay Layer (Phases 8-10) - ~240 min + Checkpoint #3
+### Gameplay Layer (Phases 8-10) - ~245 min + Checkpoint #3
 - [ ] **Phase 8**: Gameplay Entities (80 min) - Player, Enemies, Pickups
 - [ ] **Phase 9**: Weapons & Progression (80 min) - Weapons, XP, Upgrades
-- [ ] **Phase 10**: UI Systems (80 min) - HUD, Modals (9 types), Touch Controls
+- [ ] **Phase 10**: UI Systems (85 min) - HUD, Modals (10 types), Touch Controls
 - [ ] **Checkpoint #3**: Integration Test (15 min) - Full game working
 
 ### Final Integration (Phase 11) - ~75 min
@@ -139,39 +139,39 @@ Track your progress through the refactoring. Check off each phase as you complet
 
 1. Create new directory structure:
 ┌─────────────────────────────────────────────────────────────┐
-│                     PRESENTATION LAYER                       │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │   Landing    │  │   Modals     │  │     HUD      │      │
-│  │     Page     │  │   (9 types)  │  │   Display    │      │
-│  └──────────────┘  └──────────────┘  └──────────────┘      │
+│                     PRESENTATION LAYER                      │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
+│  │   Landing    │  │   Modals     │  │     HUD      │       │
+│  │     Page     │  │  (10 types)  │  │   Display    │       │
+│  └──────────────┘  └──────────────┘  └──────────────┘       │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                      SYSTEMS LAYER                           │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐      │
-│  │ Rendering│ │ Gameplay │ │  Physics │ │   Audio  │      │
-│  │ (6 mods) │ │ (9 mods) │ │ (2 mods) │ │ (1 mod)  │      │
-│  └──────────┘ └──────────┘ └──────────┘ └──────────┘      │
+│                      SYSTEMS LAYER                          │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐        │
+│  │ Rendering│ │ Gameplay │ │  Physics │ │   Audio  │        │
+│  │ (6 mods) │ │ (9 mods) │ │ (2 mods) │ │ (1 mod)  │        │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────┘        │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                       CORE LAYER                             │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │    Engine    │  │    State     │  │    Events    │      │
-│  │ (Game Loop)  │  │ (Centralized)│  │   (Input)    │      │
-│  └──────────────┘  └──────────────┘  └──────────────┘      │
+│                       CORE LAYER                            │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
+│  │    Engine    │  │    State     │  │    Events    │       │
+│  │ (Game Loop)  │  │ (Centralized)│  │   (Input)    │       │
+│  └──────────────┘  └──────────────┘  └──────────────┘       │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                    UTILITY LAYER                             │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │   Vector2    │  │     Math     │  │ Performance  │      │
-│  │ (2D Vector)  │  │  (Utilities) │  │  (Monitor)   │      │
-│  └──────────────┘  └──────────────┘  └──────────────┘      │
+│                    UTILITY LAYER                            │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
+│  │   Vector2    │  │     Math     │  │ Performance  │       │
+│  │ (2D Vector)  │  │  (Utilities) │  │  (Monitor)   │       │
+│  └──────────────┘  └──────────────┘  └──────────────┘       │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                   CONFIGURATION LAYER                        │
+│                   CONFIGURATION LAYER                       │
 │  ┌──────────────┐  ┌──────────────┐                         │
 │  │  Constants   │  │    Assets    │                         │
 │  │  (Tuning)    │  │   (Paths)    │                         │
@@ -197,11 +197,11 @@ js/
 │   ├── math.js         # Math utilities, lookup tables
 │   └── performance.js  # FPS monitoring, adaptive quality
 │
-├── systems/            # Game systems (42 modules)
+├── systems/            # Game systems (43 modules)
 │   ├── physics/        # Physics and collision (2 modules)
 │   ├── rendering/      # Rendering pipeline (6 modules)
 │   ├── gameplay/       # Game logic (9 modules)
-│   ├── ui/             # User interface (13 modules)
+│   ├── ui/             # User interface (14 modules)
 │   └── audio/          # Audio management (1 module)
 │
 ├── main.js             # Landing page controller
@@ -343,8 +343,9 @@ Extract asset management:
 - Image paths
 - Audio paths
 - Sprite configurations
-- Asset preloading logic
-- `loadAssets()` function
+- Asset preloading logic with progress tracking
+- Loading phase configurations (BOOTING, LOADING, READY states)
+- `preloadAssets()` function (replaces `loadAssets()`)
 
 **Structure**:
 ```javascript
@@ -375,8 +376,18 @@ export const SPRITE_CONFIGS = {
     }
 };
 
-export async function loadAssets() {
-    // Asset loading logic
+export const LOADING_PHASES = [
+    { percent: 0, title: 'BOOTING', label: 'Initializing systems…' },
+    { percent: 25, title: 'LOADING', label: 'Loading sprites…' },
+    { percent: 50, title: 'LOADING', label: 'Loading sounds…' },
+    { percent: 75, title: 'LOADING', label: 'Preparing game world…' },
+    { percent: 100, title: 'READY', label: 'Ready to survive!' }
+];
+
+export async function preloadAssets(progressCallback) {
+    // Asset loading logic with progress updates
+    // Loads sprites, weapon icons, passive icons, title image
+    // Calls progressCallback(percent, phaseIndex) to update loading screen UI
 }
 ```
 
@@ -385,7 +396,7 @@ export async function loadAssets() {
 Update monolith to import constants:
 ```javascript
 import { PLAYER, ENEMIES, WEAPONS, PASSIVES, GAME_CONFIG } from './config/constants.js';
-import { ASSET_PATHS, SPRITE_CONFIGS, loadAssets } from './config/assets.js';
+import { ASSET_PATHS, SPRITE_CONFIGS, LOADING_PHASES, preloadAssets } from './config/assets.js';
 ```
 
 Replace all hardcoded values with constant references.
@@ -2028,7 +2039,7 @@ xpSystem.onLevelUp((level) => {
 
 **Goal**: Extract all UI components and modals
 
-**Time**: 80 minutes (60 min implementation + 20 min testing)
+**Time**: 85 minutes (65 min implementation + 20 min testing)
 
 **Risk Level**: 🟡 Medium (visual issues possible, many components)
 
@@ -2048,17 +2059,18 @@ Touch controls and virtual joystick for mobile.
 
 Base class for all modals.
 
-#### 10.4 Create all 9 modal implementations:
+#### 10.4 Create all 10 modal implementations:
 
-1. **`js/systems/ui/modals/start-screen.js`** - Initial "Press Start" screen
-2. **`js/systems/ui/modals/pause-menu.js`** - Pause overlay (ESC key)
-3. **`js/systems/ui/modals/level-up.js`** - Level-up upgrade selection
-4. **`js/systems/ui/modals/game-over.js`** - Death screen with stats
-5. **`js/systems/ui/modals/settings.js`** - Settings (audio, controls, etc.)
-6. **`js/systems/ui/modals/help.js`** - Controls and game help
-7. **`js/systems/ui/modals/weapon-info.js`** - Weapon details and stats
-8. **`js/systems/ui/modals/stats.js`** - Player statistics modal
-9. **`js/systems/ui/modals/victory.js`** - Victory/boss defeated screen (if applicable)
+1. **`js/systems/ui/modals/loading-screen.js`** - Asset preloading overlay with progress bar
+2. **`js/systems/ui/modals/start-screen.js`** - Initial "Press Start" screen
+3. **`js/systems/ui/modals/pause-menu.js`** - Pause overlay (ESC key)
+4. **`js/systems/ui/modals/level-up.js`** - Level-up upgrade selection
+5. **`js/systems/ui/modals/game-over.js`** - Death screen with stats
+6. **`js/systems/ui/modals/settings.js`** - Settings (audio, controls, etc.)
+7. **`js/systems/ui/modals/help.js`** - Controls and game help
+8. **`js/systems/ui/modals/weapon-info.js`** - Weapon details and stats
+9. **`js/systems/ui/modals/stats.js`** - Player statistics modal
+10. **`js/systems/ui/modals/victory.js`** - Victory/boss defeated screen (if applicable)
 
 **Base Modal Structure**:
 ```javascript
@@ -2122,8 +2134,8 @@ const levelUpModal = new LevelUpModal('level-up-modal');
 - [ ] XP bar updates and fills correctly
 - [ ] Weapon icons display
 - [ ] Timer displays elapsed time
-- [ ] All 9 modals can be opened
-- [ ] All 9 modals can be closed
+- [ ] All 10 modals can be opened
+- [ ] All 10 modals can be closed
 - [ ] Modal transitions smooth
 - [ ] Touch controls work on mobile (test on phone/tablet if available)
 - [ ] Virtual joystick functional
@@ -2132,7 +2144,10 @@ const levelUpModal = new LevelUpModal('level-up-modal');
 - [ ] No console errors
 
 **Test each modal specifically:**
-- [ ] Start screen appears on load
+- [ ] Loading screen shows during asset preload
+- [ ] Loading progress bar updates (0% → 25% → 50% → 75% → 100%)
+- [ ] Loading phase labels display correctly (BOOTING → LOADING → READY)
+- [ ] Start screen appears after loading completes
 - [ ] Pause menu (ESC key)
 - [ ] Level-up modal shows 3 upgrade choices
 - [ ] Game-over modal shows final stats
@@ -2216,6 +2231,9 @@ export class GameEngine {
         this.renderer = new Renderer(canvas, context);
         await this.renderer.init();
 
+        // IMPORTANT: Show loading screen and preload assets BEFORE anything else
+        await this.preloadAssets();
+
         // Initialize input
         this.input = new InputManager();
         this.input.init(canvas);
@@ -2231,6 +2249,12 @@ export class GameEngine {
         this.player = new Player(0, 0);
         this.enemySpawner = new EnemySpawner();
         // ... all systems
+    }
+
+    async preloadAssets() {
+        // Delegates to asset system's preloadAssets()
+        // Updates loading screen UI with progress
+        // Hides loading screen when complete
     }
 
     start() {
@@ -2395,6 +2419,10 @@ startButton.addEventListener('click', async () => {
 **CRITICAL - This is the final integration test. Do NOT proceed to Post-Refactoring until ALL checks pass:**
 
 - [ ] Game initializes correctly via main.js
+- [ ] Loading screen appears immediately on game start
+- [ ] Asset preloading completes with progress bar updates (0% → 100%)
+- [ ] Loading screen hides after preload completes
+- [ ] Start screen appears after loading finishes
 - [ ] Game loop runs at consistent 60 FPS
 - [ ] All systems orchestrated correctly by engine
 - [ ] Audio system initializes
@@ -2521,19 +2549,19 @@ startButton.addEventListener('click', async () => {
 | **Checkpoint #2** | **Integration Checkpoint** | - | **15 min** | **15 min** | **445 min** |
 | Phase 8 | Gameplay (Entities) | 60 min | 20 min | 80 min | 525 min |
 | Phase 9 | Gameplay (Weapons & Progression) | 60 min | 20 min | 80 min | 605 min |
-| Phase 10 | UI Systems & Modals | 60 min | 20 min | 80 min | 685 min |
-| **Checkpoint #3** | **Integration Checkpoint** | - | **15 min** | **15 min** | **700 min** |
-| Phase 11 | Game Engine & Audio | 45 min | 30 min | 75 min | 775 min |
-| **Total** | **14 phases + 3 checkpoints** | **~9.5 hours** | **~3.5 hours** | **~13 hours** | **~13 hours** |
+| Phase 10 | UI Systems & Modals (10 modals) | 65 min | 20 min | 85 min | 690 min |
+| **Checkpoint #3** | **Integration Checkpoint** | - | **15 min** | **15 min** | **705 min** |
+| Phase 11 | Game Engine & Audio | 45 min | 30 min | 75 min | 780 min |
+| **Total** | **14 phases + 3 checkpoints** | **~9.6 hours** | **~3.5 hours** | **~13 hours** | **~13 hours** |
 
 **Realistic Estimate: 13-14 hours total**
 
 Can be spread over 2-3 days with breaks.
 
 **Time Breakdown:**
-- Implementation: ~570 minutes (~9.5 hours)
+- Implementation: ~575 minutes (~9.6 hours)
 - Testing: ~205 minutes (~3.5 hours)
-- Total: ~775 minutes (~13 hours)
+- Total: ~780 minutes (~13 hours)
 
 ---
 
