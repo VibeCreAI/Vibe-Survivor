@@ -14,6 +14,9 @@ import {
 } from './config/constants.js';
 import { ASSET_PATHS, SPRITE_CONFIGS, LOADING_PHASES, preloadAssets, getWeaponIconPath, getPassiveIconPath } from './config/assets.js';
 
+// Import state management
+import { createPlayerState, createCameraState, resetPlayerState, resetCameraState } from './core/state.js';
+
 class VibeSurvivor {
     constructor() {
         this.canvas = null;
@@ -24,27 +27,7 @@ class VibeSurvivor {
         this.keys = {};
         
         // Player properties - start at world center
-        this.player = {
-            x: 0,
-            y: 0,
-            radius: 15,
-            speed: 2.3,
-            health: 100,
-            maxHealth: 100,
-            xp: 0,
-            level: 1,
-            glow: 0,
-            invulnerable: 0,
-            dashCooldown: 0,
-            trail: [],
-            passives: {},
-            trailMultiplier: 1.0,
-            magnetBoost: 0, // Magnet boost active flag (0 = off, >0 = active)
-            // Sprite animation properties
-            spriteFrame: 0,
-            spriteTimer: 0,
-            spriteDirection: 'idle'
-        };
+        this.player = createPlayerState(0, 0);
         
         // Game properties
         this.enemies = [];
@@ -223,7 +206,7 @@ class VibeSurvivor {
         this.frameCount = 0;
         this.lastSpawn = 0;
         this.notifications = [];
-        this.camera = { x: 0, y: 0 };
+        this.camera = createCameraState(0, 0);
         
         // Game loop timing control
         this.gameLoopId = null;
@@ -3771,27 +3754,7 @@ class VibeSurvivor {
         }
         
         // Reset player - start at world center
-        this.player = {
-            x: 0,
-            y: 0,
-            radius: 15,
-            speed: 2.3, // Fixed speed for consistent gameplay
-            health: 100,
-            maxHealth: 100,
-            xp: 0,
-            level: 1,
-            glow: 0,
-            invulnerable: 0,
-            dashCooldown: 0,
-            trail: [],
-            passives: {},
-            trailMultiplier: 1.0,
-            magnetBoost: 0,
-            // Sprite animation properties
-            spriteFrame: 0,
-            spriteTimer: 0,
-            spriteDirection: 'idle'
-        };
+        resetPlayerState(this.player);
         
         // Reset weapons to single basic weapon
         this.weapons = [{
@@ -3873,8 +3836,8 @@ class VibeSurvivor {
         this.bossVictoryInProgress = false;
         this.timePaused = false;
         this.bossDefeating = false;
-        
-        this.camera = { x: 0, y: 0 };
+
+        resetCameraState(this.camera);
     }
     
     // Start or resume the main animation loop with normalized timing
