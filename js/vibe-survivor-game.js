@@ -5,6 +5,15 @@ import { Vector2 } from './utils/vector2.js';
 import { clamp, lerp, distance, distanceSquared, randomRange, randomInt, degToRad, radToDeg } from './utils/math.js';
 import { PerformanceMonitor } from './utils/performance.js';
 
+// Import configuration
+import {
+    PLAYER, ENEMIES, WEAPONS, WEAPON_UPGRADES, PASSIVES, XP_SYSTEM,
+    SPAWN_CONFIG, PICKUP_SPAWNS, DIFFICULTY_SCALING, GAME_TIMING,
+    SCREEN_EFFECTS, PARTICLES, COLLISION, ENEMY_BEHAVIORS, MOBILE_CONFIG,
+    PERFORMANCE, COLORS
+} from './config/constants.js';
+import { ASSET_PATHS, SPRITE_CONFIGS, LOADING_PHASES, preloadAssets, getWeaponIconPath, getPassiveIconPath } from './config/assets.js';
+
 class VibeSurvivor {
     constructor() {
         this.canvas = null;
