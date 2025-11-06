@@ -1,12 +1,10 @@
+// Import VibeSurvivor class from the game module
+import { VibeSurvivor } from './vibe-survivor-game.js';
+
 (function () {
     function ensureGameInstance() {
         if (!window.vibeSurvivor) {
-            if (typeof VibeSurvivor === 'function') {
-                window.vibeSurvivor = new VibeSurvivor();
-            } else {
-                console.warn('Vibe Survivor script not ready yet.');
-                return null;
-            }
+            window.vibeSurvivor = new VibeSurvivor();
         }
         return window.vibeSurvivor;
     }

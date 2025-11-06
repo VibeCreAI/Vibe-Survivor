@@ -1,64 +1,9 @@
 // Enhanced Vibe Survivor Game with Multiple Weapons and Choice System
-// Vector2 utility class for optimized vector operations
-class Vector2 {
-    // Normalize a vector to unit length, returns [x, y]
-    static normalize(x, y) {
-        const mag = Math.sqrt(x * x + y * y);
-        return mag > 0 ? [x / mag, y / mag] : [0, 0];
-    }
-    
-    // Calculate distance between two points (expensive - use sparingly)
-    static distance(x1, y1, x2, y2) {
-        const dx = x2 - x1;
-        const dy = y2 - y1;
-        return Math.sqrt(dx * dx + dy * dy);
-    }
-    
-    // Calculate squared distance (fast - no sqrt, good for comparisons)
-    static distanceSquared(x1, y1, x2, y2) {
-        const dx = x2 - x1;
-        const dy = y2 - y1;
-        return dx * dx + dy * dy;
-    }
-    
-    // Get direction vector from point A to point B (normalized)
-    static direction(x1, y1, x2, y2) {
-        const dx = x2 - x1;
-        const dy = y2 - y1;
-        return Vector2.normalize(dx, dy);
-    }
-    
-    // Linear interpolation between two vectors
-    static lerp(x1, y1, x2, y2, t) {
-        return [
-            x1 + (x2 - x1) * t,
-            y1 + (y2 - y1) * t
-        ];
-    }
-    
-    // Reflect a vector across a normal
-    static reflect(vx, vy, nx, ny) {
-        const dot = 2 * (vx * nx + vy * ny);
-        return [vx - dot * nx, vy - dot * ny];
-    }
-    
-    // Rotate a vector by angle (in radians)
-    static rotate(x, y, angle) {
-        const cos = Math.cos(angle);
-        const sin = Math.sin(angle);
-        return [x * cos - y * sin, x * sin + y * cos];
-    }
-    
-    // Add two vectors
-    static add(x1, y1, x2, y2) {
-        return [x1 + x2, y1 + y2];
-    }
-    
-    // Scale a vector by a scalar
-    static scale(x, y, scalar) {
-        return [x * scalar, y * scalar];
-    }
-}
+
+// Import utilities
+import { Vector2 } from './utils/vector2.js';
+import { clamp, lerp, distance, distanceSquared, randomRange, randomInt, degToRad, radToDeg } from './utils/math.js';
+import { PerformanceMonitor } from './utils/performance.js';
 
 class VibeSurvivor {
     constructor() {
@@ -200,27 +145,28 @@ class VibeSurvivor {
         this.updateStartOverlayLayout = this.updateStartOverlayLayout.bind(this);
         
         
-        // Performance optimization - detect if we should reduce rendering quality
-        this.performanceMode = false;
-        
-        // Frame rate monitoring and adaptive quality
-        this.frameRateMonitor = {
-            lastFrameTime: 0,
-            frameCount: 0,
-            currentFPS: 60,
-            targetFPS: 60,
-            minFPS: 30,
-            fpsHistory: [],
-            averageFPS: 60,
-            adaptiveQuality: {
-                particleCount: 1.0,
-                effectQuality: 1.0,
-                renderDistance: 1.0,
-                trailLength: 1.0
-            },
-            checkInterval: 30, // Check every 30 frames
-            lastCheck: 0
-        };
+        // Performance monitoring using extracted module
+        this.performanceMonitor = new PerformanceMonitor(60, 30);
+
+        // Keep performanceMode as a reference to the monitor's state for backward compatibility
+        Object.defineProperty(this, 'performanceMode', {
+            get: () => this.performanceMonitor.isPerformanceModeEnabled()
+        });
+
+        // Keep frameRateMonitor as a compatibility layer
+        Object.defineProperty(this, 'frameRateMonitor', {
+            get: () => ({
+                currentFPS: this.performanceMonitor.getCurrentFPS(),
+                averageFPS: this.performanceMonitor.getAverageFPS(),
+                adaptiveQuality: this.performanceMonitor.getQualitySettings(),
+                frameCount: this.performanceMonitor.frameCount,
+                targetFPS: this.performanceMonitor.targetFPS,
+                minFPS: this.performanceMonitor.minFPS,
+                fpsHistory: this.performanceMonitor.fpsHistory,
+                lastFrameTime: this.performanceMonitor.lastFrameTime,
+                lastCheck: this.performanceMonitor.lastCheck
+            })
+        });
         
         // Initialize object pools
         this.initializeProjectilePool();
@@ -3302,10 +3248,8 @@ class VibeSurvivor {
             this.updateStartOverlayLayout();
         });
         
-        // Setup mobile controls if on mobile device
-        if (this.isMobile) {
-            this.setupMobileControls();
-        }
+        // Setup mobile controls and dash button
+        this.setupMobileControls();
     }
 
     launchGame() {
@@ -3737,26 +3681,36 @@ class VibeSurvivor {
         const gameScreen = document.getElementById('game-screen');
         if (gameScreen) {
             gameScreen.classList.add('active');
+            gameScreen.style.removeProperty('display');
             // Game screen ready
         } else {
             console.error('Game screen not found! Modal structure may be missing.');
             return;
         }
-        
-        
-        // Setup mobile controls when game starts
-        if (this.isMobile) {
-            this.setupMobileControls();
-            
-            // Ensure dash button is positioned correctly after canvas setup
-            setTimeout(() => {
-                const dashBtn = document.getElementById('mobile-dash-btn');
-                if (dashBtn) {
-                    this.ensureDashButtonInBounds(dashBtn);
-                }
-            }, 100);
+
+        // Show the canvas (remove any inline display: none !important)
+        if (this.canvas) {
+            this.canvas.style.removeProperty('display');
+        }
+
+        // Show mobile controls
+        const mobileControls = document.getElementById('mobile-controls');
+        if (mobileControls) {
+            mobileControls.style.removeProperty('display');
         }
         
+
+        // Setup mobile controls and dash button when game starts
+        this.setupMobileControls();
+
+        // Ensure dash button is positioned correctly after canvas setup
+        setTimeout(() => {
+            const dashBtn = document.getElementById('mobile-dash-btn');
+            if (dashBtn) {
+                this.ensureDashButtonInBounds(dashBtn);
+            }
+        }, 100);
+
         this.gameRunning = true;
 
         // Spawn starting XP orbs around player for easier early progression
@@ -3779,7 +3733,7 @@ class VibeSurvivor {
         } catch (e) {
             console.warn('Could not start background music:', e);
         }
-        
+
         // Game loop started
         this.startAnimationLoop();
     }
@@ -3875,27 +3829,15 @@ class VibeSurvivor {
             this.magnetOrbPool.forEach(orb => orb.active = false);
         }
         
-        // Reset frame rate monitoring
-        this.frameRateMonitor.frameCount = 0;
-        this.frameRateMonitor.lastFrameTime = 0;
-        this.frameRateMonitor.fpsHistory = [];
-        this.frameRateMonitor.averageFPS = 60;
-        this.frameRateMonitor.lastCheck = 0;
-        
+        // Reset frame rate monitoring using PerformanceMonitor
+        this.performanceMonitor.reset();
+
         // Reset adaptive quality to optimal starting level
         if (this.adaptiveQuality) {
             this.adaptiveQuality.currentLevel = 3; // Reset to medium quality
             this.adaptiveQuality.frameCount = 0;
             this.adaptiveQuality.lastAdjustment = 0;
         }
-        
-        // Reset frame rate monitor adaptive quality to defaults
-        this.frameRateMonitor.adaptiveQuality = {
-            particleCount: 1.0,
-            effectQuality: 1.0,
-            renderDistance: 1.0,
-            trailLength: 1.0
-        };
         
         // Initialize dirty rectangle system
         this.dirtyRectangles = [];
@@ -3915,8 +3857,8 @@ class VibeSurvivor {
             this.canvasLayersInitialized = false;
         }
         
-        this.performanceMode = false;
-        
+        this.performanceMonitor.setPerformanceMode(false);
+
         // Reset level up and timing state
         this.pendingLevelUps = 0;
         this.bossVictoryInProgress = false;
@@ -3955,7 +3897,7 @@ class VibeSurvivor {
         }
 
         // Update frame rate monitoring
-        this.updateFrameRate();
+        this.performanceMonitor.update();
 
         const previousTimestamp = this.lastTimestamp === null ? timestamp : this.lastTimestamp;
         const delta = Math.max(0, timestamp - previousTimestamp);
@@ -4064,8 +4006,8 @@ class VibeSurvivor {
         this.player.x += moveX * speed;
         this.player.y += moveY * speed;
         
-        // Dash mechanic with Spacebar key or mobile dash button
-        const shouldDash = this.keys[' '] || (this.isMobile && this.touchControls.dashButton.pressed);
+        // Dash mechanic with Spacebar key or dash button
+        const shouldDash = this.keys[' '] || this.touchControls.dashButton.pressed;
         if (shouldDash && !this.player.dashCooldown) {
             let dashDistance = 40;
             // Apply dash boost passive (+50% distance per stack)
@@ -4114,11 +4056,9 @@ class VibeSurvivor {
             this.player.dashCooldown = 30;
             this.player.invulnerable = 30;
             this.createDashParticles();
-            
-            // Reset mobile dash button state after use
-            if (this.isMobile) {
-                this.touchControls.dashButton.pressed = false;
-            }
+
+            // Reset dash button state after use
+            this.touchControls.dashButton.pressed = false;
         }
         
         if (this.player.dashCooldown > 0) {
@@ -5317,14 +5257,14 @@ class VibeSurvivor {
         // Only enable for very old mobile devices
         const userAgent = navigator.userAgent.toLowerCase();
         if (this.isMobile && (
-            userAgent.includes('android 4') || 
+            userAgent.includes('android 4') ||
             userAgent.includes('iphone os 9')
         )) {
             console.log('Very old mobile device detected - enabling performance mode');
-            this.performanceMode = true;
+            this.performanceMonitor.setPerformanceMode(true);
         } else {
             console.log('Starting in normal performance mode - will adapt based on actual FPS');
-            this.performanceMode = false;
+            this.performanceMonitor.setPerformanceMode(false);
         }
     }
     
@@ -5411,10 +5351,9 @@ class VibeSurvivor {
         }
         
         if (dashBtn) {
-            if (this.isMobile) {
-                dashBtn.style.display = 'flex';
-                this.ensureDashButtonInBounds(dashBtn);
-            }
+            // Show dash button on both mobile and desktop
+            dashBtn.style.display = 'flex';
+            this.ensureDashButtonInBounds(dashBtn);
             this.setupDashButton(dashBtn);
         }
     }
@@ -5611,6 +5550,24 @@ class VibeSurvivor {
     }
     
     setupDashButton(dashBtn) {
+        // Click events for desktop
+        dashBtn.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.touchControls.dashButton.pressed = true;
+            dashBtn.classList.add('dash-pressed');
+        });
+
+        const endDashClick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.touchControls.dashButton.pressed = false;
+            dashBtn.classList.remove('dash-pressed');
+        };
+
+        dashBtn.addEventListener('mouseup', endDashClick);
+        dashBtn.addEventListener('mouseleave', endDashClick);
+
         // Touch events for mobile
         dashBtn.addEventListener('touchstart', (e) => {
             e.preventDefault();
@@ -5627,29 +5584,9 @@ class VibeSurvivor {
             // Remove visual flash effect for mobile
             dashBtn.classList.remove('dash-pressed');
         };
-        
+
         dashBtn.addEventListener('touchend', endDashTouch, { passive: false });
         dashBtn.addEventListener('touchcancel', endDashTouch, { passive: false });
-        
-        // Mouse events for desktop
-        dashBtn.addEventListener('mousedown', (e) => {
-            e.preventDefault();
-            e.stopPropagation(); // Prevent event from bubbling to modal
-            this.touchControls.dashButton.pressed = true;
-            // Add visual flash effect for desktop (enhances existing :active)
-            dashBtn.classList.add('dash-pressed');
-        });
-
-        const endDashMouse = (e) => {
-            e.preventDefault();
-            e.stopPropagation(); // Prevent event from bubbling to modal
-            this.touchControls.dashButton.pressed = false;
-            // Remove visual flash effect for desktop
-            dashBtn.classList.remove('dash-pressed');
-        };
-        
-        dashBtn.addEventListener('mouseup', endDashMouse);
-        dashBtn.addEventListener('mouseleave', endDashMouse);
     }
     
     fireWeapon(weapon) {
@@ -9983,67 +9920,8 @@ class VibeSurvivor {
     }
 
     
-    updateFrameRate() {
-        const currentTime = performance.now();
-        if (this.frameRateMonitor.lastFrameTime > 0) {
-            const deltaTime = currentTime - this.frameRateMonitor.lastFrameTime;
-            this.frameRateMonitor.currentFPS = Math.round(1000 / deltaTime);
-            
-            // Only update history occasionally to reduce overhead
-            if (this.frameRateMonitor.frameCount % 5 === 0) {
-                this.frameRateMonitor.fpsHistory.push(this.frameRateMonitor.currentFPS);
-                if (this.frameRateMonitor.fpsHistory.length > 20) {
-                    this.frameRateMonitor.fpsHistory.shift();
-                }
-                
-                // Calculate average FPS
-                const sum = this.frameRateMonitor.fpsHistory.reduce((a, b) => a + b, 0);
-                this.frameRateMonitor.averageFPS = sum / this.frameRateMonitor.fpsHistory.length;
-            }
-        }
-        this.frameRateMonitor.lastFrameTime = currentTime;
-        this.frameRateMonitor.frameCount++;
-        
-        // Check quality less frequently to reduce overhead
-        if (this.frameRateMonitor.frameCount % 60 === 0) { // Every 60 frames instead of 30
-            this.adjustQuality();
-            this.frameRateMonitor.lastCheck = this.frameRateMonitor.frameCount;
-        }
-    }
-    
-    adjustQuality() {
-        const avgFPS = this.frameRateMonitor.averageFPS;
-        const targetFPS = this.frameRateMonitor.targetFPS;
-        const minFPS = this.frameRateMonitor.minFPS;
-        const quality = this.frameRateMonitor.adaptiveQuality;
-        
-        // FIXED: Be much more conservative about enabling performance mode
-        // Only enable performance mode if FPS is extremely low for extended period
-        if (avgFPS < 15 && this.frameRateMonitor.fpsHistory.length >= 30) {
-            // Only enable if consistently below 15 FPS
-            const recentLowFPS = this.frameRateMonitor.fpsHistory.slice(-10).every(fps => fps < 20);
-            if (recentLowFPS) {
-                quality.particleCount = Math.max(0.5, quality.particleCount - 0.1);
-                quality.effectQuality = Math.max(0.7, quality.effectQuality - 0.1);
-                quality.renderDistance = Math.max(0.8, quality.renderDistance - 0.05);
-                quality.trailLength = Math.max(0.7, quality.trailLength - 0.1);
-                this.performanceMode = true;
-                console.log('Performance mode enabled due to consistent low FPS:', avgFPS);
-            }
-        } else if (avgFPS > 45) {
-            // Good performance - restore quality and disable performance mode
-            quality.particleCount = Math.min(1.0, quality.particleCount + 0.05);
-            quality.effectQuality = Math.min(1.0, quality.effectQuality + 0.05);
-            quality.renderDistance = Math.min(1.0, quality.renderDistance + 0.02);
-            quality.trailLength = Math.min(1.0, quality.trailLength + 0.05);
-            this.performanceMode = false;
-        }
-        
-        // Never enable performance mode on initial load
-        if (this.frameRateMonitor.frameCount < 120) { // First 2 seconds
-            this.performanceMode = false;
-        }
-    }
+    // updateFrameRate() and adjustQuality() are now handled by PerformanceMonitor
+    // These methods have been removed as they are replaced by performanceMonitor.update()
 
     // Dirty Rectangle Rendering System
     addDirtyRectangle(x, y, width, height) {
@@ -12510,11 +12388,14 @@ class VibeSurvivor {
         
         // Remove game modal class
         document.body.classList.remove('game-modal-open');
-        
-        // Brief delay to allow final cleanup, then refresh
+
+        // Brief delay to allow final cleanup, then show start screen
         setTimeout(() => {
-            
-            window.location.reload();
+            // Reset the game state completely
+            this.resetGame();
+
+            // Show the start screen instead of reloading
+            this.reopenGame();
         }, 200);
     }
     
@@ -12522,36 +12403,78 @@ class VibeSurvivor {
         const modal = document.getElementById('vibe-survivor-modal');
         if (modal) {
             modal.style.display = 'flex';
+            // Remove game-active class to hide game content
+            modal.classList.remove('game-active');
         }
-        
+
         const container = document.getElementById('vibe-survivor-container');
         if (container) {
             container.classList.remove('vibe-survivor-hidden');
+            // Remove game-active class to hide game content
+            container.classList.remove('game-active');
         }
-        
+
+        // Also remove from vibe-survivor-content
+        const content = document.querySelector('.vibe-survivor-content');
+        if (content) {
+            content.classList.remove('game-active');
+        }
+
+        // Hide pause menu and all other overlays
+        const pauseMenu = document.getElementById('pause-menu');
+        if (pauseMenu) {
+            pauseMenu.style.display = 'none';
+        }
+
+        const gameOverModal = document.getElementById('game-over-modal');
+        if (gameOverModal) {
+            gameOverModal.style.display = 'none';
+        }
+
+        // Completely hide the game screen (canvas, HUD, everything)
+        const gameScreen = document.getElementById('game-screen');
+        if (gameScreen) {
+            gameScreen.classList.remove('active');
+            gameScreen.style.setProperty('display', 'none', 'important');
+        }
+
+        // Hide the canvas
+        const canvas = document.getElementById('survivor-canvas');
+        if (canvas) {
+            canvas.style.setProperty('display', 'none', 'important');
+        }
+
+        // Hide mobile controls
+        const mobileControls = document.getElementById('mobile-controls');
+        if (mobileControls) {
+            mobileControls.style.setProperty('display', 'none', 'important');
+        }
+
+        // Hide dash button
+        const dashBtn = document.getElementById('mobile-dash-btn');
+        if (dashBtn) {
+            dashBtn.style.setProperty('display', 'none', 'important');
+        }
+
         // Force show start screen and hide all others
-        document.querySelectorAll('.vibe-survivor-screen').forEach(screen => screen.classList.remove('active'));
+        document.querySelectorAll('.vibe-survivor-screen').forEach(screen => {
+            screen.classList.remove('active');
+            if (screen.id !== 'survivor-start-overlay') {
+                screen.style.display = 'none';
+            }
+        });
+
         const startScreen = document.getElementById('survivor-start-overlay');
         if (startScreen) {
             startScreen.classList.add('active');
+            startScreen.style.display = 'flex';
 
             requestAnimationFrame(() => this.updateStartOverlayLayout());
 
-            // Re-attach start button event listener
-            const startBtn = document.getElementById('start-survivor');
-            if (startBtn) {
-                startBtn.addEventListener('click', () => {
-                    
-                    this.startGame();
-                });
-            }
-            
-            
+            // Event listener already set up in setupEventHandlers(), no need to re-attach
         } else {
             console.error('Start screen element not found');
         }
-        
-        
     }
     
     
@@ -13360,13 +13283,20 @@ class VibeSurvivor {
     }
 }
 
+// Export VibeSurvivor class for ES6 modules
+export { VibeSurvivor };
+
 // Initialize when ready - prevent multiple instances
 // VibeSurvivor class defined
 
-// Prevent multiple instances
-if (window.vibeSurvivor) {
+// Prevent multiple instances (only if not using ES6 modules)
+if (typeof window !== 'undefined' && window.VIBE_SURVIVOR_AUTO_INIT === false) {
+    // Skip auto-init when VIBE_SURVIVOR_AUTO_INIT is explicitly set to false
+    console.log('Skipping auto-init (VIBE_SURVIVOR_AUTO_INIT = false)');
+} else if (typeof window !== 'undefined' && window.vibeSurvivor) {
     // VibeSurvivor already exists
-} else {
+    console.log('VibeSurvivor already exists');
+} else if (typeof window !== 'undefined') {
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
             // Creating VibeSurvivor instance
