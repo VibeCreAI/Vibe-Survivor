@@ -33,6 +33,9 @@ import { PhysicsManager } from './core/physics.js';
 // Import rendering systems
 import { initCanvas, resizeCanvas, Camera } from './systems/rendering/canvas.js';
 import { SpriteManager } from './systems/rendering/sprites.js';
+import { AnimationController } from './systems/rendering/animation.js';
+import { ParticleSystem } from './systems/rendering/particles.js';
+import { EffectsManager } from './systems/rendering/effects.js';
 
 class VibeSurvivor {
     constructor() {
@@ -63,6 +66,9 @@ class VibeSurvivor {
         // Initialize rendering systems
         this.spriteManager = new SpriteManager();
         this.camera = new Camera();
+        this.animationController = new AnimationController();
+        this.particleSystem = new ParticleSystem();
+        this.effectsManager = new EffectsManager();
 
         // Convenience properties (delegate to spriteManager for backward compatibility)
         this.playerSprites = this.spriteManager.playerSprites;
@@ -71,6 +77,28 @@ class VibeSurvivor {
 
         // Player properties - start at world center
         this.player = createPlayerState(0, 0);
+
+        // Delegate player animation properties to AnimationController for backward compatibility
+        Object.defineProperty(this.player, 'spriteFrame', {
+            get: () => this.animationController.spriteFrame,
+            set: (value) => { this.animationController.spriteFrame = value; }
+        });
+        Object.defineProperty(this.player, 'spriteTimer', {
+            get: () => this.animationController.spriteTimer,
+            set: (value) => { this.animationController.spriteTimer = value; }
+        });
+        Object.defineProperty(this.player, 'spriteDirection', {
+            get: () => this.animationController.spriteDirection,
+            set: (value) => { this.animationController.spriteDirection = value; }
+        });
+        Object.defineProperty(this.player, 'trail', {
+            get: () => this.animationController.trail,
+            set: (value) => { this.animationController.trail = value; }
+        });
+        Object.defineProperty(this.player, 'trailMultiplier', {
+            get: () => this.animationController.trailMultiplier,
+            set: (value) => { this.animationController.trailMultiplier = value; }
+        });
         
         // Game properties - using state factories
         const enemiesState = createEnemiesState();
@@ -80,7 +108,16 @@ class VibeSurvivor {
         this.projectiles = createProjectilesState();
         this.projectilePool = []; // Object pool for reusing projectile objects
 
-        this.particles = createParticlesState();
+        // NOTE: Particles now handled by ParticleSystem
+        // Convenience properties for backward compatibility
+        Object.defineProperty(this, 'particles', {
+            get: () => this.particleSystem.particles,
+            set: (value) => { this.particleSystem.particles = value; }
+        });
+        Object.defineProperty(this, 'explosions', {
+            get: () => this.particleSystem.explosions,
+            set: (value) => { this.particleSystem.explosions = value; }
+        });
 
         const pickupsState = createPickupsState();
         this.xpOrbs = pickupsState.xpOrbs;
@@ -204,15 +241,16 @@ class VibeSurvivor {
 
         // Backup navigation state for help modal overlay scenarios
         this.previousNavigationState = null;
-        
-        // Screen effects
-        this.redFlash = {
-            active: false,
-            intensity: 0,
-            duration: 0,
-            maxIntensity: 0.6,
-            decay: 0.9
-        };
+
+        // NOTE: Screen effects now handled by EffectsManager
+        // Convenience properties for backward compatibility
+        Object.defineProperty(this, 'redFlash', {
+            get: () => this.effectsManager.redFlash
+        });
+        Object.defineProperty(this, 'screenShake', {
+            get: () => this.effectsManager.screenShake,
+            set: (value) => { this.effectsManager.screenShake = value; }
+        });
 
         // Translation system
         this.currentLanguage = 'en';
@@ -3697,17 +3735,21 @@ class VibeSurvivor {
         resetProjectilesState(this.projectiles);
         resetParticlesState(this.particles);
 
+        // Reset rendering systems
+        this.animationController.reset();
+        this.particleSystem.reset();
+        this.effectsManager.reset();
+
         this.xpOrbs.length = 0;
         this.hpOrbs.length = 0;
         this.magnetOrbs.length = 0;
-        
+
         // Reset object pools - mark all as inactive
         if (this.projectilePool) {
             this.projectilePool.forEach(projectile => projectile.active = false);
         }
-        if (this.particlePool) {
-            this.particlePool.forEach(particle => particle.active = false);
-        }
+        // Note: particle pool now managed by ParticleSystem
+        // Legacy pools kept for backward compatibility during transition
         if (this.enemyPool) {
             this.enemyPool.forEach(enemy => enemy.active = false);
         }
@@ -3809,10 +3851,10 @@ class VibeSurvivor {
 
     update() {
         // Always update effects even if player is dead
-        this.updateScreenShake();
-        this.updateRedFlash();
-        this.updateExplosions();
-        this.updateParticles();
+        this.effectsManager.updateScreenShake();
+        this.effectsManager.updateRedFlash();
+        this.particleSystem.updateExplosions();
+        this.particleSystem.updateParticles();
         this.updateNotifications();
 
         // Skip game logic if player is dead
@@ -3997,12 +4039,7 @@ class VibeSurvivor {
         }
 
         // Update sprite animation (fixed timestep, independent of draw rate)
-        this.player.spriteTimer++;
-        const framesPerSpriteFrame = Math.floor(60 / this.spriteConfig.frameRate); // 60 FPS / 8 FPS
-        if (this.player.spriteTimer >= framesPerSpriteFrame) {
-            this.player.spriteTimer = 0;
-            this.player.spriteFrame = (this.player.spriteFrame + 1) % this.spriteConfig.totalFrames;
-        }
+        this.animationController.updateFrame(this.spriteConfig);
     }
     
     updatePassives() {
@@ -6849,26 +6886,8 @@ class VibeSurvivor {
     }
     
     updateParticles() {
-        for (let i = this.particles.length - 1; i >= 0; i--) {
-            const particle = this.particles[i];
-            
-            // Update position
-            particle.x += particle.vx;
-            particle.y += particle.vy;
-            
-            // Update life
-            particle.life -= 0.016; // Approximate 60fps decay
-            
-            // Apply drag for realistic deceleration
-            particle.vx *= 0.98;
-            particle.vy *= 0.98;
-            
-            // Remove dead particles and return to pool
-            if (particle.life <= 0) {
-                this.returnParticleToPool(particle);
-                this.particles.splice(i, 1);
-            }
-        }
+        // Delegated to ParticleSystem (called from update())
+        // This method kept for backward compatibility but does nothing
     }
     
     updateXPOrbs() {
@@ -8062,47 +8081,8 @@ class VibeSurvivor {
     }
     
     createExplosion(x, y, radius, damage, sourceType = null) {
-        // Create visual explosion effect
-        if (!this.explosions) this.explosions = [];
-        
-        const explosion = this.getPooledExplosion();
-        explosion.x = x;
-        explosion.y = y;
-        explosion.radius = 0;
-        explosion.maxRadius = radius;
-        explosion.life = 30;
-        explosion.maxLife = 30;
-        explosion.color = '#FF6600';
-        
-        this.explosions.push(explosion);
-        
-        // Create explosion particles with adaptive quality
-        const baseParticleCount = 15;
-        const particleCount = this.shouldCreateExplosion() ? 
-            Math.floor(baseParticleCount * (this.qualitySettings?.explosionMultiplier || 1)) : 
-            Math.max(1, Math.floor(baseParticleCount * 0.3)); // Minimum particles for visual feedback
-        
-        for (let i = 0; i < particleCount; i++) {
-            const particle = this.getPooledParticle();
-            if (particle) {
-                const angle = (Math.PI * 2 * i) / particleCount;
-                const speed = 3 + Math.random() * 4;
-                
-                particle.x = x;
-                particle.y = y;
-                particle.vx = this.fastCos(angle) * speed;
-                particle.vy = this.fastSin(angle) * speed;
-                particle.size = 2 + Math.random() * 3;
-                particle.color = ['#FF6600', '#FF9900', '#FFCC00'][Math.floor(Math.random() * 3)];
-                particle.life = 0.8 + Math.random() * 0.4;
-                particle.maxLife = particle.life;
-                particle.type = 'explosion';
-                
-                this.particles.push(particle);
-            }
-        }
-        
-        if (damage > 0 && radius > 0) {
+        // Delegate to ParticleSystem with damage callback
+        const applyDamageCallback = (x, y, radius, damage, sourceType) => {
             this.enemies.forEach(enemy => {
                 const dx = enemy.x - x;
                 const dy = enemy.y - y;
@@ -8118,86 +8098,27 @@ class VibeSurvivor {
                     }
                 }
             });
-        }
+        };
+
+        this.particleSystem.createExplosion(
+            x, y, radius, damage, sourceType,
+            applyDamageCallback,
+            this.fastCos,
+            this.fastSin
+        );
     }
 
     createBossDefeatAnimation(bossX, bossY, bossRadius) {
-
-        // Show boss defeat notification during animation
-        this.createToast("BOSS DEFEATED! DIFFICULTY INCREASED!", 'victory', 3000);
-        
-        // Create massive explosion at boss location
-        const mainExplosionRadius = bossRadius * 3;
-        this.createExplosion(bossX, bossY, mainExplosionRadius, 0);
-        
-        // Create screen shake for dramatic effect
-        this.createScreenShake(20, 30); // High intensity, longer duration
-        
-        // Create spectacular particle burst with boss-themed colors
-        const particleCount = this.shouldCreateExplosion() ? 50 : 25;
-        for (let i = 0; i < particleCount; i++) {
-            const particle = this.getPooledParticle();
-            if (particle) {
-                const angle = (Math.PI * 2 * i) / particleCount;
-                const speed = 4 + Math.random() * 6;
-                
-                particle.x = bossX;
-                particle.y = bossY;
-                particle.vx = this.fastCos(angle) * speed;
-                particle.vy = this.fastSin(angle) * speed;
-                particle.size = 3 + Math.random() * 5;
-                // Gold and orange colors for victory theme
-                particle.color = ['#FFD700', '#FF8C00', '#FFA500', '#FFFF00'][Math.floor(Math.random() * 4)];
-                particle.life = 1.5 + Math.random() * 1.0;
-                particle.maxLife = particle.life;
-                particle.type = 'boss_defeat';
-                
-                this.particles.push(particle);
-            }
-        }
-        
-        // Create secondary explosions radiating outward
-        const secondaryExplosions = 6;
-        for (let i = 0; i < secondaryExplosions; i++) {
-            setTimeout(() => {
-                const angle = (Math.PI * 2 * i) / secondaryExplosions;
-                const distance = bossRadius * 2;
-                const explX = bossX + this.fastCos(angle) * distance;
-                const explY = bossY + this.fastSin(angle) * distance;
-                
-                this.createExplosion(explX, explY, bossRadius * 1.5, 0);
-                
-                // Add sparkle particles for each secondary explosion
-                const sparkleCount = this.shouldCreateParticle() ? 10 : 5;
-                for (let j = 0; j < sparkleCount; j++) {
-                    const particle = this.getPooledParticle();
-                    if (particle) {
-                        const sparkleAngle = Math.random() * Math.PI * 2;
-                        const sparkleSpeed = 2 + Math.random() * 3;
-                        
-                        particle.x = explX;
-                        particle.y = explY;
-                        particle.vx = this.fastCos(sparkleAngle) * sparkleSpeed;
-                        particle.vy = this.fastSin(sparkleAngle) * sparkleSpeed;
-                        particle.size = 1 + Math.random() * 2;
-                        particle.color = ['#FFFFFF', '#FFFF00', '#FFD700'][Math.floor(Math.random() * 3)];
-                        particle.life = 0.8 + Math.random() * 0.5;
-                        particle.maxLife = particle.life;
-                        particle.type = 'sparkle';
-                        
-                        this.particles.push(particle);
-                    }
-                }
-            }, i * 200); // Stagger the secondary explosions
-        }
-        
-        // Create a bright flash effect
-        this.redFlash.active = true;
-        this.redFlash.intensity = 0.8;
-        this.redFlash.duration = 60;
-        this.redFlash.maxIntensity = 0.8;
-        
-        
+        // Delegate to ParticleSystem with callbacks
+        this.particleSystem.createBossDefeatAnimation(
+            bossX, bossY, bossRadius,
+            (x, y, r, d) => this.createExplosion(x, y, r, d),
+            (intensity, duration) => this.createScreenShake(intensity, duration),
+            (intensity) => this.createRedFlash(intensity),
+            (msg, type, duration) => this.createToast(msg, type, duration),
+            this.fastCos,
+            this.fastSin
+        );
     }
     
     createHitParticles(x, y, color) {
@@ -8216,78 +8137,30 @@ class VibeSurvivor {
         // Particles removed for performance
     }
     
-    createScreenShake(intensity) {
-        // Create screen shake effect
-        this.screenShake = {
-            x: 0,
-            y: 0,
-            intensity: intensity,
-            duration: 20,
-            decay: 0.95
-        };
+    createScreenShake(intensity, duration = 20) {
+        // Delegate to EffectsManager (now supports duration parameter - fixes bug)
+        this.effectsManager.createScreenShake(intensity, duration);
     }
 
     createRedFlash(intensity = 0.6) {
-        // Create red neon flash effect
-        this.redFlash = {
-            active: true,
-            intensity: intensity,
-            duration: 15,
-            maxIntensity: intensity,
-            decay: 0.85
-        };
+        // Delegate to EffectsManager
+        this.effectsManager.createRedFlash(intensity);
     }
-    
-    
+
+
     updateScreenShake() {
-        if (this.screenShake && this.screenShake.duration > 0) {
-            // Random shake in all directions
-            this.screenShake.x = (Math.random() - 0.5) * this.screenShake.intensity;
-            this.screenShake.y = (Math.random() - 0.5) * this.screenShake.intensity;
-            
-            // Decay the shake over time
-            this.screenShake.intensity *= this.screenShake.decay;
-            this.screenShake.duration--;
-            
-            if (this.screenShake.duration <= 0) {
-                this.screenShake = null;
-            }
-        }
+        // Delegated to EffectsManager (called from update())
+        // This method kept for backward compatibility but does nothing
     }
 
     updateRedFlash() {
-        if (this.redFlash && this.redFlash.active) {
-            // Decay the flash intensity over time
-            this.redFlash.intensity *= this.redFlash.decay;
-            this.redFlash.duration--;
-            
-            // Deactivate when duration expires or intensity is very low
-            if (this.redFlash.duration <= 0 || this.redFlash.intensity < 0.01) {
-                this.redFlash.active = false;
-                this.redFlash.intensity = 0;
-            }
-        }
+        // Delegated to EffectsManager (called from update())
+        // This method kept for backward compatibility but does nothing
     }
-    
+
     updateExplosions() {
-        if (!this.explosions) return;
-        
-        // Use reverse iteration for safe removal during loop
-        for (let i = this.explosions.length - 1; i >= 0; i--) {
-            const explosion = this.explosions[i];
-            
-            // Expand the explosion radius over time
-            const progress = 1 - (explosion.life / explosion.maxLife);
-            explosion.radius = explosion.maxRadius * progress;
-            
-            explosion.life--;
-            
-            if (explosion.life <= 0) {
-                // Return to pool and remove from active array
-                this.returnExplosionToPool(explosion);
-                this.explosions.splice(i, 1);
-            }
-        }
+        // Delegated to ParticleSystem (called from update())
+        // This method kept for backward compatibility but does nothing
     }
     
     createDeathParticles(x, y, color) {
@@ -9134,7 +9007,7 @@ class VibeSurvivor {
             frameCount: 0,
             adjustmentCooldown: 180, // Wait 3 seconds between adjustments
             lastAdjustment: 0,
-            
+
             levels: {
                 1: { // Ultra Low - Crisis mode
                     particleCount: 0.1,
@@ -9183,8 +9056,9 @@ class VibeSurvivor {
                 }
             }
         };
-        
-        
+
+        // Initialize default quality level
+        this.setQualityLevel(this.adaptiveQuality.currentLevel);
     }
     
     updateAdaptiveQuality() {
@@ -9234,10 +9108,20 @@ class VibeSurvivor {
             explosionMultiplier: config.explosionCount,
             shadowBlur: config.shadowBlur,
             glowEffects: config.glowEffects,
+            useGlow: config.glowEffects,
+            effectQuality: config.particleCount,
             batchRendering: config.batchRendering,
             canvasLayers: config.canvasLayers,
             trailLength: config.trailLength
         };
+
+        // Inject quality settings into rendering systems
+        if (this.particleSystem) {
+            this.particleSystem.setQualitySettings(this.qualitySettings);
+        }
+        if (this.effectsManager) {
+            this.effectsManager.setQualitySettings(this.qualitySettings);
+        }
         
         // Keep canvas layers enabled but note the quality preference
         // (Canvas layers temporarily disabled for debugging)
@@ -9831,23 +9715,8 @@ class VibeSurvivor {
     }
 
     drawRedFlash() {
-        if (this.redFlash && this.redFlash.active && this.redFlash.intensity > 0) {
-            // Create red neon flash overlay
-            this.ctx.fillStyle = `rgba(255, 0, 50, ${this.redFlash.intensity})`;
-            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-            
-            // Add neon glow effect with adaptive quality
-            if (this.shouldUseGlowEffects()) {
-                this.ctx.shadowColor = '#ff0032';
-                this.ctx.shadowBlur = this.getQualityShadowBlur();
-            }
-            this.ctx.fillStyle = `rgba(255, 0, 50, ${this.redFlash.intensity * 0.3})`;
-            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-            
-            // Reset shadow
-            this.ctx.shadowColor = 'transparent';
-            this.ctx.shadowBlur = 0;
-        }
+        // Delegate to EffectsManager
+        this.effectsManager.drawRedFlash(this.ctx, this.canvas.width, this.canvas.height);
     }
     
     renderStartScreenBackground() {
@@ -10835,17 +10704,13 @@ class VibeSurvivor {
     }
     
     drawExplosionsWithBatching() {
-        if (!this.explosions || this.explosions.length === 0) return;
-        
-        // Fallback to traditional explosion drawing for now
-        this.drawExplosions();
+        // Delegate to ParticleSystem
+        this.particleSystem.drawExplosions(this.ctx, this.camera, this.canvas.width, this.canvas.height);
     }
-    
+
     drawParticlesWithBatching() {
-        if (!this.particles || this.particles.length === 0) return;
-        
-        // Fallback to traditional particle drawing for now
-        this.drawParticles();
+        // Delegate to ParticleSystem
+        this.particleSystem.drawParticles(this.ctx, this.camera, this.canvas.width, this.canvas.height);
     }
     
     // Fallback individual rendering functions
