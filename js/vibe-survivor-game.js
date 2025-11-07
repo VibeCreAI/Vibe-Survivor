@@ -30,6 +30,10 @@ import { InputManager } from './core/input.js';
 // Import physics management
 import { PhysicsManager } from './core/physics.js';
 
+// Import rendering systems
+import { initCanvas, resizeCanvas, Camera } from './systems/rendering/canvas.js';
+import { SpriteManager } from './systems/rendering/sprites.js';
+
 class VibeSurvivor {
     constructor() {
         this.canvas = null;
@@ -55,6 +59,15 @@ class VibeSurvivor {
         this.fastSin = this.physicsManager.fastSin.bind(this.physicsManager);
         this.fastCos = this.physicsManager.fastCos.bind(this.physicsManager);
         this.cachedSqrt = this.physicsManager.cachedSqrt.bind(this.physicsManager);
+
+        // Initialize rendering systems
+        this.spriteManager = new SpriteManager();
+        this.camera = new Camera();
+
+        // Convenience properties (delegate to spriteManager for backward compatibility)
+        this.playerSprites = this.spriteManager.playerSprites;
+        this.itemIcons = this.spriteManager.itemIcons;
+        this.spriteConfig = this.spriteManager.spriteConfig;
 
         // Player properties - start at world center
         this.player = createPlayerState(0, 0);
@@ -92,57 +105,8 @@ class VibeSurvivor {
         this.backgroundMusic.volume = 0.3; // Adjust volume as needed
         this.audioMuted = false; // Track mute state
 
-        // Player sprite animations
-        this.playerSprites = {
-            idle: new Image(),
-            up: new Image(),
-            down: new Image(),
-            left: new Image(),
-            right: new Image(),
-            loaded: 0,
-            total: 5
-        };
-
-        // Item pickup icons
-        this.itemIcons = {
-            health: new Image(),
-            magnet: new Image()
-        };
-        this.itemIcons.health.src = 'images/passives/healthBoost.png';
-        this.itemIcons.magnet.src = 'images/passives/magnet.png';
-
-        // Load sprite images
-        this.playerSprites.idle.src = 'images/AI BOT-IDLE.png';
-        this.playerSprites.up.src = 'images/AI BOT-UP.png';
-        this.playerSprites.down.src = 'images/AI BOT-DOWN.png';
-        this.playerSprites.left.src = 'images/AI BOT-LEFT.png';
-        this.playerSprites.right.src = 'images/AI BOT-RIGHT.png';
-
-        // Track sprite loading
-        const onSpriteLoad = () => {
-            this.playerSprites.loaded++;
-            // Calculate frame dimensions from first loaded sprite (rounded to prevent sub-pixel issues)
-            if (this.spriteConfig.frameWidth === 0 && this.playerSprites.idle.complete) {
-                this.spriteConfig.frameWidth = Math.floor(this.playerSprites.idle.width / this.spriteConfig.cols);
-                this.spriteConfig.frameHeight = Math.floor(this.playerSprites.idle.height / this.spriteConfig.rows);
-                console.log('Sprite dimensions calculated:', this.spriteConfig.frameWidth, 'x', this.spriteConfig.frameHeight);
-            }
-        };
-        this.playerSprites.idle.onload = onSpriteLoad;
-        this.playerSprites.up.onload = onSpriteLoad;
-        this.playerSprites.down.onload = onSpriteLoad;
-        this.playerSprites.left.onload = onSpriteLoad;
-        this.playerSprites.right.onload = onSpriteLoad;
-
-        // Sprite sheet configuration (3 columns x 4 rows = 12 frames)
-        this.spriteConfig = {
-            frameWidth: 0,  // Will be calculated when image loads
-            frameHeight: 0, // Will be calculated when image loads
-            cols: 3,
-            rows: 4,
-            totalFrames: 12,
-            frameRate: 8    // 8 FPS for animation
-        };
+        // NOTE: Sprite loading now handled by SpriteManager
+        // this.playerSprites, this.itemIcons, and this.spriteConfig are delegated to spriteManager
 
         // Touch scrolling handlers for modals
         this.pauseScrollHandler = null;
@@ -202,8 +166,8 @@ class VibeSurvivor {
         this.frameCount = 0;
         this.lastSpawn = 0;
         this.notifications = [];
-        this.camera = createCameraState(0, 0);
-        
+        // NOTE: Camera now initialized earlier as Camera class instance
+
         // Game loop timing control
         this.gameLoopId = null;
         this.lastTimestamp = null;
@@ -454,31 +418,30 @@ class VibeSurvivor {
         // Initialize canvas after modal creation with proper timing
         setTimeout(() => {
             try {
-                this.canvas = document.getElementById('survivor-canvas');
+                // Initialize canvas using rendering module
+                const canvasResult = initCanvas('survivor-canvas');
+                this.canvas = canvasResult.canvas;
+                this.ctx = canvasResult.ctx;
+
                 if (this.canvas) {
-                    // Get browser-specific optimization profile
-                    const browserProfile = this.getBrowserOptimizationProfile();
-                    
-                    // Create context with optimized settings
-                    this.ctx = this.canvas.getContext('2d', { 
-                        willReadFrequently: false, // Force GPU acceleration 
-                        ...browserProfile.contextOptions 
+                    // Resize canvas to fit container
+                    resizeCanvas(this.canvas);
+
+                    // Load sprites with progress tracking
+                    this.spriteManager.loadSprites((loaded, total) => {
+                        // Optional: Track sprite loading progress
+                        console.log(`Sprites loading: ${loaded}/${total}`);
                     });
-                    
-                    // Browser optimization applied
-                    
-                    // Optimize canvas settings for maximum performance
-                    this.ctx.imageSmoothingEnabled = false; // Disable antialiasing for speed
-                    this.ctx.globalCompositeOperation = 'source-over'; // Fastest composite mode
-                    
-                    this.resizeCanvas();
+
+                    // Load item icons
+                    this.spriteManager.loadItemIcons();
 
                     // Initialize input manager after canvas is ready
                     this.inputManager.initialize(this);
 
                     // Ensure canvas gets proper dimensions after CSS settles
                     setTimeout(() => {
-                        this.resizeCanvas();
+                        resizeCanvas(this.canvas);
                         if (!this.gameRunning) {
                             this.renderStartScreenBackground();
                         }
@@ -8373,28 +8336,28 @@ class VibeSurvivor {
     }
     
     updateCamera() {
-        // Calculate target camera position
-        const targetX = this.player.x - this.canvas.width / 2;
-        const targetY = this.player.y - this.canvas.height / 2;
-        
         // Use different smoothing based on player state
         let lerpFactor = 0.1; // Default smooth following
-        
+
         // During dash, use faster but still smooth camera movement
         if (this.player.dashCooldown > 0) {
             lerpFactor = 0.2; // Faster follow during dash, but not instant
         }
-        
-        // Smooth camera movement
-        this.camera.x += (targetX - this.camera.x) * lerpFactor;
-        this.camera.y += (targetY - this.camera.y) * lerpFactor;
+
+        // Delegate to Camera class
+        this.camera.follow(
+            this.player,
+            this.canvas.width,
+            this.canvas.height,
+            lerpFactor
+        );
     }
 
     
     // Performance optimization: Check if object is visible on screen
     isInViewport(x, y, radius = 0, cullingLevel = 'normal') {
         if (!this.canvas) return true; // Fallback to render everything if no canvas
-        
+
         // Different buffer sizes based on culling aggressiveness
         let buffer;
         switch (cullingLevel) {
@@ -8413,16 +8376,9 @@ class VibeSurvivor {
             default:
                 buffer = 100;
         }
-        
-        const left = this.camera.x - buffer;
-        const right = this.camera.x + this.canvas.width + buffer;
-        const top = this.camera.y - buffer;
-        const bottom = this.camera.y + this.canvas.height + buffer;
-        
-        return (x + radius > left && 
-                x - radius < right && 
-                y + radius > top && 
-                y - radius < bottom);
+
+        // Delegate to Camera class
+        return this.camera.isInViewport(x, y, this.canvas.width, this.canvas.height, buffer);
     }
 
     
@@ -9840,15 +9796,20 @@ class VibeSurvivor {
         // Fallback to original rendering method
         this.ctx.fillStyle = '#0a0a0a';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        
+
         this.ctx.save();
+
+        // Apply screen shake to camera
         let shakeX = 0, shakeY = 0;
         if (this.screenShake) {
             shakeX = this.screenShake.x;
             shakeY = this.screenShake.y;
         }
-        this.ctx.translate(-this.camera.x + shakeX, -this.camera.y + shakeY);
-        
+        this.camera.applyShake(shakeX, shakeY);
+
+        // Apply camera transform
+        this.camera.applyTransform(this.ctx);
+
         this.drawGrid();
         this.drawPlayerWithBatching();
         this.drawEnemiesWithBatching();

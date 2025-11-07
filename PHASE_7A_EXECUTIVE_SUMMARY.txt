@@ -1,0 +1,87 @@
+PHASE 7A: RENDERING CORE EXTRACTION - EXECUTIVE SUMMARY
+
+OVERVIEW
+Phase 7a will refactor the rendering system by extracting 5 focused manager
+classes from vibe-survivor-game.js (12,920 lines) into js/core/rendering/.
+
+KEY FINDINGS
+
+1. RENDERING ARCHITECTURE
+   - Canvas initialization and context management
+   - Camera following and viewport culling
+   - Sprite loading and management
+   - Coordinate transformations (world -> screen)
+   - Main rendering loop with 16 sequential draw calls
+
+2. CANVAS SYSTEM
+   Location: Constructor (35-36), initialize() (457-493), resizeCanvas() (3268-3343)
+   
+   Current: Single canvas + optional 5 layer canvases, performance optimizations,
+   responsive sizing based on modal
+   
+   Extract to: CanvasManager class
+
+3. CAMERA SYSTEM
+   Location: updateCamera() (8375-8391), isInViewport() (8395-8426), shouldRender() (8430-8482)
+   
+   Current: Smooth following (lerp 0.1/0.2), AABB culling, distance-based LOD,
+   infinite world
+   
+   Extract to: CameraManager class
+
+4. SPRITE SYSTEM
+   Location: Constructor (96-145), callbacks (122-135)
+   
+   Current: 5 directional sprites, 2 icons, 3x4 grid (12 frames at 8 FPS),
+   frame dimensions calculated on load
+   
+   Extract to: SpriteManager class
+
+5. COORDINATE TRANSFORMATIONS
+   Location: drawTraditional() (9850), draw methods
+   
+   Current: ctx.translate(-camera.x + shakeX, -camera.y + shakeY),
+   all draws in world coordinates
+   
+   Extract to: CoordinateTransformer utility
+
+6. RENDERING PIPELINE
+   Location: draw() (9732), drawTraditional() (9839-9870), gameLoop() (3811-3845)
+   
+   Current: Fixed timestep loop, 16 sequential draws in set order,
+   optional layer system
+   
+   Extract to: RenderingManager class
+
+
+CLASSES TO CREATE
+
+1. CanvasManager: Canvas lifecycle, sizing, layer management
+2. CameraManager: Camera state, following, culling, LOD
+3. SpriteManager: Sprite loading, caching, access
+4. CoordinateTransformer: Coordinate math utilities
+5. RenderingManager: Rendering orchestration
+
+
+IMPLEMENTATION ORDER
+
+1. CanvasManager (minimal dependencies)
+2. CameraManager (uses canvas dimensions)
+3. SpriteManager (independent)
+4. CoordinateTransformer (uses camera)
+5. RenderingManager (orchestrates all)
+
+
+ESTIMATED SCOPE
+
+Total lines to extract: ~1200
+Result: VibeSurvivor reduced from 12,920 to ~11,700 lines
+
+
+BENEFITS
+
+- Clear separation of concerns
+- Easier to test and maintain
+- Better code organization
+- Possible future optimizations
+- No performance impact expected
