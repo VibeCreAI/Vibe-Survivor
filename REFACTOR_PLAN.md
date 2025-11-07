@@ -32,9 +32,9 @@ Track your progress through the refactoring. Check off each phase as you complet
 - [x] **Phase 3**: Extract Configuration (40 min) - Constants, Assets ✅
 
 ### Core Layer (Phases 4-6) - ~200 min + Checkpoint #1
-- [ ] **Phase 4a**: State Management Part 1 (40 min) - Player & Camera
-- [ ] **Phase 4b**: State Management Part 2 (40 min) - Enemies, Weapons, Pickups
-- [ ] **Checkpoint #1**: Integration Test (15 min) - Core systems working
+- [x] **Phase 4a**: State Management Part 1 (40 min) - Player & Camera ✅
+- [x] **Phase 4b**: State Management Part 2 (40 min) - Enemies, Weapons, Pickups ✅
+- [x] **Checkpoint #1**: Integration Test (15 min) - Core systems working ✅
 - [ ] **Phase 5**: Input Handling (60 min) - Keyboard, Mouse, Touch
 - [ ] **Phase 6**: Physics System (60 min) - Collision, Movement
 
@@ -59,10 +59,10 @@ Track your progress through the refactoring. Check off each phase as you complet
 - [ ] **Git**: Commit final state and tag release
 
 **Progress Tracking:**
-- Phases Completed: 3 / 14
-- Checkpoints Passed: 0 / 3
-- Estimated Time Remaining: ~11.75 hours
-- Actual Time Spent: 2.07 hours (~124 min)
+- Phases Completed: 5 / 14
+- Checkpoints Passed: 1 / 3
+- Estimated Time Remaining: ~10.17 hours
+- Actual Time Spent: 3.65 hours (~219 min)
 
 ---
 

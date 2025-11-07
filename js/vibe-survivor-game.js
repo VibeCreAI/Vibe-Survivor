@@ -24,6 +24,9 @@ import {
     resetUIState, resetGameCoreState, resetBossState, resetScreenEffectsState
 } from './core/state.js';
 
+// Import input management
+import { InputManager } from './core/input.js';
+
 class VibeSurvivor {
     constructor() {
         this.canvas = null;
@@ -31,8 +34,17 @@ class VibeSurvivor {
         this.gameTime = 0;
         this.gameRunning = false;
         this.playerDead = false;
-        this.keys = {};
-        
+
+        // Initialize input manager
+        this.inputManager = new InputManager();
+
+        // Convenience properties (delegate to inputManager)
+        this.keys = this.inputManager.keys;
+        this.touchControls = this.inputManager.touchControls;
+        this.menuNavigationState = this.inputManager.menuNavigationState;
+        this.isMobile = this.inputManager.isMobile;
+        this.settings = this.inputManager.settings;
+
         // Player properties - start at world center
         this.player = createPlayerState(0, 0);
         
@@ -121,11 +133,7 @@ class VibeSurvivor {
             frameRate: 8    // 8 FPS for animation
         };
 
-        // Mobile touch controls
-        this.isMobile = this.detectMobile();
-
-        // Persistent player settings (e.g., mobile dash preference)
-        this.settings = this.loadSettings();
+        // Touch scrolling handlers for modals
         this.pauseScrollHandler = null;
         this.levelUpScrollHandler = null;
         this.levelUpScrollContainers = [];
@@ -178,27 +186,7 @@ class VibeSurvivor {
         
         // Initialize trigonometric lookup tables
         this.initTrigLookupTables();
-        this.touchControls = {
-            joystick: {
-                active: false,
-                startX: 0,
-                startY: 0,
-                currentX: 0,
-                currentY: 0,
-                moveX: 0,
-                moveY: 0,
-                floating: true, // Enable floating joystick mode
-                visible: false, // Track joystick visibility
-                centerX: 0, // Dynamic center position
-                centerY: 0,
-                touchId: null // Track specific touch ID
-            },
-            dashButton: {
-                pressed: false,
-                position: this.settings?.dashButtonPosition || 'right'
-            }
-        };
-        
+
         // UI properties
         this.frameCount = 0;
         this.lastSpawn = 0;
@@ -238,15 +226,6 @@ class VibeSurvivor {
         this.pendingLevelUps = 0;           // Count of deferred level ups
         this.bossVictoryInProgress = false; // Victory screen active
         this.timePaused = false;            // Whether game time should pause
-        
-        // Menu navigation state for keyboard controls
-        this.menuNavigationState = {
-            active: false,
-            selectedIndex: 0,
-            menuType: null, // 'levelup', 'gameover', 'pause'
-            menuButtons: [],
-            keyboardUsed: false
-        };
 
         // Backup navigation state for help modal overlay scenarios
         this.previousNavigationState = null;
@@ -263,7 +242,6 @@ class VibeSurvivor {
         // Translation system
         this.currentLanguage = 'en';
         this.translations = this.initTranslations();
-        this.loadUserSettings();
 
         this.initGame();
     }
@@ -483,6 +461,10 @@ class VibeSurvivor {
                     this.ctx.globalCompositeOperation = 'source-over'; // Fastest composite mode
                     
                     this.resizeCanvas();
+
+                    // Initialize input manager after canvas is ready
+                    this.inputManager.initialize(this);
+
                     // Ensure canvas gets proper dimensions after CSS settles
                     setTimeout(() => {
                         this.resizeCanvas();
@@ -3193,50 +3175,14 @@ class VibeSurvivor {
                 }
             }
 
-            // Regular game controls
-            if (this.gameRunning) {
-                // Store both lowercase and original case for arrow keys
-                this.keys[e.key.toLowerCase()] = true;
-                this.keys[e.key] = true;
-                
-                // Prevent default for game keys to avoid page scrolling
-                if (e.key === ' ' || 
-                    e.key.toLowerCase() === 'w' || 
-                    e.key.toLowerCase() === 'a' || 
-                    e.key.toLowerCase() === 's' || 
-                    e.key.toLowerCase() === 'd' ||
-                    e.key === 'ArrowUp' ||
-                    e.key === 'ArrowDown' ||
-                    e.key === 'ArrowLeft' ||
-                    e.key === 'ArrowRight' ||
-                    e.key.toLowerCase() === 'escape') {
-                    e.preventDefault();
-                }
-                
-                if (e.key.toLowerCase() === 'escape') {
-                    // About/Options menu handling is done above (before gameRunning check)
-                    // Here we just handle pause toggle during gameplay
-                    this.togglePause();
-                }
-            }
+            // NOTE: Regular game controls (keydown/keyup) are now handled by InputManager
+            // Only special UI cases remain here
         });
-        
-        document.addEventListener('keyup', (e) => {
-            this.keys[e.key.toLowerCase()] = false;
-            this.keys[e.key] = false;
-        });
-        
-        window.addEventListener('resize', () => {
-            this.resizeCanvas();
-            if (this.isMobile) {
-                const dashBtn = document.getElementById('mobile-dash-btn');
-                if (dashBtn) {
-                    setTimeout(() => this.ensureDashButtonInBounds(dashBtn), 50);
-                }
-            }
-            this.updateStartOverlayLayout();
-        });
-        
+
+        // NOTE: Keyup handler removed - now handled by InputManager
+
+        // NOTE: Resize handler removed - now handled by InputManager
+
         // Setup mobile controls and dash button
         this.setupMobileControls();
     }
@@ -3754,14 +3700,8 @@ class VibeSurvivor {
         this.pendingLevelUps = 0;
 
         // Reset touch controls to prevent stuck movement
-        if (this.touchControls && this.touchControls.joystick) {
-            this.touchControls.joystick.active = false;
-            this.touchControls.joystick.moveX = 0;
-            this.touchControls.joystick.moveY = 0;
-            this.touchControls.joystick.visible = false;
-            this.touchControls.joystick.touchId = null;
-        }
-        
+        this.inputManager.resetTouchControls();
+
         // Reset player - start at world center
         resetPlayerState(this.player);
 
@@ -4282,12 +4222,8 @@ class VibeSurvivor {
     toggleDashButtonPosition() {
         if (!this.touchControls?.dashButton) return;
 
-        const newPosition = this.touchControls.dashButton.position === 'left' ? 'right' : 'left';
-        this.touchControls.dashButton.position = newPosition;
-        if (this.settings) {
-            this.settings.dashButtonPosition = newPosition;
-            this.saveSettings();
-        }
+        // Delegate to input manager
+        this.inputManager.toggleDashButtonPosition();
 
         const dashBtn = document.getElementById('mobile-dash-btn');
         if (dashBtn) {
@@ -5138,11 +5074,7 @@ class VibeSurvivor {
     }
     
     resetMenuNavigation() {
-        this.menuNavigationState.active = false;
-        this.menuNavigationState.selectedIndex = 0;
-        this.menuNavigationState.menuType = null;
-        this.menuNavigationState.menuButtons = [];
-        this.menuNavigationState.keyboardUsed = false;
+        this.inputManager.resetMenuNavigation();
         // Note: We don't clear previousNavigationState here because it's used to restore state later
     }
     
@@ -5371,155 +5303,9 @@ class VibeSurvivor {
     }
     
     setupVirtualJoystick(joystick) {
-        const handle = document.getElementById('joystick-handle');
-        const maxDistance = 40; // Increased for better floating experience
-        
-        // Set up floating joystick with modal-wide touch events
-        const canvas = document.getElementById('survivor-canvas');
-        const gameModal = document.getElementById('vibe-survivor-modal');
-        
-        if (!canvas || !gameModal) return;
-        
-        // Helper function to get touch position relative to modal
-        const getTouchPos = (touch) => {
-            const modalRect = gameModal.getBoundingClientRect();
-            return {
-                x: touch.clientX - modalRect.left,
-                y: touch.clientY - modalRect.top
-            };
-        };
-        
-        // Helper function to check if touch is near dash button area (avoid conflicts)
-        const isTouchNearDashButton = (touchX, touchY) => {
-            const dashBtn = document.getElementById('mobile-dash-btn');
-            if (!dashBtn) return false;
-            const rect = dashBtn.getBoundingClientRect();
-            const modalRect = gameModal.getBoundingClientRect();
-            const btnX = rect.left - modalRect.left + rect.width / 2;
-            const btnY = rect.top - modalRect.top + rect.height / 2;
-            const distance = Math.sqrt((touchX - btnX) ** 2 + (touchY - btnY) ** 2);
-            return distance < 80; // 80px safe zone around dash button
-        };
-        
-        gameModal.addEventListener('touchstart', (e) => {
-            // Only handle touches that aren't on interactive elements
-            const target = e.target;
-            const isInteractiveElement = target.closest('.header-help-btn') ||
-                                       target.closest('.pause-btn') ||
-                                       target.closest('.survivor-btn') ||
-                                       target.closest('.upgrade-choice') ||
-                                       target.closest('.levelup-modal') ||
-                                       target.closest('.pause-menu') ||
-                                       target.closest('#mobile-dash-btn') ||
-                                       target.closest('#help-btn');
-            
-            if (isInteractiveElement) return;
-            
-            e.preventDefault();
-            
-            // Don't start new joystick if one is already active
-            if (this.touchControls.joystick.active) return;
-            
-            const touch = e.touches[0];
-            const pos = getTouchPos(touch);
-            
-            // Avoid conflicts with dash button
-            if (isTouchNearDashButton(pos.x, pos.y)) return;
-            
-            // Start floating joystick
-            this.touchControls.joystick.active = true;
-            this.touchControls.joystick.centerX = pos.x;
-            this.touchControls.joystick.centerY = pos.y;
-            this.touchControls.joystick.startX = pos.x;
-            this.touchControls.joystick.startY = pos.y;
-            this.touchControls.joystick.visible = true;
-            this.touchControls.joystick.touchId = touch.identifier; // Track specific touch ID
-            
-            // Position joystick at touch location relative to modal
-            const modalRect = gameModal.getBoundingClientRect();
-            
-            // Make joystick visible first, then get its dimensions
-            // Keep joystick invisible - no visual feedback needed
-            // joystick.style.display = 'block';  // Commented out - keep invisible
-            
-            // Skip visual feedback - keep joystick invisible
-            // joystick.classList.add('active');  // Commented out - no visuals needed
-            
-        }, { passive: false });
-        
-        gameModal.addEventListener('touchmove', (e) => {
-            if (!this.touchControls.joystick.active) return;
-            e.preventDefault();
-            
-            // Find the specific touch that started the joystick
-            let touch = null;
-            for (let i = 0; i < e.touches.length; i++) {
-                if (e.touches[i].identifier === this.touchControls.joystick.touchId) {
-                    touch = e.touches[i];
-                    break;
-                }
-            }
-            
-            if (!touch) return; // Touch not found, ignore
-            const pos = getTouchPos(touch);
-            
-            const deltaX = pos.x - this.touchControls.joystick.centerX;
-            const deltaY = pos.y - this.touchControls.joystick.centerY;
-            
-            // Limit movement to circle
-            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-            const limitedDistance = Math.min(distance, maxDistance);
-            const angle = Math.atan2(deltaY, deltaX);
-            
-            const limitedX = this.fastCos(angle) * limitedDistance;
-            const limitedY = this.fastSin(angle) * limitedDistance;
-            
-            // Skip visual handle updates - no graphics needed
-            // handle.style.transform = `translate(calc(-50% + ${limitedX}px), calc(-50% + ${limitedY}px))`;  // Commented out
-            // Moving class visual feedback not needed
-            // if (limitedDistance > 5) { handle.classList.add('moving'); } else { handle.classList.remove('moving'); }
-            
-            // Convert to movement values (-1 to 1)
-            this.touchControls.joystick.moveX = limitedX / maxDistance;
-            this.touchControls.joystick.moveY = limitedY / maxDistance;
-        }, { passive: false });
-        
-        const endTouch = () => {
-            this.touchControls.joystick.active = false;
-            this.touchControls.joystick.moveX = 0;
-            this.touchControls.joystick.moveY = 0;
-            this.touchControls.joystick.visible = false;
-            this.touchControls.joystick.touchId = null; // Clear touch ID
-            
-            // Skip visual cleanup - joystick stays invisible
-            // joystick.classList.remove('active');  // Commented out
-            // handle.classList.remove('moving');    // Commented out
-            // No need to hide since it's already invisible
-            // setTimeout(() => {
-            //     joystick.style.display = 'none';
-            //     handle.style.transform = 'translate(-50%, -50%)';
-            // }, 300);  // Commented out
-        };
-        
-        gameModal.addEventListener('touchend', (e) => {
-            // Only end joystick if the specific touch that started it ends
-            for (let i = 0; i < e.changedTouches.length; i++) {
-                if (e.changedTouches[i].identifier === this.touchControls.joystick.touchId) {
-                    endTouch();
-                    break;
-                }
-            }
-        });
-        
-        gameModal.addEventListener('touchcancel', (e) => {
-            // Only end joystick if the specific touch that started it is cancelled
-            for (let i = 0; i < e.changedTouches.length; i++) {
-                if (e.changedTouches[i].identifier === this.touchControls.joystick.touchId) {
-                    endTouch();
-                    break;
-                }
-            }
-        });
+        // NOTE: Touch event handlers removed - now handled by InputManager
+        // InputManager sets up all touch events on the canvas in input.js
+        // This method is kept for compatibility but no longer sets up event listeners
     }
     
     setupDashButton(dashBtn) {
