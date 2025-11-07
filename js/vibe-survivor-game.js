@@ -27,6 +27,9 @@ import {
 // Import input management
 import { InputManager } from './core/input.js';
 
+// Import physics management
+import { PhysicsManager } from './core/physics.js';
+
 class VibeSurvivor {
     constructor() {
         this.canvas = null;
@@ -44,6 +47,14 @@ class VibeSurvivor {
         this.menuNavigationState = this.inputManager.menuNavigationState;
         this.isMobile = this.inputManager.isMobile;
         this.settings = this.inputManager.settings;
+
+        // Initialize physics manager
+        this.physicsManager = new PhysicsManager();
+
+        // Convenience methods (delegate to physicsManager)
+        this.fastSin = this.physicsManager.fastSin.bind(this.physicsManager);
+        this.fastCos = this.physicsManager.fastCos.bind(this.physicsManager);
+        this.cachedSqrt = this.physicsManager.cachedSqrt.bind(this.physicsManager);
 
         // Player properties - start at world center
         this.player = createPlayerState(0, 0);
@@ -8075,183 +8086,21 @@ class VibeSurvivor {
     }
     
     checkCollisions() {
-        
-        // Optimized collision detection with distance pre-screening - ONLY for player projectiles
-        this.projectiles.forEach((projectile, pIndex) => {
-            // Skip enemy projectiles (like boss missiles) - they are handled in the enemy projectile section
-            if (projectile.owner === 'enemy') {
-                return;
-            }
-            
-            let projectileHit = false;
-            let hitCount = 0;
-            const maxHits = projectile.piercing === true ? 999 : (projectile.piercing || 1);
-            
-            // Pre-screen enemies by distance for performance
-            const nearbyEnemies = this.enemies.filter(enemy => {
-                const dx = projectile.x - enemy.x;
-                const dy = projectile.y - enemy.y;
-                const roughDistance = Math.abs(dx) + Math.abs(dy); // Manhattan distance (faster)
-                return roughDistance < 100; // Only check enemies within rough distance
-            });
-            
-            nearbyEnemies.forEach((enemy, eIndex) => {
-                const dx = projectile.x - enemy.x;
-                const dy = projectile.y - enemy.y;
-                const distanceSquared = dx * dx + dy * dy;
-                const collisionRadius = enemy.radius + (projectile.size || 3);
-                const collisionRadiusSquared = collisionRadius * collisionRadius;
-                
-                if (distanceSquared < collisionRadiusSquared && hitCount < maxHits) {
-                    hitCount++;
-                    let damage = projectile.damage;
-                    
-                    // For homing lasers, track hit count on the projectile itself
-                    if (projectile.type === 'homing_laser') {
-                        projectile.hitCount = (projectile.hitCount || 0) + 1;
-                    }
-                    
-                    // Critical hit chance (15% per stack)
-                    if (this.player.passives.critical) {
-                        const criticalStacks = typeof this.player.passives.critical === 'number' ? this.player.passives.critical : 1;
-                        const criticalChance = 0.15 * criticalStacks; // 15% per stack
-                        if (Math.random() < criticalChance) {
-                            damage *= 2;
-                            this.createCriticalParticles(enemy.x, enemy.y);
-                        }
-                    }
-                    
-                    enemy.health -= damage;
-                    if (projectile.sourceType) {
-                        this.recordWeaponDamage(projectile.sourceType, damage, enemy);
-                    }
-                    this.createHitParticles(enemy.x, enemy.y, projectile.color);
-                    
-                    // Special effects
-                    if (projectile.type === 'plasma' && projectile.explosionRadius) {
-                        this.createExplosion(enemy.x, enemy.y, projectile.explosionRadius, projectile.damage * 0.5, projectile.sourceType);
-                    } else if (projectile.type === 'missile' && projectile.explosionRadius) {
-                        this.createExplosion(enemy.x, enemy.y, projectile.explosionRadius, projectile.damage * 0.7, projectile.sourceType);
-                        projectileHit = true;
-                    } else if (projectile.type === 'flame' && projectile.dotDamage) {
-                        enemy.burning = { damage: projectile.dotDamage, duration: 180, sourceType: projectile.sourceType };
-                    }
-                    
-                    // Check if projectile should be removed
-                    if (projectile.type === 'homing_laser') {
-                        // Homing laser has limited hits and piercing
-                        if (projectile.hitCount >= (projectile.maxHits || 10)) {
-                            projectileHit = true;
-                        }
-                    } else if (!['laser', 'railgun'].includes(projectile.type) || hitCount >= maxHits) {
-                        projectileHit = true;
-                    }
-                }
-            });
-            
-            if (projectileHit) {
-                // Return projectile to pool before removing from array
-                this.returnProjectileToPool(projectile);
-                this.projectiles.splice(pIndex, 1);
-            }
-        });
-        
-        // Enemy vs Player collisions - only check nearby enemies
-        const nearbyEnemies = this.enemies.filter(enemy => {
-            const dx = this.player.x - enemy.x;
-            const dy = this.player.y - enemy.y;
-            const roughDistance = Math.abs(dx) + Math.abs(dy);
-            return roughDistance < 100; // Pre-screen for performance
-        });
-        
-        nearbyEnemies.forEach((enemy, index) => {
-            const dx = this.player.x - enemy.x;
-            const dy = this.player.y - enemy.y;
-            const distanceSquared = dx * dx + dy * dy;
-            const collisionRadius = this.player.radius + enemy.radius;
-            const collisionRadiusSquared = collisionRadius * collisionRadius;
-            
-            if (distanceSquared < collisionRadiusSquared && !this.player.invulnerable) {
-                let damage = enemy.contactDamage;
-                
-                // Armor reduction (stacks multiplicatively, capped at 90% reduction)
-                if (this.player.passives.armor) {
-                    const armorCount = typeof this.player.passives.armor === 'number' ? this.player.passives.armor : 1;
-                    const damageReduction = Math.min(0.9, 1 - Math.pow(0.85, armorCount)); // 15% per stack, capped at 90%
-                    damage = Math.floor(damage * (1 - damageReduction));
-                }
-                
-                this.player.health -= damage;
-                this.player.invulnerable = 60;
-                this.createHitParticles(this.player.x, this.player.y, '#ff0000');
-                
-                // Create screen shake effect for enemy contact
-                this.createScreenShake(6);
-                
-                // Create red flash effect for enemy contact
-                this.createRedFlash(0.5);
-                
-                if (this.player.health <= 0) {
-                    this.playerDead = true; // Mark player as dead to stop game logic
-                    // Delay stopping the game to let red flash complete
-                    setTimeout(() => {
-                        this.gameRunning = false;
-                        this.gameOver();
-                        this.showGameOverModal();
-                    }, 850);
-                }
-            }
-        });
-        
-        
-        // Check enemy projectiles hitting player - collect indices to remove first
-        
-        const projectilesToRemove = [];
-        for (let pIndex = 0; pIndex < this.projectiles.length; pIndex++) {
-            const projectile = this.projectiles[pIndex];
-            if (projectile.owner === 'enemy') {
-                const dx = projectile.x - this.player.x;
-                const dy = projectile.y - this.player.y;
-                const distance = this.cachedSqrt(dx * dx + dy * dy);
-                
-                if (distance < this.player.radius + (projectile.size || 3)) {
-                    // Player hit by enemy projectile
-                    this.player.health -= projectile.damage;
-                    
-                    // Create screen shake effect for all projectile hits
-                    this.createScreenShake(projectile.explosionRadius ? 8 : 4);
-                    
-                    // Create red flash effect for projectile hits
-                    this.createRedFlash(projectile.explosionRadius ? 0.7 : 0.4);
-                    
-                    // Create explosion if projectile has explosion radius
-                    if (projectile.explosionRadius) {
-                        this.createExplosion(projectile.x, projectile.y, projectile.explosionRadius, projectile.damage * 0.5);
-                    }
-                    
-                    projectilesToRemove.push(pIndex);
-                    
-                    // Check for game over
-                    if (this.player.health <= 0) {
-                        this.playerDead = true; // Mark player as dead to stop game logic
-                        // Delay stopping the game to let red flash complete
-                        setTimeout(() => {
-                            this.gameRunning = false;
-                            this.gameOver();
-                            this.showGameOverModal();
-                        }, 850);
-                    }
-                }
-            }
-        }
-        
-        // Remove projectiles in reverse order to avoid index shifting
-        for (let i = projectilesToRemove.length - 1; i >= 0; i--) {
-            const index = projectilesToRemove[i];
-            const projectile = this.projectiles[index];
-            this.returnProjectileToPool(projectile);
-            this.projectiles.splice(index, 1);
-        }
+        // Delegate to PhysicsManager for all collision detection
+        this.physicsManager.checkCollisions(this);
+    }
+
+    /**
+     * Handle player death - called by PhysicsManager
+     */
+    handlePlayerDeath() {
+        this.playerDead = true; // Mark player as dead to stop game logic
+        // Delay stopping the game to let red flash complete
+        setTimeout(() => {
+            this.gameRunning = false;
+            this.gameOver();
+            this.showGameOverModal();
+        }, 850);
     }
     
     createExplosion(x, y, radius, damage, sourceType = null) {
