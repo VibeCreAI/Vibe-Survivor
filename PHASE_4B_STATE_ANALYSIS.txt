@@ -1,0 +1,225 @@
+# Phase 4b State Centralization Analysis
+
+Complete mapping of all remaining state properties that need centralization.
+
+---
+
+## 1. WEAPONS STATE
+
+Properties: weapons[], weaponStats{}
+Constructor: Lines 49-57 (weapons array), Line 60 (weaponStats)
+resetGame(): Lines 3760-3768 (weapons reset), Line 3770 (weaponStats clear)
+Initial: Basic weapon with damage=15, fireRate=20, range=250, projectileSpeed=4
+
+---
+
+## 2. ENEMIES STATE
+
+Properties: enemies[], enemiesByBehavior{chase,dodge,tank,fly,teleport,boss}
+Constructor: Lines 33-42
+resetGame(): Line 3776
+Pools: enemyPool[], enemyPoolSize=50 (Lines 8889-8900)
+Pool reset: Lines 3791-3792
+
+---
+
+## 3. PROJECTILES STATE
+
+Properties: projectiles[], projectilePool[], poolSize=200
+Constructor: Lines 43-44, 164 (init call)
+Pool init: Lines 8858-8873
+resetGame(): Line 3777, 3785-3786 (mark pool inactive)
+Per-projectile: {x,y,vx,vy,damage,speed,life,size,color,type,active,trail,rotation,homing,target}
+
+---
+
+## 4. PICKUPS STATE
+
+A. XP Orbs:
+   Properties: xpOrbs[], xpOrbPool[], xpOrbPoolSize=100
+   Constructor: Lines 46, 8915-8924
+   resetGame(): Line 3779, 3794-3796
+
+B. HP Orbs:
+   Properties: hpOrbs[], hpOrbPool[], hpOrbPoolSize=20
+   Spawn config: hpOrbSpawnTimer=0, hpOrbSpawnRate=120, hpOrbSpawnChance=0.08, maxHpOrbs=1
+   Constructor: Lines 47, 222-225, 8927-8936
+   resetGame(): Line 3780, 3797-3798
+
+C. Magnet Orbs:
+   Properties: magnetOrbs[], magnetOrbPool[], magnetOrbPoolSize=20
+   Spawn config: magnetOrbSpawnTimer=0, magnetOrbSpawnRate=120, magnetOrbSpawnChance=0.08, maxMagnetOrbs=1
+   Constructor: Lines 48, 228-231, 8939-8948
+   resetGame(): Line 3781, 3800-3801
+
+---
+
+## 5. PARTICLES STATE
+
+Properties: particles[], particlePool[], particlePoolSize=500
+Constructor: Lines 45, 8876-8886
+resetGame(): Line 3778, 3788-3789
+Per-particle: {x,y,vx,vy,size,color,life,maxLife,active,type}
+
+Explosions:
+Properties: explosionPool[], explosionPoolSize=50
+Constructor: Lines 8903-8912
+Per-explosion: {x,y,radius,maxRadius,life,maxLife,color,active}
+
+---
+
+## 6. UI STATE
+
+Pause/Modal:
+   Properties: isPaused, isHelpOpen, activeHelpTab='guide', activeLevelUpTab='levelup', overlayLocks
+   Constructor: Lines 63-67
+   resetGame(): Line 3745, 3771-3772
+
+Menu Navigation:
+   Properties: menuNavigationState{active,selectedIndex,menuType,menuButtons,keyboardUsed}, previousNavigationState
+   Constructor: Lines 246-252, 255
+   resetGame(): (not reset)
+
+Notifications:
+   Properties: notifications[]
+   Constructor: Line 208
+   resetGame(): Line 3782
+
+Frame Tracking:
+   Properties: frameCount, lastSpawn
+   Constructor: Lines 206-207
+   resetGame(): Lines 3735-3736
+
+---
+
+## 7. GAME STATE
+
+Core:
+   Properties: gameTime, gameRunning, playerDead, timePaused
+   Constructor: Lines 24-26, 243
+   resetGame(): Lines 3734-3745, 3837-3838
+
+Loop Timing:
+   Properties: lastTimestamp, accumulator, frameInterval=1000/60, maxAccumulatedTime=frameInterval*5
+   Constructor: Lines 213-216
+   resetGame(): Lines 3737-3738
+
+Spawning:
+   Properties: spawnRate=120, waveMultiplier=1
+   Constructor: Lines 218-219
+   resetGame(): Lines 3739-3740
+   Updated dynamically: max(30, 120 - floor(gameTime/10)*5)
+
+---
+
+## 8. BOSS STATE
+
+Properties: bossLevel=1, bossesKilled=0, bossDefeating, bossSpawned, nextBossSpawnTime, bossRespawnDelay=30
+   pendingLevelUps=0, bossVictoryInProgress
+Constructor: Lines 234-238, 241-242
+resetGame(): Lines 3741-3744, 3835-3838
+First boss: 300+ seconds at bossesKilled==0
+
+---
+
+## 9. SCREEN EFFECTS
+
+Red Flash:
+   Properties: redFlash{active,intensity,duration,maxIntensity=0.6,decay=0.9}
+   Constructor: Lines 258-264
+   resetGame(): (not reset - effects persist)
+
+---
+
+## 10. AUDIO STATE
+
+Properties: backgroundMusic (HTMLAudioElement), audioMuted=false
+Constructor: Lines 70-73
+resetGame(): (persistent)
+
+---
+
+## 11. MOBILE/INPUT STATE
+
+Properties: keys={}, isMobile, touchControls{joystick{active,startX,startY,currentX,currentY,moveX,moveY,floating,visible,centerX,centerY,touchId}, dashButton{pressed,position}}, settings
+Constructor: Lines 27, 128, 131, 184-203
+resetGame(): Lines 3748-3754 (reset joystick)
+
+---
+
+## 12. PERFORMANCE STATE
+
+Performance Monitor:
+   Properties: performanceMonitor (PerformanceMonitor instance), frameRateMonitor (getter)
+   Constructor: Line 141
+   resetGame(): Line 3805
+
+Adaptive Quality:
+   Properties: adaptiveQuality{enabled,currentLevel=3,targetFPS=55,lowFPSThreshold=35,highFPSThreshold=50,checkInterval=30,frameCount,adjustmentCooldown=180,lastAdjustment,levels{1-5}}
+   Properties: qualitySettings{particleMultiplier,explosionMultiplier,shadowBlur,glowEffects,batchRendering,canvasLayers,trailLength}
+   Constructor: Lines 180, 9539-9598, 9645-9652
+   resetGame(): Lines 3808-3809 (reset to level 3)
+
+Batch Renderer:
+   Properties: batchRenderer{entityBatches{enemies,projectiles,particles,explosions},maxBatchSize=50,enabled}
+   Constructor: Lines 174, 9396-9407
+
+Trig Lookup Tables:
+   Properties: TRIG_TABLE_SIZE=3600, TRIG_ANGLE_SCALE, sinTable, cosTable
+   Constructor: Lines 183, 9258-9271
+
+Garbage Collection:
+   Properties: garbageCollectionSystem{enabled,cleanupScheduled,lastCleanup,cleanupInterval=5000,cleanupTasks}
+   Constructor: Lines 167, 9060-9078
+
+Cache:
+   Properties: sqrtCache (Map), maxCacheSize=1000
+   Constructor: Lines 170-171
+
+Rendering:
+   Properties: dirtyRectangles[], lastEntityPositions (Map), staticCanvasCache, backgroundCanvasCache
+   Properties: gridOffscreen, gridOffscreenCtx, canvasLayersInitialized
+   Properties: canvasLayers{background,grid,entities,effects,ui,enabled,needsGridRedraw}
+   Constructor: Line 177
+   resetGame(): Lines 3815-3829
+
+---
+
+## 13. SPRITE/ANIMATION STATE
+
+Properties: playerSprites{idle,up,down,left,right,loaded,total=5}
+Properties: spriteConfig{frameWidth,frameHeight,cols=3,rows=4,totalFrames=12,frameRate=8}
+Properties: itemIcons{health,magnet}
+Constructor: Lines 76-99, 87-92, 118-125
+resetGame(): (not reset - render assets)
+
+---
+
+## 14. TRANSLATION STATE
+
+Properties: currentLanguage='en', translations
+Constructor: Lines 267-268
+resetGame(): (not reset)
+
+---
+
+## POOL SIZE CONSTANTS
+
+projectilePool: 200 (Line 8861)
+particlePool: 500 (Line 8877)
+enemyPool: 50 (Line 8890)
+explosionPool: 50 (Line 8904)
+xpOrbPool: 100 (Line 8916)
+hpOrbPool: 20 (Line 8928)
+magnetOrbPool: 20 (Line 8940)
+
+---
+
+## KEY TIMING NOTES
+
+gameTime calculation: frameCount / 60 (Line 3909)
+frameCount only increments when !timePaused (Line 3908)
+Spawn rate adjustment: every 10 seconds, reduces by 5 frames per cycle
+Boss spawn: first at 300s, then scheduled with 30s delay
+Quality checks: every 30 frames (Line 9546)
+

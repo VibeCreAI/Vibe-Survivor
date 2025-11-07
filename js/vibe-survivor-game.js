@@ -15,7 +15,14 @@ import {
 import { ASSET_PATHS, SPRITE_CONFIGS, LOADING_PHASES, preloadAssets, getWeaponIconPath, getPassiveIconPath } from './config/assets.js';
 
 // Import state management
-import { createPlayerState, createCameraState, resetPlayerState, resetCameraState } from './core/state.js';
+import {
+    createPlayerState, createCameraState, createWeaponsState, createWeaponStatsState,
+    createEnemiesState, createProjectilesState, createPickupsState, createParticlesState,
+    createUIState, createGameCoreState, createBossState, createScreenEffectsState,
+    resetPlayerState, resetCameraState, resetWeaponsState, resetWeaponStatsState,
+    resetEnemiesState, resetProjectilesState, resetPickupsState, resetParticlesState,
+    resetUIState, resetGameCoreState, resetBossState, resetScreenEffectsState
+} from './core/state.js';
 
 class VibeSurvivor {
     constructor() {
@@ -29,35 +36,25 @@ class VibeSurvivor {
         // Player properties - start at world center
         this.player = createPlayerState(0, 0);
         
-        // Game properties
-        this.enemies = [];
-        // Enemy grouping for batch processing optimization
-        this.enemiesByBehavior = {
-            chase: [],
-            dodge: [],
-            tank: [],
-            fly: [],
-            teleport: [],
-            boss: []
-        };
-        this.projectiles = [];
+        // Game properties - using state factories
+        const enemiesState = createEnemiesState();
+        this.enemies = enemiesState.enemies;
+        this.enemiesByBehavior = enemiesState.enemiesByBehavior;
+
+        this.projectiles = createProjectilesState();
         this.projectilePool = []; // Object pool for reusing projectile objects
-        this.particles = [];
-        this.xpOrbs = [];
-        this.hpOrbs = [];
-        this.magnetOrbs = [];
-        this.weapons = [{
-            type: 'basic',
-            level: 1,
-            damage: 15,
-            fireRate: 20,
-            range: 250,
-            projectileSpeed: 4,
-            lastFire: 0
-        }];
+
+        this.particles = createParticlesState();
+
+        const pickupsState = createPickupsState();
+        this.xpOrbs = pickupsState.xpOrbs;
+        this.hpOrbs = pickupsState.hpOrbs;
+        this.magnetOrbs = pickupsState.magnetOrbs;
+
+        this.weapons = createWeaponsState();
 
         // Track per-weapon cumulative damage
-        this.weaponStats = {};
+        this.weaponStats = createWeaponStatsState();
         
         // Pause functionality
         this.isPaused = false;
@@ -3731,18 +3728,30 @@ class VibeSurvivor {
     }
     
     resetGame() {
+        // Reset game core state
         this.gameTime = 0;
-        this.frameCount = 0;
-        this.lastSpawn = 0;
         this.lastTimestamp = null;
         this.accumulator = 0;
-        this.spawnRate = 120;
+        this.spawnRate = SPAWN_CONFIG.BASE_SPAWN_RATE;
         this.waveMultiplier = 1;
-        this.bossSpawned = false;
+        this.timePaused = false;
+
+        // Reset UI state
+        this.frameCount = 0;
+        this.lastSpawn = 0;
+        this.isPaused = false;
+        this.notifications = [];
+        this.overlayLocks = 0;
+        this.activeLevelUpTab = 'levelup';
+
+        // Reset boss state
         this.bossLevel = 1;
         this.bossesKilled = 0;
+        this.bossDefeating = false;
+        this.bossSpawned = false;
         this.nextBossSpawnTime = null;
-        this.isPaused = false; // Ensure pause state is reset
+        this.bossVictoryInProgress = false;
+        this.pendingLevelUps = 0;
 
         // Reset touch controls to prevent stuck movement
         if (this.touchControls && this.touchControls.joystick) {
@@ -3755,31 +3764,28 @@ class VibeSurvivor {
         
         // Reset player - start at world center
         resetPlayerState(this.player);
-        
-        // Reset weapons to single basic weapon
-        this.weapons = [{
-            type: 'basic',
-            level: 1,
-            damage: 15,
-            fireRate: 30,
-            range: 250,
-            projectileSpeed: 6,
-            lastFire: 0
-        }];
 
-        this.weaponStats = {};
-        this.overlayLocks = 0;
-        this.activeLevelUpTab = 'levelup';
+        // Reset weapons to single basic weapon
+        resetWeaponsState(this.weapons);
+        resetWeaponStatsState(this.weaponStats);
         this.updateOverlayLockState();
-        
-        // Clear arrays
-        this.enemies = [];
-        this.projectiles = [];
-        this.particles = [];
-        this.xpOrbs = [];
-        this.hpOrbs = [];
-        this.magnetOrbs = [];
-        this.notifications = [];
+
+        // Clear game entity arrays
+        this.enemies.length = 0;
+        // Clear enemy behavior groups
+        this.enemiesByBehavior.chase.length = 0;
+        this.enemiesByBehavior.dodge.length = 0;
+        this.enemiesByBehavior.tank.length = 0;
+        this.enemiesByBehavior.fly.length = 0;
+        this.enemiesByBehavior.teleport.length = 0;
+        this.enemiesByBehavior.boss.length = 0;
+
+        resetProjectilesState(this.projectiles);
+        resetParticlesState(this.particles);
+
+        this.xpOrbs.length = 0;
+        this.hpOrbs.length = 0;
+        this.magnetOrbs.length = 0;
         
         // Reset object pools - mark all as inactive
         if (this.projectilePool) {
@@ -3831,12 +3837,7 @@ class VibeSurvivor {
         
         this.performanceMonitor.setPerformanceMode(false);
 
-        // Reset level up and timing state
-        this.pendingLevelUps = 0;
-        this.bossVictoryInProgress = false;
-        this.timePaused = false;
-        this.bossDefeating = false;
-
+        // Reset camera
         resetCameraState(this.camera);
     }
     
