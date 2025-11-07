@@ -261,7 +261,7 @@ export function resetWeaponsState(weapons) {
         type: 'basic',
         level: 1,
         damage: 15,
-        fireRate: 20,
+        fireRate: 30,
         range: 250,
         projectileSpeed: 6,
         lastFire: 0

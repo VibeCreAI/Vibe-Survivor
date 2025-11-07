@@ -3851,21 +3851,16 @@ class VibeSurvivor {
         this.updateExplosions();
         this.updateParticles();
         this.updateNotifications();
-        
+
         // Skip game logic if player is dead
         if (this.playerDead) return;
-        
+
         // Only update time and frame count if not paused (menus, victory screens, etc.)
         if (!this.timePaused) {
             this.frameCount++;
             this.gameTime = this.frameCount / 60;
-        } else {
-            // Debug: Log when time is paused to track the issue
-            if (this.frameCount % 60 === 0) { // Log once per second worth of frames
-                
-            }
         }
-        
+
         this.updatePlayer();
         
         // Keep magnet boost active until field is clear of XP orbs

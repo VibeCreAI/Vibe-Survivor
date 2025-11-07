@@ -146,9 +146,12 @@ export class PhysicsManager {
         const enemies = game.enemies;
         const player = game.player;
 
-        projectiles.forEach((projectile, pIndex) => {
+        // Loop backwards to safely remove projectiles during iteration
+        for (let pIndex = projectiles.length - 1; pIndex >= 0; pIndex--) {
+            const projectile = projectiles[pIndex];
+
             // Skip enemy projectiles
-            if (projectile.owner === 'enemy') return;
+            if (projectile.owner === 'enemy') continue;
 
             let projectileHit = false;
             let hitCount = 0;
@@ -163,7 +166,9 @@ export class PhysicsManager {
                 );
             });
 
-            nearbyEnemies.forEach((enemy) => {
+            for (let j = nearbyEnemies.length - 1; j >= 0; j--) {
+                const enemy = nearbyEnemies[j];
+
                 const dx = projectile.x - enemy.x;
                 const dy = projectile.y - enemy.y;
                 const distanceSquared = dx * dx + dy * dy;
@@ -234,7 +239,7 @@ export class PhysicsManager {
                         }
                     }
                 }
-            });
+            }
 
             if (projectileHit) {
                 // Return projectile to pool if available
@@ -243,7 +248,7 @@ export class PhysicsManager {
                 }
                 projectiles.splice(pIndex, 1);
             }
-        });
+        }
     }
 
     /**

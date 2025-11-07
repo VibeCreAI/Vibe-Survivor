@@ -36,7 +36,7 @@ Track your progress through the refactoring. Check off each phase as you complet
 - [x] **Phase 4b**: State Management Part 2 (40 min) - Enemies, Weapons, Pickups ✅
 - [x] **Checkpoint #1**: Integration Test (15 min) - Core systems working ✅
 - [x] **Phase 5**: Input Handling (60 min) - Keyboard, Mouse, Touch ✅
-- [ ] **Phase 6**: Physics System (60 min) - Collision, Movement
+- [x] **Phase 6**: Physics System (60 min) - Collision, Movement ✅
 
 ### Rendering Layer (Phases 7a-7b) - ~115 min + Checkpoint #2
 - [ ] **Phase 7a**: Rendering Core (55 min) - Canvas, Camera, Sprites
@@ -59,10 +59,10 @@ Track your progress through the refactoring. Check off each phase as you complet
 - [ ] **Git**: Commit final state and tag release
 
 **Progress Tracking:**
-- Phases Completed: 6 / 14
+- Phases Completed: 7 / 14
 - Checkpoints Passed: 1 / 3
-- Estimated Time Remaining: ~9.17 hours
-- Actual Time Spent: 4.65 hours (~279 min)
+- Estimated Time Remaining: ~8.17 hours
+- Actual Time Spent: 5.25 hours (~315 min)
 
 ---
 
