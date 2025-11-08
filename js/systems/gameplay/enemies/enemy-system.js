@@ -795,9 +795,17 @@ export class EnemySystem {
                     // Set boss defeating flag to prevent multiple triggers
                     setBossDefeating(true);
 
+                    // Save boss position and size for animation
+                    const bossX = enemy.x;
+                    const bossY = enemy.y;
+                    const bossRadius = enemy.radius;
+
+                    // Mark boss as defeated so it doesn't render during defeat animation
+                    enemy.isDefeated = true;
+
                     // Clear all normal enemies for clean boss defeat animation
                     for (let j = enemies.length - 1; j >= 0; j--) {
-                        if (enemies[j].behavior !== 'boss') {
+                        if (enemies[j].behavior !== 'boss' && !enemies[j].isDefeated) {
                             enemies.splice(j, 1);
                         }
                     }
@@ -805,11 +813,17 @@ export class EnemySystem {
                     // Clear all projectiles (including boss missiles) for clean animation
                     clearProjectiles();
 
-                    // Trigger boss defeat animation
-                    createBossDefeatAnimation(enemy.x, enemy.y, enemy.radius);
+                    // Trigger boss defeat animation with saved position/size
+                    createBossDefeatAnimation(bossX, bossY, bossRadius);
 
-                    // Remove boss from enemies array
-                    enemies.splice(i, 1);
+                    // Remove boss from enemies array after a short delay
+                    // This ensures rendering has time to skip it via isDefeated flag
+                    setTimeout(() => {
+                        const bossIndex = enemies.indexOf(enemy);
+                        if (bossIndex !== -1) {
+                            enemies.splice(bossIndex, 1);
+                        }
+                    }, 100); // Remove after 100ms (multiple frames)
 
                     // Show victory screen after animation delay
                     setTimeout(() => {

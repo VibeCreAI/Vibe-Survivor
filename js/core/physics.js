@@ -227,7 +227,7 @@ export class PhysicsManager {
                         if (projectile.hitCount >= (projectile.maxHits || 10)) {
                             projectileHit = true;
                         }
-                    } else if (!['laser', 'railgun'].includes(projectile.type) || hitCount >= maxHits) {
+                    } else if (!['laser', 'railgun', 'homing_laser'].includes(projectile.type) || hitCount >= maxHits) {
                         projectileHit = true;
                     }
 

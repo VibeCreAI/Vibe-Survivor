@@ -167,13 +167,11 @@ export class InputManager {
         // InputManager just provides the input state, game handles the logic
 
         // Escape key handling
+        // Note: ESC key for help/pause/menu navigation is handled by the main keydown handler
+        // in vibe-survivor-game.js which has more complex logic for menu states
         if (key === 'escape') {
             e.preventDefault();
-            if (this.game.isHelpOpen) {
-                this.game.toggleHelp();
-            } else if (!this.game.playerDead && this.game.gameRunning) {
-                this.game.togglePause();
-            }
+            // Don't handle ESC here - let the main handler deal with it
             return;
         }
 

@@ -3097,6 +3097,33 @@ class VibeSurvivor {
 
         // Keyboard controls
         document.addEventListener('keydown', (e) => {
+            // F1 key opens help menu (works anywhere)
+            if (e.key === 'F1') {
+                e.preventDefault();
+                if (!this.isHelpOpen && this.gameRunning) {
+                    this.toggleHelp();
+                }
+                return;
+            }
+
+            // Tab key cycles tabs in help and level up menus
+            if (e.key === 'Tab') {
+                if (this.menuNavigationState.menuType === 'help') {
+                    e.preventDefault();
+                    // Cycle help tabs
+                    const helpTabs = ['guide', 'status'];
+                    const currentIndex = helpTabs.indexOf(this.activeHelpTab || 'guide');
+                    const nextIndex = (currentIndex + 1) % helpTabs.length;
+                    this.switchHelpTab(helpTabs[nextIndex]);
+                    return;
+                } else if (this.menuNavigationState.menuType === 'levelup') {
+                    e.preventDefault();
+                    // Cycle level up tabs
+                    this.cycleLevelUpTab(1);
+                    return;
+                }
+            }
+
             // Menu navigation takes priority
             if (this.menuNavigationState.active) {
                 // Handle menu navigation keys
@@ -3197,6 +3224,20 @@ class VibeSurvivor {
                 if (optionsMenu && optionsMenu.style.display === 'flex') {
                     e.preventDefault();
                     this.hideOptionsMenu();
+                    return;
+                }
+
+                // Handle ESC for help menu during gameplay
+                if (this.isHelpOpen) {
+                    e.preventDefault();
+                    this.toggleHelp();
+                    return;
+                }
+
+                // Handle ESC for pause toggle during normal gameplay
+                if (!this.playerDead && this.gameRunning && !this.isPaused) {
+                    e.preventDefault();
+                    this.togglePause();
                     return;
                 }
             }
@@ -4769,6 +4810,23 @@ class VibeSurvivor {
 
         const activePane = Array.from(helpContent.querySelectorAll('.help-pane')).find(pane => pane.style.display !== 'none');
         const target = (activePane && activePane.scrollHeight > activePane.clientHeight) ? activePane : helpContent;
+
+        // Check if we're at the bottom and trying to scroll down - navigate to close button instead
+        const isAtBottom = target.scrollTop + target.clientHeight >= target.scrollHeight - 5; // 5px tolerance
+        const isAtTop = target.scrollTop <= 5; // 5px tolerance
+
+        if (direction === 'down' && isAtBottom) {
+            // Navigate to close button
+            this.navigateMenu('down');
+            return;
+        }
+
+        if (direction === 'up' && isAtTop && this.menuNavigationState.selectedIndex > 0) {
+            // If close button is selected and at top, deselect it
+            this.menuNavigationState.selectedIndex = -1;
+            this.updateMenuSelection();
+            return;
+        }
 
         // Scroll amount per key press (adjust as needed)
         const scrollAmount = 60;
@@ -9583,11 +9641,16 @@ class VibeSurvivor {
     
     drawEnemies() {
         if (this.enemies.length === 0) return;
-        
+
         // Batch enemies by behavior type to reduce context state changes
         const enemiesByType = {};
-        
+
         for (const enemy of this.enemies) {
+            // Skip defeated enemies (boss during defeat animation)
+            if (enemy.isDefeated) {
+                continue;
+            }
+
             // Enhanced frustum culling: Skip enemies that shouldn't be rendered
             if (!this.shouldRender(enemy, 'enemy')) {
                 continue;
@@ -11024,9 +11087,9 @@ class VibeSurvivor {
         
         // Add both click and touch events for better mobile support
         retryBtn.addEventListener('click', retryHandler);
-        retryBtn.addEventListener('touchend', retryHandler);
+        retryBtn.addEventListener('touchend', retryHandler, { passive: false });
         exitBtn.addEventListener('click', exitHandler);
-        exitBtn.addEventListener('touchend', exitHandler);
+        exitBtn.addEventListener('touchend', exitHandler, { passive: false });
         
         // Add menu navigation styles
         this.addMenuNavigationStyles();
