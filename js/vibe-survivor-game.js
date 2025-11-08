@@ -48,6 +48,21 @@ import { ProjectileSystem } from './systems/gameplay/weapons/projectiles.js';
 import { XPSystem } from './systems/gameplay/progression/xp-system.js';
 import { UpgradeSystem } from './systems/gameplay/progression/upgrades.js';
 
+// Import Phase 10 systems - UI Components
+import { HUDSystem } from './systems/ui/hud.js';
+import { TouchControlsUI } from './systems/ui/touch-controls.js';
+import { Modal, ModalManager } from './systems/ui/modals/modal-base.js';
+import { LoadingScreen } from './systems/ui/modals/loading-screen.js';
+import { StartScreen } from './systems/ui/modals/start-screen.js';
+import { PauseMenu } from './systems/ui/modals/pause-menu.js';
+import { LevelUpModal } from './systems/ui/modals/level-up.js';
+import { GameOverModal } from './systems/ui/modals/game-over.js';
+import { SettingsModal } from './systems/ui/modals/settings.js';
+import { HelpModal } from './systems/ui/modals/help.js';
+import { WeaponInfoModal } from './systems/ui/modals/weapon-info.js';
+import { StatsModal } from './systems/ui/modals/stats.js';
+import { VictoryModal } from './systems/ui/modals/victory.js';
+
 class VibeSurvivor {
     constructor() {
         this.canvas = null;
@@ -91,6 +106,25 @@ class VibeSurvivor {
         this.projectileSystem = new ProjectileSystem();
         this.xpSystem = new XPSystem();
         this.upgradeSystem = new UpgradeSystem();
+
+        // Initialize Phase 10 systems - UI Components
+        this.hudSystem = new HUDSystem();
+        this.touchControlsUI = new TouchControlsUI();
+        this.modalManager = new ModalManager();
+
+        // Initialize individual modals (will be set up after DOM is ready)
+        this.modals = {
+            loading: new LoadingScreen(),
+            start: new StartScreen(),
+            pause: new PauseMenu(),
+            levelUp: new LevelUpModal(),
+            gameOver: new GameOverModal(),
+            settings: new SettingsModal(),
+            help: new HelpModal(),
+            weaponInfo: new WeaponInfoModal(),
+            stats: new StatsModal(),
+            victory: new VictoryModal()
+        };
 
         // Convenience properties (delegate to spriteManager for backward compatibility)
         this.playerSprites = this.spriteManager.playerSprites;
