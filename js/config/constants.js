@@ -282,7 +282,7 @@ export const SPAWN_CONFIG = {
     SPAWN_RATE_DECREASE_PER_10_SECONDS: 5,
     BOSS_SPAWN_DISTANCE: 250,
     BOSS_RESPAWN_DELAY: 30, // seconds
-    FIRST_BOSS_TIME: 300 // 5 minutes
+    FIRST_BOSS_TIME: 180 // 3 minutes
 };
 
 /**

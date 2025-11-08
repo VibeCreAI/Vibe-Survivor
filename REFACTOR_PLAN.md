@@ -40,11 +40,11 @@ Track your progress through the refactoring. Check off each phase as you complet
 
 ### Rendering Layer (Phases 7a-7b) - ~115 min + Checkpoint #2
 - [x] **Phase 7a**: Rendering Core (55 min) - Canvas, Camera, Sprites ✅
-- [ ] **Phase 7b**: Rendering Effects (60 min) - Animation, Particles, Effects
-- [ ] **Checkpoint #2**: Integration Test (15 min) - Rendering working
+- [x] **Phase 7b**: Rendering Effects (60 min) - Animation, Particles, Effects ✅
+- [x] **Checkpoint #2**: Integration Test (15 min) - Rendering working ✅
 
 ### Gameplay Layer (Phases 8-10) - ~245 min + Checkpoint #3
-- [ ] **Phase 8**: Gameplay Entities (80 min) - Player, Enemies, Pickups
+- [x] **Phase 8**: Gameplay Entities (80 min) - Player, Enemies, Pickups ✅
 - [ ] **Phase 9**: Weapons & Progression (80 min) - Weapons, XP, Upgrades
 - [ ] **Phase 10**: UI Systems (85 min) - HUD, Modals (10 types), Touch Controls
 - [ ] **Checkpoint #3**: Integration Test (15 min) - Full game working
@@ -59,10 +59,10 @@ Track your progress through the refactoring. Check off each phase as you complet
 - [ ] **Git**: Commit final state and tag release
 
 **Progress Tracking:**
-- Phases Completed: 7 / 14
-- Checkpoints Passed: 1 / 3
-- Estimated Time Remaining: ~8.17 hours
-- Actual Time Spent: 5.25 hours (~315 min)
+- Phases Completed: 10 / 14
+- Checkpoints Passed: 2 / 3
+- Estimated Time Remaining: ~4.25 hours (~255 min)
+- Actual Time Spent: ~7.41 hours (~445 min)
 
 ---
 

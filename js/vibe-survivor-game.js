@@ -37,6 +37,11 @@ import { AnimationController } from './systems/rendering/animation.js';
 import { ParticleSystem } from './systems/rendering/particles.js';
 import { EffectsManager } from './systems/rendering/effects.js';
 
+// Import gameplay systems
+import { PlayerSystem } from './systems/gameplay/player.js';
+import { PickupSystem } from './systems/gameplay/pickups.js';
+import { EnemySystem } from './systems/gameplay/enemies/enemy-system.js';
+
 class VibeSurvivor {
     constructor() {
         this.canvas = null;
@@ -69,6 +74,11 @@ class VibeSurvivor {
         this.animationController = new AnimationController();
         this.particleSystem = new ParticleSystem();
         this.effectsManager = new EffectsManager();
+
+        // Initialize gameplay systems
+        this.playerSystem = new PlayerSystem();
+        this.pickupSystem = new PickupSystem();
+        this.enemySystem = new EnemySystem();
 
         // Convenience properties (delegate to spriteManager for backward compatibility)
         this.playerSprites = this.spriteManager.playerSprites;
@@ -179,7 +189,11 @@ class VibeSurvivor {
         
         // Initialize object pools
         this.initializeProjectilePool();
-        
+
+        // Inject pools into PickupSystem (pools are created in initializeProjectilePool)
+        // Note: This must be called after initializeProjectilePool()
+        this.pickupSystem.setPools(this.xpOrbPool, this.hpOrbPool, this.magnetOrbPool);
+
         // Initialize smart garbage collection system
         this.initializeSmartGarbageCollection();
         
@@ -3740,6 +3754,11 @@ class VibeSurvivor {
         this.particleSystem.reset();
         this.effectsManager.reset();
 
+        // Reset gameplay systems
+        this.playerSystem.reset();
+        this.pickupSystem.reset();
+        this.enemySystem.reset();
+
         this.xpOrbs.length = 0;
         this.hpOrbs.length = 0;
         this.magnetOrbs.length = 0;
@@ -3894,173 +3913,21 @@ class VibeSurvivor {
     }
     
     updatePlayer() {
-        // Speed is now directly modified when speed_boost is acquired
-        const speed = this.player.speed;
-        
-        // Keyboard WASD movement
-        let moveX = 0, moveY = 0;
-        
-        if (this.keys['w'] || this.keys['arrowup']) {
-            moveY -= 1;
-        }
-        if (this.keys['s'] || this.keys['arrowdown']) {
-            moveY += 1;
-        }
-        if (this.keys['a'] || this.keys['arrowleft']) {
-            moveX -= 1;
-        }
-        if (this.keys['d'] || this.keys['arrowright']) {
-            moveX += 1;
-        }
-        
-        // Add mobile joystick movement
-        if (this.isMobile && this.touchControls.joystick.active) {
-            moveX += this.touchControls.joystick.moveX;
-            moveY += this.touchControls.joystick.moveY;
-        }
-        
-        // Normalize movement vector to prevent faster diagonal movement
-        const magnitude = Math.sqrt(moveX * moveX + moveY * moveY);
-        if (magnitude > 0) {
-            moveX /= magnitude;
-            moveY /= magnitude;
-        }
-        
-        // Apply movement
-        this.player.x += moveX * speed;
-        this.player.y += moveY * speed;
-        
-        // Dash mechanic with Spacebar key or dash button
-        const shouldDash = this.keys[' '] || this.touchControls.dashButton.pressed;
-        if (shouldDash && !this.player.dashCooldown) {
-            let dashDistance = 40;
-            // Apply dash boost passive (+50% distance per stack)
-            if (this.player.passives.dash_boost) {
-                const dashStacks = typeof this.player.passives.dash_boost === 'number' ? this.player.passives.dash_boost : 1;
-                dashDistance *= (1 + 0.5 * dashStacks); // 50% increase per stack
-            }
-            let dashX = 0, dashY = 0;
-            
-            // Use current movement direction for dash
-            if (moveX !== 0 || moveY !== 0) {
-                // Normalize the movement direction for consistent dash distance
-                const magnitude = this.cachedSqrt(moveX * moveX + moveY * moveY);
-                dashX = (moveX / magnitude) * dashDistance;
-                dashY = (moveY / magnitude) * dashDistance;
-            } else {
-                // Fallback: check individual keys if moveX/moveY are both 0 (keyboard ghosting issue)
-                let fallbackX = 0, fallbackY = 0;
-                
-                // Check arrow keys individually first (prone to ghosting with spacebar)
-                if (this.keys['arrowup']) fallbackY -= 1;
-                if (this.keys['arrowdown']) fallbackY += 1;
-                if (this.keys['arrowleft']) fallbackX -= 1;
-                if (this.keys['arrowright']) fallbackX += 1;
-                
-                // If no arrow keys detected, try WASD as backup
-                if (fallbackX === 0 && fallbackY === 0) {
-                    if (this.keys['w']) fallbackY -= 1;
-                    if (this.keys['s']) fallbackY += 1;
-                    if (this.keys['a']) fallbackX -= 1;
-                    if (this.keys['d']) fallbackX += 1;
-                }
-                
-                if (fallbackX !== 0 || fallbackY !== 0) {
-                    const magnitude = this.cachedSqrt(fallbackX * fallbackX + fallbackY * fallbackY);
-                    dashX = (fallbackX / magnitude) * dashDistance;
-                    dashY = (fallbackY / magnitude) * dashDistance;
-                } else {
-                    // Default forward dash if no direction
-                    dashY = -dashDistance;
-                }
-            }
-            
-            this.player.x += dashX;
-            this.player.y += dashY;
-            this.player.dashCooldown = 30;
-            this.player.invulnerable = 30;
-            this.createDashParticles();
-
-            // Reset dash button state after use
-            this.touchControls.dashButton.pressed = false;
-        }
-        
-        if (this.player.dashCooldown > 0) {
-            this.player.dashCooldown--;
-        }
-        
-        if (this.player.invulnerable > 0) {
-            this.player.invulnerable--;
-        }
-        
-        // No bounds checking - infinite world!
-        
-        // Update trail
-        this.player.trail.push({ x: this.player.x, y: this.player.y });
-        const baseTrailLength = this.qualitySettings?.trailLength || 8;
-        const maxTrailLength = Math.floor(baseTrailLength * (this.player.trailMultiplier || 1.0));
-        if (this.player.trail.length > maxTrailLength) {
-            this.player.trail.shift();
-        }
-
-        this.player.glow = (this.player.glow + 0.1) % (Math.PI * 2);
-
-        // Update sprite direction based on movement (must be in update loop for consistency)
-        let movementAngle = this.player.lastMovementAngle || 0;
-        let isMoving = false;
-
-        // Check for joystick movement first (takes priority for mobile)
-        if (this.isMobile && this.touchControls.joystick.active &&
-            (Math.abs(this.touchControls.joystick.moveX) > 0.1 || Math.abs(this.touchControls.joystick.moveY) > 0.1)) {
-            const joystickAngle = Math.atan2(this.touchControls.joystick.moveY, this.touchControls.joystick.moveX);
-            movementAngle = (joystickAngle * 180 / Math.PI);
-            isMoving = true;
-        }
-        // Check keyboard controls
-        else if (moveX !== 0 || moveY !== 0) {
-            movementAngle = Math.atan2(moveY, moveX) * 180 / Math.PI;
-            isMoving = true;
-        }
-
-        // Update sprite direction
-        if (!isMoving) {
-            this.player.spriteDirection = 'idle';
-        } else {
-            // Determine direction based on angle
-            if (movementAngle >= -112.5 && movementAngle < -67.5) {
-                this.player.spriteDirection = 'up';
-            } else if (movementAngle >= -67.5 && movementAngle < 67.5) {
-                this.player.spriteDirection = 'right';
-            } else if (movementAngle >= 67.5 && movementAngle < 112.5) {
-                this.player.spriteDirection = 'down';
-            } else {
-                this.player.spriteDirection = 'left';
-            }
-        }
-
-        // Update sprite animation (fixed timestep, independent of draw rate)
-        this.animationController.updateFrame(this.spriteConfig);
+        // Delegate to PlayerSystem
+        this.playerSystem.updatePlayer(
+            this.player,
+            this.inputManager,
+            this.animationController,
+            this.spriteConfig,
+            this.cachedSqrt,
+            () => this.createDashParticles(),
+            this.qualitySettings
+        );
     }
     
     updatePassives() {
-        // Regeneration - handle both boolean and object cases
-        if (this.player.passives.regeneration && this.player.health < this.player.maxHealth) {
-            // Fix: If regeneration is boolean true, convert to object
-            if (this.player.passives.regeneration === true) {
-                this.player.passives.regeneration = { timer: 0 };
-            }
-            
-            // Ensure regeneration is an object with timer property
-            if (typeof this.player.passives.regeneration === 'object') {
-                if (!this.player.passives.regeneration.timer) {
-                    this.player.passives.regeneration.timer = 0;
-                }
-                if (this.player.passives.regeneration.timer++ >= 60) { // 1 second
-                    this.player.health = Math.min(this.player.maxHealth, this.player.health + 1);
-                    this.player.passives.regeneration.timer = 0;
-                }
-            }
-        }
+        // Delegate to PlayerSystem
+        this.playerSystem.updatePassives(this.player);
     }
     
     updateWeapons() {
@@ -4681,7 +4548,7 @@ class VibeSurvivor {
     }
 
     enableGameOverScrolling() {
-        const gameOverContent = document.querySelector('#survivor-game-over-overlay [style*="overflow-y: auto"]');
+        const gameOverContent = document.querySelector('.game-over-scroll-content');
         if (!gameOverContent) return;
 
         // Remove any existing touch event listeners to avoid duplicates
@@ -4720,7 +4587,7 @@ class VibeSurvivor {
     }
 
     disableGameOverScrolling() {
-        const gameOverContent = document.querySelector('#survivor-game-over-overlay [style*="overflow-y: auto"]');
+        const gameOverContent = document.querySelector('.game-over-scroll-content');
         if (!gameOverContent || !this.gameOverScrollHandler) return;
 
         // Remove touch event listeners
@@ -4858,7 +4725,7 @@ class VibeSurvivor {
     }
 
     scrollGameOverContent(direction) {
-        const gameOverContent = document.querySelector('#survivor-game-over-overlay [style*="overflow-y: auto"]');
+        const gameOverContent = document.querySelector('.game-over-scroll-content');
         if (!gameOverContent) return;
 
         // Scroll amount per key press (adjust as needed)
@@ -5226,8 +5093,9 @@ class VibeSurvivor {
             const isAboutContent = target.closest('.about-content');
             const isOptionsContent = target.closest('.options-content');
             const isVictoryContent = target.closest('.victory-scroll-content');
+            const isGameOverContent = target.closest('.game-over-scroll-content');
 
-            if (!isHelpContent && !isLevelUpContent && !isPauseContent && !isAboutContent && !isOptionsContent && !isVictoryContent) {
+            if (!isHelpContent && !isLevelUpContent && !isPauseContent && !isAboutContent && !isOptionsContent && !isVictoryContent && !isGameOverContent) {
                 e.preventDefault();
                 e.stopPropagation();
             }
@@ -6067,42 +5935,16 @@ class VibeSurvivor {
     }
     
     spawnEnemies() {
-        // Skip enemy spawning during boss defeat animation for clean victory sequence  
-        if (this.bossDefeating) {
-            // No new enemies spawn during boss defeat cinematic moment
-            return;
-        }
-        
-        this.frameCount++;
-        
-        // Performance limit: maximum number of enemies on screen
-        const maxEnemies = 20; // Increased for performance testing
-        
-        if (this.enemies.length >= maxEnemies) {
-            return; // Don't spawn more if at limit
-        }
-        
-        // Check for first boss spawn at 5 minutes (300 seconds)
-        if (this.gameTime >= 300 && this.bossesKilled === 0 && !this.bossSpawned && !this.enemies.some(enemy => enemy.behavior === 'boss')) {
-            this.spawnBoss();
-            this.bossSpawned = true;
-            return; // Don't spawn regular enemies this frame
-        }
-        
-        // Increase difficulty over time
-        const difficultyMultiplier = 1 + Math.floor(this.gameTime / 30) * 0.2;
-        this.spawnRate = Math.max(30, 120 - Math.floor(this.gameTime / 10) * 5);
-        
-        if (this.frameCount - this.lastSpawn >= this.spawnRate) {
-            const spawnCount = 1 + Math.floor(this.gameTime / 60);
-            // Limit spawn count to not exceed max enemies
-            const actualSpawnCount = Math.min(spawnCount, maxEnemies - this.enemies.length);
-            
-            for (let i = 0; i < actualSpawnCount; i++) {
-                this.spawnEnemy();
-            }
-            this.lastSpawn = this.frameCount;
-        }
+        // Delegate to EnemySystem
+        this.enemySystem.spawnEnemies({
+            enemies: this.enemies,
+            player: this.player,
+            gameTime: this.gameTime,
+            bossesKilled: this.bossesKilled,
+            bossDefeating: this.bossDefeating,
+            spawnEnemy: () => this.spawnEnemy(),
+            spawnBoss: () => this.spawnBoss()
+        });
     }
     
     spawnEnemy() {
@@ -6642,88 +6484,24 @@ class VibeSurvivor {
     }
 
     updateEnemies() {
-        // Update enemy groupings for optimized batch processing
-        this.updateEnemyGroupings();
-        
-        // Process all enemy movements in optimized batches
-        this.processBatchedEnemies();
-        
-        // Use reverse iteration for safe and efficient removal (health, effects, cleanup)
-        for (let i = this.enemies.length - 1; i >= 0; i--) {
-            const enemy = this.enemies[i];
-            // Handle burning damage over time
-            if (enemy.burning) {
-                if (enemy.burning.duration-- <= 0) {
-                    enemy.burning = null;
-                } else if (this.frameCount % 20 === 0) { // Damage every 1/3 second
-                    enemy.health -= enemy.burning.damage;
-                    if (enemy.burning.sourceType) {
-                        this.recordWeaponDamage(enemy.burning.sourceType, enemy.burning.damage, enemy);
-                    }
-                    this.createHitParticles(enemy.x, enemy.y, '#ff6348');
-                }
-            }
-            
-            if (enemy.specialCooldown > 0) {
-                enemy.specialCooldown--;
-            }
-            
-            // Only rotate tank and boss enemies for performance
-            if (enemy.behavior === 'tank' || enemy.behavior === 'boss') {
-                enemy.angle += enemy.rotSpeed;
-            }
-            
-            // Remove dead enemies
-            if (enemy.health <= 0) {
-                // Check if this was a boss enemy
-                if (enemy.behavior === 'boss') {
-                    // Prevent multiple boss defeat triggers
-                    if (this.bossDefeating) {
-                        return;
-                    }
-                    
-                    // Start boss defeat animation sequence
-                    this.bossDefeating = true;
-                    
-                    
-                    // Create spectacular defeat animation
-                    this.createBossDefeatAnimation(enemy.x, enemy.y, enemy.radius);
-                    
-                    // Remove boss from enemies array
-                    this.enemies.splice(i, 1);
-                    
-                    // Clear all remaining enemies for clean victory
-                    this.enemies.length = 0;
-                    
-                    // Clear all projectiles (including boss missiles)
-                    this.projectiles.length = 0;
-                    
-                    // Delay the victory screen to allow animation to play
-                    setTimeout(() => {
-                        this.bossDefeated();
-                    }, 3000); // 3.0 second delay for animation
-                    
-                    return; // Exit early, animation will handle the rest
-                }
-                
-                this.createXPOrb(enemy.x, enemy.y);
-                this.createDeathParticles(enemy.x, enemy.y, enemy.color);
-                this.enemies.splice(i, 1);
-            } else {
-                // Remove enemies that are too far from player (performance optimization)
-                // But NEVER remove bosses - they use teleportation instead
-                if (enemy.behavior !== 'boss') {
-                    const dx = enemy.x - this.player.x;
-                    const dy = enemy.y - this.player.y;
-                    const distanceFromPlayer = this.cachedSqrt(dx * dx + dy * dy);
-
-                    if (distanceFromPlayer > 1200) { // Remove enemies beyond this distance
-                        this.enemies.splice(i, 1);
-                    }
-                }
-            }
-        }
-        
+        // Delegate to EnemySystem
+        this.enemySystem.updateEnemies({
+            enemies: this.enemies,
+            frameCount: this.frameCount,
+            player: this.player,
+            bossDefeating: this.bossDefeating,
+            updateEnemyGroupings: () => this.updateEnemyGroupings(),
+            processBatchedEnemies: () => this.processBatchedEnemies(),
+            createXPOrb: (x, y) => this.createXPOrb(x, y),
+            createDeathParticles: (x, y, color) => this.createDeathParticles(x, y, color),
+            createHitParticles: (x, y, color) => this.createHitParticles(x, y, color),
+            recordWeaponDamage: (type, damage, enemy) => this.recordWeaponDamage(type, damage, enemy),
+            createBossDefeatAnimation: (x, y, radius) => this.createBossDefeatAnimation(x, y, radius),
+            setBossDefeating: (value) => { this.bossDefeating = value; },
+            clearProjectiles: () => { this.projectiles.length = 0; },
+            bossDefeated: () => this.bossDefeated(),
+            cachedSqrt: this.cachedSqrt
+        });
     }
     
     spawnMinions(x, y, count) {
@@ -6891,147 +6669,30 @@ class VibeSurvivor {
     }
     
     updateXPOrbs() {
-        // Skip XP orb collection during boss defeat animation for clean victory sequence
-        if (this.bossDefeating) {
-            // XP orbs remain visible but are not collectible during boss defeat animation
-            // This prevents level up timing conflicts during the cinematic moment
-            return;
-        }
-        
-        // Use reverse iteration for safe and efficient removal
-        for (let i = this.xpOrbs.length - 1; i >= 0; i--) {
-            const orb = this.xpOrbs[i];
-            const dx = this.player.x - orb.x;
-            const dy = this.player.y - orb.y;
-            const distanceSquared = dx * dx + dy * dy;
-            
-            // Player magnet effect (enhanced when magnetBoost is active)
-            let magnetRange = this.player.passives.magnet ? 80 : 40;
-            
-            // Enhanced magnet range and strength when magnetBoost is active
-            if (this.player.magnetBoost > 0) {
-                magnetRange = 2000; // Large range when magnet boost is active
-            }
-            
-            const magnetRangeSquared = magnetRange * magnetRange;
-            if (distanceSquared < magnetRangeSquared) {
-                const distance = Math.sqrt(distanceSquared); // Only calculate sqrt when needed
-                const attractionSpeed = this.player.magnetBoost > 0 ? 12 : 4; // Triple speed with boost (50% faster than double)
-                orb.x += (dx / distance) * attractionSpeed;
-                orb.y += (dy / distance) * attractionSpeed;
-            }
-            
-            orb.glow = (orb.glow + 0.2) % (Math.PI * 2);
-            
-            // Collect orb (optimized comparison)
-            if (distanceSquared < 225) { // 15 * 15 = 225
-                this.player.xp += orb.value;
-                
-                // Update trail multiplier based on XP progress
-                const xpRequired = this.player.level * 5 + 10;
-                const xpProgress = this.player.xp / xpRequired;
-                this.player.trailMultiplier = 1.0 + (xpProgress * 3.0);
-                
-                // Return to pool instead of creating garbage
-                orb.active = false;
-                this.xpOrbs.splice(i, 1);
-            } else if (orb.life-- <= 0) {
-                // Return to pool instead of creating garbage
-                orb.active = false;
-                this.xpOrbs.splice(i, 1);
-            }
-        }
+        // Delegate to PickupSystem
+        this.pickupSystem.updateXPOrbs(this.xpOrbs, this.player, this.cachedSqrt, this.bossDefeating);
     }
 
     updateHPOrbs() {
-        // Skip HP orb collection during boss defeat animation
-        if (this.bossDefeating) {
-            return;
-        }
-        
-        // Use reverse iteration for safe and efficient removal
-        for (let i = this.hpOrbs.length - 1; i >= 0; i--) {
-            const orb = this.hpOrbs[i];
-            const dx = this.player.x - orb.x;
-            const dy = this.player.y - orb.y;
-            const distanceSquared = dx * dx + dy * dy;
-            
-            // Magnet effect - same as XP orbs
-            const magnetRange = this.player.passives.magnet ? 80 : 40;
-            const magnetRangeSquared = magnetRange * magnetRange;
-            if (distanceSquared < magnetRangeSquared) {
-                const distance = Math.sqrt(distanceSquared);
-                orb.x += (dx / distance) * 4;
-                orb.y += (dy / distance) * 4;
-            }
-            
-            orb.glow = (orb.glow + 0.2) % (Math.PI * 2);
-            
-            // Collect orb
-            if (distanceSquared < 225) { // 15 * 15 = 225
-                // Heal player
-                const healAmount = orb.healAmount;
-                const oldHealth = this.player.health;
-                this.player.health = Math.min(this.player.maxHealth, this.player.health + healAmount);
-                const actualHeal = this.player.health - oldHealth;
-                
-                // Show healing notification if we actually healed
-                if (actualHeal > 0) {
-                    this.showToastNotification(`+${actualHeal} HP`, 'heal');
-                }
-                
-                // Return to pool
-                orb.active = false;
-                this.hpOrbs.splice(i, 1);
-            } else if (orb.life-- <= 0) {
-                // Return to pool when expired
-                orb.active = false;
-                this.hpOrbs.splice(i, 1);
-            }
-        }
+        // Delegate to PickupSystem
+        this.pickupSystem.updateHPOrbs(
+            this.hpOrbs,
+            this.player,
+            this.cachedSqrt,
+            (message, type) => this.showToastNotification(message, type),
+            this.bossDefeating
+        );
     }
 
     updateMagnetOrbs() {
-        // Skip magnet orb collection during boss defeat animation
-        if (this.bossDefeating) {
-            return;
-        }
-        
-        // Use reverse iteration for safe and efficient removal
-        for (let i = this.magnetOrbs.length - 1; i >= 0; i--) {
-            const orb = this.magnetOrbs[i];
-            const dx = this.player.x - orb.x;
-            const dy = this.player.y - orb.y;
-            const distanceSquared = dx * dx + dy * dy;
-            
-            // Magnet effect - same as other orbs
-            const magnetRange = this.player.passives.magnet ? 80 : 40;
-            const magnetRangeSquared = magnetRange * magnetRange;
-            if (distanceSquared < magnetRangeSquared) {
-                const distance = Math.sqrt(distanceSquared);
-                orb.x += (dx / distance) * 4;
-                orb.y += (dy / distance) * 4;
-            }
-            
-            orb.glow = (orb.glow + 0.2) % (Math.PI * 2);
-            
-            // Collect orb
-            if (distanceSquared < 225) { // 15 * 15 = 225
-                // Activate magnet boost until all XP orbs are absorbed
-                this.player.magnetBoost = 1;
-                
-                // Show magnet activation notification
-                this.showToastNotification(`MAGNET ACTIVATED!`, 'magnet');
-                
-                // Return to pool
-                orb.active = false;
-                this.magnetOrbs.splice(i, 1);
-            } else if (orb.life-- <= 0) {
-                // Return to pool when expired
-                orb.active = false;
-                this.magnetOrbs.splice(i, 1);
-            }
-        }
+        // Delegate to PickupSystem
+        this.pickupSystem.updateMagnetOrbs(
+            this.magnetOrbs,
+            this.player,
+            this.cachedSqrt,
+            (message, type) => this.showToastNotification(message, type),
+            this.bossDefeating
+        );
     }
     
     createXPOrb(x, y) {
@@ -7045,25 +6706,16 @@ class VibeSurvivor {
     }
 
     spawnHPOrbs() {
-        // Only spawn HP orbs during active gameplay
-        if (this.playerDead || this.isPaused || this.bossDefeating) {
-            return;
-        }
+        // Delegate to PickupSystem
+        const shouldCreate = this.pickupSystem.spawnHPOrbs(
+            this.hpOrbs,
+            this.playerDead,
+            this.isPaused,
+            this.bossDefeating
+        );
 
-        // Check if it's time to attempt HP orb spawn
-        this.hpOrbSpawnTimer++;
-        if (this.hpOrbSpawnTimer >= this.hpOrbSpawnRate) {
-            this.hpOrbSpawnTimer = 0;
-
-            // Don't spawn if we already have maximum HP orbs
-            if (this.hpOrbs.length >= this.maxHpOrbs) {
-                return;
-            }
-
-            // Random chance to spawn HP orb
-            if (Math.random() < this.hpOrbSpawnChance) {
-                this.createHPOrb();
-            }
+        if (shouldCreate) {
+            this.createHPOrb();
         }
     }
 
@@ -7084,28 +6736,16 @@ class VibeSurvivor {
     }
 
     spawnMagnetOrbs() {
-        // Only spawn magnet orbs during active gameplay
-        if (this.playerDead || this.isPaused || this.bossDefeating) {
-            return;
-        }
+        // Delegate to PickupSystem
+        const shouldCreate = this.pickupSystem.spawnMagnetOrbs(
+            this.magnetOrbs,
+            this.playerDead,
+            this.isPaused,
+            this.bossDefeating
+        );
 
-        // Check if it's time to attempt magnet orb spawn
-        this.magnetOrbSpawnTimer++;
-        // Removed excessive logging
-        if (this.magnetOrbSpawnTimer >= this.magnetOrbSpawnRate) {
-            this.magnetOrbSpawnTimer = 0;
-
-            // Don't spawn if we already have maximum magnet orbs
-            if (this.magnetOrbs.length >= this.maxMagnetOrbs) {
-                return;
-            }
-
-            // Random chance to spawn magnet orb (same as HP orbs)
-            if (Math.random() < this.magnetOrbSpawnChance) {
-                // Spawning magnet orb
-                this.createMagnetOrb();
-                
-            }
+        if (shouldCreate) {
+            this.createMagnetOrb();
         }
     }
 
@@ -7134,52 +6774,31 @@ class VibeSurvivor {
     }
     
     checkLevelUp() {
-        const xpRequired = this.player.level * 5 + 10;
-        if (this.player.xp >= xpRequired) {
-            this.player.xp -= xpRequired;
-            this.player.level++;
-            this.player.trailMultiplier = 1.0; // Reset trail length
-            
-            // Check if help button should be shown
-            this.checkHelpButtonVisibility();
-            
-            // Force trail to shrink back to base length immediately
-            const baseMaxLength = 8;
-            while (this.player.trail.length > baseMaxLength) {
-                this.player.trail.shift();
-            }
-            
-            // Defer level up menu during boss defeat animation OR victory screen
-            if (this.bossDefeating || this.bossVictoryInProgress) {
-                this.pendingLevelUps++;
-                
-                return;
-            }
-            
-            this.showLevelUpChoices();
+        // Delegate to PlayerSystem
+        const wasDeferred = this.playerSystem.checkLevelUp(
+            this.player,
+            this.bossDefeating,
+            this.bossVictoryInProgress,
+            () => this.showLevelUpChoices()
+        );
+
+        if (wasDeferred) {
+            this.pendingLevelUps++;
         }
     }
 
     // Process deferred level ups after victory screen or other interruptions
     processPendingLevelUps() {
-        if (this.pendingLevelUps > 0) {
-            this.pendingLevelUps--;
-            
-            
-            // Ensure time stays paused during deferred menus
-            this.timePaused = true;
-            this.gameRunning = false;
-            
-            this.showLevelUpChoices();  // Show one level up menu
-            // Will be called again after this menu closes if more pending
-        } else {
-            // No more level ups, resume normal game state
-            
-            
-            this.timePaused = false;
-            this.bossVictoryInProgress = false;
-            this.gameRunning = true;
-        }
+        // Delegate to PlayerSystem
+        const result = this.playerSystem.processPendingLevelUps(
+            this.pendingLevelUps,
+            this.bossVictoryInProgress,
+            this.bossDefeating,
+            () => this.showLevelUpChoices()
+        );
+
+        // Update pending level ups count
+        this.pendingLevelUps = result.pendingLevelUps;
     }
     
     showLevelUpChoices() {
@@ -7541,10 +7160,11 @@ class VibeSurvivor {
                 
                 // Process any remaining deferred level ups, or resume game
                 this.processPendingLevelUps();
-                
-                // If no more pending level ups, start game loop
-                if (this.pendingLevelUps === 0 && this.gameRunning) {
-                    
+
+                // If no more pending level ups, resume game
+                if (this.pendingLevelUps === 0) {
+                    this.gameRunning = true;
+                    this.timePaused = false;
                     this.startAnimationLoop();
                 }
             });
@@ -11212,7 +10832,7 @@ class VibeSurvivor {
                     text-shadow: 0 0 15px rgba(255, 0, 102, 0.8) !important;
                 ">${t.gameOver}</div>
 
-                <div style="
+                <div class="game-over-scroll-content" tabindex="0" style="
                     overflow-y: auto !important;
                     max-height: calc(80vh - 180px) !important;
                     padding-right: 10px !important;
@@ -11334,7 +10954,30 @@ class VibeSurvivor {
 
         // Enable touch scrolling for game over screen
         this.enableGameOverScrolling();
-        
+
+        // Focus the scrollable content for keyboard scrolling
+        const gameOverScrollContent = gameOverOverlay.querySelector('.game-over-scroll-content');
+        if (gameOverScrollContent) {
+            gameOverScrollContent.focus({ preventScroll: true });
+        }
+
+        // Add keyboard scrolling handler
+        if (!this.gameOverKeydownHandler) {
+            this.gameOverKeydownHandler = (event) => {
+                const key = event.key;
+                if (!document.getElementById('survivor-game-over-overlay')) return;
+                if (key === 'ArrowUp' || key === 'ArrowDown' || key === 'Up' || key === 'Down' || key === 'w' || key === 'W' || key === 's' || key === 'S') {
+                    if (this.menuNavigationState.active && this.menuNavigationState.menuType === 'gameOver') {
+                        return;
+                    }
+                    event.preventDefault();
+                    const direction = (key === 'ArrowUp' || key === 'Up' || key === 'w' || key === 'W') ? 'up' : 'down';
+                    this.scrollGameOverContent(direction);
+                }
+            };
+            document.addEventListener('keydown', this.gameOverKeydownHandler, { passive: false });
+        }
+
         // Add event listeners with both click and touch support
         const retryBtn = document.getElementById('overlay-retry-btn');
         const exitBtn = document.getElementById('overlay-exit-btn');
@@ -11346,6 +10989,11 @@ class VibeSurvivor {
             this.disableGameOverScrolling();
             // Reset menu navigation
             this.resetMenuNavigation();
+            // Remove keydown handler
+            if (this.gameOverKeydownHandler) {
+                document.removeEventListener('keydown', this.gameOverKeydownHandler);
+                this.gameOverKeydownHandler = null;
+            }
             // Remove overlay
             gameOverOverlay.remove();
             style.remove();
@@ -11361,6 +11009,11 @@ class VibeSurvivor {
             this.disableGameOverScrolling();
             // Reset menu navigation
             this.resetMenuNavigation();
+            // Remove keydown handler
+            if (this.gameOverKeydownHandler) {
+                document.removeEventListener('keydown', this.gameOverKeydownHandler);
+                this.gameOverKeydownHandler = null;
+            }
             // Remove overlay
             gameOverOverlay.remove();
             style.remove();
@@ -11667,12 +11320,14 @@ class VibeSurvivor {
             
             
             
+            // Clear victory screen state
+            this.bossVictoryInProgress = false;
+
             // Process any deferred level ups before continuing
             this.processPendingLevelUps();
-            
+
             // If no pending level ups, continue immediately
             if (this.pendingLevelUps === 0) {
-                
                 this.continueAfterBoss();
             }
         };
@@ -11718,6 +11373,7 @@ class VibeSurvivor {
     continueAfterBoss() {
         // Resume the game with increased difficulty after beating the boss
         this.gameRunning = true;
+        this.timePaused = false;
 
         // Reset touch controls to ensure clean state when continuing after boss defeat
         if (this.touchControls && this.touchControls.joystick) {
@@ -11738,6 +11394,8 @@ class VibeSurvivor {
         
         // Reset boss tracking and schedule the next encounter using game time
         this.bossSpawned = false;
+        // Reset EnemySystem's boss tracking (it won't spawn bosses after the first one)
+        this.enemySystem.bossSpawned = false;
         this.scheduleNextBossSpawn(this.bossRespawnDelay);
         
         // Increase general game difficulty
@@ -11749,11 +11407,13 @@ class VibeSurvivor {
         // Add bonus XP for defeating boss
         this.player.xp += 50;
         this.checkLevelUp();
-        
+
         // Boss defeat notification already shown during animation
-        
-        // Resume game loop
-        this.startAnimationLoop();
+
+        // Resume game loop (only if not showing level up modal)
+        if (this.gameRunning && !this.timePaused) {
+            this.startAnimationLoop();
+        }
     }
 
     scheduleNextBossSpawn(delaySeconds = this.bossRespawnDelay) {
