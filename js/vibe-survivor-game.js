@@ -42,6 +42,12 @@ import { PlayerSystem } from './systems/gameplay/player.js';
 import { PickupSystem } from './systems/gameplay/pickups.js';
 import { EnemySystem } from './systems/gameplay/enemies/enemy-system.js';
 
+// Import Phase 9 systems - Weapons & Progression
+import { WeaponSystem } from './systems/gameplay/weapons/weapon-base.js';
+import { ProjectileSystem } from './systems/gameplay/weapons/projectiles.js';
+import { XPSystem } from './systems/gameplay/progression/xp-system.js';
+import { UpgradeSystem } from './systems/gameplay/progression/upgrades.js';
+
 class VibeSurvivor {
     constructor() {
         this.canvas = null;
@@ -79,6 +85,12 @@ class VibeSurvivor {
         this.playerSystem = new PlayerSystem();
         this.pickupSystem = new PickupSystem();
         this.enemySystem = new EnemySystem();
+
+        // Initialize Phase 9 systems - Weapons & Progression
+        this.weaponSystem = new WeaponSystem();
+        this.projectileSystem = new ProjectileSystem();
+        this.xpSystem = new XPSystem();
+        this.upgradeSystem = new UpgradeSystem();
 
         // Convenience properties (delegate to spriteManager for backward compatibility)
         this.playerSprites = this.spriteManager.playerSprites;
