@@ -63,6 +63,10 @@ import { WeaponInfoModal } from './systems/ui/modals/weapon-info.js';
 import { StatsModal } from './systems/ui/modals/stats.js';
 import { VictoryModal } from './systems/ui/modals/victory.js';
 
+// Import Phase 11 systems - Engine & Audio
+import { AudioManager } from './systems/audio/audio-manager.js';
+import { GameLoop, EngineTimer, FrameRateCounter } from './core/engine.js';
+
 class VibeSurvivor {
     constructor() {
         this.canvas = null;
@@ -125,6 +129,12 @@ class VibeSurvivor {
             stats: new StatsModal(),
             victory: new VictoryModal()
         };
+
+        // Initialize Phase 11 systems - Engine & Audio
+        this.audioManager = new AudioManager();
+        this.gameLoopManager = new GameLoop(); // Renamed to avoid conflict with existing gameLoop() method
+        this.engineTimer = new EngineTimer();
+        this.frameRateCounter = new FrameRateCounter();
 
         // Convenience properties (delegate to spriteManager for backward compatibility)
         this.playerSprites = this.spriteManager.playerSprites;
@@ -193,10 +203,9 @@ class VibeSurvivor {
         this.overlayLocks = 0;
         
         // Background music
-        this.backgroundMusic = new Audio('sound/Vibe_Survivor.mp3');
-        this.backgroundMusic.loop = true;
-        this.backgroundMusic.volume = 0.3; // Adjust volume as needed
-        this.audioMuted = false; // Track mute state
+        // NOTE: Audio now managed by AudioManager (Phase 11)
+        // Audio initialization happens in audioManager.init()
+        this.audioMuted = false; // Legacy flag - delegates to audioManager
 
         // NOTE: Sprite loading now handled by SpriteManager
         // this.playerSprites, this.itemIcons, and this.spriteConfig are delegated to spriteManager
@@ -453,10 +462,12 @@ class VibeSurvivor {
 
         // Phase 2: Load sounds (50%)
         updateProgress(50, 2);
-        if (this.backgroundMusic && this.backgroundMusic.readyState < 2) {
+        // Initialize audio manager (Phase 11)
+        await this.audioManager.init();
+        if (this.audioManager.music && this.audioManager.music.readyState < 2) {
             await new Promise(resolve => {
-                this.backgroundMusic.addEventListener('canplaythrough', resolve, { once: true });
-                this.backgroundMusic.addEventListener('error', resolve, { once: true });
+                this.audioManager.music.addEventListener('canplaythrough', resolve, { once: true });
+                this.audioManager.music.addEventListener('error', resolve, { once: true });
                 setTimeout(resolve, 1000); // Timeout after 1s
             });
         }
@@ -3771,12 +3782,11 @@ class VibeSurvivor {
             this.createXPOrb(orbX, orbY);
         }
 
-        // Start background music when game actually begins
+        // Start background music when game actually begins (Phase 11 - AudioManager)
         try {
-            this.backgroundMusic.currentTime = 0;
-            // Respect mute state
-            this.backgroundMusic.volume = this.audioMuted ? 0 : 0.3;
-            this.backgroundMusic.play();
+            this.audioManager.resetMusic();
+            this.audioManager.setMuted(this.audioMuted);
+            this.audioManager.playMusic();
             // Background music started
         } catch (e) {
             console.warn('Could not start background music:', e);
@@ -4067,10 +4077,8 @@ class VibeSurvivor {
                 this.updateMenuSelection();
             }
             
-            // Pause background music
-            if (this.backgroundMusic && !this.backgroundMusic.paused) {
-                this.backgroundMusic.pause();
-            }
+            // Pause background music (Phase 11 - AudioManager)
+            this.audioManager.pauseMusic();
         } else {
             // Update pause button to show pause symbol
             if (pauseBtn) pauseBtn.textContent = '||';
@@ -4081,14 +4089,9 @@ class VibeSurvivor {
             // Deactivate keyboard navigation
             this.resetMenuNavigation();
 
-            // Resume background music
-            if (this.backgroundMusic && this.backgroundMusic.paused) {
-                // Respect mute state when resuming
-                this.backgroundMusic.volume = this.audioMuted ? 0 : 0.3;
-                this.backgroundMusic.play().catch(e => {
-                    console.warn('Could not resume background music:', e);
-                });
-            }
+            // Resume background music (Phase 11 - AudioManager)
+            this.audioManager.setMuted(this.audioMuted);
+            this.audioManager.resumeMusic();
         }
     }
 
@@ -4096,13 +4099,12 @@ class VibeSurvivor {
         this.audioMuted = !this.audioMuted;
         const muteBtn = document.getElementById('mute-btn');
 
+        // Use AudioManager (Phase 11)
+        this.audioManager.setMuted(this.audioMuted);
+
         if (this.audioMuted) {
-            // Mute the audio
-            this.backgroundMusic.volume = 0;
             if (muteBtn) muteBtn.textContent = this.t('unmute');
         } else {
-            // Unmute the audio
-            this.backgroundMusic.volume = 0.3;
             if (muteBtn) muteBtn.textContent = this.t('mute');
         }
 
@@ -10943,10 +10945,13 @@ class VibeSurvivor {
 
                 <div class="game-over-scroll-content" tabindex="0" style="
                     overflow-y: auto !important;
-                    max-height: calc(80vh - 180px) !important;
+                    overflow-x: hidden !important;
+                    max-height: calc(80vh - 220px) !important;
                     padding-right: 10px !important;
-                    margin-bottom: 20px !important;
+                    margin-bottom: 10px !important;
+                    flex: 1 1 auto !important;
                     -webkit-overflow-scrolling: touch !important;
+                    outline: none !important;
                 ">
                     <!-- Basic Stats Section -->
                     <div style="margin-bottom: 20px !important;">
@@ -11000,7 +11005,17 @@ class VibeSurvivor {
                     ${playerStatsSection}
                 </div>
 
-                <div style="display: flex; gap: 15px; justify-content: center; margin-top: auto;">
+                <div style="
+                    display: flex;
+                    gap: 15px;
+                    justify-content: center;
+                    margin-top: auto;
+                    position: sticky !important;
+                    bottom: 0 !important;
+                    background: linear-gradient(135deg, #0a0a1a, #1a0a2a) !important;
+                    padding: 10px 0 !important;
+                    z-index: 10 !important;
+                ">
                     <button id="overlay-retry-btn" style="
                         background: transparent !important;
                         border: 2px solid #00ffff !important;
@@ -11068,6 +11083,23 @@ class VibeSurvivor {
         const gameOverScrollContent = gameOverOverlay.querySelector('.game-over-scroll-content');
         if (gameOverScrollContent) {
             gameOverScrollContent.focus({ preventScroll: true });
+
+            // Re-focus scroll content when clicked (to ensure keyboard scrolling works)
+            gameOverScrollContent.addEventListener('click', (e) => {
+                // Don't interfere with button clicks
+                if (!e.target.closest('button')) {
+                    gameOverScrollContent.focus({ preventScroll: true });
+                }
+            });
+
+            // Add scroll indicator if content is scrollable
+            const checkScrollable = () => {
+                const isScrollable = gameOverScrollContent.scrollHeight > gameOverScrollContent.clientHeight;
+                if (isScrollable) {
+                    gameOverScrollContent.style.borderBottom = '2px solid rgba(0, 255, 255, 0.3)';
+                }
+            };
+            setTimeout(checkScrollable, 100);
         }
 
         // Add keyboard scrolling handler
@@ -11075,10 +11107,22 @@ class VibeSurvivor {
             this.gameOverKeydownHandler = (event) => {
                 const key = event.key;
                 if (!document.getElementById('survivor-game-over-overlay')) return;
-                if (key === 'ArrowUp' || key === 'ArrowDown' || key === 'Up' || key === 'Down' || key === 'w' || key === 'W' || key === 's' || key === 'S') {
-                    if (this.menuNavigationState.active && this.menuNavigationState.menuType === 'gameOver') {
+
+                // Check if we're pressing scroll keys
+                const isScrollKey = key === 'ArrowUp' || key === 'ArrowDown' || key === 'Up' || key === 'Down' || key === 'w' || key === 'W' || key === 's' || key === 'S';
+
+                if (isScrollKey) {
+                    // Check if scroll content is focused (allow scrolling)
+                    const scrollContent = document.querySelector('.game-over-scroll-content');
+                    const isFocusedOnScroll = scrollContent && document.activeElement === scrollContent;
+
+                    // If menu navigation is active for buttons, skip (let it handle navigation)
+                    // But if scroll content is focused, allow scrolling
+                    if (this.menuNavigationState.active && this.menuNavigationState.menuType === 'gameover' && !isFocusedOnScroll) {
                         return;
                     }
+
+                    // If focused on scroll content or not in menu nav, allow scrolling
                     event.preventDefault();
                     const direction = (key === 'ArrowUp' || key === 'Up' || key === 'w' || key === 'W') ? 'up' : 'down';
                     this.scrollGameOverContent(direction);
@@ -11570,10 +11614,9 @@ class VibeSurvivor {
             this.gameLoopId = null;
         }
         
-        // Stop background music immediately
+        // Stop background music immediately (Phase 11 - AudioManager)
         try {
-            this.backgroundMusic.pause();
-            this.backgroundMusic.currentTime = 0;
+            this.audioManager.stopMusic();
         } catch (e) {
             console.warn('Could not stop background music:', e);
         }
