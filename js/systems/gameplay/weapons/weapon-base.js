@@ -42,6 +42,7 @@ export class WeaponSystem {
             spreadCount: config.spreadCount || 0,
             spreadAngle: config.spreadAngle || 0,
             pelletCount: config.pelletCount || 0,
+            isMergeWeapon: config.isMergeWeapon || false,
             lastFire: 0,
             projectileCount: 1
         };
@@ -62,9 +63,14 @@ export class WeaponSystem {
         // Increase damage by 30% per level
         weapon.damage = Math.floor(weapon.damage * (1 + WEAPON_UPGRADES.DAMAGE_PER_LEVEL));
 
-        // Some weapons get additional projectiles at higher levels
-        if (weapon.level % 2 === 0 && weapon.type !== 'laser' && weapon.type !== 'railgun') {
-            weapon.projectileCount++;
+        // Projectile count increases every level from level 2 onwards
+        // Game-specific behavior: more generous than every-other-level
+        if (weapon.level === 2 && (!weapon.projectileCount || weapon.projectileCount === 1)) {
+            // Double projectile count at level 2
+            weapon.projectileCount = 2;
+        } else if (weapon.level >= 2 && weapon.projectileCount && weapon.projectileCount < 5) {
+            // Increment each level, capped at 5
+            weapon.projectileCount = Math.min(weapon.projectileCount + 1, 5);
         }
     }
 
@@ -119,22 +125,22 @@ export class WeaponSystem {
      * @returns {string|null} Merged weapon type or null if can't merge
      */
     canMerge(weapon1, weapon2) {
-        // Basic + Laser = Homing Laser
-        if ((weapon1.type === 'basic' && weapon2.type === 'laser') ||
-            (weapon1.type === 'laser' && weapon2.type === 'basic')) {
+        // Laser + Missiles (both level 3+) = Homing Laser
+        if ((weapon1.type === 'laser' && weapon2.type === 'missiles' && weapon1.level >= 3 && weapon2.level >= 3) ||
+            (weapon1.type === 'missiles' && weapon2.type === 'laser' && weapon1.level >= 3 && weapon2.level >= 3)) {
             return 'homing_laser';
         }
 
-        // Spread + Plasma = Shockburst
-        if ((weapon1.type === 'spread' && weapon2.type === 'plasma') ||
-            (weapon1.type === 'plasma' && weapon2.type === 'spread')) {
+        // Lightning + Plasma (both level 3+) = Shockburst
+        if ((weapon1.type === 'lightning' && weapon2.type === 'plasma' && weapon1.level >= 3 && weapon2.level >= 3) ||
+            (weapon1.type === 'plasma' && weapon2.type === 'lightning' && weapon1.level >= 3 && weapon2.level >= 3)) {
             return 'shockburst';
         }
 
-        // Basic + Shotgun = Gatling
-        if ((weapon1.type === 'basic' && weapon2.type === 'shotgun') ||
-            (weapon1.type === 'shotgun' && weapon2.type === 'basic')) {
-            return 'gatling';
+        // Rapid Fire (level 5+) + Spread Shot (level 3+) = Gatling Gun
+        if ((weapon1.type === 'rapid' && weapon2.type === 'spread' && weapon1.level >= 5 && weapon2.level >= 3) ||
+            (weapon1.type === 'spread' && weapon2.type === 'rapid' && weapon1.level >= 3 && weapon2.level >= 5)) {
+            return 'gatling_gun';
         }
 
         return null;
@@ -160,8 +166,9 @@ export class WeaponSystem {
         // Create new merged weapon
         const mergedWeapon = this.createWeapon(mergedType);
 
-        // Inherit the higher level
-        mergedWeapon.level = Math.max(weapon1.level, weapon2.level);
+        // Start at level 1 but with 4 projectiles for power
+        mergedWeapon.level = 1;
+        mergedWeapon.projectileCount = 4;
 
         // Remove old weapons (remove higher index first to avoid index shift)
         const removeFirst = Math.max(index1, index2);

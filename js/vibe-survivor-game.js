@@ -7607,127 +7607,79 @@ class VibeSurvivor {
     
     upgradeExistingWeapon(weaponIndex) {
         const weapon = this.weapons[weaponIndex];
-        weapon.level++;
-        weapon.damage = Math.floor(weapon.damage * 1.3);
-        // Special handling for merge weapons - don't increase their fire rate
-        if (weapon.isMergeWeapon) {
-            // Keep merge weapons at their original fire rate for consistent timing
-            weapon.fireRate = weapon.fireRate;
-        } else {
+
+        // Phase 9 integration - Use WeaponSystem for core upgrade logic
+        // This handles: level++, damage increase, projectile count increase
+        this.weaponSystem.upgradeWeapon(weapon);
+
+        // Game-specific enhancements - Fire rate adjustment
+        if (!weapon.isMergeWeapon) {
+            // Non-merge weapons get faster fire rate
             weapon.fireRate = Math.max(10, weapon.fireRate - 3);
         }
-        
-        // Double projectile count at level 2
-        if (weapon.level === 2 && !weapon.projectileCount) {
-            weapon.projectileCount = 2;
-        } else if (weapon.level >= 2 && weapon.projectileCount) {
-            weapon.projectileCount = Math.min(weapon.projectileCount + 1, 5); // Cap at 5 projectiles
-        }
-        
-        // Special upgrades at certain levels
+        // Note: Merge weapons keep their original fire rate for consistent timing
+
+        // Special upgrades at certain levels (legacy transformations)
         if (weapon.level === 5 && weapon.type === 'basic') {
             weapon.type = 'rapid';
         } else if (weapon.level === 8 && weapon.type === 'spread_shot') {
             weapon.type = 'spread';
         }
-        
+
         // Check for weapon merges after upgrade
         this.checkForWeaponMerges();
     }
     
     addNewWeapon(weaponType) {
-        const weaponConfigs = {
-            'spread': { damage: 12, fireRate: 40, range: 200, projectileSpeed: 6 },
-            'laser': { damage: 25, fireRate: 60, range: 350, projectileSpeed: 12 },
-            'plasma': { damage: 30, fireRate: 80, range: 300, projectileSpeed: 7 },
-            'shotgun': { damage: 8, fireRate: 45, range: 150, projectileSpeed: 10 },
-            'lightning': { damage: 20, fireRate: 100, range: 250, projectileSpeed: 0 },
-            'flamethrower': { damage: 6, fireRate: 15, range: 120, projectileSpeed: 4 },
-            'railgun': { damage: 50, fireRate: 90, range: 500, projectileSpeed: 15, piercing: 999 },
-            'missiles': { damage: 35, fireRate: 120, range: 400, projectileSpeed: 5, homing: true, explosionRadius: 60 },
-            'homing_laser': { damage: 24, fireRate: 100, range: 400, projectileSpeed: 8, homing: true, piercing: true, isMergeWeapon: true },
-            'shockburst': { damage: 50, fireRate: 80, range: 300, projectileSpeed: 0, explosionRadius: 100, isMergeWeapon: true },
-            'gatling_gun': { damage: 35, fireRate: 4, range: 450, projectileSpeed: 10, isMergeWeapon: true }
-        };
-        
-        const config = weaponConfigs[weaponType];
-        this.weapons.push({
-            type: weaponType,
-            level: 1,
-            lastFire: 0,
-            ...config
-        });
+        // Phase 9 integration - Use WeaponSystem to create weapons
+        const newWeapon = this.weaponSystem.createWeapon(weaponType);
+        if (newWeapon) {
+            this.weapons.push(newWeapon);
+        } else {
+            console.error(`Failed to create weapon: ${weaponType}`);
+        }
     }
     
     checkForWeaponMerges() {
-        // Check for laser + missiles both at level 3
-        const laserWeapon = this.weapons.find(w => w.type === 'laser' && w.level >= 3);
-        const missilesWeapon = this.weapons.find(w => w.type === 'missiles' && w.level >= 3);
-        
-        if (laserWeapon && missilesWeapon) {
-            this.performWeaponMerge('homing_laser', [laserWeapon, missilesWeapon]);
-        }
-        
-        // Check for lightning + plasma both at level 3
-        const lightningWeapon = this.weapons.find(w => w.type === 'lightning' && w.level >= 3);
-        const plasmaWeapon = this.weapons.find(w => w.type === 'plasma' && w.level >= 3);
-        
-        if (lightningWeapon && plasmaWeapon) {
-            this.performWeaponMerge('shockburst', [lightningWeapon, plasmaWeapon]);
-        }
-        
-        // Check for rapid fire level 5 + spread shot level 3
-        const rapidWeapon = this.weapons.find(w => w.type === 'rapid' && w.level >= 5);
-        const spreadWeapon = this.weapons.find(w => w.type === 'spread' && w.level >= 3);
-        
-        if (rapidWeapon && spreadWeapon) {
-            this.performWeaponMerge('gatling_gun', [rapidWeapon, spreadWeapon]);
-        }
-    }
-    
-    performWeaponMerge(mergeWeaponType, sourceWeapons) {
-        // Remove source weapons from array
-        sourceWeapons.forEach(sourceWeapon => {
-            const index = this.weapons.indexOf(sourceWeapon);
-            if (index > -1) {
-                this.weapons.splice(index, 1);
+        // Phase 9 integration - Use WeaponSystem for merge detection and execution
+        // Check all weapon pairs for possible merges
+        for (let i = 0; i < this.weapons.length; i++) {
+            for (let j = i + 1; j < this.weapons.length; j++) {
+                const mergedType = this.weaponSystem.canMerge(this.weapons[i], this.weapons[j]);
+                if (mergedType) {
+                    // Perform merge using WeaponSystem
+                    if (this.weaponSystem.mergeWeapons(this.weapons, i, j)) {
+                        // Show merge notification
+                        setTimeout(() => {
+                            this.showUpgradeNotification(
+                                `${this.getWeaponName(mergedType)} - WEAPONS MERGED!`,
+                                this.getWeaponIcon(mergedType)
+                            );
+                        }, 100);
+                        return; // Only merge one pair at a time
+                    }
+                }
             }
-        });
-        
-        // Add merged weapon starting at level 1 with projectileCount 4
-        const mergedWeapon = {
-            type: mergeWeaponType,
-            level: 1,
-            lastFire: 0,
-            projectileCount: 4,
-            ...this.getWeaponConfig(mergeWeaponType)
-        };
-        
-        this.weapons.push(mergedWeapon);
-        
-        // Show merge notification with reduced delay since we have better stacking
-        setTimeout(() => {
-            this.showUpgradeNotification(`${this.getWeaponName(mergeWeaponType)} - WEAPONS MERGED!`, this.getWeaponIcon(mergeWeaponType));
-        }, 100); // Reduced from 200ms to 100ms delay
+        }
     }
-    
-    getWeaponConfig(weaponType) {
-        const weaponConfigs = {
-            'spread': { damage: 12, fireRate: 40, range: 200, projectileSpeed: 6 },
-            'laser': { damage: 25, fireRate: 60, range: 350, projectileSpeed: 12, piercing: 999 },
-            'plasma': { damage: 30, fireRate: 80, range: 300, projectileSpeed: 7 },
-            'shotgun': { damage: 8, fireRate: 45, range: 150, projectileSpeed: 10 },
-            'lightning': { damage: 20, fireRate: 100, range: 250, projectileSpeed: 0 },
-            'flamethrower': { damage: 6, fireRate: 15, range: 120, projectileSpeed: 4 },
-            'railgun': { damage: 50, fireRate: 120, range: 500, projectileSpeed: 12, piercing: 999 },
-            'missiles': { damage: 35, fireRate: 120, range: 400, projectileSpeed: 5, homing: true, explosionRadius: 60 },
-            'homing_laser': { damage: 16, fireRate: 100, range: 400, projectileSpeed: 8, homing: true, piercing: true, isMergeWeapon: true },
-            'shockburst': { damage: 50, fireRate: 80, range: 300, projectileSpeed: 0, explosionRadius: 100, isMergeWeapon: true },
-            'gatling_gun': { damage: 35, fireRate: 4, range: 450, projectileSpeed: 10, isMergeWeapon: true }
-        };
-        return weaponConfigs[weaponType] || {};
+
+    performWeaponMerge(mergeWeaponType, sourceWeapons) {
+        // Legacy method - kept for backward compatibility but now uses WeaponSystem
+        const index1 = this.weapons.indexOf(sourceWeapons[0]);
+        const index2 = this.weapons.indexOf(sourceWeapons[1]);
+
+        if (index1 !== -1 && index2 !== -1) {
+            if (this.weaponSystem.mergeWeapons(this.weapons, index1, index2)) {
+                setTimeout(() => {
+                    this.showUpgradeNotification(
+                        `${this.getWeaponName(mergeWeaponType)} - WEAPONS MERGED!`,
+                        this.getWeaponIcon(mergeWeaponType)
+                    );
+                }, 100);
+            }
+        }
     }
-    
+
     addPassiveAbility(passiveId) {
         switch (passiveId) {
             case 'health_boost':
@@ -7741,9 +7693,8 @@ class VibeSurvivor {
                 }
                 break;
             case 'speed_boost':
-                // Apply multiplicative 10% speed boost to current speed
-                this.player.speed *= 1.1;
                 // Track count for stackable passive (capped at 3)
+                // PlayerSystem (Phase 8) applies the actual speed boost during movement
                 if (typeof this.player.passives.speed_boost === 'number') {
                     this.player.passives.speed_boost = Math.min(3, this.player.passives.speed_boost + 1);
                 } else {
@@ -8134,24 +8085,12 @@ class VibeSurvivor {
         }
     }
     
-    // Get projectile from pool
+    // Get projectile from pool - Phase 9 integration
     getPooledProjectile() {
-        for (let i = 0; i < this.projectilePool.length; i++) {
-            if (!this.projectilePool[i].active) {
-                const projectile = this.projectilePool[i];
-                projectile.active = true;
-                projectile.trail = []; // Reset trail
-                projectile.rotation = 0;
-                projectile.homing = false;
-                projectile.target = null;
-                return projectile;
-            }
-        }
-        
         // Safety limit: Prevent memory issues with too many complex weapons
         const activeProjectiles = this.projectiles.length;
         const maxProjectiles = 1000; // Reasonable limit for performance
-        
+
         if (activeProjectiles >= maxProjectiles) {
             console.warn('🚨 Projectile limit reached:', activeProjectiles);
             // Return oldest projectile instead of creating new one
@@ -8162,21 +8101,25 @@ class VibeSurvivor {
                 oldestProjectile.rotation = 0;
                 oldestProjectile.homing = false;
                 oldestProjectile.target = null;
+                oldestProjectile.targetEnemy = null;
+                oldestProjectile.owner = 'player'; // Ensure player ownership
                 return oldestProjectile;
             }
         }
-        
-        // If no available projectile in pool, expand pool dynamically
-        const newProjectile = {
-            x: 0, y: 0, vx: 0, vy: 0,
-            damage: 0, speed: 0, life: 0,
-            size: 3, color: '#ffffff',
-            type: 'basic', active: true,
-            trail: [], rotation: 0,
-            homing: false, target: null
-        };
-        this.projectilePool.push(newProjectile);
-        return newProjectile;
+
+        // Use ProjectileSystem for pooling
+        const projectile = this.projectileSystem.getPooled();
+
+        // Reset properties for reuse
+        projectile.active = true;
+        projectile.trail = [];
+        projectile.rotation = 0;
+        projectile.homing = false;
+        projectile.target = null;
+        projectile.targetEnemy = null;
+        projectile.owner = 'player'; // CRITICAL: Ensure player ownership to prevent boss missiles from attacking player
+
+        return projectile;
     }
 
     getPooledXPOrb() {
@@ -9253,26 +9196,9 @@ class VibeSurvivor {
     
     // Return projectile to pool
     returnProjectileToPool(projectile) {
-        // Mark as inactive for reuse
-        projectile.active = false;
-        // Reset properties for reuse
-        projectile.x = 0;
-        projectile.y = 0;
-        projectile.vx = 0;
-        projectile.vy = 0;
-        projectile.life = 0;
-        projectile.damage = 0;
-        projectile.type = 'basic';
-        projectile.color = '#ffffff';
-        projectile.size = 3;
-        projectile.homing = false;
-        projectile.target = null;
-        projectile.targetEnemy = null;
-        projectile.trail = [];
-        projectile.rotation = 0;
-        projectile.owner = null;
-        projectile.explosionRadius = 0;
-        projectile.homingStrength = 0;
+        // Phase 9 integration - Use ProjectileSystem for pool management
+        projectile.active = false; // Mark inactive for compatibility
+        this.projectileSystem.returnToPool(projectile);
     }
 
     
@@ -11556,9 +11482,9 @@ class VibeSurvivor {
         this.spawnRate = Math.max(0.3, this.spawnRate * 0.9); // Spawn enemies faster
         
         // Player health is maintained from battle as a challenge
-        
-        // Add bonus XP for defeating boss
-        this.player.xp += 50;
+
+        // Add bonus XP for defeating boss - Phase 9 integration
+        this.xpSystem.addXP(this.player, 50);
         this.checkLevelUp();
 
         // Boss defeat notification already shown during animation

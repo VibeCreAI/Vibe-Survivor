@@ -52,16 +52,25 @@ Track your progress through the refactoring. Check off each phase as you complet
 ### Final Integration (Phase 11) - ~75 min
 - [x] **Phase 11**: Game Engine & Audio (75 min) - Final orchestration ✅
 
+### Code Replacement Phases (12a-12d) - ~200 min
+**CRITICAL**: Phases 8-10 created new systems but didn't replace old code. These phases actually integrate them.
+
+- [x] **Phase 12a**: Replace Phase 8 Code (50 min) - Integrate Player, Enemy, Pickup Systems ✅ (Already done!)
+- [ ] **Phase 12b**: Replace Phase 9 Code (50 min) - Integrate Weapon, Projectile, XP, Upgrade Systems
+- [ ] **Phase 12c**: Replace Phase 10 Code (70 min) - Integrate HUD, Modals, Touch Controls
+- [ ] **Phase 12d**: Replace Phase 11 Code (30 min) - Integrate Game Loop Utilities
+- [ ] **Checkpoint #4**: Integration Test (15 min) - All new systems fully integrated
+
 ### Post-Refactoring
-- [ ] **Cleanup**: Remove old monolith code
+- [ ] **Cleanup**: Remove old monolith code and dead imports
 - [ ] **Documentation**: Update README, ARCHITECTURE
 - [ ] **Final Testing**: Complete smoke test on multiple browsers
 - [ ] **Git**: Commit final state and tag release
 
 **Progress Tracking:**
-- Phases Completed: 13 / 14 ✅
-- Checkpoints Passed: 3 / 3 ✅
-- Estimated Time Remaining: ~0 hours (Post-Refactoring cleanup remaining)
+- Phases Completed: 13 / 18 (72%)
+- Checkpoints Passed: 3 / 4 ✅
+- Estimated Time Remaining: ~3.58 hours (~215 min)
 - Actual Time Spent: ~11.66 hours (~700 min)
 
 ---
@@ -2444,6 +2453,619 @@ startButton.addEventListener('click', async () => {
 - [ ] Test all enemy types
 - [ ] Test death and restart
 - [ ] Game remains stable and responsive
+
+
+---
+
+## Phase 12a: Replace Phase 8 Code - Integrate Gameplay Entities
+
+**Goal**: Replace old player, enemy, and pickup code with Phase 8 systems
+
+**Time**: 50 minutes (35 min implementation + 15 min testing)
+
+**Risk Level**: 🟠 Medium-High (core gameplay logic)
+
+**Dependencies**: Phase 8 systems must exist
+
+**IMPORTANT**: Phase 8 created PlayerSystem, EnemySystem, and PickupSystem but old code still runs. This phase actually uses them.
+
+### Current State Analysis
+
+**PlayerSystem exists but NOT used:**
+- Old code: `updatePlayer()`, `checkLevelUp()`, `updatePassives()` methods in main file
+- New code: `PlayerSystem` with same methods, sitting unused
+
+**EnemySystem exists but NOT used:**
+- Old code: `updateEnemies()`, `spawnEnemy()`, inline enemy update logic
+- New code: `EnemySystem.updateEnemy()`, `.spawnEnemy()`, sitting unused
+
+**PickupSystem exists but NOT used:**
+- Old code: `updatePickups()`, `spawnPickup()`, inline pickup logic
+- New code: `PickupSystem` methods, sitting unused
+
+### Implementation Steps
+
+#### 12a.1: Replace Player Update Logic
+
+Find and replace in `vibe-survivor-game.js`:
+
+**OLD CODE (to remove):**
+```javascript
+// In gameLoop() or update():
+this.updatePlayer();
+this.checkLevelUp();
+this.updatePassives();
+```
+
+**NEW CODE (use existing PlayerSystem):**
+```javascript
+// In gameLoop() or update():
+this.playerSystem.updatePlayer(this.player, this.keys, this.touchControls, deltaTime);
+this.playerSystem.checkLevelUp(this.player, this.weapons, this.passives);
+this.playerSystem.updatePassives(this.player, this.passives, deltaTime);
+```
+
+#### 12a.2: Replace Enemy Update Logic
+
+**OLD CODE (to remove):**
+```javascript
+updateEnemies() {
+    // Inline enemy update logic (~100+ lines)
+}
+```
+
+**NEW CODE:**
+```javascript
+updateEnemies() {
+    // Delegate to EnemySystem
+    for (const enemy of this.enemies) {
+        this.enemySystem.updateEnemy(enemy, this.player, deltaTime);
+    }
+}
+```
+
+#### 12a.3: Replace Pickup Logic
+
+**OLD CODE (to remove):**
+```javascript
+updatePickups() {
+    // Inline pickup logic
+}
+spawnPickup(x, y, type) {
+    // Inline spawn logic
+}
+```
+
+**NEW CODE:**
+```javascript
+updatePickups() {
+    this.pickups = this.pickupSystem.updatePickups(
+        this.pickups,
+        this.player,
+        this.passives,
+        deltaTime
+    );
+}
+
+spawnPickup(x, y, type) {
+    return this.pickupSystem.createPickup(x, y, type);
+}
+```
+
+### Testing Checklist
+
+**STOP - Do NOT proceed until ALL checks pass:**
+
+- [ ] Player movement works (WASD/Arrow keys)
+- [ ] Player dash works (Spacebar)
+- [ ] Player health updates correctly
+- [ ] XP collection works
+- [ ] Level up triggers at correct XP
+- [ ] Passive abilities apply correctly
+- [ ] Enemies spawn correctly
+- [ ] Enemies move and attack player
+- [ ] Enemy behaviors work (chase, dodge, tank, fly, teleport)
+- [ ] Boss enemies work
+- [ ] Pickups spawn correctly
+- [ ] XP orbs collect when player touches them
+- [ ] Health pickups heal player
+- [ ] Magnet passive affects pickup range
+- [ ] No console errors
+- [ ] Game runs smoothly at 60 FPS
+
+**If ANY test fails, rollback and debug before proceeding!**
+
+
+---
+
+## Phase 12b: Replace Phase 9 Code - Integrate Weapons & Progression
+
+**Goal**: Replace old weapon, projectile, XP, and upgrade code with Phase 9 systems
+
+**Time**: 50 minutes (35 min implementation + 15 min testing)
+
+**Risk Level**: 🟠 Medium-High (combat and progression)
+
+**Dependencies**: Phase 9 systems must exist
+
+**IMPORTANT**: Phase 9 created WeaponSystem, ProjectileSystem, XPSystem, UpgradeSystem but old code still runs.
+
+### Current State Analysis
+
+**Systems exist but NOT used:**
+- WeaponSystem: `createWeapon()`, `upgradeWeapon()` exist but old inline code runs
+- ProjectileSystem: Object pooling exists but old `getPooledProjectile()` runs
+- XPSystem: `getXPForLevel()`, `addXP()` exist but old inline XP logic runs
+- UpgradeSystem: `getUpgradeChoices()` exists but old upgrade logic runs
+
+### Implementation Steps
+
+#### 12b.1: Replace Weapon Creation
+
+**OLD CODE:**
+```javascript
+createWeapon(type) {
+    // Inline weapon creation (~30 lines)
+    const config = WEAPONS[type.toUpperCase()];
+    return { type, level: 1, damage: config.damage, ... };
+}
+```
+
+**NEW CODE:**
+```javascript
+createWeapon(type) {
+    return this.weaponSystem.createWeapon(type);
+}
+```
+
+#### 12b.2: Replace Weapon Upgrade Logic
+
+**OLD CODE in upgrade selection:**
+```javascript
+// In selectUpgrade():
+weapon.level++;
+weapon.damage = Math.floor(weapon.damage * 1.3);
+if (weapon.level % 2 === 0) weapon.projectileCount++;
+```
+
+**NEW CODE:**
+```javascript
+// In selectUpgrade():
+this.weaponSystem.upgradeWeapon(weapon);
+```
+
+#### 12b.3: Replace Projectile Pooling
+
+**OLD CODE:**
+```javascript
+getPooledProjectile() {
+    // Inline pooling logic
+    if (this.projectilePool.length > 0) {
+        return this.projectilePool.pop();
+    }
+    return { x: 0, y: 0, ... };
+}
+```
+
+**NEW CODE:**
+```javascript
+getPooledProjectile() {
+    return this.projectileSystem.getPooled();
+}
+
+returnProjectileToPool(projectile) {
+    this.projectileSystem.returnToPool(projectile);
+}
+```
+
+#### 12b.4: Replace XP Logic
+
+**OLD CODE:**
+```javascript
+// Inline XP calculation
+const xpRequired = this.player.level * 5 + 10;
+if (this.player.xp >= xpRequired) {
+    this.player.level++;
+    this.player.xp -= xpRequired;
+}
+```
+
+**NEW CODE:**
+```javascript
+const xpRequired = this.xpSystem.getXPForLevel(this.player.level);
+if (this.xpSystem.canLevelUp(this.player)) {
+    this.player.level++;
+    this.player.xp -= xpRequired;
+}
+```
+
+#### 12b.5: Replace Upgrade Choice Generation
+
+**OLD CODE:**
+```javascript
+getUpgradeChoices() {
+    // Inline upgrade choice logic (~100 lines)
+    const choices = [];
+    // Build weapon upgrades
+    // Build new weapons
+    // Build passives
+    return choices;
+}
+```
+
+**NEW CODE:**
+```javascript
+getUpgradeChoices() {
+    return this.upgradeSystem.getUpgradeChoices(
+        this.weapons,
+        this.passives,
+        3 // choice count
+    );
+}
+```
+
+### Testing Checklist
+
+**STOP - Do NOT proceed until ALL checks pass:**
+
+- [ ] All weapon types fire correctly
+- [ ] Weapon damage calculated correctly
+- [ ] Weapon fire rate works
+- [ ] Projectiles spawn from weapon pool
+- [ ] Projectiles return to pool when destroyed
+- [ ] No memory leaks (pool doesn't grow infinitely)
+- [ ] XP orbs give correct XP amount
+- [ ] Level up triggers at correct threshold
+- [ ] Level up modal shows 3 upgrade choices
+- [ ] Weapon upgrades apply correctly
+- [ ] New weapons can be acquired
+- [ ] Passive abilities can be selected
+- [ ] Max weapons limit respected (4)
+- [ ] Max level limit respected (10)
+- [ ] No console errors
+- [ ] Combat feels responsive
+
+**If ANY test fails, rollback and debug before proceeding!**
+
+
+---
+
+## Phase 12c: Replace Phase 10 Code - Integrate UI Systems
+
+**Goal**: Replace old HUD, modal, and touch control code with Phase 10 systems
+
+**Time**: 70 minutes (50 min implementation + 20 min testing)
+
+**Risk Level**: 🔴 High (many UI components, visual regression risk)
+
+**Dependencies**: Phase 10 systems must exist
+
+**IMPORTANT**: Phase 10 created HUDSystem and 10 modal classes but old UI code still runs.
+
+### Current State Analysis
+
+**HUDSystem exists but NOT used:**
+- Old code: `updateUI()` method updates HUD inline (~80 lines)
+- New code: `HUDSystem.updateAll()` exists but never called
+
+**Modal classes exist but NOT used:**
+- Old code: `showGameOverModal()` creates HTML dynamically (~300 lines)
+- New code: `GameOverModal` class exists but never instantiated with DOM
+- Same for all 10 modal types
+
+**TouchControlsUI exists but NOT used:**
+- Old code: Touch control logic inline
+- New code: `TouchControlsUI` exists but never used
+
+### Implementation Steps
+
+#### 12c.1: Replace HUD Update Logic
+
+**OLD CODE:**
+```javascript
+updateUI() {
+    // 80+ lines of inline HUD updates
+    const healthPercent = (this.player.health / this.player.maxHealth) * 100;
+    document.getElementById('header-health-fill').style.width = `${healthPercent}%`;
+    // ... many more lines
+}
+```
+
+**NEW CODE:**
+```javascript
+updateUI() {
+    this.hudSystem.updateAll(
+        {
+            player: this.player,
+            weapons: this.weapons,
+            game: {
+                gameTime: this.gameTime,
+                bossesKilled: this.bossesKilled
+            }
+        },
+        this.getWeaponIconForHeader.bind(this),
+        this.getWeaponName.bind(this)
+    );
+}
+```
+
+#### 12c.2: Replace Game Over Modal
+
+**CRITICAL CHANGE - This is where your bug fix needs to go!**
+
+**OLD CODE (~300 lines):**
+```javascript
+showGameOverModal() {
+    // Creates entire modal HTML dynamically
+    const gameOverOverlay = document.createElement('div');
+    gameOverOverlay.innerHTML = `...300 lines...`;
+    // Add event listeners inline
+    // Manual scroll handling
+}
+```
+
+**NEW CODE:**
+```javascript
+showGameOverModal() {
+    // Use GameOverModal class
+    const finalStats = {
+        level: this.player.level,
+        timeText: this.formatTime(this.gameTime),
+        enemiesKilled: Math.floor(this.gameTime * 1.8),
+        weapons: this.weapons,
+        passives: this.passives
+    };
+
+    this.modals.gameOver.update(finalStats);
+    this.modals.gameOver.show();
+}
+```
+
+**This means you need to update `game-over.js` with your bug fix!**
+
+#### 12c.3: Replace Level Up Modal
+
+**OLD CODE:**
+```javascript
+showLevelUpScreen() {
+    // Creates modal HTML dynamically (~200 lines)
+    const choices = this.getUpgradeChoices();
+    // Render choices inline
+}
+```
+
+**NEW CODE:**
+```javascript
+showLevelUpScreen() {
+    const choices = this.upgradeSystem.getUpgradeChoices(
+        this.weapons,
+        this.passives
+    );
+
+    this.modals.levelUp.update({
+        choices: choices,
+        playerLevel: this.player.level
+    });
+    this.modals.levelUp.show();
+}
+```
+
+#### 12c.4: Replace All Other Modals
+
+Similar pattern for:
+- Pause menu
+- Settings
+- Help
+- Victory
+- etc.
+
+#### 12c.5: Replace Touch Controls
+
+**OLD CODE:**
+```javascript
+// Inline touch control updates in game loop
+if (this.touchControls.active) {
+    // Update joystick position
+}
+```
+
+**NEW CODE:**
+```javascript
+// In init:
+this.touchControlsUI.init();
+this.touchControlsUI.autoDetect();
+
+// In game loop:
+this.touchControlsUI.updateJoystick(
+    this.touchControls.moveX,
+    this.touchControls.moveY
+);
+```
+
+### Special Considerations
+
+**Game Over Modal Bug Fix:**
+Since we're replacing the old modal code, we need to implement your sticky button fix in `game-over.js`:
+
+1. Update `game-over.js` modal template to include sticky buttons
+2. Add proper focus management for scrolling
+3. Add keyboard scroll handling
+4. Test with lots of upgrades (late game scenario)
+
+### Testing Checklist
+
+**STOP - Do NOT proceed until ALL checks pass:**
+
+- [ ] HUD displays correctly
+- [ ] Health bar updates in real-time
+- [ ] XP bar fills correctly
+- [ ] Level display updates
+- [ ] Time display counts up
+- [ ] Weapon icons show correctly (all 4 slots)
+- [ ] Boss counter appears after first boss kill
+- [ ] Game over modal appears on death
+- [ ] Game over modal shows all stats
+- [ ] Game over modal scrolls with keyboard (W/S, Arrow keys)
+- [ ] Game over buttons work (Retry, Exit)
+- [ ] Game over buttons ALWAYS visible (sticky at bottom)
+- [ ] **Test with 7+ boss kills and many upgrades** (your bug scenario)
+- [ ] Level up modal shows 3 choices
+- [ ] Level up choices are clickable
+- [ ] Selecting upgrade works
+- [ ] Pause menu works (ESC key)
+- [ ] Settings modal works
+- [ ] Touch controls visible on mobile
+- [ ] Touch joystick updates correctly
+- [ ] All modals can be opened
+- [ ] All modals can be closed
+- [ ] No console errors
+- [ ] No visual glitches
+
+**If ANY test fails, rollback and debug before proceeding!**
+
+
+---
+
+## Phase 12d: Replace Phase 11 Code - Integrate Game Loop Utilities
+
+**Goal**: Replace old game loop with GameLoop utility classes
+
+**Time**: 30 minutes (20 min implementation + 10 min testing)
+
+**Risk Level**: 🟡 Medium (game loop is critical but simple)
+
+**Dependencies**: Phase 11 engine.js must exist
+
+**IMPORTANT**: Phase 11 created GameLoop, EngineTimer, FrameRateCounter but old loop still runs.
+
+### Current State Analysis
+
+**Old code:**
+- `gameLoop(timestamp)` method runs the game loop inline
+- Manual deltaTime calculation
+- Inline FPS tracking
+
+**New code:**
+- `GameLoopManager` instance exists but not used
+- `EngineTimer` instance exists but not used
+- `FrameRateCounter` instance exists but not used
+
+### Implementation Steps
+
+#### 12d.1: Optional - Use EngineTimer
+
+**OLD CODE:**
+```javascript
+this.gameTime += deltaTime;
+```
+
+**NEW CODE:**
+```javascript
+this.engineTimer.update(deltaTime);
+this.gameTime = this.engineTimer.getTime();
+```
+
+#### 12d.2: Optional - Use FrameRateCounter
+
+**OLD CODE:**
+```javascript
+// Manual FPS calculation in performanceMonitor
+```
+
+**NEW CODE:**
+```javascript
+this.frameRateCounter.update(performance.now());
+const fps = this.frameRateCounter.getFPS();
+```
+
+#### 12d.3: Optional - Use GameLoop
+
+This is the most complex change and is **OPTIONAL** since the current loop works well.
+
+**Benefits:**
+- Cleaner code
+- Reusable game loop utility
+
+**Risks:**
+- Game loop is critical
+- Current loop is well-tested
+- May introduce timing issues
+
+**Recommendation:** Skip this for now, keep existing loop. The utilities are available if needed later.
+
+### Testing Checklist
+
+**STOP - Do NOT proceed until ALL checks pass:**
+
+- [ ] Game runs at stable 60 FPS
+- [ ] No timing issues
+- [ ] Game time advances correctly
+- [ ] Pause/resume works
+- [ ] No console errors
+- [ ] Game feels responsive
+
+**If ANY test fails, rollback immediately!**
+
+
+---
+
+## Integration Checkpoint #4
+
+**Goal**: Verify ALL new systems are fully integrated and working
+
+**Time**: 15 minutes
+
+**This is a CRITICAL checkpoint - the game must be fully modular now.**
+
+### Complete Integration Checklist
+
+- [ ] **Phase 8 Integration:**
+  - [ ] PlayerSystem fully integrated
+  - [ ] EnemySystem fully integrated
+  - [ ] PickupSystem fully integrated
+  - [ ] Old inline code removed
+
+- [ ] **Phase 9 Integration:**
+  - [ ] WeaponSystem fully integrated
+  - [ ] ProjectileSystem fully integrated
+  - [ ] XPSystem fully integrated
+  - [ ] UpgradeSystem fully integrated
+  - [ ] Old inline code removed
+
+- [ ] **Phase 10 Integration:**
+  - [ ] HUDSystem fully integrated
+  - [ ] All 10 modals fully integrated
+  - [ ] TouchControlsUI fully integrated
+  - [ ] Old UI code removed
+
+- [ ] **Phase 11 Integration:**
+  - [ ] AudioManager fully integrated (already done)
+  - [ ] Game loop utilities integrated (or documented as skipped)
+
+### Full Game Test
+
+Play a complete game session:
+
+- [ ] Start game → Loading works
+- [ ] Gameplay → All systems responsive
+- [ ] Level up → Modal works, upgrades apply
+- [ ] Combat → Weapons and enemies work
+- [ ] Late game → 7+ bosses, many upgrades
+- [ ] Death → Game over modal works perfectly
+  - [ ] Shows all stats
+  - [ ] Scrollable with lots of content
+  - [ ] Buttons always visible and working
+- [ ] Restart → Game resets properly
+- [ ] Exit → Game closes cleanly
+
+### Performance Check
+
+- [ ] FPS stable at 60
+- [ ] No memory leaks (play 10+ minutes)
+- [ ] No console errors
+- [ ] No console warnings
+
+**If ANY check fails, fix before proceeding to cleanup!**
 
 
 ---

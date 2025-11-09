@@ -38,11 +38,15 @@ export class ProjectileSystem {
             explosionRadius: 0,
             sourceType: '',
             targetEnemy: null,
+            target: null, // Alias for targetEnemy (used in old code)
             hitCount: 0,
             maxHits: 10,
             speed: 0,
             baseSpeed: 0,
-            owner: 'player'
+            owner: 'player',
+            active: true, // Compatibility flag for old code
+            trail: [], // Visual trail for missiles/lasers
+            rotation: 0 // Rotation angle for rendering
         };
     }
 
@@ -71,7 +75,11 @@ export class ProjectileSystem {
         projectile.damage = 0;
         projectile.life = 0;
         projectile.targetEnemy = null;
+        projectile.target = null;
         projectile.hitCount = 0;
+        projectile.owner = 'player'; // CRITICAL: Reset to player to prevent boss missiles from attacking player when reused
+        projectile.type = '';
+        projectile.homing = false;
 
         // Return to pool if not at capacity
         if (this.pool.length < this.poolSize) {

@@ -177,7 +177,8 @@ export const WEAPONS = {
         range: 400,
         projectileSpeed: 8,
         piercing: 3,
-        homing: true
+        homing: true,
+        isMergeWeapon: true
     },
     SHOCKBURST: {
         name: 'Shockburst',
@@ -186,15 +187,17 @@ export const WEAPONS = {
         range: 300,
         projectileSpeed: 0,
         piercing: 0,
-        explosionRadius: 100
+        explosionRadius: 100,
+        isMergeWeapon: true
     },
-    GATLING: {
+    GATLING_GUN: {
         name: 'Gatling Gun',
         damage: 35,
         fireRate: 4,
         range: 450,
         projectileSpeed: 10,
-        piercing: 0
+        piercing: 0,
+        isMergeWeapon: true
     }
 };
 
