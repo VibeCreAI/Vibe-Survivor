@@ -168,6 +168,140 @@ export class ProjectileSystem {
     }
 
     /**
+     * Updates all projectiles (movement, homing, lifetime)
+     * @param {Array} projectiles - Array of active projectiles
+     * @param {Object} context - Game context with required callbacks
+     * @param {Object} context.player - Player object
+     * @param {Array} context.enemies - Array of enemies
+     * @param {Function} context.cachedSqrt - Cached sqrt function
+     * @param {Function} context.findNearestEnemy - Find nearest enemy function
+     * @param {Function} context.createExplosion - Explosion creation callback
+     */
+    updateProjectiles(projectiles, context) {
+        const { player, enemies, cachedSqrt, findNearestEnemy, createExplosion } = context;
+
+        // Use reverse iteration for safe removal
+        for (let i = projectiles.length - 1; i >= 0; i--) {
+            const projectile = projectiles[i];
+
+            // Update position based on type
+            switch (projectile.type) {
+                case 'missile':
+                    if (projectile.homing && projectile.targetEnemy) {
+                        const targetStillExists = enemies.includes(projectile.targetEnemy);
+
+                        if (targetStillExists) {
+                            projectile.targetX = projectile.targetEnemy.x;
+                            projectile.targetY = projectile.targetEnemy.y;
+
+                            const dx = projectile.targetX - projectile.x;
+                            const dy = projectile.targetY - projectile.y;
+                            const distance = cachedSqrt(dx * dx + dy * dy);
+
+                            if (distance > 0) {
+                                projectile.vx = (dx / distance) * projectile.speed;
+                                projectile.vy = (dy / distance) * projectile.speed;
+                            }
+                        } else {
+                            const nearestEnemy = findNearestEnemy(projectile.x, projectile.y, 200);
+                            if (nearestEnemy) {
+                                projectile.targetEnemy = nearestEnemy;
+                            }
+                        }
+                    }
+                    projectile.x += projectile.vx;
+                    projectile.y += projectile.vy;
+                    break;
+
+                case 'boss-missile':
+                    if (projectile.homing) {
+                        const dx = player.x - projectile.x;
+                        const dy = player.y - projectile.y;
+                        const distance = cachedSqrt(dx * dx + dy * dy);
+
+                        if (distance > 0) {
+                            const homingStrength = projectile.homingStrength || 0.05;
+                            projectile.vx += (dx / distance) * homingStrength;
+                            projectile.vy += (dy / distance) * homingStrength;
+
+                            // Limit max speed
+                            const currentSpeed = cachedSqrt(projectile.vx * projectile.vx + projectile.vy * projectile.vy);
+                            if (currentSpeed > projectile.speed) {
+                                projectile.vx = (projectile.vx / currentSpeed) * projectile.speed;
+                                projectile.vy = (projectile.vy / currentSpeed) * projectile.speed;
+                            }
+                        }
+                    }
+                    projectile.x += projectile.vx;
+                    projectile.y += projectile.vy;
+                    break;
+
+                case 'homing_laser':
+                    if (projectile.homing && projectile.targetEnemy) {
+                        const targetStillExists = enemies.includes(projectile.targetEnemy);
+
+                        if (targetStillExists) {
+                            const dx = projectile.targetEnemy.x - projectile.x;
+                            const dy = projectile.targetEnemy.y - projectile.y;
+                            const distance = cachedSqrt(dx * dx + dy * dy);
+
+                            if (distance > 0) {
+                                const homingStrength = 0.25;
+
+                                const targetVx = (dx / distance) * projectile.speed;
+                                const targetVy = (dy / distance) * projectile.speed;
+
+                                projectile.vx += (targetVx - projectile.vx) * homingStrength;
+                                projectile.vy += (targetVy - projectile.vy) * homingStrength;
+
+                                const currentSpeed = cachedSqrt(projectile.vx * projectile.vx + projectile.vy * projectile.vy);
+                                if (currentSpeed > 0) {
+                                    projectile.vx = (projectile.vx / currentSpeed) * projectile.speed;
+                                    projectile.vy = (projectile.vy / currentSpeed) * projectile.speed;
+                                }
+                            }
+                        } else {
+                            const nearestEnemy = findNearestEnemy(projectile.x, projectile.y, 400);
+                            if (nearestEnemy) {
+                                projectile.targetEnemy = nearestEnemy;
+                            }
+                        }
+                    }
+                    projectile.x += projectile.vx;
+                    projectile.y += projectile.vy;
+                    break;
+
+                case 'lightning':
+                case 'shockburst':
+                    // Static projectiles that don't move
+                    break;
+
+                default:
+                    projectile.x += projectile.vx;
+                    projectile.y += projectile.vy;
+                    break;
+            }
+
+            projectile.life--;
+
+            // Remove expired or far-away projectiles
+            const dx = projectile.x - player.x;
+            const dy = projectile.y - player.y;
+            const distanceFromPlayer = Math.sqrt(dx * dx + dy * dy);
+
+            if (projectile.life <= 0 || (distanceFromPlayer > 800 && projectile.type !== 'boss-missile')) {
+                if (projectile.type === 'missile' && projectile.explosionRadius && createExplosion) {
+                    createExplosion(projectile.x, projectile.y, projectile.explosionRadius, projectile.damage * 0.7, projectile.sourceType);
+                }
+
+                // Return to pool
+                this.returnToPool(projectile);
+                projectiles.splice(i, 1);
+            }
+        }
+    }
+
+    /**
      * Resets the projectile system
      */
     reset() {
