@@ -853,8 +853,76 @@ class VibeSurvivor {
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Level Up Modal (Phase 12c - Static HTML) -->
+                        <div id="levelup-modal" class="levelup-modal levelup-modal-responsive" style="display: none;">
+                            <div class="levelup-content" tabindex="-1">
+                                <div class="levelup-tabs">
+                                    <button id="levelup-tab-main" class="levelup-tab active" data-tab="levelup">LEVEL UP</button>
+                                    <button id="levelup-tab-guide" class="levelup-tab" data-tab="guide">GUIDE</button>
+                                    <button id="levelup-tab-status" class="levelup-tab" data-tab="status">STATUS</button>
+                                </div>
+                                <div id="levelup-pane-levelup" class="levelup-pane active">
+                                    <div class="levelup-title">LEVEL UP</div>
+                                    <div class="levelup-scroll upgrade-choices-container">
+                                        <div class="upgrade-choices">
+                                            <!-- Upgrade choices will be populated dynamically -->
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="levelup-pane-guide" class="levelup-pane">
+                                    <div class="levelup-scroll levelup-guide-pane guide-pane">
+                                        <!-- Guide content will be populated by modal -->
+                                    </div>
+                                </div>
+                                <div id="levelup-pane-status" class="levelup-pane">
+                                    <div class="levelup-scroll levelup-status-pane help-pane">
+                                        <!-- Status content will be populated by modal -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Game Over Modal (Phase 12c - Static HTML) -->
+                        <div id="game-over-modal" class="survivor-game-over-overlay" style="display: none;">
+                            <div class="survivor-game-over-content">
+                                <div class="gameover-title">GAME OVER</div>
+
+                                <div class="game-over-scroll-content" tabindex="0">
+                                    <!-- Basic Stats Section -->
+                                    <div class="gameover-basic-stats">
+                                        <div class="gameover-stat-row">
+                                            <span class="stat-label" data-i18n="level">Level</span>
+                                            <span class="stat-value final-level">--</span>
+                                        </div>
+                                        <div class="gameover-stat-row">
+                                            <span class="stat-label" data-i18n="time">Time</span>
+                                            <span class="stat-value final-time">--</span>
+                                        </div>
+                                        <div class="gameover-stat-row">
+                                            <span class="stat-label" data-i18n="enemies">Enemies</span>
+                                            <span class="stat-value enemies-killed">--</span>
+                                        </div>
+                                        <div class="gameover-stat-row gameover-bosses-row" style="display: none;">
+                                            <span class="stat-label" data-i18n="bosses">Bosses Defeated</span>
+                                            <span class="stat-value bosses-defeated">0</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Detailed Stats Sections (will be populated dynamically) -->
+                                    <div class="gameover-weapons-section"></div>
+                                    <div class="gameover-passives-section"></div>
+                                    <div class="gameover-player-stats-section"></div>
+                                </div>
+
+                                <div class="gameover-buttons">
+                                    <button class="gameover-restart-btn survivor-btn primary">RETRY</button>
+                                    <button class="gameover-exit-btn survivor-btn">EXIT</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    
+
                     <!-- Toast Notification Container (at modal level) -->
                     <div id="toast-container" class="toast-container"></div>
                 </div>
@@ -871,12 +939,15 @@ class VibeSurvivor {
             copyrightYearElement.textContent = new Date().getFullYear();
         }
 
+        // Phase 12c - Add game-over modal styles
+        this.addGameOverModalStyles();
+
         // Add toast notification styles
         this.addToastStyles();
-        
+
         // Add touch event listeners to prevent background page scrolling
         this.preventBackgroundScrolling();
-        
+
         // Modal created successfully
     }
     
@@ -2523,12 +2594,18 @@ class VibeSurvivor {
                 position: fixed;
                 inset: 0;
                 background: rgba(0, 0, 0, 0.82);
-                display: flex;
+                display: none;
                 align-items: center;
                 justify-content: center;
                 z-index: 120000;
                 backdrop-filter: blur(6px);
                 -webkit-backdrop-filter: blur(6px);
+            }
+
+            /* When visible, use flex layout for centering */
+            .levelup-modal[style*="display: block"],
+            .levelup-modal[style*="display: flex"] {
+                display: flex !important;
             }
 
             .levelup-content {
@@ -2590,6 +2667,8 @@ class VibeSurvivor {
                 overflow-y: auto;
                 padding: 0 10px;
                 margin: 0;
+                max-height: 60vh;
+                height: auto;
             }
 
             .levelup-title {
@@ -2685,6 +2764,105 @@ class VibeSurvivor {
                 color: #FFD700 !important;
                 text-shadow: 0 0 8px rgba(255, 215, 0, 0.8) !important;
                 font-weight: bold !important;
+            }
+
+            /* Guide Pane Styles */
+            .guide-pane .merge-recipe {
+                text-align: center;
+            }
+
+            .guide-pane .help-section p,
+            .guide-pane .merge-recipe p,
+            .guide-pane .merge-recipe span,
+            .guide-pane .help-section span {
+                max-width: none;
+                margin-left: auto;
+                margin-right: auto;
+                display: block;
+            }
+
+            .levelup-guide-pane h2,
+            .levelup-status-pane h2 {
+                color: #00ffff;
+                margin-bottom: 16px;
+                margin-top: 24px;
+                font-size: 20px;
+                text-shadow: 0 0 8px rgba(0, 255, 255, 0.4);
+            }
+
+            .levelup-guide-pane h2:first-of-type,
+            .levelup-status-pane h2:first-of-type {
+                margin-top: 0;
+            }
+
+            .help-recipes {
+                margin-bottom: 20px;
+            }
+
+            .merge-recipe {
+                background: linear-gradient(135deg, rgba(255, 170, 0, 0.2), rgba(255, 215, 0, 0.06));
+                border: 1px solid rgba(255, 215, 0, 0.4);
+                border-radius: 8px;
+                margin-bottom: 12px;
+                text-align: center;
+                box-shadow: 0 0 14px rgba(255, 200, 0, 0.18);
+            }
+
+            .merge-recipe img {
+                width: 40px;
+                height: 40px;
+                margin-right: 0;
+                vertical-align: middle;
+                image-rendering: pixelated;
+            }
+
+            .section-icon {
+                width: 40px;
+                height: 40px;
+                margin-right: 8px;
+                vertical-align: middle;
+                image-rendering: pixelated;
+            }
+
+            .help-section {
+                background: rgba(0, 255, 255, 0.04);
+                border: 1px solid rgba(0, 255, 255, 0.18);
+                border-radius: 8px;
+                padding: 12px;
+                margin-bottom: 16px;
+                text-align: left;
+            }
+
+            .guide-pane .help-section {
+                text-align: center !important;
+            }
+
+            .guide-pane .help-section p {
+                text-align: center;
+            }
+
+            .merge-recipe h3 {
+                color: #ffdf70;
+                margin-bottom: 6px;
+                font-size: 16px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 12px;
+            }
+
+            .merge-recipe p {
+                color: #ffe8b0;
+                margin-bottom: 4px;
+                font-weight: bold;
+                font-size: 14px;
+            }
+
+            .recipe-desc {
+                color: #f9d97a;
+                font-style: italic;
+                font-size: 13px;
+                margin-bottom: 12px;
             }
 
             /* Mobile Touch Controls */
@@ -3163,7 +3341,8 @@ class VibeSurvivor {
                 return;
             }
 
-            // Tab key cycles tabs in help and level up menus
+            // Tab key cycles tabs in help menu
+            // Phase 12c - Level up modal now handles its own keyboard navigation
             if (e.key === 'Tab') {
                 if (this.menuNavigationState.menuType === 'help') {
                     e.preventDefault();
@@ -3173,12 +3352,8 @@ class VibeSurvivor {
                     const nextIndex = (currentIndex + 1) % helpTabs.length;
                     this.switchHelpTab(helpTabs[nextIndex]);
                     return;
-                } else if (this.menuNavigationState.menuType === 'levelup') {
-                    e.preventDefault();
-                    // Cycle level up tabs
-                    this.cycleLevelUpTab(1);
-                    return;
                 }
+                // Level up tab cycling removed - handled by LevelUpModal class
             }
 
             // Menu navigation takes priority
@@ -3189,15 +3364,13 @@ class VibeSurvivor {
                     case 'w':
                         e.preventDefault();
                         this.menuNavigationState.keyboardUsed = true;
-                        // Special scrolling behavior for help modal and game over
+                        // Phase 12c - Level up scrolling/navigation removed, handled by LevelUpModal class
                         if (this.menuNavigationState.menuType === 'help') {
                             this.scrollHelpContent('up');
                         } else if (this.menuNavigationState.menuType === 'gameover') {
                             this.scrollGameOverContent('up');
                         } else if (this.menuNavigationState.menuType === 'victory') {
                             this.scrollVictoryContent('up');
-                        } else if (this.menuNavigationState.menuType === 'levelup' && this.activeLevelUpTab !== 'levelup') {
-                            this.scrollLevelUpContent('up');
                         } else {
                             this.navigateMenu('up');
                         }
@@ -3206,15 +3379,13 @@ class VibeSurvivor {
                     case 's':
                         e.preventDefault();
                         this.menuNavigationState.keyboardUsed = true;
-                        // Special scrolling behavior for help modal and game over
+                        // Phase 12c - Level up scrolling/navigation removed, handled by LevelUpModal class
                         if (this.menuNavigationState.menuType === 'help') {
                             this.scrollHelpContent('down');
                         } else if (this.menuNavigationState.menuType === 'gameover') {
                             this.scrollGameOverContent('down');
                         } else if (this.menuNavigationState.menuType === 'victory') {
                             this.scrollVictoryContent('down');
-                        } else if (this.menuNavigationState.menuType === 'levelup' && this.activeLevelUpTab !== 'levelup') {
-                            this.scrollLevelUpContent('down');
                         } else {
                             this.navigateMenu('down');
                         }
@@ -3223,21 +3394,15 @@ class VibeSurvivor {
                     case 'a':
                         e.preventDefault();
                         this.menuNavigationState.keyboardUsed = true;
-                        if (this.menuNavigationState.menuType === 'levelup' && this.activeLevelUpTab !== 'levelup') {
-                            this.cycleLevelUpTab(-1);
-                        } else {
-                            this.navigateMenu('left');
-                        }
+                        // Phase 12c - Level up tab cycling removed, handled by LevelUpModal class
+                        this.navigateMenu('left');
                         break;
                     case 'arrowright':
                     case 'd':
                         e.preventDefault();
                         this.menuNavigationState.keyboardUsed = true;
-                        if (this.menuNavigationState.menuType === 'levelup' && this.activeLevelUpTab !== 'levelup') {
-                            this.cycleLevelUpTab(1);
-                        } else {
-                            this.navigateMenu('right');
-                        }
+                        // Phase 12c - Level up tab cycling removed, handled by LevelUpModal class
+                        this.navigateMenu('right');
                         break;
                     case 'enter':
                         e.preventDefault();
@@ -3757,7 +3922,51 @@ class VibeSurvivor {
         if (mobileControls) {
             mobileControls.style.removeProperty('display');
         }
-        
+
+        // Phase 12c - Initialize HUD system
+        this.hudSystem.init();
+
+        // Phase 12c - Initialize game-over modal (if not already initialized)
+        if (!this._gameOverModalInitialized) {
+            this.modals.gameOver.init();
+            this._gameOverModalInitialized = true;
+        }
+
+        // Phase 12c - Initialize level-up modal (if not already initialized)
+        if (!this._levelUpModalInitialized) {
+            this.modals.levelUp.init();
+
+            // Set up render callbacks for guide and status panes
+            this.modals.levelUp.setRenderCallbacks({
+                t: this.t.bind(this),
+                generateWeaponsSection: this.generateWeaponsSection.bind(this),
+                generatePassivesSection: this.generatePassivesSection.bind(this),
+                generatePlayerStatsSection: this.generatePlayerStatsSection.bind(this)
+            });
+
+            // Set up overlay lock callbacks for disabling pause/help buttons
+            this.modals.levelUp.setOverlayLockCallbacks(
+                this.incrementOverlayLock.bind(this),
+                this.decrementOverlayLock.bind(this)
+            );
+
+            // Set up upgrade selection callback
+            this.modals.levelUp.onUpgradeSelected((choice, choiceIndex) => {
+                this.selectUpgrade(choice);
+
+                // Process any remaining deferred level ups, or resume game
+                this.processPendingLevelUps();
+
+                // If no more pending level ups, resume game
+                if (this.pendingLevelUps === 0) {
+                    this.gameRunning = true;
+                    this.timePaused = false;
+                    this.startAnimationLoop();
+                }
+            });
+
+            this._levelUpModalInitialized = true;
+        }
 
         // Setup mobile controls and dash button when game starts
         this.setupMobileControls();
@@ -4575,6 +4784,8 @@ class VibeSurvivor {
         `;
     }
 
+    // Phase 12c - OBSOLETE: Tab switching is now handled by LevelUpModal class (Option B pattern)
+    /*
     switchLevelUpTab(tab) {
         const modal = document.getElementById('levelup-modal');
         if (!modal) return;
@@ -4635,6 +4846,7 @@ class VibeSurvivor {
         index = (index + direction + order.length) % order.length;
         this.switchLevelUpTab(order[index]);
     }
+    */
 
     enableGameOverScrolling() {
         const gameOverContent = document.querySelector('.game-over-scroll-content');
@@ -6143,10 +6355,21 @@ class VibeSurvivor {
     }
     
     showLevelUpChoices() {
+        // Phase 12c integration - Use LevelUpModal class (Option B: Proper Encapsulation)
         this.gameRunning = false;
         this.timePaused = true;  // Pause time during weapon upgrade menu
+
+        // Generate upgrade choices
         const choices = this.generateUpgradeChoices();
-        this.createLevelUpModal(choices);
+
+        // Update modal with choices
+        this.modals.levelUp.update({
+            choices: choices,
+            playerLevel: this.player.level
+        });
+
+        // Show the modal (modal handles all keyboard interaction, tab switching, and scrolling internally)
+        this.modals.levelUp.show();
     }
     
     generateUpgradeChoices() {
@@ -6397,6 +6620,10 @@ class VibeSurvivor {
         return `<img src="images/passives/${iconName}.png" alt="${passiveId}" style="width: 48px; height: 48px; vertical-align: middle;">`;
     }
     
+    // Phase 12c - OBSOLETE: Level up modal is now managed by LevelUpModal class (Option B pattern)
+    // This method has been replaced with simplified showLevelUpChoices() that delegates to the modal
+    // Keeping this commented out for reference during refactoring
+    /*
     createLevelUpModal(choices) {
         // Calculate responsive sizing
         const viewportWidth = window.innerWidth;
@@ -6511,7 +6738,10 @@ class VibeSurvivor {
             });
         });
     }
-    
+    */
+
+    // Phase 12c - OBSOLETE: Responsive modal styling is now managed by LevelUpModal class
+    /*
     applyResponsiveModalStyles(modal, choiceCount, isMobile) {
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
@@ -6580,11 +6810,11 @@ class VibeSurvivor {
             choice.style.setProperty('padding', '16px', 'important');
             choice.style.setProperty('font-size', '14px', 'important');
         });
-        
-        
-    }
 
-    
+
+    }
+    */
+
     addMenuNavigationStyles() {
         // Add CSS styles for keyboard navigation if not already added
         if (document.getElementById('menu-navigation-styles')) return;
@@ -6656,7 +6886,135 @@ class VibeSurvivor {
         document.head.appendChild(style);
     }
 
-    
+
+    addGameOverModalStyles() {
+        // Phase 12c - Add CSS styles for game-over modal
+        if (document.getElementById('gameover-modal-styles')) return;
+
+        const style = document.createElement('style');
+        style.id = 'gameover-modal-styles';
+        style.textContent = `
+            /* Game Over Modal Styles */
+            .survivor-game-over-overlay {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: transparent;
+                align-items: center;
+                justify-content: center;
+                z-index: 99999;
+                backdrop-filter: blur(5px);
+            }
+
+            /* When visible, use flex layout for centering */
+            .survivor-game-over-overlay[style*="display: block"],
+            .survivor-game-over-overlay[style*="display: flex"] {
+                display: flex !important;
+            }
+
+            .survivor-game-over-content {
+                background: linear-gradient(135deg, #0a0a1a, #1a0a2a) !important;
+                border: 2px solid #00ffff !important;
+                border-radius: 15px !important;
+                padding: 30px !important;
+                text-align: center !important;
+                color: white !important;
+                max-width: 550px !important;
+                min-width: 400px !important;
+                max-height: 80vh !important;
+                box-shadow: 0 0 30px rgba(0, 255, 255, 0.5) !important;
+                font-family: 'NeoDunggeunmoPro', Arial, sans-serif !important;
+                display: flex !important;
+                flex-direction: column !important;
+            }
+
+            .gameover-title {
+                color: #ff0066 !important;
+                font-size: 36px !important;
+                font-weight: bold !important;
+                margin-bottom: 20px !important;
+                text-shadow: 0 0 15px rgba(255, 0, 102, 0.8) !important;
+            }
+
+            .game-over-scroll-content {
+                overflow-y: auto !important;
+                overflow-x: hidden !important;
+                max-height: calc(80vh - 220px) !important;
+                padding-right: 10px !important;
+                margin-bottom: 10px !important;
+                flex: 1 1 auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                outline: none !important;
+            }
+
+            .gameover-basic-stats {
+                margin-bottom: 20px !important;
+            }
+
+            .gameover-stat-row {
+                display: flex !important;
+                justify-content: space-between !important;
+                margin: 8px 0 !important;
+                font-size: 18px !important;
+                color: #00ffff !important;
+            }
+
+            .stat-value {
+                color: #ff00ff !important;
+                font-weight: bold !important;
+            }
+
+            .gameover-buttons {
+                display: flex !important;
+                gap: 15px !important;
+                justify-content: center !important;
+                margin-top: auto !important;
+                position: sticky !important;
+                bottom: 0 !important;
+                background: linear-gradient(135deg, #0a0a1a, #1a0a2a) !important;
+                padding: 10px 0 !important;
+                z-index: 10 !important;
+            }
+
+            .gameover-restart-btn,
+            .gameover-exit-btn {
+                background: transparent !important;
+                border: 2px solid #00ffff !important;
+                color: #00ffff !important;
+                padding: 12px 25px !important;
+                font-size: 16px !important;
+                border-radius: 25px !important;
+                font-weight: bold !important;
+                transition: all 0.3s ease !important;
+                cursor: pointer !important;
+                touch-action: manipulation !important;
+                min-width: 44px !important;
+                min-height: 44px !important;
+                user-select: none !important;
+                -webkit-user-select: none !important;
+                -webkit-tap-highlight-color: transparent !important;
+            }
+
+            .gameover-exit-btn {
+                border-color: #ff00ff !important;
+                color: #ff00ff !important;
+            }
+
+            .gameover-restart-btn:hover {
+                background: rgba(0, 255, 255, 0.1) !important;
+                box-shadow: 0 0 15px rgba(0, 255, 255, 0.5) !important;
+            }
+
+            .gameover-exit-btn:hover {
+                background: rgba(255, 0, 255, 0.1) !important;
+                box-shadow: 0 0 15px rgba(255, 0, 255, 0.5) !important;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
     addToastStyles() {
         // Add CSS styles for toast notifications if not already added
         if (document.getElementById('toast-notification-styles')) return;
@@ -9720,82 +10078,19 @@ class VibeSurvivor {
     }
     
     updateUI() {
-        // Header Health bar
-        const healthPercent = (this.player.health / this.player.maxHealth) * 100;
-        const headerHealthFill = document.getElementById('header-health-fill');
-        const headerHealthText = document.getElementById('header-health-text');
-        if (headerHealthFill && headerHealthText) {
-            headerHealthFill.style.width = `${Math.max(0, healthPercent)}%`;
-            headerHealthText.textContent = `${Math.max(0, Math.floor(this.player.health))}`;
-            
-            // Color-changing health bar (same logic as enemy health bars)
-            const healthRatio = this.player.health / this.player.maxHealth;
-            const healthColor = healthRatio > 0.5 ? '#00ff00' : healthRatio > 0.25 ? '#ffff00' : '#ff0000';
-            headerHealthFill.style.backgroundColor = healthColor;
-        }
-        
-        // Header XP bar
-        const xpRequired = this.player.level * 5 + 10;
-        const xpPercent = (this.player.xp / xpRequired) * 100;
-        const headerXpFill = document.getElementById('header-xp-fill');
-        const headerLevelText = document.getElementById('header-level-text');
-        if (headerXpFill && headerLevelText) {
-            headerXpFill.style.width = `${xpPercent}%`;
-            headerLevelText.textContent = `Lv${this.player.level}`;
-        }
-        
-        // Header Time display
-        const headerTimeDisplay = document.getElementById('header-time-display');
-        if (headerTimeDisplay) {
-            const minutes = Math.floor(this.gameTime / 60);
-            const seconds = Math.floor(this.gameTime % 60);
-            headerTimeDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-        }
-        
-        // Header Weapon display - Always show 4 slots
-        const headerWeaponDisplay = document.getElementById('header-weapon-display');
-        if (headerWeaponDisplay) {
-            const maxWeaponSlots = 4;
-            const weaponSlots = [];
-
-            // Fill slots with acquired weapons
-            for (let i = 0; i < maxWeaponSlots; i++) {
-                if (i < this.weapons.length) {
-                    const weapon = this.weapons[i];
-                    const isMergeWeapon = weapon.isMergeWeapon || (weapon.type && weapon.type.includes('homing_laser'));
-                    const mergeClass = isMergeWeapon ? ' header-weapon-merge' : '';
-                    const weaponIcon = this.getWeaponIconForHeader(weapon.type);
-                    weaponSlots.push(`
-                        <div class="header-weapon-item${mergeClass}">
-                            <div class="header-weapon-content">
-                                <img src="${weaponIcon}" alt="${weapon.type}" class="header-weapon-icon">
-                                <span class="header-weapon-text">${this.getWeaponName(weapon.type)} ${weapon.level}</span>
-                            </div>
-                        </div>
-                    `);
-                } else {
-                    // Empty slot
-                    weaponSlots.push(`
-                        <div class="header-weapon-empty">
-                            ---
-                        </div>
-                    `);
+        // Phase 12c integration - Delegate to HUDSystem
+        this.hudSystem.updateAll(
+            {
+                player: this.player,
+                weapons: this.weapons,
+                game: {
+                    gameTime: this.gameTime,
+                    bossesKilled: this.bossesKilled
                 }
-            }
-
-            headerWeaponDisplay.innerHTML = weaponSlots.join('');
-        }
-        
-        // Header Boss counter (only show after first boss defeat)
-        const headerBossDisplay = document.getElementById('header-boss-display');
-        if (headerBossDisplay) {
-            if (this.bossesKilled > 0) {
-                headerBossDisplay.style.display = 'block';
-                headerBossDisplay.textContent = `Boss x${this.bossesKilled}`;
-            } else {
-                headerBossDisplay.style.display = 'none';
-            }
-        }
+            },
+            this.getWeaponIconForHeader.bind(this),
+            this.getWeaponName.bind(this)
+        );
     }
     
     gameOver() {
@@ -10059,317 +10354,46 @@ class VibeSurvivor {
     }
 
     showGameOverModal() {
-        // Creating game over overlay
-        
+        // Phase 12c integration - Use GameOverModal class (Option B: Proper Encapsulation)
+
         // Calculate final stats
         const minutes = Math.floor(this.gameTime / 60);
         const seconds = Math.floor(this.gameTime % 60);
         const timeText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-        
-        const finalStats = {
+
+        // Generate detailed sections using existing methods
+        const weaponsHTML = this.generateWeaponsSection();
+        const passivesHTML = this.generatePassivesSection();
+        const playerStatsHTML = this.generatePlayerStatsSection();
+
+        // Update modal with all data
+        this.modals.gameOver.update({
             level: this.player.level,
             timeText: timeText,
-            enemiesKilled: Math.max(1, Math.floor(this.gameTime * 1.8))
-        };
-        
-        // Create game over overlay (similar to Vibe Runner style)
-        const gameOverOverlay = document.createElement('div');
-        gameOverOverlay.id = 'survivor-game-over-overlay';
-        gameOverOverlay.style.cssText = `
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
-            background: transparent !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            z-index: 99999 !important;
-            backdrop-filter: blur(5px) !important;
-        `;
-        
-        // Generate detailed sections
-        const weaponsSection = this.generateWeaponsSection();
-        const passivesSection = this.generatePassivesSection();
-        const playerStatsSection = this.generatePlayerStatsSection();
+            enemiesKilled: Math.max(1, Math.floor(this.gameTime * 1.8)),
+            bossesKilled: this.bossesKilled,
+            weaponsHTML: weaponsHTML,
+            passivesHTML: passivesHTML,
+            playerStatsHTML: playerStatsHTML
+        });
 
-        // Get translations
-        const t = this.translations[this.currentLanguage].ui;
-
-        // Create game over content with neon theme and enhanced layout
-        gameOverOverlay.innerHTML = `
-            <div style="
-                background: linear-gradient(135deg, #0a0a1a, #1a0a2a) !important;
-                border: 2px solid #00ffff !important;
-                border-radius: 15px !important;
-                padding: 30px !important;
-                text-align: center !important;
-                color: white !important;
-                max-width: 550px !important;
-                min-width: 400px !important;
-                max-height: 80vh !important;
-                box-shadow: 0 0 30px rgba(0, 255, 255, 0.5) !important;
-                font-family: 'NeoDunggeunmoPro', Arial, sans-serif !important;
-                display: flex !important;
-                flex-direction: column !important;
-            ">
-                <div style="
-                    color: #ff0066 !important;
-                    font-size: 36px !important;
-                    font-weight: bold !important;
-                    margin-bottom: 20px !important;
-                    text-shadow: 0 0 15px rgba(255, 0, 102, 0.8) !important;
-                ">${t.gameOver}</div>
-
-                <div class="game-over-scroll-content" tabindex="0" style="
-                    overflow-y: auto !important;
-                    overflow-x: hidden !important;
-                    max-height: calc(80vh - 220px) !important;
-                    padding-right: 10px !important;
-                    margin-bottom: 10px !important;
-                    flex: 1 1 auto !important;
-                    -webkit-overflow-scrolling: touch !important;
-                    outline: none !important;
-                ">
-                    <!-- Basic Stats Section -->
-                    <div style="margin-bottom: 20px !important;">
-                        <div style="
-                            display: flex;
-                            justify-content: space-between;
-                            margin: 8px 0;
-                            font-size: 18px;
-                            color: #00ffff;
-                        ">
-                            <span>${t.level}</span>
-                            <span style="color: #ff00ff; font-weight: bold;">${finalStats.level}</span>
-                        </div>
-                        <div style="
-                            display: flex;
-                            justify-content: space-between;
-                            margin: 8px 0;
-                            font-size: 18px;
-                            color: #00ffff;
-                        ">
-                            <span>${t.time}</span>
-                            <span style="color: #ff00ff; font-weight: bold;">${finalStats.timeText}</span>
-                        </div>
-                        <div style="
-                            display: flex;
-                            justify-content: space-between;
-                            margin: 8px 0;
-                            font-size: 18px;
-                            color: #00ffff;
-                        ">
-                            <span>${t.enemies}</span>
-                            <span style="color: #ff00ff; font-weight: bold;">${finalStats.enemiesKilled}</span>
-                        </div>
-                        ${this.bossesKilled > 0 ? `
-                        <div style="
-                            display: flex;
-                            justify-content: space-between;
-                            margin: 8px 0;
-                            font-size: 18px;
-                            color: #00ffff;
-                        ">
-                            <span>${t.bossesDefeated}</span>
-                            <span style="color: #ff00ff; font-weight: bold;">${this.bossesKilled}</span>
-                        </div>
-                        ` : ''}
-                    </div>
-
-                    <!-- Detailed Stats Sections -->
-                    ${weaponsSection}
-                    ${passivesSection}
-                    ${playerStatsSection}
-                </div>
-
-                <div style="
-                    display: flex;
-                    gap: 15px;
-                    justify-content: center;
-                    margin-top: auto;
-                    position: sticky !important;
-                    bottom: 0 !important;
-                    background: linear-gradient(135deg, #0a0a1a, #1a0a2a) !important;
-                    padding: 10px 0 !important;
-                    z-index: 10 !important;
-                ">
-                    <button id="overlay-retry-btn" style="
-                        background: transparent !important;
-                        border: 2px solid #00ffff !important;
-                        color: #00ffff !important;
-                        padding: 12px 25px !important;
-                        font-size: 16px !important;
-                        border-radius: 25px !important;
-                        font-weight: bold !important;
-                        transition: all 0.3s ease !important;
-                        cursor: pointer !important;
-                        touch-action: manipulation !important;
-                        min-width: 44px !important;
-                        min-height: 44px !important;
-                        user-select: none !important;
-                        -webkit-user-select: none !important;
-                        -webkit-tap-highlight-color: transparent !important;
-                    ">${t.retry}</button>
-
-                    <button id="overlay-exit-btn" style="
-                        background: transparent !important;
-                        border: 2px solid #ff00ff !important;
-                        color: #ff00ff !important;
-                        padding: 12px 25px !important;
-                        font-size: 16px !important;
-                        border-radius: 25px !important;
-                        font-weight: bold !important;
-                        transition: all 0.3s ease !important;
-                        cursor: pointer !important;
-                        touch-action: manipulation !important;
-                        min-width: 44px !important;
-                        min-height: 44px !important;
-                        user-select: none !important;
-                        -webkit-user-select: none !important;
-                        -webkit-tap-highlight-color: transparent !important;
-                    ">${t.exit}</button>
-                </div>
-            </div>
-        `;
-        
-        // Add hover effects
-        const style = document.createElement('style');
-        style.textContent = `
-            #overlay-retry-btn:hover {
-                background: rgba(0, 255, 255, 0.1) !important;
-                box-shadow: 0 0 15px rgba(0, 255, 255, 0.5) !important;
-            }
-            #overlay-exit-btn:hover {
-                background: rgba(255, 0, 255, 0.1) !important;
-                box-shadow: 0 0 15px rgba(255, 0, 255, 0.5) !important;
-            }
-        `;
-        document.head.appendChild(style);
-        
-        // Add overlay to the game container (not the modal)
-        const gameContainer = document.getElementById('vibe-survivor-container');
-        if (gameContainer) {
-            gameContainer.appendChild(gameOverOverlay);
-            this.incrementOverlayLock();
-        }
-
-        // Enable touch scrolling for game over screen
-        this.enableGameOverScrolling();
-
-        // Focus the scrollable content for keyboard scrolling
-        const gameOverScrollContent = gameOverOverlay.querySelector('.game-over-scroll-content');
-        if (gameOverScrollContent) {
-            gameOverScrollContent.focus({ preventScroll: true });
-
-            // Re-focus scroll content when clicked (to ensure keyboard scrolling works)
-            gameOverScrollContent.addEventListener('click', (e) => {
-                // Don't interfere with button clicks
-                if (!e.target.closest('button')) {
-                    gameOverScrollContent.focus({ preventScroll: true });
-                }
+        // Set up event handlers (if not already set)
+        if (!this._gameOverHandlersSet) {
+            this.modals.gameOver.onRestart(() => {
+                this.startGame();
             });
 
-            // Add scroll indicator if content is scrollable
-            const checkScrollable = () => {
-                const isScrollable = gameOverScrollContent.scrollHeight > gameOverScrollContent.clientHeight;
-                if (isScrollable) {
-                    gameOverScrollContent.style.borderBottom = '2px solid rgba(0, 255, 255, 0.3)';
-                }
-            };
-            setTimeout(checkScrollable, 100);
+            this.modals.gameOver.onExit(() => {
+                this.closeGame();
+            });
+
+            this._gameOverHandlersSet = true;
         }
 
-        // Add keyboard scrolling handler
-        if (!this.gameOverKeydownHandler) {
-            this.gameOverKeydownHandler = (event) => {
-                const key = event.key;
-                if (!document.getElementById('survivor-game-over-overlay')) return;
-
-                // Check if we're pressing scroll keys
-                const isScrollKey = key === 'ArrowUp' || key === 'ArrowDown' || key === 'Up' || key === 'Down' || key === 'w' || key === 'W' || key === 's' || key === 'S';
-
-                if (isScrollKey) {
-                    // Check if scroll content is focused (allow scrolling)
-                    const scrollContent = document.querySelector('.game-over-scroll-content');
-                    const isFocusedOnScroll = scrollContent && document.activeElement === scrollContent;
-
-                    // If menu navigation is active for buttons, skip (let it handle navigation)
-                    // But if scroll content is focused, allow scrolling
-                    if (this.menuNavigationState.active && this.menuNavigationState.menuType === 'gameover' && !isFocusedOnScroll) {
-                        return;
-                    }
-
-                    // If focused on scroll content or not in menu nav, allow scrolling
-                    event.preventDefault();
-                    const direction = (key === 'ArrowUp' || key === 'Up' || key === 'w' || key === 'W') ? 'up' : 'down';
-                    this.scrollGameOverContent(direction);
-                }
-            };
-            document.addEventListener('keydown', this.gameOverKeydownHandler, { passive: false });
-        }
-
-        // Add event listeners with both click and touch support
-        const retryBtn = document.getElementById('overlay-retry-btn');
-        const exitBtn = document.getElementById('overlay-exit-btn');
-        
-        const retryHandler = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            // Disable touch scrolling
-            this.disableGameOverScrolling();
-            // Reset menu navigation
-            this.resetMenuNavigation();
-            // Remove keydown handler
-            if (this.gameOverKeydownHandler) {
-                document.removeEventListener('keydown', this.gameOverKeydownHandler);
-                this.gameOverKeydownHandler = null;
-            }
-            // Remove overlay
-            gameOverOverlay.remove();
-            style.remove();
-            this.decrementOverlayLock();
-            // Restart game
-            this.startGame();
-        };
-        
-        const exitHandler = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            // Disable touch scrolling
-            this.disableGameOverScrolling();
-            // Reset menu navigation
-            this.resetMenuNavigation();
-            // Remove keydown handler
-            if (this.gameOverKeydownHandler) {
-                document.removeEventListener('keydown', this.gameOverKeydownHandler);
-                this.gameOverKeydownHandler = null;
-            }
-            // Remove overlay
-            gameOverOverlay.remove();
-            style.remove();
-            this.decrementOverlayLock();
-            // Close game
-            this.closeGame();
-        };
-        
-        // Add both click and touch events for better mobile support
-        retryBtn.addEventListener('click', retryHandler);
-        retryBtn.addEventListener('touchend', retryHandler, { passive: false });
-        exitBtn.addEventListener('click', exitHandler);
-        exitBtn.addEventListener('touchend', exitHandler, { passive: false });
-        
-        // Add menu navigation styles
-        this.addMenuNavigationStyles();
-        
-        // Initialize keyboard navigation for game over buttons
-        const gameOverButtons = [retryBtn, exitBtn];
-        this.initializeMenuNavigation('gameover', gameOverButtons);
-        
-        // Game over overlay ready
+        // Show the modal (modal handles all keyboard interaction internally)
+        this.modals.gameOver.show();
     }
-    
+
     bossDefeated() {
 
         // Reset touch controls when victory screen opens to prevent stuck movement

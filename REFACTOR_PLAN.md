@@ -57,7 +57,7 @@ Track your progress through the refactoring. Check off each phase as you complet
 
 - [x] **Phase 12a**: Replace Phase 8 Code (50 min) - Integrate Player, Enemy, Pickup Systems ✅ (Already done!)
 - [x] **Phase 12b**: Replace Phase 9 Code (50 min) - Integrate Weapon, Projectile, XP, Upgrade Systems ✅
-- [ ] **Phase 12c**: Replace Phase 10 Code (70 min) - Integrate HUD, Modals, Touch Controls
+- [ ] **Phase 12c**: Replace Phase 10 Code (70 min) - Integrate HUD, Modals, Touch Controls (3/12 sub-tasks complete: HUD ✅, Game Over Modal ✅, Level Up Modal ✅)
 - [ ] **Phase 12d**: Replace Phase 11 Code (30 min) - Integrate Game Loop Utilities
 - [ ] **Checkpoint #4**: Integration Test (15 min) - All new systems fully integrated
 
@@ -2927,7 +2927,187 @@ this.touchControlsUI.updateJoystick(
 );
 ```
 
+### Detailed Sub-Tasks (Option B Pattern)
+
+**IMPORTANT**: All modals must follow the "Option B" pattern - proper encapsulation where modals own ALL their behavior.
+
+**Reference Code**: Pre-refactor code available at:
+`C:\Users\samso\OneDrive\Desktop\Vibe\Web\Temp\Vibe-Survivor_Pre-Refactor\js\vibe-survivor-game.js`
+
+Use this reference to match exact styling, HTML structure, colors, and functionality from the original implementation.
+
+#### Option B Pattern Requirements
+
+Each modal must:
+1. **Own all keyboard handling** - Modal sets up keyboard handlers in `onShow()`, cleans up in `onHide()`
+2. **Own all scrolling behavior** - Modal handles W/S/arrow key scrolling internally
+3. **Own all tab switching** - Modal manages tab state and navigation
+4. **Own all touch handling** - Modal sets up touch handlers for mobile
+5. **Manage overlay locks** - Modal calls `incrementOverlayLock()` on show, `decrementOverlayLock()` on hide
+6. **Use lifecycle hooks** - All setup in `onShow()`, all cleanup in `onHide()`
+7. **Event capture phase** - Use `{ capture: true }` for keyboard handlers to get events before main game
+8. **Stop propagation** - Call `e.stopPropagation()` after handling events to prevent main game from seeing them
+
+**Main file responsibilities:**
+- Provide data to modal via `update(data)`
+- Provide callbacks via setter methods
+- Show/hide modal
+- **NO** keyboard handling for modals
+- **NO** direct DOM manipulation for modal content
+
+#### 12c.1: ✅ HUD System Integration (COMPLETED)
+
+- [x] Replace inline HUD updates with `HUDSystem.updateAll()`
+- [x] Test health bar, XP bar, level display, weapon icons
+
+#### 12c.2: ✅ Game Over Modal Integration (COMPLETED)
+
+- [x] Use `GameOverModal` class instead of dynamic HTML creation
+- [x] Implement Option B pattern (modal owns keyboard/scrolling)
+- [x] Add overlay lock integration
+- [x] Test with many upgrades (late game scenario)
+
+#### 12c.3: ✅ Level Up Modal Integration (COMPLETED)
+
+- [x] Use `LevelUpModal` class instead of dynamic HTML creation
+- [x] Implement Option B pattern with full keyboard navigation
+- [x] Add tab management (Level Up, Guide, Status tabs)
+- [x] Add keyboard scrolling (W/S, arrows) in Guide/Status tabs
+- [x] Add overlay lock to disable pause/help buttons when active
+- [x] Match Guide tab styling exactly to pre-refactor (gold cards, weapon PNGs, evolution icon)
+- [x] Test keyboard navigation (Tab, W/S, A/D, arrows, Enter)
+- [x] Test scrolling in all tabs
+
+#### 12c.4: Pause Modal Integration
+
+**Files**: `js/systems/ui/modals/pause.js`, `js/vibe-survivor-game.js`
+
+**Tasks**:
+- [ ] Refactor `PauseModal` to Option B pattern
+- [ ] Add keyboard handler for Resume (Enter), Settings (S), Exit (ESC)
+- [ ] Add overlay lock callbacks
+- [ ] Extract all keyboard navigation from main file to modal
+- [ ] Test pause/resume flow
+- [ ] Verify ESC to close, Enter to resume
+
+**Reference**: Lines ~4400-4500 in pre-refactor code for pause menu behavior
+
+#### 12c.5: Settings Modal Integration
+
+**Files**: `js/systems/ui/modals/settings.js`, `js/vibe-survivor-game.js`
+
+**Tasks**:
+- [ ] Refactor `SettingsModal` to Option B pattern
+- [ ] Add keyboard navigation for options (W/S, arrows, Enter to toggle)
+- [ ] Add tab switching if multiple setting categories exist
+- [ ] Add overlay lock callbacks
+- [ ] Test all settings changes (audio, graphics, controls)
+
+**Reference**: Lines ~4500-4700 in pre-refactor code for settings menu
+
+#### 12c.6: Help Modal Integration
+
+**Files**: `js/systems/ui/modals/help.js`, `js/vibe-survivor-game.js`
+
+**Tasks**:
+- [ ] Refactor `HelpModal` to Option B pattern
+- [ ] Add keyboard scrolling (W/S, arrows) for long help content
+- [ ] Add tab switching between Controls, Tips, About tabs
+- [ ] Add overlay lock callbacks
+- [ ] Match exact styling/colors from pre-refactor
+- [ ] Test scrolling with keyboard
+
+**Reference**: Lines ~4700-4900 in pre-refactor code for help menu structure
+
+#### 12c.7: Victory Modal Integration
+
+**Files**: `js/systems/ui/modals/victory.js`, `js/vibe-survivor-game.js`
+
+**Tasks**:
+- [ ] Refactor `VictoryModal` to Option B pattern
+- [ ] Add keyboard scrolling for victory stats
+- [ ] Add keyboard navigation for Continue/Exit buttons
+- [ ] Add overlay lock callbacks
+- [ ] Match styling from pre-refactor
+- [ ] Test with various victory conditions
+
+**Reference**: Lines ~4900-5100 in pre-refactor code for victory screen
+
+#### 12c.8: Start Screen Modal Integration
+
+**Files**: `js/systems/ui/modals/start-screen.js`, `js/vibe-survivor-game.js`
+
+**Tasks**:
+- [ ] Refactor `StartScreenModal` to Option B pattern
+- [ ] Add keyboard handler (Enter to start)
+- [ ] Ensure modal doesn't interfere with landing page bot
+- [ ] Test transition from landing page to game
+
+**Reference**: Lines ~700-900 in pre-refactor code for start screen
+
+#### 12c.9: Loading Screen Modal Integration
+
+**Files**: `js/systems/ui/modals/loading-screen.js`, `js/vibe-survivor-game.js`
+
+**Tasks**:
+- [ ] Refactor `LoadingScreenModal` to Option B pattern
+- [ ] Integrate with asset loading progress
+- [ ] Test loading phases and progress updates
+- [ ] Ensure smooth transition to game start
+
+**Reference**: Lines ~900-1100 in pre-refactor code for loading screen
+
+#### 12c.10: About Modal Integration
+
+**Files**: `js/systems/ui/modals/about.js`, `js/vibe-survivor-game.js`
+
+**Tasks**:
+- [ ] Refactor `AboutModal` to Option B pattern
+- [ ] Add keyboard scrolling for about content
+- [ ] Add overlay lock callbacks
+- [ ] Test open/close flow
+
+**Reference**: Lines ~5100-5200 in pre-refactor code
+
+#### 12c.11: Options Modal Integration
+
+**Files**: `js/systems/ui/modals/options.js`, `js/vibe-survivor-game.js`
+
+**Tasks**:
+- [ ] Refactor `OptionsModal` to Option B pattern
+- [ ] Add keyboard navigation for option selection
+- [ ] Add overlay lock callbacks
+- [ ] Test all option changes
+
+**Reference**: Lines ~5200-5300 in pre-refactor code
+
+#### 12c.12: Touch Controls Integration
+
+**Files**: `js/systems/ui/touch-controls.js`, `js/vibe-survivor-game.js`
+
+**Tasks**:
+- [ ] Replace inline touch control logic with `TouchControlsUI`
+- [ ] Test virtual joystick on mobile/tablet
+- [ ] Test dash button
+- [ ] Verify touch detection and auto-show/hide
+
+**Reference**: Lines ~5300-5500 in pre-refactor code for touch controls
+
 ### Special Considerations
+
+**Modal Refactoring Checklist** (Apply to each modal):
+1. ✅ Read pre-refactor code to understand original behavior
+2. ✅ Add keyboard handler with `{ capture: true }`
+3. ✅ Add `e.stopPropagation()` to all handled keys
+4. ✅ Add overlay lock callbacks (`setOverlayLockCallbacks`)
+5. ✅ Call `incrementOverlayLockCallback()` in `onShow()`
+6. ✅ Call `decrementOverlayLockCallback()` in `onHide()`
+7. ✅ Set up keyboard handlers in `onShow()`
+8. ✅ Clean up keyboard handlers in `onHide()`
+9. ✅ Match exact CSS colors/styling from pre-refactor
+10. ✅ Match exact HTML structure from pre-refactor
+11. ✅ Test keyboard navigation thoroughly
+12. ✅ Test with actual game scenarios
 
 **Game Over Modal Bug Fix:**
 Since we're replacing the old modal code, we need to implement your sticky button fix in `game-over.js`:

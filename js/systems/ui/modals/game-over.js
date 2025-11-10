@@ -16,6 +16,12 @@ export class GameOverModal extends Modal {
         this.exitButton = null;
         this.onRestartCallback = null;
         this.onExitCallback = null;
+
+        // Keyboard navigation state
+        this.keyboardHandler = null;
+        this.selectedButtonIndex = 0;
+        this.buttons = [];
+        this.keyboardUsed = false;
     }
 
     /**
@@ -59,8 +65,12 @@ export class GameOverModal extends Modal {
      * @param {number} data.level - Final level reached
      * @param {string} data.timeText - Time survived (formatted)
      * @param {number} data.enemiesKilled - Enemies defeated
+     * @param {number} data.bossesKilled - Bosses defeated
      * @param {Array} data.weapons - Final weapons
      * @param {Object} data.passives - Final passives
+     * @param {string} data.weaponsHTML - Pre-generated weapons HTML
+     * @param {string} data.passivesHTML - Pre-generated passives HTML
+     * @param {string} data.playerStatsHTML - Pre-generated player stats HTML
      */
     update(data) {
         if (!data) return;
@@ -70,14 +80,31 @@ export class GameOverModal extends Modal {
         this.updateStat('final-time', data.timeText);
         this.updateStat('enemies-killed', data.enemiesKilled);
 
-        // Update weapons section
-        if (data.weapons) {
-            this.updateWeaponsSection(data.weapons);
+        // Update bosses (show row if any bosses killed)
+        const bossesRow = this.element?.querySelector('.gameover-bosses-row');
+        if (bossesRow) {
+            if (data.bossesKilled > 0) {
+                bossesRow.style.display = 'flex';
+                this.updateStat('bosses-defeated', data.bossesKilled);
+            } else {
+                bossesRow.style.display = 'none';
+            }
         }
 
-        // Update passives section
-        if (data.passives) {
-            this.updatePassivesSection(data.passives);
+        // Update detailed sections with pre-generated HTML
+        if (data.weaponsHTML) {
+            const weaponsSection = this.element?.querySelector('.gameover-weapons-section');
+            if (weaponsSection) weaponsSection.innerHTML = data.weaponsHTML;
+        }
+
+        if (data.passivesHTML) {
+            const passivesSection = this.element?.querySelector('.gameover-passives-section');
+            if (passivesSection) passivesSection.innerHTML = data.passivesHTML;
+        }
+
+        if (data.playerStatsHTML) {
+            const playerStatsSection = this.element?.querySelector('.gameover-player-stats-section');
+            if (playerStatsSection) playerStatsSection.innerHTML = data.playerStatsHTML;
         }
     }
 
@@ -169,11 +196,145 @@ export class GameOverModal extends Modal {
     }
 
     /**
+     * Scrolls the game over content
+     * @param {string} direction - 'up' or 'down'
+     */
+    scrollContent(direction) {
+        const scrollContent = this.element?.querySelector('.game-over-scroll-content');
+        if (!scrollContent) return;
+
+        const scrollAmount = 50;
+
+        if (direction === 'up') {
+            scrollContent.scrollBy({
+                top: -scrollAmount,
+                behavior: 'smooth'
+            });
+        } else if (direction === 'down') {
+            scrollContent.scrollBy({
+                top: scrollAmount,
+                behavior: 'smooth'
+            });
+        }
+    }
+
+    /**
+     * Updates button selection visual highlight
+     */
+    updateButtonSelection() {
+        // Remove previous selection styling
+        this.buttons.forEach(button => {
+            button.classList.remove('menu-selected');
+            button.style.boxShadow = '';
+            button.style.borderColor = '';
+        });
+
+        // Only show visual selection if keyboard has been used
+        if (this.keyboardUsed && this.buttons[this.selectedButtonIndex]) {
+            const selectedButton = this.buttons[this.selectedButtonIndex];
+            selectedButton.classList.add('menu-selected');
+            selectedButton.style.boxShadow = '0 0 15px rgba(0, 255, 255, 0.8)';
+            selectedButton.style.borderColor = '#00ffff';
+        }
+    }
+
+    /**
+     * Sets up keyboard event handlers
+     */
+    setupKeyboardHandlers() {
+        // Store buttons for navigation
+        this.buttons = [this.restartButton, this.exitButton].filter(Boolean);
+        this.selectedButtonIndex = 0;
+        this.keyboardUsed = false;
+
+        // Create keyboard handler
+        this.keyboardHandler = (e) => {
+            // Scroll controls (W/S, Arrow Up/Down)
+            if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+                e.preventDefault();
+                this.scrollContent('up');
+            } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+                e.preventDefault();
+                this.scrollContent('down');
+            }
+            // Button navigation (Tab, Arrow Left/Right)
+            else if (e.key === 'Tab' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                e.preventDefault();
+                this.keyboardUsed = true;
+
+                if (e.key === 'ArrowLeft') {
+                    this.selectedButtonIndex = Math.max(0, this.selectedButtonIndex - 1);
+                } else {
+                    this.selectedButtonIndex = (this.selectedButtonIndex + 1) % this.buttons.length;
+                }
+
+                this.updateButtonSelection();
+            }
+            // Activate selected button (Enter)
+            else if (e.key === 'Enter') {
+                if (this.keyboardUsed && this.buttons[this.selectedButtonIndex]) {
+                    e.preventDefault();
+                    this.buttons[this.selectedButtonIndex].click();
+                }
+            }
+        };
+
+        // Add event listener
+        document.addEventListener('keydown', this.keyboardHandler);
+
+        // Add navigation styles
+        this.addNavigationStyles();
+    }
+
+    /**
+     * Adds CSS for keyboard navigation
+     */
+    addNavigationStyles() {
+        if (document.getElementById('gameover-nav-styles')) return;
+
+        const style = document.createElement('style');
+        style.id = 'gameover-nav-styles';
+        style.textContent = `
+            .menu-selected {
+                box-shadow: 0 0 15px rgba(0, 255, 255, 0.8) !important;
+                border-color: #00ffff !important;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    /**
+     * Removes keyboard event handlers
+     */
+    cleanupKeyboardHandlers() {
+        if (this.keyboardHandler) {
+            document.removeEventListener('keydown', this.keyboardHandler);
+            this.keyboardHandler = null;
+        }
+        this.selectedButtonIndex = 0;
+        this.keyboardUsed = false;
+        this.buttons = [];
+    }
+
+    /**
      * Shows game over modal
      */
     onShow() {
-        if (this.restartButton) {
-            this.restartButton.focus();
+        // Set up keyboard handlers
+        this.setupKeyboardHandlers();
+
+        // Focus the scrollable content for keyboard scrolling
+        const scrollContent = this.element?.querySelector('.game-over-scroll-content');
+        if (scrollContent) {
+            scrollContent.focus({ preventScroll: true });
         }
+    }
+
+    /**
+     * Hides game over modal
+     */
+    onHide() {
+        // Clean up keyboard handlers
+        this.cleanupKeyboardHandlers();
     }
 }
