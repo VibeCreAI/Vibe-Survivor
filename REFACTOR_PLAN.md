@@ -57,7 +57,7 @@ Track your progress through the refactoring. Check off each phase as you complet
 
 - [x] **Phase 12a**: Replace Phase 8 Code (50 min) - Integrate Player, Enemy, Pickup Systems ✅ (Already done!)
 - [x] **Phase 12b**: Replace Phase 9 Code (50 min) - Integrate Weapon, Projectile, XP, Upgrade Systems ✅
-- [ ] **Phase 12c**: Replace Phase 10 Code (70 min) - Integrate HUD, Modals, Touch Controls (5/12 sub-tasks complete: HUD ✅, Game Over ✅, Level Up ✅, Pause ✅, Confirmations ✅)
+- [ ] **Phase 12c**: Replace Phase 10 Code (70 min) - Integrate HUD, Modals, Touch Controls (6/12 sub-tasks complete: HUD ✅, Game Over ✅, Level Up ✅, Pause ✅, Confirmations ✅, Options ✅)
 - [ ] **Phase 12d**: Replace Phase 11 Code (30 min) - Integrate Game Loop Utilities
 - [ ] **Checkpoint #4**: Integration Test (15 min) - All new systems fully integrated
 
@@ -3009,18 +3009,113 @@ Each modal must:
 
 **Reference**: Confirmation modals triggered from pause menu
 
-#### 12c.5: Settings Modal Integration
+#### 12c.5: ✅ Options Menu Integration (COMPLETED)
 
-**Files**: `js/systems/ui/modals/settings.js`, `js/vibe-survivor-game.js`
+**Files**: `js/systems/ui/modals/options-menu.js`, `js/vibe-survivor-game.js`
 
 **Tasks**:
-- [ ] Refactor `SettingsModal` to Option B pattern
-- [ ] Add keyboard navigation for options (W/S, arrows, Enter to toggle)
-- [ ] Add tab switching if multiple setting categories exist
-- [ ] Add overlay lock callbacks
-- [ ] Test all settings changes (audio, graphics, controls)
+- [x] Create `OptionsMenu` class following Option B pattern
+- [x] Add keyboard navigation for options (W/S, arrows, Enter to select/toggle)
+- [x] Add overlay lock integration
+- [x] Implement dynamic button label updates (Mute, Dash Position)
+- [x] Wire up callbacks for language change, mute, and dash position
+- [x] Remove old event listeners from main file
+- [x] Add modal cleanup to closeGame()
+- [x] Support for previous navigation state restoration (when opened from start screen)
+- [x] Test all settings changes (language, audio, dash position)
 
-**Reference**: Lines ~4500-4700 in pre-refactor code for settings menu
+**Note**: The game uses "options-menu" not "settings-modal". The OptionsMenu class manages language selection, audio mute toggle, and dash button position toggle.
+
+---
+
+### 📋 MODAL INITIALIZATION PATTERN (Option B)
+
+**CRITICAL**: This pattern must be followed for ALL modal refactoring to ensure modals work on initial load AND after game restart.
+
+#### Initialization Flow
+
+The game has multiple initialization paths:
+
+1. **Initial Load (Constructor → initGame)**:
+   ```
+   Constructor() → initGame() → createGameModal() → setupEventHandlers() → Initialize Modal
+   ```
+
+2. **After Restart (launchGame)**:
+   ```
+   launchGame() → createGameModal() → setupEventHandlers() → (Modal already initialized)
+   ```
+
+#### Where to Initialize Modals
+
+**Rule**: Initialize modals in `initGame()`, NOT in `launchGame()` or `openGame()`.
+
+**Why**:
+- `initGame()` runs during constructor, ensuring modals are ready on first load
+- `launchGame()` is only called when restarting (from landing page), modal already exists
+- `openGame()` is called when starting gameplay, too late for start screen modals
+
+#### Modal Initialization Template
+
+```javascript
+// In initGame() method (after createGameModal and setupEventHandlers):
+
+// Phase 12c.X - Initialize [ModalName] modal (after modal HTML is created)
+if (!this._modalNameInitialized) {
+    this.modals.modalName.init();
+
+    // Set up game state callbacks for dynamic labels/content
+    this.modals.modalName.setGameStateCallbacks(
+        () => this.someState,
+        () => this.anotherState
+    );
+
+    // Set up overlay lock callbacks
+    this.modals.modalName.setOverlayLockCallbacks(
+        this.incrementOverlayLock.bind(this),
+        this.decrementOverlayLock.bind(this)
+    );
+
+    // Set up parent keyboard management (if nested in another modal)
+    this.modals.modalName.setParentKeyboardCallbacks(
+        this.modals.parentModal.disableKeyboardHandlers.bind(this.modals.parentModal),
+        this.modals.parentModal.enableKeyboardHandlers.bind(this.modals.parentModal)
+    );
+
+    // Set up button callbacks
+    this.modals.modalName.onAction(() => {
+        // Handle action
+    });
+
+    this._modalNameInitialized = true;
+}
+```
+
+#### Initialization Guard Flag
+
+Always use a flag to prevent re-initialization:
+- `this._pauseModalInitialized`
+- `_optionsMenuInitialized`
+- `_restartConfirmationModalInitialized`
+- etc.
+
+#### Event Listener Placement
+
+- **Modal open/close triggers**: In `setupEventHandlers()` (e.g., `options-btn` click)
+- **Modal internal buttons**: In the modal class itself (Option B pattern)
+- **Never duplicate**: Remove old event listeners from main file when refactoring
+
+#### Testing Checklist
+
+When refactoring a modal, test:
+1. ✅ Modal works on initial page load
+2. ✅ Modal works from start screen
+3. ✅ Modal works during gameplay (if applicable)
+4. ✅ Modal works after restart (quit to start menu)
+5. ✅ Keyboard navigation works in all scenarios
+6. ✅ Modal cleanup happens on game exit (closeGame)
+
+---
 
 #### 12c.6: Help Modal Integration
 

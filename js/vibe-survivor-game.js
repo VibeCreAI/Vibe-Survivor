@@ -64,6 +64,7 @@ import { StatsModal } from './systems/ui/modals/stats.js';
 import { VictoryModal } from './systems/ui/modals/victory.js';
 import { RestartConfirmationModal } from './systems/ui/modals/restart-confirmation.js';
 import { ExitConfirmationModal } from './systems/ui/modals/exit-confirmation.js';
+import { OptionsMenu } from './systems/ui/modals/options-menu.js';
 
 // Import Phase 11 systems - Engine & Audio
 import { AudioManager } from './systems/audio/audio-manager.js';
@@ -131,7 +132,8 @@ class VibeSurvivor {
             stats: new StatsModal(),
             victory: new VictoryModal(),
             restartConfirmation: new RestartConfirmationModal(),
-            exitConfirmation: new ExitConfirmationModal()
+            exitConfirmation: new ExitConfirmationModal(),
+            options: new OptionsMenu()
         };
 
         // Initialize Phase 11 systems - Engine & Audio
@@ -511,6 +513,48 @@ class VibeSurvivor {
         this.createGameModal();
         this.addStyles();
         this.setupEventHandlers();
+
+        // Phase 12c.5 - Initialize options menu modal (after modal HTML is created)
+        if (!this._optionsMenuInitialized) {
+            this.modals.options.init();
+
+            // Set up game state callbacks for dynamic button labels
+            this.modals.options.setGameStateCallbacks(
+                () => this.audioMuted,
+                () => this.dashButtonPosition,
+                () => this.currentLanguage
+            );
+
+            // Set up overlay lock callbacks
+            this.modals.options.setOverlayLockCallbacks(
+                this.incrementOverlayLock.bind(this),
+                this.decrementOverlayLock.bind(this)
+            );
+
+            // Set up button callbacks
+            this.modals.options.onLanguageChange((language) => {
+                this.setLanguage(language);
+            });
+
+            this.modals.options.onMute(() => {
+                this.toggleAudioMute();
+            });
+
+            this.modals.options.onDashPosition(() => {
+                this.toggleDashButtonPosition();
+            });
+
+            this.modals.options.onClose(() => {
+                // Restore previous navigation state if it exists
+                const previousState = this.modals.options.getPreviousNavigationState();
+                if (previousState) {
+                    this.menuNavigationState = previousState;
+                    this.updateMenuSelection();
+                }
+            });
+
+            this._optionsMenuInitialized = true;
+        }
 
         // Preload assets with loading screen
         setTimeout(() => {
@@ -3215,17 +3259,7 @@ class VibeSurvivor {
             this.showOptionsMenu();
         });
 
-        // Close options button with mobile support
-        const closeOptionsBtn = document.getElementById('close-options-btn');
-        closeOptionsBtn.addEventListener('click', () => {
-            this.hideOptionsMenu();
-        });
-
-        closeOptionsBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            this.hideOptionsMenu();
-        }, { passive: false });
+        // Phase 12c.5 - Close options button event listeners removed (handled by OptionsMenu modal - Option B pattern)
 
         // About menu event listeners
         document.getElementById('about-btn').addEventListener('click', () => {
@@ -3242,57 +3276,6 @@ class VibeSurvivor {
             e.preventDefault();
             e.stopPropagation();
             this.hideAboutMenu();
-        }, { passive: false });
-
-        // Language selection with mobile support
-        const langSelect = document.getElementById('language-select');
-        langSelect.addEventListener('change', (e) => {
-            this.setLanguage(e.target.value);
-        });
-
-        // Add touch support for language dropdown
-        langSelect.addEventListener('touchstart', (e) => {
-            e.stopPropagation();
-        }, { passive: true });
-
-        langSelect.addEventListener('touchend', (e) => {
-            e.stopPropagation();
-            // Force focus and trigger on mobile
-            langSelect.focus();
-            if (window.innerWidth <= 768) {
-                // Small delay to ensure focus is set
-                setTimeout(() => {
-                    langSelect.click();
-                }, 100);
-            }
-        }, { passive: true });
-
-        // Audio toggle in options with mobile support
-        const optionsMuteBtn = document.getElementById('options-mute-btn');
-        optionsMuteBtn.addEventListener('click', () => {
-            this.toggleAudioMute();
-            this.updateOptionsAudioButton();
-        });
-
-        optionsMuteBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            this.toggleAudioMute();
-            this.updateOptionsAudioButton();
-        }, { passive: false });
-
-        // Dash position toggle in options with mobile support
-        const optionsDashBtn = document.getElementById('options-dash-position-btn');
-        optionsDashBtn.addEventListener('click', () => {
-            this.toggleDashButtonPosition();
-            this.updateOptionsDashButton();
-        });
-
-        optionsDashBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            this.toggleDashButtonPosition();
-            this.updateOptionsDashButton();
         }, { passive: false });
 
         // Help menu event listeners (both click and touch for mobile support)
@@ -3482,7 +3465,7 @@ class VibeSurvivor {
 
     launchGame() {
         // Launching game with fresh modal state
-        
+
         // Always remove existing modal and create fresh one to avoid overlay issues
         const existingModal = document.getElementById('vibe-survivor-modal');
         if (existingModal) {
@@ -3495,7 +3478,10 @@ class VibeSurvivor {
         
         // Set up event handlers for the fresh modal
         this.setupEventHandlers();
-        
+
+        // Phase 12c.5 - Initialize options menu modal (already initialized in initGame)
+        // Modal initialization happens in initGame(), not here, to ensure it's ready on first load
+
         // Show modal
         const modal = document.getElementById('vibe-survivor-modal');
         if (modal) {
@@ -3505,10 +3491,10 @@ class VibeSurvivor {
             console.error('Failed to create modal!');
             return;
         }
-        
+
         // Show fresh start screen
         this.showStartScreen();
-        
+
     }
     
     openGame() {
@@ -4074,6 +4060,9 @@ class VibeSurvivor {
 
             this._exitConfirmationModalInitialized = true;
         }
+
+        // Phase 12c.5 - Options menu modal already initialized in launchGame()
+        // (needs to be available on start screen, not just when game starts)
 
         // Setup mobile controls and dash button when game starts
         this.setupMobileControls();
@@ -10900,6 +10889,9 @@ class VibeSurvivor {
             if (this.modals.settings && this.modals.settings.element) {
                 this.modals.settings.hide();
             }
+            if (this.modals.options && this.modals.options.element) {
+                this.modals.options.hide();
+            }
         }
 
         // Cancel any running game loop
@@ -11680,69 +11672,27 @@ class VibeSurvivor {
         }
     }
 
-    // Options Menu Methods
+    // Phase 12c.5 - Options Menu Methods (using OptionsMenu modal - Option B pattern)
     showOptionsMenu() {
-        const optionsMenu = document.getElementById('options-menu');
-        if (optionsMenu) {
-            // Preserve current navigation state if we're on the start screen
-            if (this.menuNavigationState.menuType === 'start') {
-                this.previousNavigationState = {
-                    active: this.menuNavigationState.active,
-                    selectedIndex: this.menuNavigationState.selectedIndex,
-                    menuType: this.menuNavigationState.menuType,
-                    menuButtons: [...this.menuNavigationState.menuButtons],
-                    keyboardUsed: this.menuNavigationState.keyboardUsed
-                };
-            }
-
-            optionsMenu.style.display = 'flex';
-            this.updateOptionsMenuState();
-
-            // Enable scrolling for mobile
-            this.enableOptionsScrolling();
-
-            // Initialize keyboard navigation for options menu
-            const languageSelect = document.getElementById('language-select');
-            const muteBtn = document.getElementById('options-mute-btn');
-            const dashPosBtn = document.getElementById('options-dash-position-btn');
-            const closeBtn = document.getElementById('close-options-btn');
-            const optionsButtons = [languageSelect, muteBtn, dashPosBtn, closeBtn].filter(btn => btn);
-
-            if (optionsButtons.length > 0) {
-                this.initializeMenuNavigation('options', optionsButtons);
-            }
-
-            // Hide start screen bot when options menu is open
-            if (window.startScreenBot) {
-                window.startScreenBot.hide();
-            }
+        // Store previous navigation state if we're on the start screen
+        if (this.menuNavigationState.menuType === 'start') {
+            const previousState = {
+                active: this.menuNavigationState.active,
+                selectedIndex: this.menuNavigationState.selectedIndex,
+                menuType: this.menuNavigationState.menuType,
+                menuButtons: [...this.menuNavigationState.menuButtons],
+                keyboardUsed: this.menuNavigationState.keyboardUsed
+            };
+            this.modals.options.setPreviousNavigationState(previousState);
         }
+
+        // Show the modal (modal handles all keyboard interaction internally)
+        this.modals.options.show();
     }
 
     hideOptionsMenu() {
-        const optionsMenu = document.getElementById('options-menu');
-        if (optionsMenu) {
-            optionsMenu.style.display = 'none';
-
-            // Disable scrolling handlers
-            this.disableOptionsScrolling();
-
-            // Restore previous navigation state if it exists (from start screen)
-            if (this.previousNavigationState) {
-                this.menuNavigationState.active = this.previousNavigationState.active;
-                this.menuNavigationState.selectedIndex = this.previousNavigationState.selectedIndex;
-                this.menuNavigationState.menuType = this.previousNavigationState.menuType;
-                this.menuNavigationState.menuButtons = [...this.previousNavigationState.menuButtons];
-                this.menuNavigationState.keyboardUsed = this.previousNavigationState.keyboardUsed;
-                this.updateMenuSelection();
-                this.previousNavigationState = null;
-            }
-
-            // Show start screen bot again if we're on the start screen
-            if (!this.gameRunning && window.startScreenBot) {
-                window.startScreenBot.show();
-            }
-        }
+        // Hide the modal (modal handles all cleanup internally)
+        this.modals.options.hide();
     }
 
     updateOptionsMenuState() {
