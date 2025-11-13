@@ -57,7 +57,7 @@ Track your progress through the refactoring. Check off each phase as you complet
 
 - [x] **Phase 12a**: Replace Phase 8 Code (50 min) - Integrate Player, Enemy, Pickup Systems ✅ (Already done!)
 - [x] **Phase 12b**: Replace Phase 9 Code (50 min) - Integrate Weapon, Projectile, XP, Upgrade Systems ✅
-- [ ] **Phase 12c**: Replace Phase 10 Code (70 min) - Integrate HUD, Modals, Touch Controls (6/12 sub-tasks complete: HUD ✅, Game Over ✅, Level Up ✅, Pause ✅, Confirmations ✅, Options ✅)
+- [ ] **Phase 12c**: Replace Phase 10 Code (70 min) - Integrate HUD, Modals, Touch Controls (7/12 sub-tasks complete: HUD ✅, Game Over ✅, Level Up ✅, Pause ✅, Confirmations ✅, Options ✅, Help ✅)
 - [ ] **Phase 12d**: Replace Phase 11 Code (30 min) - Integrate Game Loop Utilities
 - [ ] **Checkpoint #4**: Integration Test (15 min) - All new systems fully integrated
 
@@ -3117,19 +3117,25 @@ When refactoring a modal, test:
 
 ---
 
-#### 12c.6: Help Modal Integration
+#### 12c.6: ✅ Help Menu Integration (COMPLETED)
 
-**Files**: `js/systems/ui/modals/help.js`, `js/vibe-survivor-game.js`
+**Files**: `js/systems/ui/modals/help-menu.js`, `js/vibe-survivor-game.js`
 
 **Tasks**:
-- [ ] Refactor `HelpModal` to Option B pattern
-- [ ] Add keyboard scrolling (W/S, arrows) for long help content
-- [ ] Add tab switching between Controls, Tips, About tabs
-- [ ] Add overlay lock callbacks
-- [ ] Match exact styling/colors from pre-refactor
-- [ ] Test scrolling with keyboard
+- [x] Create `HelpMenu` class following Option B pattern
+- [x] Add keyboard scrolling (W/S, arrows) for long help content
+- [x] Add tab switching between Guide and Status tabs (with Tab key)
+- [x] Add overlay lock integration
+- [x] Add game pause/resume functionality
+- [x] Previous navigation state restoration
+- [x] F1 key shortcut support (handled internally by modal)
+- [x] Touch scrolling support for mobile
+- [x] Help button text toggle (? when closed, × when open)
+- [x] Remove old event listeners from main file
+- [x] Remove help-related code from mainKeyboardHandler
+- [x] Add modal cleanup to closeGame()
 
-**Reference**: Lines ~4700-4900 in pre-refactor code for help menu structure
+**Note**: The game uses "help-menu" with two tabs: Guide (controls/tips) and Status (current weapons/passives). The modal pauses the game when opened and resumes when closed (unless pause menu is still open).
 
 #### 12c.7: Victory Modal Integration
 

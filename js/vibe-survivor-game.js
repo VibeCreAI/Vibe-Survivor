@@ -65,6 +65,7 @@ import { VictoryModal } from './systems/ui/modals/victory.js';
 import { RestartConfirmationModal } from './systems/ui/modals/restart-confirmation.js';
 import { ExitConfirmationModal } from './systems/ui/modals/exit-confirmation.js';
 import { OptionsMenu } from './systems/ui/modals/options-menu.js';
+import { HelpMenu } from './systems/ui/modals/help-menu.js';
 
 // Import Phase 11 systems - Engine & Audio
 import { AudioManager } from './systems/audio/audio-manager.js';
@@ -133,7 +134,8 @@ class VibeSurvivor {
             victory: new VictoryModal(),
             restartConfirmation: new RestartConfirmationModal(),
             exitConfirmation: new ExitConfirmationModal(),
-            options: new OptionsMenu()
+            options: new OptionsMenu(),
+            helpMenu: new HelpMenu()
         };
 
         // Initialize Phase 11 systems - Engine & Audio
@@ -554,6 +556,59 @@ class VibeSurvivor {
             });
 
             this._optionsMenuInitialized = true;
+        }
+
+        // Phase 12c.6 - Initialize help menu modal (after modal HTML is created)
+        if (!this._helpMenuInitialized) {
+            this.modals.helpMenu.init();
+
+            // Set up game state callbacks
+            this.modals.helpMenu.setGameStateCallbacks(
+                () => {
+                    // Pause game
+                    this.isPaused = true;
+                    this.timePaused = true;
+                },
+                () => {
+                    // Resume game
+                    this.isPaused = false;
+                    this.timePaused = false;
+                },
+                () => {
+                    // Check if pause menu is open
+                    const pauseMenu = document.getElementById('pause-menu');
+                    return pauseMenu && pauseMenu.style.display !== 'none';
+                },
+                this.t.bind(this),
+                this.renderHelpStatusTab.bind(this)
+            );
+
+            // Set up overlay lock callbacks
+            this.modals.helpMenu.setOverlayLockCallbacks(
+                this.incrementOverlayLock.bind(this),
+                this.decrementOverlayLock.bind(this)
+            );
+
+            // Set up close callback
+            this.modals.helpMenu.onClose(() => {
+                // CRITICAL: Update isHelpOpen state when modal closes itself
+                this.isHelpOpen = false;
+
+                // Restore previous navigation state if it exists
+                const previousState = this.modals.helpMenu.getPreviousNavigationState();
+                if (previousState) {
+                    this.menuNavigationState = previousState;
+                    this.updateMenuSelection();
+                    this.modals.helpMenu.setPreviousNavigationState(null);
+                } else {
+                    this.resetMenuNavigation();
+                }
+
+                // Update help button text
+                this.modals.helpMenu.updateHelpButtonText(false);
+            });
+
+            this._helpMenuInitialized = true;
         }
 
         // Preload assets with loading screen
@@ -3213,7 +3268,7 @@ class VibeSurvivor {
             this.togglePause();
         });
         
-        // Help button event listeners (both click and touch for mobile support)
+        // Phase 12c.6 - Help button event listeners
         const helpBtn = document.getElementById('help-btn');
         helpBtn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -3278,66 +3333,21 @@ class VibeSurvivor {
             this.hideAboutMenu();
         }, { passive: false });
 
-        // Help menu event listeners (both click and touch for mobile support)
-        const closeHelpBtn = document.getElementById('close-help-btn');
-        closeHelpBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            this.toggleHelp();
-        });
-        closeHelpBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            this.toggleHelp();
-        }, { passive: false });
-
-        const helpGuideTab = document.getElementById('help-tab-guide');
-        const helpStatusTab = document.getElementById('help-tab-status');
-        if (helpGuideTab && helpStatusTab) {
-            const guideHandler = (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.switchHelpTab('guide');
-            };
-            const statusHandler = (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.switchHelpTab('status');
-            };
-
-            helpGuideTab.addEventListener('click', guideHandler);
-            helpGuideTab.addEventListener('touchstart', guideHandler, { passive: false });
-
-            helpStatusTab.addEventListener('click', statusHandler);
-            helpStatusTab.addEventListener('touchstart', statusHandler, { passive: false });
-        }
+        // Phase 12c.6 - Help menu event listeners removed (handled by HelpMenu modal - Option B pattern)
+        // The modal owns all button behavior including close button and tab switching
 
         this.updateDashPositionButtonLabel();
 
         // Keyboard controls
         // Phase 12c.4b - Store keyboard handler reference for cleanup
         this.mainKeyboardHandler = (e) => {
-            // F1 key opens help menu (works anywhere)
+            // Phase 12c.6 - F1 key opens help menu (works anywhere during gameplay)
             if (e.key === 'F1') {
                 e.preventDefault();
                 if (!this.isHelpOpen && this.gameRunning) {
                     this.toggleHelp();
                 }
                 return;
-            }
-
-            // Tab key cycles tabs in help menu
-            // Phase 12c - Level up modal now handles its own keyboard navigation
-            if (e.key === 'Tab') {
-                if (this.menuNavigationState.menuType === 'help') {
-                    e.preventDefault();
-                    // Cycle help tabs
-                    const helpTabs = ['guide', 'status'];
-                    const currentIndex = helpTabs.indexOf(this.activeHelpTab || 'guide');
-                    const nextIndex = (currentIndex + 1) % helpTabs.length;
-                    this.switchHelpTab(helpTabs[nextIndex]);
-                    return;
-                }
-                // Level up tab cycling removed - handled by LevelUpModal class
             }
 
             // Menu navigation takes priority
@@ -3348,10 +3358,9 @@ class VibeSurvivor {
                     case 'w':
                         e.preventDefault();
                         this.menuNavigationState.keyboardUsed = true;
+                        // Phase 12c.6 - Help scrolling removed, handled by HelpMenu modal
                         // Phase 12c - Level up scrolling/navigation removed, handled by LevelUpModal class
-                        if (this.menuNavigationState.menuType === 'help') {
-                            this.scrollHelpContent('up');
-                        } else if (this.menuNavigationState.menuType === 'gameover') {
+                        if (this.menuNavigationState.menuType === 'gameover') {
                             this.scrollGameOverContent('up');
                         } else if (this.menuNavigationState.menuType === 'victory') {
                             this.scrollVictoryContent('up');
@@ -3363,10 +3372,9 @@ class VibeSurvivor {
                     case 's':
                         e.preventDefault();
                         this.menuNavigationState.keyboardUsed = true;
+                        // Phase 12c.6 - Help scrolling removed, handled by HelpMenu modal
                         // Phase 12c - Level up scrolling/navigation removed, handled by LevelUpModal class
-                        if (this.menuNavigationState.menuType === 'help') {
-                            this.scrollHelpContent('down');
-                        } else if (this.menuNavigationState.menuType === 'gameover') {
+                        if (this.menuNavigationState.menuType === 'gameover') {
                             this.scrollGameOverContent('down');
                         } else if (this.menuNavigationState.menuType === 'victory') {
                             this.scrollVictoryContent('down');
@@ -4492,111 +4500,34 @@ class VibeSurvivor {
         }
     }
 
+    // Phase 12c.6 - Toggle help menu (using HelpMenu modal - Option B pattern)
     toggleHelp() {
         this.isHelpOpen = !this.isHelpOpen;
-        const helpMenu = document.getElementById('help-menu');
-        const helpBtn = document.getElementById('help-btn');
 
         if (this.isHelpOpen) {
-            // Pause the game when help is open
-            this.isPaused = true;
-            this.timePaused = true;
-            helpMenu.style.display = 'flex';
-            this.incrementOverlayLock();
-
-            this.switchHelpTab(this.activeHelpTab || 'guide');
-
-            const helpContent = document.querySelector('.help-content');
-            if (helpContent) {
-                helpContent.focus({ preventScroll: true });
-            }
-
-            if (!this.helpKeydownHandler) {
-                this.helpKeydownHandler = (event) => {
-                    if (!this.isHelpOpen) return;
-                    const key = event.key;
-                    if (key === 'ArrowUp' || key === 'ArrowDown' || key === 'Up' || key === 'Down' || key === 'w' || key === 'W' || key === 's' || key === 'S') {
-                        if (this.menuNavigationState.active && this.menuNavigationState.menuType === 'help') {
-                            return;
-                        }
-                        event.preventDefault();
-                        const direction = (key === 'ArrowUp' || key === 'Up' || key === 'w' || key === 'W') ? 'up' : 'down';
-                        this.scrollHelpContent(direction);
-                    }
-                };
-                document.addEventListener('keydown', this.helpKeydownHandler, { passive: false });
-            }
-
-            // Change help button to X
-            if (helpBtn) {
-                helpBtn.textContent = '×';
-            }
-
-            // Enable touch scrolling for help content
-            this.enableHelpScrolling();
-
-            // Save current navigation state before switching to help
+            // Save current navigation state before opening help
             if (this.menuNavigationState.active) {
-                this.previousNavigationState = {
+                const previousState = {
                     active: this.menuNavigationState.active,
                     selectedIndex: this.menuNavigationState.selectedIndex,
                     menuType: this.menuNavigationState.menuType,
                     menuButtons: [...this.menuNavigationState.menuButtons],
                     keyboardUsed: this.menuNavigationState.keyboardUsed
                 };
+                this.modals.helpMenu.setPreviousNavigationState(previousState);
             }
 
-            // Initialize keyboard navigation for help menu
-            const closeBtn = document.getElementById('close-help-btn');
-            if (closeBtn) {
-                this.menuNavigationState.active = true;
-                this.menuNavigationState.menuType = 'help';
-                this.menuNavigationState.selectedIndex = 0;
-                this.menuNavigationState.menuButtons = [closeBtn];
-                this.menuNavigationState.keyboardUsed = false;
-                this.updateMenuSelection();
-            }
+            // Update help button text
+            this.modals.helpMenu.updateHelpButtonText(true);
+
+            // Show the modal (modal handles all keyboard interaction internally)
+            this.modals.helpMenu.show();
         } else {
-            // Check if pause menu is still open before resuming the game
-            const pauseMenu = document.getElementById('pause-menu');
-            const pauseMenuOpen = pauseMenu && pauseMenu.style.display !== 'none';
+            // Update help button text
+            this.modals.helpMenu.updateHelpButtonText(false);
 
-            // Only resume the game if the pause menu is not open
-            if (!pauseMenuOpen) {
-                this.isPaused = false;
-                this.timePaused = false;
-            }
-
-            helpMenu.style.display = 'none';
-
-            // Change help button back to ?
-            if (helpBtn) {
-                helpBtn.textContent = '?';
-            }
-
-            // Clean up help scrolling handlers
-            this.disableHelpScrolling();
-
-            if (this.helpKeydownHandler) {
-                document.removeEventListener('keydown', this.helpKeydownHandler);
-                this.helpKeydownHandler = null;
-            }
-
-            this.decrementOverlayLock();
-
-            // Restore previous navigation state if it exists
-            if (this.previousNavigationState) {
-                this.menuNavigationState.active = this.previousNavigationState.active;
-                this.menuNavigationState.selectedIndex = this.previousNavigationState.selectedIndex;
-                this.menuNavigationState.menuType = this.previousNavigationState.menuType;
-                this.menuNavigationState.menuButtons = [...this.previousNavigationState.menuButtons];
-                this.menuNavigationState.keyboardUsed = this.previousNavigationState.keyboardUsed;
-                this.updateMenuSelection();
-                this.previousNavigationState = null; // Clear the backup
-            } else {
-                // No previous state to restore, deactivate navigation
-                this.resetMenuNavigation();
-            }
+            // Hide the modal (modal handles all cleanup internally)
+            this.modals.helpMenu.hide();
         }
     }
 
@@ -10891,6 +10822,9 @@ class VibeSurvivor {
             }
             if (this.modals.options && this.modals.options.element) {
                 this.modals.options.hide();
+            }
+            if (this.modals.helpMenu && this.modals.helpMenu.element) {
+                this.modals.helpMenu.hide();
             }
         }
 
