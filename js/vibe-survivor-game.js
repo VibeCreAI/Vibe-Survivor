@@ -62,6 +62,8 @@ import { HelpModal } from './systems/ui/modals/help.js';
 import { WeaponInfoModal } from './systems/ui/modals/weapon-info.js';
 import { StatsModal } from './systems/ui/modals/stats.js';
 import { VictoryModal } from './systems/ui/modals/victory.js';
+import { RestartConfirmationModal } from './systems/ui/modals/restart-confirmation.js';
+import { ExitConfirmationModal } from './systems/ui/modals/exit-confirmation.js';
 
 // Import Phase 11 systems - Engine & Audio
 import { AudioManager } from './systems/audio/audio-manager.js';
@@ -127,7 +129,9 @@ class VibeSurvivor {
             help: new HelpModal(),
             weaponInfo: new WeaponInfoModal(),
             stats: new StatsModal(),
-            victory: new VictoryModal()
+            victory: new VictoryModal(),
+            restartConfirmation: new RestartConfirmationModal(),
+            exitConfirmation: new ExitConfirmationModal()
         };
 
         // Initialize Phase 11 systems - Engine & Audio
@@ -2049,6 +2053,12 @@ class VibeSurvivor {
                 pointer-events: auto;
             }
 
+            /* When visible, use flex layout for centering */
+            .pause-menu[style*="display: block"],
+            .pause-menu[style*="display: flex"] {
+                display: flex !important;
+            }
+
             .pause-content {
                 background: linear-gradient(135deg, #0a0a1a, #1a0a2a);
                 border: 2px solid #00ffff;
@@ -2096,6 +2106,12 @@ class VibeSurvivor {
                 z-index: 140000;
                 backdrop-filter: blur(6px);
                 -webkit-backdrop-filter: blur(6px);
+            }
+
+            /* When visible, use flex layout for centering */
+            .exit-confirmation-modal[style*="display: block"],
+            .exit-confirmation-modal[style*="display: flex"] {
+                display: flex !important;
             }
 
             .exit-confirmation-content {
@@ -2157,6 +2173,12 @@ class VibeSurvivor {
                 z-index: 140000;
                 backdrop-filter: blur(6px);
                 -webkit-backdrop-filter: blur(6px);
+            }
+
+            /* When visible, use flex layout for centering */
+            .restart-confirmation-modal[style*="display: block"],
+            .restart-confirmation-modal[style*="display: flex"] {
+                display: flex !important;
             }
 
             .restart-confirmation-content {
@@ -3120,6 +3142,12 @@ class VibeSurvivor {
     }
     
     setupEventHandlers() {
+        // Phase 12c.4b - Remove old keyboard handler before creating new one (prevent handler leaks)
+        if (this.mainKeyboardHandler) {
+            document.removeEventListener('keydown', this.mainKeyboardHandler);
+            this.mainKeyboardHandler = null;
+        }
+
         // Setting up event listeners
         document.getElementById('start-survivor').addEventListener('click', () => {
             this.resetMenuNavigation();
@@ -3153,34 +3181,10 @@ class VibeSurvivor {
             this.toggleHelp();
         }, { passive: false });
         
-        // Pause menu event listeners
-        document.getElementById('resume-btn').addEventListener('click', () => {
-            this.togglePause();
-        });
-        
-        document.getElementById('mute-btn').addEventListener('click', () => {
-            this.toggleAudioMute();
-        });
+        // Phase 12c.4 - Pause menu event listeners removed (handled by PauseMenu modal - Option B pattern)
+        // The modal owns all button behavior now
 
-        const dashPositionBtn = document.getElementById('dash-position-btn');
-        if (dashPositionBtn) {
-            dashPositionBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.toggleDashButtonPosition();
-            });
-
-            dashPositionBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.toggleDashButtonPosition();
-            }, { passive: false });
-        }
-
-        document.getElementById('exit-to-menu-btn').addEventListener('click', () => {
-            this.showExitConfirmation();
-        });
-
-        // Exit confirmation handlers
+        // Exit confirmation handlers (these stay - not part of pause modal)
         document.getElementById('exit-confirm-yes').addEventListener('click', () => {
             this.hideExitConfirmation();
             this.closeGame();
@@ -3188,10 +3192,6 @@ class VibeSurvivor {
 
         document.getElementById('exit-confirm-no').addEventListener('click', () => {
             this.hideExitConfirmation();
-        });
-
-        document.getElementById('pause-restart-btn').addEventListener('click', () => {
-            this.showRestartConfirmation();
         });
 
         // Restart confirmation handlers
@@ -3331,7 +3331,8 @@ class VibeSurvivor {
         this.updateDashPositionButtonLabel();
 
         // Keyboard controls
-        document.addEventListener('keydown', (e) => {
+        // Phase 12c.4b - Store keyboard handler reference for cleanup
+        this.mainKeyboardHandler = (e) => {
             // F1 key opens help menu (works anywhere)
             if (e.key === 'F1') {
                 e.preventDefault();
@@ -3466,7 +3467,10 @@ class VibeSurvivor {
 
             // NOTE: Regular game controls (keydown/keyup) are now handled by InputManager
             // Only special UI cases remain here
-        });
+        };
+
+        // Phase 12c.4b - Add keyboard handler
+        document.addEventListener('keydown', this.mainKeyboardHandler);
 
         // NOTE: Keyup handler removed - now handled by InputManager
 
@@ -3968,6 +3972,109 @@ class VibeSurvivor {
             this._levelUpModalInitialized = true;
         }
 
+        // Phase 12c.4 - Initialize pause modal (if not already initialized)
+        if (!this._pauseModalInitialized) {
+            this.modals.pause.init();
+
+            // Set up game state callbacks for dynamic button labels
+            this.modals.pause.setGameStateCallbacks(
+                () => this.audioMuted,
+                () => this.dashButtonPosition,
+                this.t.bind(this)
+            );
+
+            // Set up overlay lock callbacks
+            this.modals.pause.setOverlayLockCallbacks(
+                this.incrementOverlayLock.bind(this),
+                this.decrementOverlayLock.bind(this)
+            );
+
+            // Set up button callbacks
+            this.modals.pause.onResume(() => {
+                this.togglePause(); // Resume game
+            });
+
+            this.modals.pause.onRestart(() => {
+                this.showRestartConfirmation();
+            });
+
+            this.modals.pause.onMute(() => {
+                this.toggleAudioMute();
+            });
+
+            this.modals.pause.onDashPosition(() => {
+                this.toggleDashButtonPosition();
+            });
+
+            this.modals.pause.onExit(() => {
+                this.showExitConfirmation();
+            });
+
+            this._pauseModalInitialized = true;
+        }
+
+        // Phase 12c.4b - Initialize restart confirmation modal
+        if (!this._restartConfirmationModalInitialized) {
+            this.modals.restartConfirmation.init();
+
+            // Set up overlay lock callbacks
+            this.modals.restartConfirmation.setOverlayLockCallbacks(
+                this.incrementOverlayLock.bind(this),
+                this.decrementOverlayLock.bind(this)
+            );
+
+            // Set up parent keyboard management (disable pause modal's keyboard handler)
+            this.modals.restartConfirmation.setParentKeyboardCallbacks(
+                this.modals.pause.disableKeyboardHandlers.bind(this.modals.pause),
+                this.modals.pause.enableKeyboardHandlers.bind(this.modals.pause)
+            );
+
+            // Set up confirmation callbacks
+            this.modals.restartConfirmation.onConfirm(() => {
+                // Close pause menu and restart game
+                this.isPaused = false;
+                this.modals.pause.hide();
+                this.restartGame();
+            });
+
+            this.modals.restartConfirmation.onCancel(() => {
+                // Just close the confirmation dialog
+            });
+
+            this._restartConfirmationModalInitialized = true;
+        }
+
+        // Phase 12c.4b - Initialize exit confirmation modal
+        if (!this._exitConfirmationModalInitialized) {
+            this.modals.exitConfirmation.init();
+
+            // Set up overlay lock callbacks
+            this.modals.exitConfirmation.setOverlayLockCallbacks(
+                this.incrementOverlayLock.bind(this),
+                this.decrementOverlayLock.bind(this)
+            );
+
+            // Set up parent keyboard management (disable pause modal's keyboard handler)
+            this.modals.exitConfirmation.setParentKeyboardCallbacks(
+                this.modals.pause.disableKeyboardHandlers.bind(this.modals.pause),
+                this.modals.pause.enableKeyboardHandlers.bind(this.modals.pause)
+            );
+
+            // Set up confirmation callbacks
+            this.modals.exitConfirmation.onConfirm(() => {
+                // Hide confirmation modal first to prevent re-enabling parent keyboard handler
+                this.modals.exitConfirmation.hide();
+                // Then close the game
+                this.closeGame();
+            });
+
+            this.modals.exitConfirmation.onCancel(() => {
+                // Just close the confirmation dialog
+            });
+
+            this._exitConfirmationModalInitialized = true;
+        }
+
         // Setup mobile controls and dash button when game starts
         this.setupMobileControls();
 
@@ -4247,56 +4354,25 @@ class VibeSurvivor {
     }
     
     togglePause() {
+        // Phase 12c.4 - Use PauseMenu modal (Option B: Proper Encapsulation)
         this.isPaused = !this.isPaused;
-        const pauseMenu = document.getElementById('pause-menu');
         const pauseBtn = document.getElementById('pause-btn');
-        
+
         if (this.isPaused) {
             // Update pause button to show play symbol
             if (pauseBtn) pauseBtn.textContent = '▶';
-            pauseMenu.style.display = 'flex';
-            this.incrementOverlayLock();
-            this.enablePauseScrolling();
 
-            const pauseContent = document.querySelector('.pause-content');
-            if (pauseContent) {
-                pauseContent.focus({ preventScroll: true });
-            }
+            // Show pause modal (modal handles all keyboard interaction internally)
+            this.modals.pause.show();
 
-            // Initialize keyboard navigation for pause menu
-            const resumeBtn = document.getElementById('resume-btn');
-            const restartBtn = document.getElementById('pause-restart-btn');
-            const muteBtn = document.getElementById('mute-btn');
-            const dashPositionBtn = document.getElementById('dash-position-btn');
-            const exitBtn = document.getElementById('exit-to-menu-btn');
-            this.updateDashPositionButtonLabel();
-            const pauseButtons = [resumeBtn, restartBtn, muteBtn, dashPositionBtn, exitBtn].filter(btn => btn); // Filter out null buttons
-
-            // Update mute button text based on current state
-            if (muteBtn) {
-                muteBtn.textContent = this.audioMuted ? this.t('unmute') : this.t('mute');
-            }
-
-            if (pauseButtons.length > 0) {
-                this.menuNavigationState.active = true;
-                this.menuNavigationState.menuType = 'pause';
-                this.menuNavigationState.selectedIndex = 0;
-                this.menuNavigationState.menuButtons = pauseButtons;
-                this.menuNavigationState.keyboardUsed = false;
-                this.updateMenuSelection();
-            }
-            
             // Pause background music (Phase 11 - AudioManager)
             this.audioManager.pauseMusic();
         } else {
             // Update pause button to show pause symbol
             if (pauseBtn) pauseBtn.textContent = '||';
-            pauseMenu.style.display = 'none';
-            this.disablePauseScrolling();
-            this.decrementOverlayLock();
 
-            // Deactivate keyboard navigation
-            this.resetMenuNavigation();
+            // Hide pause modal
+            this.modals.pause.hide();
 
             // Resume background music (Phase 11 - AudioManager)
             this.audioManager.setMuted(this.audioMuted);
@@ -4322,35 +4398,23 @@ class VibeSurvivor {
     }
 
     showExitConfirmation() {
-        const exitModal = document.getElementById('exit-confirmation-modal');
-        if (exitModal) {
-            exitModal.style.display = 'flex';
-            this.incrementOverlayLock();
-        }
+        // Phase 12c.4b - Use ExitConfirmationModal (Option B pattern)
+        this.modals.exitConfirmation.show();
     }
 
     hideExitConfirmation() {
-        const exitModal = document.getElementById('exit-confirmation-modal');
-        if (exitModal) {
-            exitModal.style.display = 'none';
-            this.decrementOverlayLock();
-        }
+        // Phase 12c.4b - Use ExitConfirmationModal (Option B pattern)
+        this.modals.exitConfirmation.hide();
     }
 
     showRestartConfirmation() {
-        const restartModal = document.getElementById('restart-confirmation-modal');
-        if (restartModal) {
-            restartModal.style.display = 'flex';
-            this.incrementOverlayLock();
-        }
+        // Phase 12c.4b - Use RestartConfirmationModal (Option B pattern)
+        this.modals.restartConfirmation.show();
     }
 
     hideRestartConfirmation() {
-        const restartModal = document.getElementById('restart-confirmation-modal');
-        if (restartModal) {
-            restartModal.style.display = 'none';
-            this.decrementOverlayLock();
-        }
+        // Phase 12c.4b - Use RestartConfirmationModal (Option B pattern)
+        this.modals.restartConfirmation.hide();
     }
 
     enablePauseScrolling() {
@@ -10802,8 +10866,8 @@ class VibeSurvivor {
     
 
     closeGame() {
-        
-        
+
+
         // Stop game immediately to prevent any lingering processes
         this.gameRunning = false;
         this.isPaused = false;
@@ -10811,12 +10875,39 @@ class VibeSurvivor {
         this.overlayLocks = 0;
         this.updateOverlayLockState();
 
+        // Phase 12c.4b - Clean up all modal keyboard handlers
+        // NOTE: Don't remove mainKeyboardHandler here - it's needed for internal start screen navigation
+        if (this.modals) {
+            // Hide all modals to trigger cleanup (only if initialized)
+            if (this.modals.pause && this.modals.pause.element) {
+                this.modals.pause.hide();
+            }
+            if (this.modals.levelUp && this.modals.levelUp.element) {
+                this.modals.levelUp.hide();
+            }
+            if (this.modals.gameOver && this.modals.gameOver.element) {
+                this.modals.gameOver.hide();
+            }
+            if (this.modals.restartConfirmation && this.modals.restartConfirmation.element) {
+                this.modals.restartConfirmation.hide();
+            }
+            if (this.modals.exitConfirmation && this.modals.exitConfirmation.element) {
+                this.modals.exitConfirmation.hide();
+            }
+            if (this.modals.help && this.modals.help.element) {
+                this.modals.help.hide();
+            }
+            if (this.modals.settings && this.modals.settings.element) {
+                this.modals.settings.hide();
+            }
+        }
+
         // Cancel any running game loop
         if (this.gameLoopId) {
             cancelAnimationFrame(this.gameLoopId);
             this.gameLoopId = null;
         }
-        
+
         // Stop background music immediately (Phase 11 - AudioManager)
         try {
             this.audioManager.stopMusic();
@@ -10915,6 +11006,21 @@ class VibeSurvivor {
 
             requestAnimationFrame(() => this.updateStartOverlayLayout());
 
+            // Phase 12c.4b - Initialize keyboard navigation for start screen after quit
+            // Use setTimeout to ensure DOM is fully ready
+            setTimeout(() => {
+                const startBtn = document.getElementById('start-survivor');
+                const optionsBtn = document.getElementById('options-btn');
+                const aboutBtn = document.getElementById('about-btn');
+                const restartBtn = document.getElementById('restart-survivor');
+                const exitBtn = document.getElementById('exit-survivor');
+                const startButtons = [startBtn, optionsBtn, aboutBtn, restartBtn, exitBtn].filter(btn => btn);
+
+                if (startButtons.length > 0) {
+                    this.initializeMenuNavigation('start', startButtons);
+                }
+            }, 100);
+
             // Event listener already set up in setupEventHandlers(), no need to re-attach
         } else {
             console.error('Start screen element not found');
@@ -10943,8 +11049,13 @@ class VibeSurvivor {
     }
     
     cleanExit() {
-        
-        
+
+        // Phase 12c.4b - Clean up main game keyboard handler (complete exit to landing page)
+        if (this.mainKeyboardHandler) {
+            document.removeEventListener('keydown', this.mainKeyboardHandler);
+            this.mainKeyboardHandler = null;
+        }
+
         // Restore body scrolling behavior
         this.restoreBackgroundScrolling();
         

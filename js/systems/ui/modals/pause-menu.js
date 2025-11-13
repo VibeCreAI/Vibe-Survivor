@@ -1,26 +1,44 @@
 /**
  * Pause Menu Modal
  * Pause overlay displayed when ESC is pressed
- * Extracted from vibe-survivor-game.js during Phase 10 refactoring
+ * Refactored to Option B pattern - modal owns all its behavior
+ * Phase 12c.4 refactoring
  */
 
 import { Modal } from './modal-base.js';
 
 /**
- * PauseMenu - Game pause screen
+ * PauseMenu - Game pause screen with full keyboard navigation
  */
 export class PauseMenu extends Modal {
     constructor(id = 'pause-menu') {
-        super(id, { closeOnEscape: true, closeOnBackdropClick: false });
+        super(id, { closeOnEscape: false, closeOnBackdropClick: false });
         this.resumeButton = null;
         this.restartButton = null;
-        this.settingsButton = null;
+        this.muteButton = null;
+        this.dashPositionButton = null;
         this.exitButton = null;
 
         this.onResumeCallback = null;
         this.onRestartCallback = null;
-        this.onSettingsCallback = null;
+        this.onMuteCallback = null;
+        this.onDashPositionCallback = null;
         this.onExitCallback = null;
+
+        // Keyboard navigation state
+        this.keyboardHandler = null;
+        this.selectedIndex = 0;
+        this.navigableButtons = [];
+        this.keyboardUsed = false;
+
+        // Overlay lock callbacks (for disabling pause/help buttons)
+        this.incrementOverlayLockCallback = null;
+        this.decrementOverlayLockCallback = null;
+
+        // Game state callbacks for dynamic button labels
+        this.getAudioMutedState = null;
+        this.getDashPositionState = null;
+        this.getTranslation = null;
     }
 
     /**
@@ -29,10 +47,11 @@ export class PauseMenu extends Modal {
     init() {
         const result = super.init();
         if (result) {
-            this.resumeButton = this.element.querySelector('.pause-resume-btn');
-            this.restartButton = this.element.querySelector('.pause-restart-btn');
-            this.settingsButton = this.element.querySelector('.pause-settings-btn');
-            this.exitButton = this.element.querySelector('.pause-exit-btn');
+            this.resumeButton = this.element.querySelector('#resume-btn');
+            this.restartButton = this.element.querySelector('#pause-restart-btn');
+            this.muteButton = this.element.querySelector('#mute-btn');
+            this.dashPositionButton = this.element.querySelector('#dash-position-btn');
+            this.exitButton = this.element.querySelector('#exit-to-menu-btn');
 
             // Set up button event listeners
             if (this.resumeButton) {
@@ -41,8 +60,11 @@ export class PauseMenu extends Modal {
             if (this.restartButton) {
                 this.restartButton.addEventListener('click', () => this.handleRestart());
             }
-            if (this.settingsButton) {
-                this.settingsButton.addEventListener('click', () => this.handleSettings());
+            if (this.muteButton) {
+                this.muteButton.addEventListener('click', () => this.handleMute());
+            }
+            if (this.dashPositionButton) {
+                this.dashPositionButton.addEventListener('click', () => this.handleDashPosition());
             }
             if (this.exitButton) {
                 this.exitButton.addEventListener('click', () => this.handleExit());
@@ -68,11 +90,19 @@ export class PauseMenu extends Modal {
     }
 
     /**
-     * Sets callback for settings action
-     * @param {Function} callback - Settings callback
+     * Sets callback for mute action
+     * @param {Function} callback - Mute callback
      */
-    onSettings(callback) {
-        this.onSettingsCallback = callback;
+    onMute(callback) {
+        this.onMuteCallback = callback;
+    }
+
+    /**
+     * Sets callback for dash position action
+     * @param {Function} callback - Dash position callback
+     */
+    onDashPosition(callback) {
+        this.onDashPositionCallback = callback;
     }
 
     /**
@@ -84,13 +114,35 @@ export class PauseMenu extends Modal {
     }
 
     /**
+     * Sets overlay lock callbacks for disabling pause/help buttons
+     * @param {Function} incrementFn - Function to call when modal shows
+     * @param {Function} decrementFn - Function to call when modal hides
+     */
+    setOverlayLockCallbacks(incrementFn, decrementFn) {
+        this.incrementOverlayLockCallback = incrementFn;
+        this.decrementOverlayLockCallback = decrementFn;
+    }
+
+    /**
+     * Sets game state callbacks for dynamic button labels
+     * @param {Function} getAudioMutedState - Gets current audio mute state
+     * @param {Function} getDashPositionState - Gets current dash button position
+     * @param {Function} getTranslation - Translation function
+     */
+    setGameStateCallbacks(getAudioMutedState, getDashPositionState, getTranslation) {
+        this.getAudioMutedState = getAudioMutedState;
+        this.getDashPositionState = getDashPositionState;
+        this.getTranslation = getTranslation;
+    }
+
+    /**
      * Handles resume button click
      */
     handleResume() {
         if (this.onResumeCallback) {
             this.onResumeCallback();
         }
-        this.hide();
+        // Don't call this.hide() here - togglePause() will handle it
     }
 
     /**
@@ -100,15 +152,29 @@ export class PauseMenu extends Modal {
         if (this.onRestartCallback) {
             this.onRestartCallback();
         }
+        // Don't hide - restart confirmation might be shown
     }
 
     /**
-     * Handles settings button click
+     * Handles mute button click
      */
-    handleSettings() {
-        if (this.onSettingsCallback) {
-            this.onSettingsCallback();
+    handleMute() {
+        if (this.onMuteCallback) {
+            this.onMuteCallback();
         }
+        // Update button label
+        this.updateButtonLabels();
+    }
+
+    /**
+     * Handles dash position button click
+     */
+    handleDashPosition() {
+        if (this.onDashPositionCallback) {
+            this.onDashPositionCallback();
+        }
+        // Update button label
+        this.updateButtonLabels();
     }
 
     /**
@@ -118,14 +184,213 @@ export class PauseMenu extends Modal {
         if (this.onExitCallback) {
             this.onExitCallback();
         }
+        // Don't hide here - let the callback handle modal state
+    }
+
+    /**
+     * Updates dynamic button labels based on game state
+     */
+    updateButtonLabels() {
+        // Update mute button
+        if (this.muteButton && this.getAudioMutedState && this.getTranslation) {
+            const isMuted = this.getAudioMutedState();
+            this.muteButton.textContent = isMuted ? this.getTranslation('unmute') : this.getTranslation('mute');
+        }
+
+        // Update dash position button
+        if (this.dashPositionButton && this.getDashPositionState) {
+            const position = this.getDashPositionState();
+            if (position) {
+                this.dashPositionButton.textContent = `DASH BUTTON: ${position.toUpperCase()}`;
+            }
+        }
+    }
+
+    /**
+     * Navigates through pause menu buttons
+     * @param {string} direction - 'up' or 'down'
+     */
+    navigateMenu(direction) {
+        if (this.navigableButtons.length === 0) return;
+
+        if (direction === 'up') {
+            this.selectedIndex = (this.selectedIndex - 1 + this.navigableButtons.length) % this.navigableButtons.length;
+        } else if (direction === 'down') {
+            this.selectedIndex = (this.selectedIndex + 1) % this.navigableButtons.length;
+        }
+
+        this.updateMenuHighlight();
+    }
+
+    /**
+     * Updates visual highlight for selected button
+     */
+    updateMenuHighlight() {
+        // Remove previous highlights
+        this.navigableButtons.forEach(button => {
+            button.classList.remove('menu-selected');
+            button.style.boxShadow = '';
+            button.style.borderColor = '';
+        });
+
+        // Only show highlight if keyboard has been used
+        if (this.keyboardUsed && this.navigableButtons[this.selectedIndex]) {
+            const selected = this.navigableButtons[this.selectedIndex];
+            selected.classList.add('menu-selected');
+            selected.style.boxShadow = '0 0 15px rgba(0, 255, 255, 0.8)';
+            selected.style.borderColor = '#00ffff';
+        }
+    }
+
+    /**
+     * Selects the currently highlighted button
+     */
+    selectCurrentButton() {
+        if (this.navigableButtons[this.selectedIndex]) {
+            this.navigableButtons[this.selectedIndex].click();
+        }
+    }
+
+    /**
+     * Sets up keyboard event handlers
+     */
+    setupKeyboardHandlers() {
+        this.keyboardHandler = (e) => {
+            // Handle navigation
+            switch (e.key.toLowerCase()) {
+                case 'arrowup':
+                case 'w':
+                    e.preventDefault();
+                    e.stopPropagation(); // Stop event from reaching main game handler
+                    this.keyboardUsed = true;
+                    this.navigateMenu('up');
+                    break;
+
+                case 'arrowdown':
+                case 's':
+                    e.preventDefault();
+                    e.stopPropagation(); // Stop event from reaching main game handler
+                    this.keyboardUsed = true;
+                    this.navigateMenu('down');
+                    break;
+
+                case 'enter':
+                    if (this.keyboardUsed) {
+                        e.preventDefault();
+                        e.stopPropagation(); // Stop event from reaching main game handler
+                        this.selectCurrentButton();
+                    }
+                    break;
+
+                case 'escape':
+                    e.preventDefault();
+                    e.stopPropagation(); // Stop event from reaching main game handler
+                    this.handleResume(); // ESC resumes game
+                    break;
+            }
+        };
+
+        // Use capture phase to ensure modal gets events before main game handler
+        document.addEventListener('keydown', this.keyboardHandler, { capture: true });
+
+        // Add navigation CSS styles
+        this.addNavigationStyles();
+    }
+
+    /**
+     * Removes keyboard event handlers
+     */
+    cleanupKeyboardHandlers() {
+        if (this.keyboardHandler) {
+            document.removeEventListener('keydown', this.keyboardHandler, { capture: true });
+            this.keyboardHandler = null;
+        }
+        this.selectedIndex = 0;
+        this.keyboardUsed = false;
+        this.navigableButtons = [];
+    }
+
+    /**
+     * Adds CSS for keyboard navigation
+     */
+    addNavigationStyles() {
+        if (document.getElementById('pause-nav-styles')) return;
+
+        const style = document.createElement('style');
+        style.id = 'pause-nav-styles';
+        style.textContent = `
+            .menu-selected {
+                box-shadow: 0 0 15px rgba(0, 255, 255, 0.8) !important;
+                border-color: #00ffff !important;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    /**
+     * Temporarily disables keyboard handlers (for when confirmation dialogs are shown)
+     */
+    disableKeyboardHandlers() {
+        if (this.keyboardHandler) {
+            document.removeEventListener('keydown', this.keyboardHandler, { capture: true });
+        }
+    }
+
+    /**
+     * Re-enables keyboard handlers (after confirmation dialogs are closed)
+     */
+    enableKeyboardHandlers() {
+        if (this.keyboardHandler) {
+            document.addEventListener('keydown', this.keyboardHandler, { capture: true });
+        }
     }
 
     /**
      * Shows pause menu
      */
     onShow() {
-        if (this.resumeButton) {
-            this.resumeButton.focus();
+        // Increment overlay lock to disable pause/help buttons
+        if (this.incrementOverlayLockCallback) {
+            this.incrementOverlayLockCallback();
         }
+
+        // Update button labels
+        this.updateButtonLabels();
+
+        // Set up keyboard handlers
+        this.setupKeyboardHandlers();
+
+        // Set up navigable buttons
+        this.navigableButtons = [
+            this.resumeButton,
+            this.restartButton,
+            this.muteButton,
+            this.dashPositionButton,
+            this.exitButton
+        ].filter(Boolean);
+
+        // Initialize selection
+        this.selectedIndex = 0;
+        this.keyboardUsed = false;
+
+        // Focus the pause content
+        const pauseContent = this.element?.querySelector('.pause-content');
+        if (pauseContent) {
+            pauseContent.setAttribute('tabindex', '-1');
+            pauseContent.focus({ preventScroll: true });
+        }
+    }
+
+    /**
+     * Hides pause menu
+     */
+    onHide() {
+        // Decrement overlay lock to re-enable pause/help buttons
+        if (this.decrementOverlayLockCallback) {
+            this.decrementOverlayLockCallback();
+        }
+
+        // Clean up keyboard handlers
+        this.cleanupKeyboardHandlers();
     }
 }

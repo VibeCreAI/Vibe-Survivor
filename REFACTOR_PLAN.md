@@ -57,7 +57,7 @@ Track your progress through the refactoring. Check off each phase as you complet
 
 - [x] **Phase 12a**: Replace Phase 8 Code (50 min) - Integrate Player, Enemy, Pickup Systems ✅ (Already done!)
 - [x] **Phase 12b**: Replace Phase 9 Code (50 min) - Integrate Weapon, Projectile, XP, Upgrade Systems ✅
-- [ ] **Phase 12c**: Replace Phase 10 Code (70 min) - Integrate HUD, Modals, Touch Controls (3/12 sub-tasks complete: HUD ✅, Game Over Modal ✅, Level Up Modal ✅)
+- [ ] **Phase 12c**: Replace Phase 10 Code (70 min) - Integrate HUD, Modals, Touch Controls (5/12 sub-tasks complete: HUD ✅, Game Over ✅, Level Up ✅, Pause ✅, Confirmations ✅)
 - [ ] **Phase 12d**: Replace Phase 11 Code (30 min) - Integrate Game Loop Utilities
 - [ ] **Checkpoint #4**: Integration Test (15 min) - All new systems fully integrated
 
@@ -2978,19 +2978,36 @@ Each modal must:
 - [x] Test keyboard navigation (Tab, W/S, A/D, arrows, Enter)
 - [x] Test scrolling in all tabs
 
-#### 12c.4: Pause Modal Integration
+#### 12c.4: ✅ Pause Modal Integration (COMPLETED)
 
-**Files**: `js/systems/ui/modals/pause.js`, `js/vibe-survivor-game.js`
+**Files**: `js/systems/ui/modals/pause-menu.js`, `js/vibe-survivor-game.js`
 
 **Tasks**:
-- [ ] Refactor `PauseModal` to Option B pattern
-- [ ] Add keyboard handler for Resume (Enter), Settings (S), Exit (ESC)
-- [ ] Add overlay lock callbacks
-- [ ] Extract all keyboard navigation from main file to modal
-- [ ] Test pause/resume flow
-- [ ] Verify ESC to close, Enter to resume
+- [x] Refactor `PauseModal` to Option B pattern
+- [x] Add keyboard handler for Resume (ESC), navigation (W/S/arrows), activate (Enter)
+- [x] Add overlay lock callbacks
+- [x] Extract all keyboard navigation from main file to modal
+- [x] Add support for Mute and Dash Position buttons
+- [x] Implement dynamic button label updates
 
-**Reference**: Lines ~4400-4500 in pre-refactor code for pause menu behavior
+**Reference**: Lines ~4217-4305 in pre-refactor code for pause menu behavior
+
+#### 12c.4b: ✅ Restart and Exit Confirmation Modals (COMPLETED)
+
+**Files**: `js/systems/ui/modals/restart-confirmation.js`, `js/systems/ui/modals/exit-confirmation.js`, `js/vibe-survivor-game.js`
+
+**Tasks**:
+- [x] Create `RestartConfirmationModal` class following Option B pattern
+- [x] Create `ExitConfirmationModal` class following Option B pattern
+- [x] Add keyboard navigation (A/D, W/S, arrows) for both modals
+- [x] Add overlay lock integration
+- [x] Implement parent keyboard handler management (disable pause modal while confirmation shown)
+- [x] Wire up confirmation callbacks in main file
+- [x] Fix keyboard handler cleanup in `setupEventHandlers()` to prevent handler leaks
+- [x] Fix `reopenGame()` to reinitialize keyboard navigation after quit
+- [x] Test full flow: pause → exit/restart → confirmation → action
+
+**Reference**: Confirmation modals triggered from pause menu
 
 #### 12c.5: Settings Modal Integration
 
