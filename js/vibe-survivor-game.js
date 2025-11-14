@@ -339,14 +339,11 @@ class VibeSurvivor {
     }
     
     async preloadAssets() {
-        const loadingScreen = document.getElementById('loading-screen');
-        const loadingFill = loadingScreen?.querySelector('.loading-fill');
-        const loadingPercent = loadingScreen?.querySelector('.loading-percent');
-        const loadingLabel = loadingScreen?.querySelector('.loading-label');
-        const loadingText = loadingScreen?.querySelector('.loading-text');
-        const loadingTrack = loadingScreen?.querySelector('.loading-track');
+        // Phase 12c.9 - Use LoadingScreen modal instead of direct DOM manipulation
+        if (!this.modals.loading.element) return;
 
-        if (!loadingScreen) return;
+        // Show loading screen
+        this.modals.loading.show();
 
         const phases = [
             { percent: 0, title: 'BOOTING', label: 'Initializing systems…' },
@@ -357,15 +354,13 @@ class VibeSurvivor {
         ];
 
         const updateProgress = (percent, phaseIndex) => {
-            if (loadingFill) loadingFill.style.width = `${percent}%`;
-            if (loadingPercent) loadingPercent.textContent = `${Math.round(percent)}%`;
+            // Use modal methods to update progress
+            this.modals.loading.setProgress(percent);
 
             if (phaseIndex !== undefined && phases[phaseIndex]) {
                 const phase = phases[phaseIndex];
-                if (loadingText && loadingText.firstChild) {
-                    loadingText.firstChild.textContent = phase.title;
-                }
-                if (loadingLabel) loadingLabel.textContent = phase.label;
+                this.modals.loading.setPhase(phase.title);
+                this.modals.loading.setMessage(phase.label);
             }
         };
 
@@ -497,14 +492,18 @@ class VibeSurvivor {
 
         // Phase 4: Complete (100%)
         updateProgress(100, 4);
+        // Add flash effect to loading track
+        const loadingTrack = this.modals.loading.element?.querySelector('.loading-track');
         if (loadingTrack) loadingTrack.classList.add('flash');
         await new Promise(resolve => setTimeout(resolve, 350));
 
-        // Fade out loading screen
-        loadingScreen.style.opacity = '0';
-        loadingScreen.style.transition = 'opacity 0.6s ease-out';
+        // Phase 12c.9 - Fade out loading screen using modal
+        if (this.modals.loading.element) {
+            this.modals.loading.element.style.opacity = '0';
+            this.modals.loading.element.style.transition = 'opacity 0.6s ease-out';
+        }
         await new Promise(resolve => setTimeout(resolve, 600));
-        loadingScreen.style.display = 'none';
+        this.modals.loading.hide();
 
         // Show footer, background, and start screen bot after loading
         const footer = document.querySelector('.footer-bar');
@@ -652,11 +651,20 @@ class VibeSurvivor {
             this._startScreenModalInitialized = true;
         }
 
+        // Phase 12c.9 - Initialize loading screen modal (after modal HTML is created)
+        if (!this._loadingScreenInitialized) {
+            this.modals.loading.init();
+            this._loadingScreenInitialized = true;
+        }
+
         // Preload assets with loading screen
         setTimeout(() => {
             this.preloadAssets().then(() => {
-                // Initialize the start screen after loading completes
-                this.showStartScreen();
+                // Wait for background to start appearing before showing start screen
+                // Background has 0.6s ease-in transition when 'loaded' class is added
+                setTimeout(() => {
+                    this.showStartScreen();
+                }, 300);
             });
         }, 100);
 
@@ -1131,7 +1139,6 @@ class VibeSurvivor {
                 align-items: center;
                 justify-content: center;
                 flex-direction: column;
-                gap: 40px;
             }
 
             .loading-content {
@@ -1139,6 +1146,8 @@ class VibeSurvivor {
                 flex-direction: column;
                 align-items: center;
                 gap: 24px;
+                /* Shift content down so logo is vertically centered */
+                transform: translateY(90px);
             }
 
             .loading-logo {

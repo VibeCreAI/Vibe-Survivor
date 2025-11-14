@@ -15,6 +15,7 @@ export class LoadingScreen extends Modal {
         this.progressBar = null;
         this.progressText = null;
         this.phaseLabel = null;
+        this.progressPercent = null;
     }
 
     /**
@@ -23,10 +24,11 @@ export class LoadingScreen extends Modal {
     init() {
         const result = super.init();
         if (result) {
-            // Find progress elements
-            this.progressBar = this.element.querySelector('.loading-progress-bar');
-            this.progressText = this.element.querySelector('.loading-progress-text');
-            this.phaseLabel = this.element.querySelector('.loading-phase-label');
+            // Phase 12c.9 - Find progress elements (matching actual HTML structure)
+            this.progressBar = this.element.querySelector('.loading-fill');
+            this.progressPercent = this.element.querySelector('.loading-percent');
+            this.progressText = this.element.querySelector('.loading-text');
+            this.phaseLabel = this.element.querySelector('.loading-label');
         }
         return result;
     }
@@ -53,12 +55,13 @@ export class LoadingScreen extends Modal {
     }
 
     /**
-     * Sets loading phase
+     * Sets loading phase (updates the title in .loading-text)
      * @param {string} phase - Phase name (e.g., 'BOOTING', 'LOADING', 'READY')
      */
     setPhase(phase) {
-        if (this.phaseLabel) {
-            this.phaseLabel.textContent = phase;
+        // Phase 12c.9 - Update the first child (title text) of .loading-text
+        if (this.progressText && this.progressText.firstChild) {
+            this.progressText.firstChild.textContent = phase;
         }
     }
 
@@ -67,18 +70,27 @@ export class LoadingScreen extends Modal {
      * @param {number} percent - Progress (0-100)
      */
     setProgress(percent) {
+        const clampedPercent = Math.min(100, Math.max(0, percent));
+
+        // Update progress bar width
         if (this.progressBar) {
-            this.progressBar.style.width = `${Math.min(100, Math.max(0, percent))}%`;
+            this.progressBar.style.width = `${clampedPercent}%`;
+        }
+
+        // Phase 12c.9 - Update percentage text
+        if (this.progressPercent) {
+            this.progressPercent.textContent = `${Math.round(clampedPercent)}%`;
         }
     }
 
     /**
-     * Sets progress message
+     * Sets progress message (label below the progress bar)
      * @param {string} message - Progress message
      */
     setMessage(message) {
-        if (this.progressText) {
-            this.progressText.textContent = message;
+        // Phase 12c.9 - Update .loading-label element
+        if (this.phaseLabel) {
+            this.phaseLabel.textContent = message;
         }
     }
 }
