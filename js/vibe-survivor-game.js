@@ -471,6 +471,14 @@ class VibeSurvivor {
         // Phase 2: Load sounds (50%)
         updateProgress(50, 2);
         // Initialize audio manager (Phase 11)
+        // First, stop ALL audio elements on the page to prevent music from persisting across refreshes
+        document.querySelectorAll('audio').forEach(audio => {
+            audio.pause();
+            audio.currentTime = 0;
+            audio.src = '';
+        });
+        // Then destroy and reinitialize our audio manager
+        this.audioManager.destroy();
         await this.audioManager.init();
         if (this.audioManager.music && this.audioManager.music.readyState < 2) {
             await new Promise(resolve => {
@@ -3342,9 +3350,10 @@ class VibeSurvivor {
         // Phase 12c.4b - Store keyboard handler reference for cleanup
         this.mainKeyboardHandler = (e) => {
             // Phase 12c.6 - F1 key opens help menu (works anywhere during gameplay)
+            // Only allow if no other modals are currently open (overlayLocks === 0)
             if (e.key === 'F1') {
                 e.preventDefault();
-                if (!this.isHelpOpen && this.gameRunning) {
+                if (!this.isHelpOpen && this.gameRunning && this.overlayLocks === 0) {
                     this.toggleHelp();
                 }
                 return;
@@ -3359,11 +3368,10 @@ class VibeSurvivor {
                         e.preventDefault();
                         this.menuNavigationState.keyboardUsed = true;
                         // Phase 12c.6 - Help scrolling removed, handled by HelpMenu modal
+                        // Phase 12c.7 - Victory scrolling removed, handled by VictoryModal class
                         // Phase 12c - Level up scrolling/navigation removed, handled by LevelUpModal class
                         if (this.menuNavigationState.menuType === 'gameover') {
                             this.scrollGameOverContent('up');
-                        } else if (this.menuNavigationState.menuType === 'victory') {
-                            this.scrollVictoryContent('up');
                         } else {
                             this.navigateMenu('up');
                         }
@@ -3373,11 +3381,10 @@ class VibeSurvivor {
                         e.preventDefault();
                         this.menuNavigationState.keyboardUsed = true;
                         // Phase 12c.6 - Help scrolling removed, handled by HelpMenu modal
+                        // Phase 12c.7 - Victory scrolling removed, handled by VictoryModal class
                         // Phase 12c - Level up scrolling/navigation removed, handled by LevelUpModal class
                         if (this.menuNavigationState.menuType === 'gameover') {
                             this.scrollGameOverContent('down');
-                        } else if (this.menuNavigationState.menuType === 'victory') {
-                            this.scrollVictoryContent('down');
                         } else {
                             this.navigateMenu('down');
                         }
@@ -3449,7 +3456,8 @@ class VibeSurvivor {
                 }
 
                 // Handle ESC for pause toggle during normal gameplay
-                if (!this.playerDead && this.gameRunning && !this.isPaused) {
+                // Only allow if no other modals are currently open (overlayLocks === 0)
+                if (!this.playerDead && this.gameRunning && !this.isPaused && this.overlayLocks === 0) {
                     e.preventDefault();
                     this.togglePause();
                     return;
@@ -4048,22 +4056,39 @@ class VibeSurvivor {
                 this.decrementOverlayLock.bind(this)
             );
 
+            // Store default parent keyboard callbacks (pause modal) for later restoration
+            this.exitConfirmationDefaultCallbacks = {
+                disable: this.modals.pause.disableKeyboardHandlers.bind(this.modals.pause),
+                enable: this.modals.pause.enableKeyboardHandlers.bind(this.modals.pause)
+            };
+
             // Set up parent keyboard management (disable pause modal's keyboard handler)
             this.modals.exitConfirmation.setParentKeyboardCallbacks(
-                this.modals.pause.disableKeyboardHandlers.bind(this.modals.pause),
-                this.modals.pause.enableKeyboardHandlers.bind(this.modals.pause)
+                this.exitConfirmationDefaultCallbacks.disable,
+                this.exitConfirmationDefaultCallbacks.enable
             );
 
             // Set up confirmation callbacks
             this.modals.exitConfirmation.onConfirm(() => {
                 // Hide confirmation modal first to prevent re-enabling parent keyboard handler
                 this.modals.exitConfirmation.hide();
+
+                // Reset parent callbacks back to default (pause modal)
+                this.modals.exitConfirmation.setParentKeyboardCallbacks(
+                    this.exitConfirmationDefaultCallbacks.disable,
+                    this.exitConfirmationDefaultCallbacks.enable
+                );
+
                 // Then close the game
                 this.closeGame();
             });
 
             this.modals.exitConfirmation.onCancel(() => {
-                // Just close the confirmation dialog
+                // Reset parent callbacks back to default (pause modal) after cancellation
+                this.modals.exitConfirmation.setParentKeyboardCallbacks(
+                    this.exitConfirmationDefaultCallbacks.disable,
+                    this.exitConfirmationDefaultCallbacks.enable
+                );
             });
 
             this._exitConfirmationModalInitialized = true;
@@ -4884,46 +4909,7 @@ class VibeSurvivor {
         this.gameOverScrollHandler = null;
     }
 
-    enableVictoryScrolling() {
-        const victoryContent = document.querySelector('#survivor-victory-overlay .victory-scroll-content');
-        if (!victoryContent) return;
-
-        if (this.victoryScrollHandler) {
-            victoryContent.removeEventListener('touchstart', this.victoryScrollHandler.start, { passive: true });
-            victoryContent.removeEventListener('touchmove', this.victoryScrollHandler.move, { passive: true });
-            victoryContent.removeEventListener('touchend', this.victoryScrollHandler.end, { passive: true });
-        }
-
-        this.victoryScrollHandler = {
-            start: (e) => {
-                if (e.target.closest('button')) return;
-                e.stopPropagation();
-            },
-            move: (e) => {
-                if (e.target.closest('button')) return;
-                e.stopPropagation();
-            },
-            end: (e) => {
-                if (e.target.closest('button')) return;
-                e.stopPropagation();
-            }
-        };
-
-        victoryContent.addEventListener('touchstart', this.victoryScrollHandler.start, { passive: true });
-        victoryContent.addEventListener('touchmove', this.victoryScrollHandler.move, { passive: true });
-        victoryContent.addEventListener('touchend', this.victoryScrollHandler.end, { passive: true });
-    }
-
-    disableVictoryScrolling() {
-        const victoryContent = document.querySelector('#survivor-victory-overlay .victory-scroll-content');
-        if (!victoryContent || !this.victoryScrollHandler) return;
-
-        victoryContent.removeEventListener('touchstart', this.victoryScrollHandler.start, { passive: true });
-        victoryContent.removeEventListener('touchmove', this.victoryScrollHandler.move, { passive: true });
-        victoryContent.removeEventListener('touchend', this.victoryScrollHandler.end, { passive: true });
-
-        this.victoryScrollHandler = null;
-    }
+    // Phase 12c.7 - Victory scrolling methods removed, handled by VictoryModal class
 
     enableAboutScrolling() {
         const aboutContent = document.querySelector('.about-content');
@@ -5029,24 +5015,7 @@ class VibeSurvivor {
         }
     }
 
-    scrollVictoryContent(direction) {
-        const victoryContent = document.querySelector('#survivor-victory-overlay .victory-scroll-content');
-        if (!victoryContent) return;
-
-        const scrollAmount = 60;
-
-        if (direction === 'up') {
-            victoryContent.scrollBy({
-                top: -scrollAmount,
-                behavior: 'smooth'
-            });
-        } else if (direction === 'down') {
-            victoryContent.scrollBy({
-                top: scrollAmount,
-                behavior: 'smooth'
-            });
-        }
-    }
+    // Phase 12c.7 - scrollVictoryContent removed, handled by VictoryModal class
 
     scrollHelpContent(direction) {
         const helpContent = document.querySelector('.help-content');
@@ -10378,6 +10347,7 @@ class VibeSurvivor {
         this.modals.gameOver.show();
     }
 
+    // Phase 12c.7 - Boss defeated using VictoryModal (Option B pattern)
     bossDefeated() {
 
         // Reset touch controls when victory screen opens to prevent stuck movement
@@ -10394,272 +10364,42 @@ class VibeSurvivor {
         this.timePaused = true;             // Pause game time during victory
         this.bossDefeating = false;         // Reset animation state
         this.gameRunning = false;
-        
+
         // Cancel any running game loop
         if (this.gameLoopId) {
             cancelAnimationFrame(this.gameLoopId);
             this.gameLoopId = null;
-            
         }
-        
-        // Creating victory overlay
-        
+
         // Calculate final stats
         const minutes = Math.floor(this.gameTime / 60);
         const seconds = Math.floor(this.gameTime % 60);
         const timeText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-        
+
         const finalStats = {
             level: this.player.level,
             timeText: timeText,
             enemiesKilled: Math.max(1, Math.floor(this.gameTime * 1.8))
         };
-        
-        // Create victory overlay (similar to game over but with victory theme)
-        const victoryOverlay = document.createElement('div');
-        victoryOverlay.id = 'survivor-victory-overlay';
-        victoryOverlay.style.cssText = `
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
-            background: transparent !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            z-index: 99999 !important;
-            backdrop-filter: blur(5px) !important;
-        `;
-        
-        const t = this.translations[this.currentLanguage].ui;
-        const weaponsSection = this.generateWeaponsSection();
-        const passivesSection = this.generatePassivesSection();
-        const playerStatsSection = this.generatePlayerStatsSection();
-        const bossBanner = this.bossesKilled === 0
-            ? this.t('bossDefeatedBanner')
-            : this.t('bossLevelDefeated').replace('{level}', this.bossLevel);
-        const nextBossText = this.bossesKilled >= 1
-            ? this.t('nextBoss').replace('{level}', this.bossLevel + 1)
-            : '';
 
-        // Create victory content with neon theme
-        victoryOverlay.innerHTML = `
-            <div class="victory-content" style="
-                background: linear-gradient(135deg, #0a1a0a, #1a2a0a) !important;
-                border: 2px solid #00ff00 !important;
-                border-radius: 15px !important;
-                padding: 30px !important;
-                text-align: center !important;
-                color: white !important;
-                max-width: 550px !important;
-                max-height: 80vh !important;
-                box-shadow: 0 0 30px rgba(0, 255, 0, 0.5) !important;
-                font-family: 'NeoDunggeunmoPro', Arial, sans-serif !important;
-                display: flex !important;
-                flex-direction: column !important;
-            ">
-                <div style="
-                    color: #00ff00 !important;
-                    font-size: 36px !important;
-                    font-weight: bold !important;
-                    margin-bottom: 20px !important;
-                    text-shadow: 0 0 15px rgba(0, 255, 0, 0.8) !important;
-                ">${this.t('victoryTitle')}</div>
-                
-                <div style="
-                    color: #ffff00 !important;
-                    font-size: 18px !important;
-                    font-weight: bold !important;
-                    margin-bottom: 20px !important;
-                    text-shadow: 0 0 10px rgba(255, 255, 0, 0.6) !important;
-                ">${bossBanner}</div>
-                
-                <div class="victory-scroll-content" tabindex="0" style="
-                    overflow-y: auto !important;
-                    max-height: calc(80vh - 220px) !important;
-                    padding-right: 10px !important;
-                    margin-bottom: 20px !important;
-                    -webkit-overflow-scrolling: touch !important;
-                    text-align: left !important;
-                    outline: none !important;
-                ">
-                    <div style="margin-bottom: 20px !important;">
-                        <div style="
-                            display: flex;
-                            justify-content: space-between;
-                            margin: 8px 0;
-                            font-size: 18px;
-                            color: #00ffff;
-                        ">
-                            <span>${t.level}</span>
-                            <span style="color: #00ff00; font-weight: bold;">${finalStats.level}</span>
-                        </div>
-                        <div style="
-                            display: flex;
-                            justify-content: space-between;
-                            margin: 8px 0;
-                            font-size: 18px;
-                            color: #00ffff;
-                        ">
-                            <span>${t.time}</span>
-                            <span style="color: #00ff00; font-weight: bold;">${finalStats.timeText}</span>
-                        </div>
-                        <div style="
-                            display: flex;
-                            justify-content: space-between;
-                            margin: 8px 0;
-                            font-size: 18px;
-                            color: #00ffff;
-                        ">
-                            <span>${t.enemies}</span>
-                            <span style="color: #00ff00; font-weight: bold;">${finalStats.enemiesKilled}</span>
-                        </div>
-                        ${this.bossesKilled >= 1 ? `
-                        <div style="
-                            display: flex;
-                            justify-content: space-between;
-                            margin: 8px 0;
-                            font-size: 18px;
-                            color: #00ffff;
-                        ">
-                            <span>${t.bossesDefeated}</span>
-                            <span style="color: #ff00ff; font-weight: bold;">${this.bossesKilled}</span>
-                        </div>
-                        ` : ''}
-                        ${nextBossText ? `
-                        <div style="
-                            margin: 15px 0;
-                            font-size: 16px;
-                            color: #ffff00;
-                            text-align: center;
-                            font-weight: bold;
-                            text-shadow: 0 0 8px rgba(255, 255, 0, 0.8);
-                        ">
-                            ${nextBossText}
-                        </div>
-                        ` : ''}
-                    </div>
+        // Set up VictoryModal callbacks
+        this.modals.victory.setGameStateCallbacks(
+            () => this.translations[this.currentLanguage].ui,
+            this.t.bind(this),
+            this.generateWeaponsSection.bind(this),
+            this.generatePassivesSection.bind(this),
+            this.generatePlayerStatsSection.bind(this)
+        );
 
-                    ${weaponsSection}
-                    ${passivesSection}
-                    ${playerStatsSection}
-                </div>
-                
-                <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-top: auto;">
-                    <button id="victory-continue-btn" style="
-                        background: transparent !important;
-                        border: 2px solid #ff00ff !important;
-                        color: #ff00ff !important;
-                        padding: 12px 25px !important;
-                        font-size: 16px !important;
-                        border-radius: 25px !important;
-                        font-weight: bold !important;
-                        transition: all 0.3s ease !important;
-                        cursor: pointer !important;
-                        touch-action: manipulation !important;
-                        min-width: 44px !important;
-                        min-height: 44px !important;
-                        user-select: none !important;
-                        -webkit-user-select: none !important;
-                        -webkit-tap-highlight-color: transparent !important;
-                    ">${this.t('continueButton')}</button>
+        this.modals.victory.setOverlayLockCallbacks(
+            this.incrementOverlayLock.bind(this),
+            this.decrementOverlayLock.bind(this)
+        );
 
-                    <button id="victory-exit-btn" style="
-                        background: transparent !important;
-                        border: 2px solid #ffff00 !important;
-                        color: #ffff00 !important;
-                        padding: 12px 25px !important;
-                        font-size: 16px !important;
-                        border-radius: 25px !important;
-                        font-weight: bold !important;
-                        transition: all 0.3s ease !important;
-                        cursor: pointer !important;
-                        touch-action: manipulation !important;
-                        min-width: 44px !important;
-                        min-height: 44px !important;
-                        user-select: none !important;
-                        -webkit-user-select: none !important;
-                        -webkit-tap-highlight-color: transparent !important;
-                    ">${t.exit}</button>
-                </div>
-            </div>
-        `;
-        
-        // Add hover effects
-        const style = document.createElement('style');
-        style.textContent = `
-            #victory-continue-btn:hover {
-                background: rgba(255, 0, 255, 0.1) !important;
-                box-shadow: 0 0 15px rgba(255, 0, 255, 0.5) !important;
-            }
-            #victory-exit-btn:hover {
-                background: rgba(255, 255, 0, 0.1) !important;
-                box-shadow: 0 0 15px rgba(255, 255, 0, 0.5) !important;
-            }
-        `;
-        document.head.appendChild(style);
-        
-        // Add overlay to the game container - try multiple possible containers
-        let gameContainer = document.getElementById('vibe-survivor-container');
-        if (!gameContainer) {
-            gameContainer = document.getElementById('vibe-survivor-modal');
-        }
-        if (!gameContainer) {
-            gameContainer = document.getElementById('game-screen');
-        }
-        if (!gameContainer) {
-            gameContainer = document.body; // Fallback to body
-        }
-        
-        if (gameContainer) {
-            gameContainer.appendChild(victoryOverlay);
-            this.incrementOverlayLock();
-            this.enableVictoryScrolling();
-            const victoryScrollContent = victoryOverlay.querySelector('.victory-scroll-content');
-            if (victoryScrollContent) {
-                victoryScrollContent.focus({ preventScroll: true });
-            }
-            if (!this.victoryKeydownHandler) {
-                this.victoryKeydownHandler = (event) => {
-                    const key = event.key;
-                    if (!document.getElementById('survivor-victory-overlay')) return;
-                    if (key === 'ArrowUp' || key === 'ArrowDown' || key === 'Up' || key === 'Down' || key === 'w' || key === 'W' || key === 's' || key === 'S') {
-                        if (this.menuNavigationState.active && this.menuNavigationState.menuType === 'victory') {
-                            return;
-                        }
-                        event.preventDefault();
-                        const direction = (key === 'ArrowUp' || key === 'Up' || key === 'w' || key === 'W') ? 'up' : 'down';
-                        this.scrollVictoryContent(direction);
-                    }
-                };
-                document.addEventListener('keydown', this.victoryKeydownHandler, { passive: false });
-            }
-        } else {
-            console.error('Could not find container for victory overlay');
-        }
-        
-        // Add event listeners with both click and touch support
-        const victoryContinueBtn = document.getElementById('victory-continue-btn');
-        const victoryExitBtn = document.getElementById('victory-exit-btn');
-        
-        const victoryContinueHandler = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
+        this.modals.victory.onContinue(() => {
             // Reset menu navigation
             this.resetMenuNavigation();
-            this.disableVictoryScrolling();
-            if (this.victoryKeydownHandler) {
-                document.removeEventListener('keydown', this.victoryKeydownHandler);
-                this.victoryKeydownHandler = null;
-            }
-            // Remove overlay
-            victoryOverlay.remove();
-            style.remove();
-            this.decrementOverlayLock();
-            
-            
-            
+
             // Clear victory screen state
             this.bossVictoryInProgress = false;
 
@@ -10670,46 +10410,23 @@ class VibeSurvivor {
             if (this.pendingLevelUps === 0) {
                 this.continueAfterBoss();
             }
-        };
-        
-        const victoryExitHandler = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            // Reset menu navigation
-            this.resetMenuNavigation();
-            this.disableVictoryScrolling();
-            if (this.victoryKeydownHandler) {
-                document.removeEventListener('keydown', this.victoryKeydownHandler);
-                this.victoryKeydownHandler = null;
-            }
-            // Remove overlay
-            victoryOverlay.remove();
-            style.remove();
-            this.decrementOverlayLock();
-            // Clear any pending level ups since we're exiting
-            this.pendingLevelUps = 0;
-            this.bossVictoryInProgress = false;
-            this.timePaused = false;
-            // Close game
-            this.closeGame();
-        };
-        
-        // Add both click and touch events for better mobile support
-        victoryContinueBtn.addEventListener('click', victoryContinueHandler);
-        victoryContinueBtn.addEventListener('touchend', victoryContinueHandler);
-        victoryExitBtn.addEventListener('click', victoryExitHandler);
-        victoryExitBtn.addEventListener('touchend', victoryExitHandler);
-        
-        // Add menu navigation styles
-        this.addMenuNavigationStyles();
-        
-        // Initialize keyboard navigation for victory buttons
-        const victoryButtons = [victoryContinueBtn, victoryExitBtn];
-        this.initializeMenuNavigation('victory', victoryButtons);
-        
-        // Victory overlay ready
+        });
+
+        this.modals.victory.onExit(() => {
+            // Set up exit confirmation to work with victory modal
+            this.modals.exitConfirmation.setParentKeyboardCallbacks(
+                this.modals.victory.disableKeyboardHandlers.bind(this.modals.victory),
+                this.modals.victory.enableKeyboardHandlers.bind(this.modals.victory)
+            );
+
+            // Show exit confirmation modal
+            this.showExitConfirmation();
+        });
+
+        // Show the victory modal
+        this.modals.victory.show(finalStats, this.bossesKilled, this.bossLevel);
     }
-    
+
     continueAfterBoss() {
         // Resume the game with increased difficulty after beating the boss
         this.gameRunning = true;
@@ -10825,6 +10542,10 @@ class VibeSurvivor {
             }
             if (this.modals.helpMenu && this.modals.helpMenu.element) {
                 this.modals.helpMenu.hide();
+            }
+            // Phase 12c.7 - Victory modal cleanup
+            if (this.modals.victory && this.modals.victory.element) {
+                this.modals.victory.hide();
             }
         }
 
