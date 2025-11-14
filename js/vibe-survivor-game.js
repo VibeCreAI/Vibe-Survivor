@@ -66,6 +66,7 @@ import { RestartConfirmationModal } from './systems/ui/modals/restart-confirmati
 import { ExitConfirmationModal } from './systems/ui/modals/exit-confirmation.js';
 import { OptionsMenu } from './systems/ui/modals/options-menu.js';
 import { HelpMenu } from './systems/ui/modals/help-menu.js';
+import { StartScreenModal } from './systems/ui/modals/start-screen-modal.js';
 
 // Import Phase 11 systems - Engine & Audio
 import { AudioManager } from './systems/audio/audio-manager.js';
@@ -135,7 +136,8 @@ class VibeSurvivor {
             restartConfirmation: new RestartConfirmationModal(),
             exitConfirmation: new ExitConfirmationModal(),
             options: new OptionsMenu(),
-            helpMenu: new HelpMenu()
+            helpMenu: new HelpMenu(),
+            startScreenModal: new StartScreenModal()
         };
 
         // Initialize Phase 11 systems - Engine & Audio
@@ -617,6 +619,37 @@ class VibeSurvivor {
             });
 
             this._helpMenuInitialized = true;
+        }
+
+        // Phase 12c.8 - Initialize start screen modal (after modal HTML is created)
+        if (!this._startScreenModalInitialized) {
+            this.modals.startScreenModal.init();
+
+            // Set up button callbacks
+            this.modals.startScreenModal.onStart(() => {
+                this.resetMenuNavigation();
+                this.startGame();
+            });
+
+            this.modals.startScreenModal.onOptions(() => {
+                this.showOptionsMenu();
+            });
+
+            this.modals.startScreenModal.onAbout(() => {
+                this.showAboutMenu();
+            });
+
+            this.modals.startScreenModal.onRestart(() => {
+                this.resetMenuNavigation();
+                this.restartGame();
+            });
+
+            this.modals.startScreenModal.onExit(() => {
+                this.resetMenuNavigation();
+                this.closeGame();
+            });
+
+            this._startScreenModalInitialized = true;
         }
 
         // Preload assets with loading screen
@@ -3255,22 +3288,9 @@ class VibeSurvivor {
             this.mainKeyboardHandler = null;
         }
 
-        // Setting up event listeners
-        document.getElementById('start-survivor').addEventListener('click', () => {
-            this.resetMenuNavigation();
-            this.startGame();
-        });
-        
-        document.getElementById('restart-survivor').addEventListener('click', () => {
-            this.resetMenuNavigation();
-            this.restartGame();
-        });
-        
-        document.getElementById('exit-survivor').addEventListener('click', () => {
-            this.resetMenuNavigation();
-            this.closeGame();
-        });
-        
+        // Phase 12c.8 - Start screen button event listeners removed (handled by StartScreenModal - Option B pattern)
+        // The modal owns all start screen button behavior now (Start, Options, About, Restart, Exit)
+
         // Pause button event listener
         document.getElementById('pause-btn').addEventListener('click', () => {
             this.togglePause();
@@ -3317,17 +3337,10 @@ class VibeSurvivor {
             this.hideRestartConfirmation();
         });
 
-        // Options menu event listeners
-        document.getElementById('options-btn').addEventListener('click', () => {
-            this.showOptionsMenu();
-        });
+        // Phase 12c.8 - Options and About button event listeners removed (handled by StartScreenModal - Option B pattern)
+        // The StartScreenModal now owns the click behavior for options-btn and about-btn
 
         // Phase 12c.5 - Close options button event listeners removed (handled by OptionsMenu modal - Option B pattern)
-
-        // About menu event listeners
-        document.getElementById('about-btn').addEventListener('click', () => {
-            this.showAboutMenu();
-        });
 
         // Close about button with mobile support
         const closeAboutBtn = document.getElementById('close-about-btn');
@@ -3873,15 +3886,24 @@ class VibeSurvivor {
             
             // Canvas ready
             this.resizeCanvas();
-            
+
             // Initialize offscreen canvases for performance
             this.initializeOffscreenCanvases();
-            
+
         } catch (e) {
             console.error('Canvas initialization failed:', e);
             return;
         }
-        
+
+        // BUGFIX: Ensure overlayLocks is reset to 0 before starting game
+        // This handles edge cases where options/about menus may have left locks
+        this.overlayLocks = 0;
+
+        // BUGFIX: Reset menuNavigationState to restore reference to inputManager's state
+        // Options menu breaks the reference when restoring previousState, so we need to re-establish it
+        this.menuNavigationState = this.inputManager.menuNavigationState;
+        this.inputManager.resetMenuNavigation();
+
         this.resetGame();
         
         // Optimize memory before starting intensive gameplay

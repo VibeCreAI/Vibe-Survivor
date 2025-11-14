@@ -57,7 +57,7 @@ Track your progress through the refactoring. Check off each phase as you complet
 
 - [x] **Phase 12a**: Replace Phase 8 Code (50 min) - Integrate Player, Enemy, Pickup Systems ✅ (Already done!)
 - [x] **Phase 12b**: Replace Phase 9 Code (50 min) - Integrate Weapon, Projectile, XP, Upgrade Systems ✅
-- [ ] **Phase 12c**: Replace Phase 10 Code (70 min) - Integrate HUD, Modals, Touch Controls (8/12 sub-tasks complete: HUD ✅, Game Over ✅, Level Up ✅, Pause ✅, Confirmations ✅, Options ✅, Help ✅, Victory ✅)
+- [ ] **Phase 12c**: Replace Phase 10 Code (70 min) - Integrate HUD, Modals, Touch Controls (9/12 sub-tasks complete: HUD ✅, Game Over ✅, Level Up ✅, Pause ✅, Confirmations ✅, Options ✅, Help ✅, Victory ✅, Start Screen ✅)
 - [ ] **Phase 12d**: Replace Phase 11 Code (30 min) - Integrate Game Loop Utilities
 - [ ] **Checkpoint #4**: Integration Test (15 min) - All new systems fully integrated
 
@@ -3153,17 +3153,25 @@ When refactoring a modal, test:
 
 **Note**: The victory modal is dynamically created when a boss is defeated. It shows final stats, weapons, passives, and player stats with scrollable content. Users can navigate to buttons at the bottom using keyboard, then select Continue or Exit. ESC key is disabled in victory modal to prevent accidental exits.
 
-#### 12c.8: Start Screen Modal Integration
+#### 12c.8: ✅ Start Screen Modal Integration (COMPLETED)
 
-**Files**: `js/systems/ui/modals/start-screen.js`, `js/vibe-survivor-game.js`
+**Files**: `js/systems/ui/modals/start-screen-modal.js`, `js/vibe-survivor-game.js`
 
 **Tasks**:
-- [ ] Refactor `StartScreenModal` to Option B pattern
-- [ ] Add keyboard handler (Enter to start)
-- [ ] Ensure modal doesn't interfere with landing page bot
-- [ ] Test transition from landing page to game
+- [x] Create minimal `StartScreenModal` class (Option B pattern - conservative approach)
+- [x] Modal handles only button click event listeners
+- [x] Set up callbacks for Start, Options, About, Restart, Exit buttons
+- [x] Initialize in initGame() with all button callbacks
+- [x] Remove old button event listeners from setupEventHandlers()
 
-**Reference**: Lines ~700-900 in pre-refactor code for start screen
+**Implementation Notes**:
+- **Conservative Approach**: Modal only handles button click events
+- Keyboard navigation remains in main game file (uses existing menuNavigationState system)
+- DOM manipulation (showStartScreen, startGame) remains in main game file
+- Rendering and lifecycle management remains in main game file
+- This minimal approach preserves all existing functionality and reduces risk
+
+**Reference**: Lines ~3727-3783 (showStartScreen), ~3292 (removed event listeners)
 
 #### 12c.9: Loading Screen Modal Integration
 
