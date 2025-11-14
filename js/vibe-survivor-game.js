@@ -67,6 +67,7 @@ import { ExitConfirmationModal } from './systems/ui/modals/exit-confirmation.js'
 import { OptionsMenu } from './systems/ui/modals/options-menu.js';
 import { HelpMenu } from './systems/ui/modals/help-menu.js';
 import { StartScreenModal } from './systems/ui/modals/start-screen-modal.js';
+import { AboutModal } from './systems/ui/modals/about-modal.js';
 
 // Import Phase 11 systems - Engine & Audio
 import { AudioManager } from './systems/audio/audio-manager.js';
@@ -137,7 +138,8 @@ class VibeSurvivor {
             exitConfirmation: new ExitConfirmationModal(),
             options: new OptionsMenu(),
             helpMenu: new HelpMenu(),
-            startScreenModal: new StartScreenModal()
+            startScreenModal: new StartScreenModal(),
+            aboutModal: new AboutModal()
         };
 
         // Initialize Phase 11 systems - Engine & Audio
@@ -532,7 +534,7 @@ class VibeSurvivor {
             // Set up game state callbacks for dynamic button labels
             this.modals.options.setGameStateCallbacks(
                 () => this.audioMuted,
-                () => this.dashButtonPosition,
+                () => this.touchControls?.dashButton?.position || this.dashButtonPosition || 'right',
                 () => this.currentLanguage
             );
 
@@ -655,6 +657,18 @@ class VibeSurvivor {
         if (!this._loadingScreenInitialized) {
             this.modals.loading.init();
             this._loadingScreenInitialized = true;
+        }
+
+        // Phase 12c.10 - Initialize about modal (after modal HTML is created)
+        if (!this._aboutModalInitialized) {
+            this.modals.aboutModal.init();
+
+            // Set up close callback
+            this.modals.aboutModal.onClose(() => {
+                this.hideAboutMenu();
+            });
+
+            this._aboutModalInitialized = true;
         }
 
         // Preload assets with loading screen
@@ -3351,17 +3365,8 @@ class VibeSurvivor {
 
         // Phase 12c.5 - Close options button event listeners removed (handled by OptionsMenu modal - Option B pattern)
 
-        // Close about button with mobile support
-        const closeAboutBtn = document.getElementById('close-about-btn');
-        closeAboutBtn.addEventListener('click', () => {
-            this.hideAboutMenu();
-        });
-
-        closeAboutBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            this.hideAboutMenu();
-        }, { passive: false });
+        // Phase 12c.10 - Close about button event listeners removed (handled by AboutModal - Option B pattern)
+        // The AboutModal now owns the close button behavior (click and touchstart)
 
         // Phase 12c.6 - Help menu event listeners removed (handled by HelpMenu modal - Option B pattern)
         // The modal owns all button behavior including close button and tab switching
@@ -4512,6 +4517,9 @@ class VibeSurvivor {
 
         // Delegate to input manager
         this.inputManager.toggleDashButtonPosition();
+
+        // Sync the main class property
+        this.dashButtonPosition = this.touchControls.dashButton.position;
 
         const dashBtn = document.getElementById('mobile-dash-btn');
         if (dashBtn) {

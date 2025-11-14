@@ -57,7 +57,7 @@ Track your progress through the refactoring. Check off each phase as you complet
 
 - [x] **Phase 12a**: Replace Phase 8 Code (50 min) - Integrate Player, Enemy, Pickup Systems ✅ (Already done!)
 - [x] **Phase 12b**: Replace Phase 9 Code (50 min) - Integrate Weapon, Projectile, XP, Upgrade Systems ✅
-- [ ] **Phase 12c**: Replace Phase 10 Code (70 min) - Integrate HUD, Modals, Touch Controls (10/12 sub-tasks complete: HUD ✅, Game Over ✅, Level Up ✅, Pause ✅, Confirmations ✅, Options ✅, Help ✅, Victory ✅, Start Screen ✅, Loading ✅)
+- [ ] **Phase 12c**: Replace Phase 10 Code (70 min) - Integrate HUD, Modals, Touch Controls (11/12 sub-tasks complete: HUD ✅, Game Over ✅, Level Up ✅, Pause ✅, Confirmations ✅, Options ✅, Help ✅, Victory ✅, Start Screen ✅, Loading ✅, About ✅)
 - [ ] **Phase 12d**: Replace Phase 11 Code (30 min) - Integrate Game Loop Utilities
 - [ ] **Checkpoint #4**: Integration Test (15 min) - All new systems fully integrated
 
@@ -3193,17 +3193,25 @@ When refactoring a modal, test:
 
 **Reference**: Lines ~341-517 (preloadAssets method)
 
-#### 12c.10: About Modal Integration
+#### 12c.10: ✅ About Modal Integration (COMPLETED)
 
-**Files**: `js/systems/ui/modals/about.js`, `js/vibe-survivor-game.js`
+**Files**: `js/systems/ui/modals/about-modal.js`, `js/vibe-survivor-game.js`
 
 **Tasks**:
-- [ ] Refactor `AboutModal` to Option B pattern
-- [ ] Add keyboard scrolling for about content
-- [ ] Add overlay lock callbacks
-- [ ] Test open/close flow
+- [x] Create minimal `AboutModal` class (Option B pattern - conservative approach)
+- [x] Modal handles only close button click event listener (click and touchstart)
+- [x] Set up close callback
+- [x] Initialize in initGame() with close callback
+- [x] Remove old close button event listeners from setupEventHandlers()
 
-**Reference**: Lines ~5100-5200 in pre-refactor code
+**Implementation Notes**:
+- **Conservative Approach**: Modal only handles close button click events
+- Keyboard navigation remains in main game file (uses existing menuNavigationState system)
+- Scrolling methods (enableAboutScrolling, disableAboutScrolling) remain in main game file
+- Menu state management remains in main game file
+- This minimal approach preserves all existing functionality and reduces risk
+
+**Reference**: Lines ~11415-11475 (showAboutMenu, hideAboutMenu), ~3368 (removed event listeners)
 
 #### 12c.11: Options Modal Integration
 
