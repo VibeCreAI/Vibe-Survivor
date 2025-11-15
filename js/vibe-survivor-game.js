@@ -243,7 +243,9 @@ class VibeSurvivor {
         // Keep frameRateMonitor as a compatibility layer
         Object.defineProperty(this, 'frameRateMonitor', {
             get: () => ({
-                currentFPS: this.performanceMonitor.getCurrentFPS(),
+                currentFPS: this.frameRateCounter
+                    ? this.frameRateCounter.getFPS()
+                    : this.performanceMonitor.getCurrentFPS(),
                 averageFPS: this.performanceMonitor.getAverageFPS(),
                 adaptiveQuality: this.performanceMonitor.getQualitySettings(),
                 frameCount: this.performanceMonitor.frameCount,
@@ -4255,6 +4257,12 @@ class VibeSurvivor {
         this.spawnRate = SPAWN_CONFIG.BASE_SPAWN_RATE;
         this.waveMultiplier = 1;
         this.timePaused = false;
+        if (this.engineTimer) {
+            this.engineTimer.reset();
+        }
+        if (this.frameRateCounter) {
+            this.frameRateCounter.reset();
+        }
 
         // Reset UI state
         this.frameCount = 0;
@@ -4394,6 +4402,9 @@ class VibeSurvivor {
 
         // Update frame rate monitoring
         this.performanceMonitor.update();
+        if (this.frameRateCounter && typeof timestamp === 'number') {
+            this.frameRateCounter.update(timestamp);
+        }
 
         const previousTimestamp = this.lastTimestamp === null ? timestamp : this.lastTimestamp;
         const delta = Math.max(0, timestamp - previousTimestamp);
@@ -4430,7 +4441,16 @@ class VibeSurvivor {
         // Only update time and frame count if not paused (menus, victory screens, etc.)
         if (!this.timePaused) {
             this.frameCount++;
-            this.gameTime = this.frameCount / 60;
+
+            // Sync main game time with EngineTimer utility
+            if (this.engineTimer) {
+                const fixedDeltaSeconds = this.frameInterval / 1000;
+                this.engineTimer.update(fixedDeltaSeconds);
+                this.gameTime = this.engineTimer.getTime();
+            } else {
+                // Fallback in case timer is unavailable
+                this.gameTime = this.frameCount / 60;
+            }
         }
 
         this.updatePlayer();
