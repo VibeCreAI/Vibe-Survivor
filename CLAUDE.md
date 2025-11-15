@@ -6,36 +6,74 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Vibe Survivor is a standalone JavaScript arcade-style survival game built with HTML5 Canvas. The game features pixel art styling, multiple weapon systems, enemy waves, and progression mechanics. It's designed as a self-contained web application that can be deployed independently.
 
+**Major Refactor Completed**: The game has been refactored from a monolithic ~9300+ line single-file architecture to a modern modular system with separated concerns, improved maintainability, and clearer code organization. See REFACTOR.md and AGENTS.md for detailed documentation.
+
 ## Architecture
 
 ### Core Structure
-- **index.html**: Entry point with minimal pixel-styled landing page featuring a "Press Start" button
-- **js/vibe-survivor-game.js**: Complete game engine (~9300+ lines) containing all game logic, rendering, and systems
+- **index.html**: Entry point with pixel-styled landing page and in-page game modal
 - **js/main.js**: Landing page controller that handles game initialization and UI wiring
-- **styles/base.css**: Complete styling for landing page with custom fonts and pixel aesthetic
-- **fonts/**: Custom fonts (Born2bSporty, Minecraft) for authentic pixel game styling
-- **sound/**: Contains Vibe_Survivor.mp3 background music
+- **js/vibe-survivor-game.js**: Orchestration layer that wires all systems, manages lifecycle, and owns the high-level game loop
+- **js/core/**: Core engine pieces (engine, state, input, physics)
+- **js/config/**: Configuration files (constants, assets, loading phases)
+- **js/utils/**: Shared utilities (Vector2 math, general math helpers, performance monitor)
+- **js/systems/**: Modular systems extracted from the original monolith
+  - `audio/`: Audio management
+  - `gameplay/`: Player, enemies, weapons, pickups, progression
+  - `rendering/`: Canvas, sprites, animations, particles, effects
+  - `ui/`: HUD, touch controls, modals
+- **styles/base.css**: Complete styling for landing page and in-game UI with custom fonts and pixel aesthetic
+- **fonts/**: Custom fonts (NeoDunggeunmoPro, etc.) for authentic pixel game styling
+- **sound/**: Background music (Vibe_Survivor.mp3) and SFX (weapon sounds, game events)
+- **images/**: Title art, backgrounds, weapon/passive icons, sprite sheets
 
-### Game Engine Architecture (vibe-survivor-game.js)
+### Game Engine Architecture (Modular)
 
-The game uses a single-file architecture with these key components:
+The game now uses a **modular architecture** with `VibeSurvivor` acting as the high-level coordinator:
 
-1. **Vector2 Class**: Utility class for optimized 2D vector operations (normalize, distance, direction, etc.)
+1. **Core Engine & Utilities (`js/core/`, `js/utils/`)**
+   - `core/engine.js`: GameLoop, EngineTimer, FrameRateCounter - handles fixed-timestep game loop
+   - `core/state.js`: State factories and reset helpers for player, enemies, projectiles, pickups, UI
+   - `core/input.js`: InputManager - centralized keyboard, mouse, touch, and menu navigation
+   - `core/physics.js`: PhysicsManager - movement helpers, cached trig/sqrt for performance
+   - `utils/vector2.js`: Vector2 class for optimized 2D vector operations
+   - `utils/math.js`: Math utilities (clamp, lerp, distance calculations)
+   - `utils/performance.js`: PerformanceMonitor for FPS tracking and diagnostics
 
-2. **VibeSurvivor Main Class**: Core game controller with properties for:
-   - Player state (position, health, XP, level, abilities)
-   - Enemy management with behavior-based grouping (chase, dodge, tank, fly, teleport, boss)
-   - Weapon systems and projectiles
-   - Particle effects and visual systems
-   - Audio management
-   - UI overlays and modals
+2. **Configuration (`js/config/`)**
+   - `constants.js`: Game balance values, physics constants, weapon stats, enemy configs
+   - `assets.js`: Asset paths, sprite configurations, loading phases
 
-3. **Key Systems**:
-   - Canvas-based rendering with world-to-screen coordinate transformation
-   - Frame-based game loop with deltaTime calculations
-   - Event-driven input handling (keyboard, mouse, touch)
-   - Modal system for in-game UI (pause, level-up, death screens)
-   - Sound management with fallback handling
+3. **Gameplay Systems (`js/systems/gameplay/`)**
+   - `player.js`: PlayerSystem - movement, dash, collision hooks, passive abilities
+   - `pickups.js`: PickupSystem - XP/HP/magnet orbs and collection behavior
+   - `enemies/enemy-system.js`: EnemySystem - enemy waves, behaviors (chase, dodge, tank, fly, teleport, boss)
+   - `weapons/weapon-base.js`: WeaponSystem - weapon creation, merging, upgrades
+   - `weapons/projectiles.js`: ProjectileSystem - projectile pooling and updates
+   - `progression/xp-system.js`: XPSystem - level progression, XP thresholds, level-ups
+   - `progression/upgrades.js`: UpgradeSystem - upgrade choice generation and application
+
+4. **Rendering Systems (`js/systems/rendering/`)**
+   - `canvas.js`: Canvas initialization, resize handling, camera abstraction
+   - `sprites.js`: SpriteManager - sprite loading and caching
+   - `animation.js`: AnimationController - sprite frame timing
+   - `particles.js`: ParticleSystem - particle effects and explosions with pooling
+   - `effects.js`: EffectsManager - screen shake, flashes, visual overlays
+
+5. **UI Systems (`js/systems/ui/`)**
+   - `hud.js`: In-game HUD (HP, XP, time, weapons, boss indicators)
+   - `touch-controls.js`: TouchControlsUI - virtual joystick and dash button for mobile
+   - `modals/modal-base.js`: Base Modal class and ModalManager for all overlays
+   - `modals/`: Pause, Game Over, Level Up, Options, Help, Victory, Loading, Start Screen, About, etc.
+
+6. **Audio System (`js/systems/audio/audio-manager.js`)**
+   - Centralized audio management with lazy initialization, mute state, music control, SFX playback
+
+7. **VibeSurvivor Orchestration (`js/vibe-survivor-game.js`)**
+   - High-level game coordinator that wires systems together
+   - Manages lifecycle: canvas init, asset loading, game loop, modal lifecycle
+   - Maintains glue logic and compatibility shims between systems
+   - Runs fixed-timestep game loop using EngineTimer + PerformanceMonitor
 
 ### Initialization Flow
 
@@ -93,18 +131,45 @@ No automated test suite is currently configured. Manual testing should cover:
 - Performance considerations for mobile devices
 
 ### File Dependencies
-- Game expects `sound/Vibe_Survivor.mp3` for background music
+- Game expects background music at `sound/Vibe_Survivor.mp3`
+- Additional SFX files in `sound/` directory (weapon sounds, boss alerts, game events)
+- Weapon-specific sounds in `sound/weapon/` (basicMissile.mp3, flameThrower.mp3, etc.)
 - Fonts loaded from `fonts/` directory via CSS @font-face
+- Images and sprite sheets in `images/` directory
 - All paths are relative and must be maintained when moving files
+
+## Working with the Modular Architecture
+
+### System Organization
+- Each system is self-contained in its own file/directory
+- Systems communicate through the main VibeSurvivor orchestrator
+- State is managed centrally through `core/state.js` factories
+- Systems receive state references and update them directly
+- Cross-system dependencies are minimized and clearly documented
+
+### Making Changes
+- **Adding new features**: Identify the appropriate system (gameplay, rendering, UI) and add logic there
+- **Modifying game balance**: Update values in `js/config/constants.js`
+- **Adding new weapons**: Extend weapon definitions in `constants.js` and add logic in `weapons/weapon-base.js`
+- **UI changes**: Modal-based UI lives in `systems/ui/modals/`, HUD changes go in `systems/ui/hud.js`
+- **Performance tuning**: Check `utils/performance.js` for monitoring and optimization opportunities
+
+### Testing Changes
+- Test the specific system you modified
+- Verify integration with other systems through the orchestrator
+- Check that state management remains consistent
+- Test on both desktop (keyboard/mouse) and mobile (touch) inputs
 
 ## Code Style and Conventions
 
 - ES6+ JavaScript with class-based architecture
+- Modular design with single responsibility principle
 - Consistent indentation (4 spaces)
 - Descriptive variable and method names
 - Inline comments for complex game logic
 - Vector operations abstracted through Vector2 utility class
 - Event-driven architecture for user interactions
+- Systems use dependency injection pattern (state and managers passed in)
 
 ## Deployment Notes
 

@@ -618,7 +618,7 @@ export class WeaponSystem {
             projectile.vx = fastCos(angle) * weapon.projectileSpeed * 0.7;
             projectile.vy = fastSin(angle) * weapon.projectileSpeed * 0.7;
             projectile.damage = weapon.damage;
-            projectile.life = 160;
+            projectile.life = 120;
             projectile.type = 'homing_laser';
             projectile.color = '#FFD700';
             projectile.size = 5;
