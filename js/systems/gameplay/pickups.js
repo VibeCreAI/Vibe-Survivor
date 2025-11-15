@@ -148,10 +148,6 @@ export class PickupSystem {
                 // Return to pool
                 orb.active = false;
                 hpOrbs.splice(i, 1);
-            } else if (orb.life-- <= 0) {
-                // Return to pool when expired
-                orb.active = false;
-                hpOrbs.splice(i, 1);
             }
         }
     }
@@ -205,10 +201,6 @@ export class PickupSystem {
                 }
 
                 // Return to pool
-                orb.active = false;
-                magnetOrbs.splice(i, 1);
-            } else if (orb.life-- <= 0) {
-                // Return to pool when expired
                 orb.active = false;
                 magnetOrbs.splice(i, 1);
             }
@@ -331,7 +323,6 @@ export class PickupSystem {
             const distance = 300 + Math.random() * 500; // 300-800 units away
             orb.x = player.x + fastCos(angle) * distance;
             orb.y = player.y + fastSin(angle) * distance;
-            orb.duration = 300; // Last for 5 seconds
             magnetOrbs.push(orb);
         }
     }
