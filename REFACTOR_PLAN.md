@@ -3457,10 +3457,9 @@ Play a complete game session:
 
 ### 1. Cleanup Old Code
 
-```bash
-# Review and delete any unused code from monolith
-# Verify all functionality moved to modules
-```
+- [x] Remove legacy Level Up modal/tabs implementation from `js/vibe-survivor-game.js`
+- [x] Identify and delete any remaining monolith-only helpers that have modular counterparts
+- [x] Verify no orphaned UI logic remains after modal refactors
 
 ### 2. Update Documentation
 

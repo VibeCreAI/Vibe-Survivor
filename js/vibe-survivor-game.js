@@ -212,7 +212,6 @@ class VibeSurvivor {
         this.isPaused = false;
         this.isHelpOpen = false;
         this.activeHelpTab = 'guide';
-        this.activeLevelUpTab = 'levelup';
         this.overlayLocks = 0;
         
         // Background music
@@ -225,8 +224,6 @@ class VibeSurvivor {
 
         // Touch scrolling handlers for modals
         this.pauseScrollHandler = null;
-        this.levelUpScrollHandler = null;
-        this.levelUpScrollContainers = [];
 
         // Bind layout helpers that run from event listeners
         this.updateStartOverlayLayout = this.updateStartOverlayLayout.bind(this);
@@ -1346,7 +1343,9 @@ class VibeSurvivor {
             }
 
             .vibe-survivor-content.overlay-active .pause-btn,
-            .vibe-survivor-content.overlay-active .header-help-btn {
+            .vibe-survivor-content.overlay-active .header-help-btn,
+            .vibe-survivor-content.pause-menu-open .pause-btn,
+            .vibe-survivor-content.pause-menu-open .header-help-btn {
                 opacity: 0;
                 pointer-events: none;
                 visibility: hidden;
@@ -3403,7 +3402,7 @@ class VibeSurvivor {
                         // Phase 12c.7 - Victory scrolling removed, handled by VictoryModal class
                         // Phase 12c - Level up scrolling/navigation removed, handled by LevelUpModal class
                         if (this.menuNavigationState.menuType === 'gameover') {
-                            this.scrollGameOverContent('up');
+                            this.modals.gameOver?.scrollContent?.('up');
                         } else {
                             this.navigateMenu('up');
                         }
@@ -3416,7 +3415,7 @@ class VibeSurvivor {
                         // Phase 12c.7 - Victory scrolling removed, handled by VictoryModal class
                         // Phase 12c - Level up scrolling/navigation removed, handled by LevelUpModal class
                         if (this.menuNavigationState.menuType === 'gameover') {
-                            this.scrollGameOverContent('down');
+                            this.modals.gameOver?.scrollContent?.('down');
                         } else {
                             this.navigateMenu('down');
                         }
@@ -4153,6 +4152,7 @@ class VibeSurvivor {
                 // Close pause menu and restart game
                 this.isPaused = false;
                 this.modals.pause.hide();
+                this.setPauseMenuOverlayState(false);
                 this.restartGame();
             });
 
@@ -4270,7 +4270,6 @@ class VibeSurvivor {
         this.isPaused = false;
         this.notifications = [];
         this.overlayLocks = 0;
-        this.activeLevelUpTab = 'levelup';
 
         // Reset boss state
         this.bossLevel = 1;
@@ -4519,6 +4518,7 @@ class VibeSurvivor {
 
             // Show pause modal (modal handles all keyboard interaction internally)
             this.modals.pause.show();
+            this.setPauseMenuOverlayState(true);
 
             // Pause background music (Phase 11 - AudioManager)
             this.audioManager.pauseMusic();
@@ -4528,6 +4528,7 @@ class VibeSurvivor {
 
             // Hide pause modal
             this.modals.pause.hide();
+            this.setPauseMenuOverlayState(false);
 
             // Resume background music (Phase 11 - AudioManager)
             this.audioManager.setMuted(this.audioMuted);
@@ -4717,6 +4718,16 @@ class VibeSurvivor {
         }
     }
 
+    setPauseMenuOverlayState(isOpen) {
+        const content = document.querySelector('.vibe-survivor-content');
+        if (!content) return;
+        if (isOpen) {
+            content.classList.add('pause-menu-open');
+        } else {
+            content.classList.remove('pause-menu-open');
+        }
+    }
+
     switchHelpTab(tab) {
         const guideBtn = document.getElementById('help-tab-guide');
         const statusBtn = document.getElementById('help-tab-status');
@@ -4758,238 +4769,6 @@ class VibeSurvivor {
             ${sections || `<p class="help-status-empty">${emptyText}</p>`}
         `;
     }
-
-    enableHelpScrolling() {
-        const helpContent = document.querySelector('.help-content');
-        if (!helpContent) return;
-
-        // Remove any existing touch event listeners to avoid duplicates
-        if (this.helpScrollHandler) {
-            helpContent.removeEventListener('touchstart', this.helpScrollHandler.start, { passive: false });
-            helpContent.removeEventListener('touchmove', this.helpScrollHandler.move, { passive: false });
-            helpContent.removeEventListener('touchend', this.helpScrollHandler.end, { passive: false });
-        }
-
-        // Create touch scroll handlers that allow native scrolling
-        this.helpScrollHandler = {
-            start: (e) => {
-                // Don't prevent default - allow native touch scrolling
-                e.stopPropagation(); // Stop it from bubbling to modal
-            },
-            move: (e) => {
-                // Don't prevent default - allow native touch scrolling
-                e.stopPropagation(); // Stop it from bubbling to modal
-            },
-            end: (e) => {
-                // Don't prevent default - allow native touch scrolling
-                e.stopPropagation(); // Stop it from bubbling to modal
-            }
-        };
-
-        // Add touch event listeners that explicitly allow scrolling
-        helpContent.addEventListener('touchstart', this.helpScrollHandler.start, { passive: true });
-        helpContent.addEventListener('touchmove', this.helpScrollHandler.move, { passive: true });
-        helpContent.addEventListener('touchend', this.helpScrollHandler.end, { passive: true });
-    }
-
-    disableHelpScrolling() {
-        const helpContent = document.querySelector('.help-content');
-        if (!helpContent || !this.helpScrollHandler) return;
-
-        // Remove touch event listeners
-        helpContent.removeEventListener('touchstart', this.helpScrollHandler.start, { passive: true });
-        helpContent.removeEventListener('touchmove', this.helpScrollHandler.move, { passive: true });
-        helpContent.removeEventListener('touchend', this.helpScrollHandler.end, { passive: true });
-
-        // Clear the handler reference
-        this.helpScrollHandler = null;
-    }
-
-    enableLevelUpScrolling() {
-        const containers = document.querySelectorAll('#levelup-modal .levelup-scroll');
-        if (!containers.length) return;
-
-        // Clear previous listeners
-        this.disableLevelUpScrolling();
-
-        this.levelUpScrollHandler = {
-            start: (e) => {
-                e.stopPropagation();
-            },
-            move: (e) => {
-                e.stopPropagation();
-            },
-            end: (e) => {
-                e.stopPropagation();
-            }
-        };
-
-        this.levelUpScrollContainers = Array.from(containers);
-
-        this.levelUpScrollContainers.forEach(container => {
-            container.addEventListener('touchstart', this.levelUpScrollHandler.start, { passive: true });
-            container.addEventListener('touchmove', this.levelUpScrollHandler.move, { passive: true });
-            container.addEventListener('touchend', this.levelUpScrollHandler.end, { passive: true });
-        });
-    }
-
-    disableLevelUpScrolling() {
-        if (!this.levelUpScrollHandler || !this.levelUpScrollContainers) return;
-
-        this.levelUpScrollContainers.forEach(container => {
-            container.removeEventListener('touchstart', this.levelUpScrollHandler.start, { passive: true });
-            container.removeEventListener('touchmove', this.levelUpScrollHandler.move, { passive: true });
-            container.removeEventListener('touchend', this.levelUpScrollHandler.end, { passive: true });
-        });
-
-        this.levelUpScrollContainers = [];
-        this.levelUpScrollHandler = null;
-    }
-
-    getActiveLevelUpScrollContainer() {
-        const modal = document.getElementById('levelup-modal');
-        if (!modal) return null;
-        if (this.activeLevelUpTab === 'guide') {
-            return modal.querySelector('#levelup-pane-guide .levelup-scroll');
-        }
-        if (this.activeLevelUpTab === 'status') {
-            return modal.querySelector('#levelup-pane-status .levelup-scroll');
-        }
-        return modal.querySelector('#levelup-pane-levelup .levelup-scroll');
-    }
-
-    scrollLevelUpContent(direction) {
-        const container = this.getActiveLevelUpScrollContainer();
-        if (!container) return;
-        const scrollAmount = 120;
-        const delta = direction === 'up' ? -scrollAmount : scrollAmount;
-        container.scrollBy({ top: delta, behavior: 'smooth' });
-    }
-
-    renderLevelUpGuidePane() {
-        const guidePane = document.querySelector('.levelup-guide-pane');
-        if (!guidePane) return;
-
-        const mergerTitle = this.t('weaponMergers', 'help');
-        const evolutionTitle = this.t('weaponEvolution', 'help');
-        const rapidEvolution = this.t('rapidFireEvolution', 'help');
-
-        const homingLaserName = this.t('homingLaser', 'weapons');
-        const homingLaserRecipe = this.t('homingLaserRecipe', 'help');
-        const homingLaserDesc = this.t('homingLaserDesc', 'help');
-
-        const shockburstName = this.t('shockburst', 'weapons');
-        const shockburstRecipe = this.t('shockburstRecipe', 'help');
-        const shockburstDesc = this.t('shockburstDesc', 'help');
-
-        const gatlingName = this.t('gatlingGun', 'weapons');
-        const gatlingRecipe = this.t('gatlingGunRecipe', 'help');
-        const gatlingDesc = this.t('gatlingGunDesc', 'help');
-
-        guidePane.innerHTML = `
-            <h2 class="levelup-guide-title">${mergerTitle}</h2>
-            <div class="help-recipes">
-                <div class="merge-recipe">
-                    <h3><img src="images/weapons/homingLaser.png" alt="Homing Laser"> ${homingLaserName}</h3>
-                    <p>${homingLaserRecipe}</p>
-                    <span class="recipe-desc">${homingLaserDesc}</span>
-                </div>
-                <div class="merge-recipe">
-                    <h3><img src="images/weapons/shockburst.png" alt="Shockburst"> ${shockburstName}</h3>
-                    <p>${shockburstRecipe}</p>
-                    <span class="recipe-desc">${shockburstDesc}</span>
-                </div>
-                <div class="merge-recipe">
-                    <h3><img src="images/weapons/gatlingGun.png" alt="Gatling Gun"> ${gatlingName}</h3>
-                    <p>${gatlingRecipe}</p>
-                    <span class="recipe-desc">${gatlingDesc}</span>
-                </div>
-            </div>
-            <h2 class="levelup-guide-evolution"><img src="images/passives/evolution.png" alt="Weapon Evolution" class="section-icon"> ${evolutionTitle}</h2>
-            <div class="help-section">
-                <p>${rapidEvolution}</p>
-            </div>
-        `;
-    }
-
-    renderLevelUpStatusPane() {
-        const statusPane = document.querySelector('.levelup-status-pane');
-        if (!statusPane) return;
-
-        const weaponsSection = this.generateWeaponsSection();
-        const passivesSection = this.generatePassivesSection();
-        const playerStatsSection = this.generatePlayerStatsSection();
-        const sections = [weaponsSection, passivesSection, playerStatsSection].filter(Boolean).join('');
-
-        statusPane.innerHTML = `
-            <h2 class="levelup-status-title">${this.t('statusTab')}</h2>
-            ${sections || `<p class="help-status-empty">${this.t('statusEmpty')}</p>`}
-        `;
-    }
-
-    // Phase 12c - OBSOLETE: Tab switching is now handled by LevelUpModal class (Option B pattern)
-    /*
-    switchLevelUpTab(tab) {
-        const modal = document.getElementById('levelup-modal');
-        if (!modal) return;
-
-        const validTabs = ['levelup', 'guide', 'status'];
-        if (!validTabs.includes(tab)) {
-            tab = 'levelup';
-        }
-
-        const tabButtons = {
-            levelup: modal.querySelector('[data-tab="levelup"]'),
-            guide: modal.querySelector('[data-tab="guide"]'),
-            status: modal.querySelector('[data-tab="status"]')
-        };
-
-        const panes = {
-            levelup: modal.querySelector('#levelup-pane-levelup'),
-            guide: modal.querySelector('#levelup-pane-guide'),
-            status: modal.querySelector('#levelup-pane-status')
-        };
-
-        Object.values(tabButtons).forEach(btn => btn && btn.classList.remove('active'));
-        Object.values(panes).forEach(pane => pane && pane.classList.remove('active'));
-
-        if (tabButtons[tab]) tabButtons[tab].classList.add('active');
-        if (panes[tab]) panes[tab].classList.add('active');
-
-        this.activeLevelUpTab = tab;
-
-        if (tab === 'guide') {
-            this.renderLevelUpGuidePane();
-        } else if (tab === 'status') {
-            this.renderLevelUpStatusPane();
-        }
-
-        // Update menu navigation buttons/highlights
-        const choiceButtons = Array.from(modal.querySelectorAll('.upgrade-choice'));
-        choiceButtons.forEach(btn => btn.classList.remove('menu-selected'));
-
-        if (tab === 'levelup') {
-            this.initializeMenuNavigation('levelup', choiceButtons);
-        } else {
-            this.resetMenuNavigation();
-            this.menuNavigationState.active = true;
-            this.menuNavigationState.menuType = 'levelup';
-            this.menuNavigationState.selectedIndex = 0;
-            this.menuNavigationState.menuButtons = [];
-            this.menuNavigationState.keyboardUsed = false;
-        }
-
-        this.enableLevelUpScrolling();
-    }
-
-    cycleLevelUpTab(direction) {
-        const order = ['levelup', 'guide', 'status'];
-        let index = order.indexOf(this.activeLevelUpTab);
-        if (index === -1) index = 0;
-        index = (index + direction + order.length) % order.length;
-        this.switchLevelUpTab(order[index]);
-    }
-    */
 
     // Phase 12c.2 - Game Over touch scrolling moved to GameOverModal class
     // enableGameOverScrolling() and disableGameOverScrolling() removed
@@ -5039,109 +4818,7 @@ class VibeSurvivor {
         this.aboutScrollHandler = null;
     }
 
-    enableOptionsScrolling() {
-        const optionsContent = document.querySelector('.options-content');
-        if (!optionsContent) return;
-
-        // Remove any existing touch event listeners to avoid duplicates
-        if (this.optionsScrollHandler) {
-            optionsContent.removeEventListener('touchstart', this.optionsScrollHandler.start, { passive: false });
-            optionsContent.removeEventListener('touchmove', this.optionsScrollHandler.move, { passive: false });
-            optionsContent.removeEventListener('touchend', this.optionsScrollHandler.end, { passive: false });
-        }
-
-        this.optionsScrollHandler = {
-            start: (e) => {
-                e.stopPropagation();
-            },
-            move: (e) => {
-                e.stopPropagation();
-            },
-            end: (e) => {
-                e.stopPropagation();
-            }
-        };
-
-        // Add touch event listeners that explicitly allow scrolling
-        optionsContent.addEventListener('touchstart', this.optionsScrollHandler.start, { passive: true });
-        optionsContent.addEventListener('touchmove', this.optionsScrollHandler.move, { passive: true });
-        optionsContent.addEventListener('touchend', this.optionsScrollHandler.end, { passive: true });
-    }
-
-    disableOptionsScrolling() {
-        const optionsContent = document.querySelector('.options-content');
-        if (!optionsContent || !this.optionsScrollHandler) return;
-
-        // Remove touch event listeners
-        optionsContent.removeEventListener('touchstart', this.optionsScrollHandler.start, { passive: true });
-        optionsContent.removeEventListener('touchmove', this.optionsScrollHandler.move, { passive: true });
-        optionsContent.removeEventListener('touchend', this.optionsScrollHandler.end, { passive: true });
-
-        // Clear the handler reference
-        this.optionsScrollHandler = null;
-    }
-
-    scrollGameOverContent(direction) {
-        const gameOverContent = document.querySelector('.game-over-scroll-content');
-        if (!gameOverContent) return;
-
-        // Scroll amount per key press (adjust as needed)
-        const scrollAmount = 50;
-
-        if (direction === 'up') {
-            gameOverContent.scrollBy({
-                top: -scrollAmount,
-                behavior: 'smooth'
-            });
-        } else if (direction === 'down') {
-            gameOverContent.scrollBy({
-                top: scrollAmount,
-                behavior: 'smooth'
-            });
-        }
-    }
-
     // Phase 12c.7 - scrollVictoryContent removed, handled by VictoryModal class
-
-    scrollHelpContent(direction) {
-        const helpContent = document.querySelector('.help-content');
-        if (!helpContent) return;
-
-        const activePane = Array.from(helpContent.querySelectorAll('.help-pane')).find(pane => pane.style.display !== 'none');
-        const target = (activePane && activePane.scrollHeight > activePane.clientHeight) ? activePane : helpContent;
-
-        // Check if we're at the bottom and trying to scroll down - navigate to close button instead
-        const isAtBottom = target.scrollTop + target.clientHeight >= target.scrollHeight - 5; // 5px tolerance
-        const isAtTop = target.scrollTop <= 5; // 5px tolerance
-
-        if (direction === 'down' && isAtBottom) {
-            // Navigate to close button
-            this.navigateMenu('down');
-            return;
-        }
-
-        if (direction === 'up' && isAtTop && this.menuNavigationState.selectedIndex > 0) {
-            // If close button is selected and at top, deselect it
-            this.menuNavigationState.selectedIndex = -1;
-            this.updateMenuSelection();
-            return;
-        }
-
-        // Scroll amount per key press (adjust as needed)
-        const scrollAmount = 60;
-
-        if (direction === 'up') {
-            target.scrollBy({
-                top: -scrollAmount,
-                behavior: 'smooth'
-            });
-        } else if (direction === 'down') {
-            target.scrollBy({
-                top: scrollAmount,
-                behavior: 'smooth'
-            });
-        }
-    }
 
     checkHelpButtonVisibility() {
         const helpBtn = document.getElementById('help-btn');
@@ -6561,201 +6238,6 @@ class VibeSurvivor {
         return `<img src="images/passives/${iconName}.png" alt="${passiveId}" style="width: 48px; height: 48px; vertical-align: middle;">`;
     }
     
-    // Phase 12c - OBSOLETE: Level up modal is now managed by LevelUpModal class (Option B pattern)
-    // This method has been replaced with simplified showLevelUpChoices() that delegates to the modal
-    // Keeping this commented out for reference during refactoring
-    /*
-    createLevelUpModal(choices) {
-        // Calculate responsive sizing
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
-        const isMobile = viewportWidth <= 768;
-        
-        const modalHTML = `
-            <div id="levelup-modal" class="levelup-modal levelup-modal-responsive">
-                <div class="levelup-content" tabindex="-1">
-                    <div class="levelup-tabs">
-                        <button id="levelup-tab-main" class="levelup-tab active" data-tab="levelup">${this.t('levelUp')}</button>
-                        <button id="levelup-tab-guide" class="levelup-tab" data-tab="guide">${this.t('guideTab')}</button>
-                        <button id="levelup-tab-status" class="levelup-tab" data-tab="status">${this.t('statusTab')}</button>
-                    </div>
-                    <div id="levelup-pane-levelup" class="levelup-pane active">
-                        <div class="levelup-title">${this.t('levelUp')}</div>
-                        <div class="levelup-scroll upgrade-choices-container">
-                            <div class="upgrade-choices">
-                                ${choices.map((choice, index) => {
-                                    const mergeClass = choice.isMergeWeapon ? ' upgrade-choice-merge' : '';
-                                    return `
-                                    <div class="upgrade-choice${mergeClass}" data-choice="${index}">
-                                        <div class="upgrade-choice-icon">
-                                            <span class="upgrade-choice-icon-image">${choice.icon}</span>
-                                            <span class="upgrade-choice-title">${choice.name}</span>
-                                        </div>
-                                        <p>${choice.description}</p>
-                                    </div>
-                                `}).join('')}
-                            </div>
-                        </div>
-                    </div>
-                    <div id="levelup-pane-guide" class="levelup-pane">
-                        <div class="levelup-scroll levelup-guide-pane guide-pane"></div>
-                    </div>
-                    <div id="levelup-pane-status" class="levelup-pane">
-                        <div class="levelup-scroll levelup-status-pane help-pane"></div>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        this.activeLevelUpTab = 'levelup';
-
-        document.getElementById('game-screen').insertAdjacentHTML('beforeend', modalHTML);
-        
-        // Apply responsive positioning and sizing after insertion
-        const modal = document.getElementById('levelup-modal');
-        if (modal) {
-            this.incrementOverlayLock();
-            this.applyResponsiveModalStyles(modal, choices.length, isMobile);
-        }
-
-        const levelupContent = modal?.querySelector('.levelup-content');
-        if (levelupContent) {
-            levelupContent.setAttribute('tabindex', '-1');
-            levelupContent.focus({ preventScroll: true });
-        }
-
-        // Wire tab buttons
-        const tabButtons = modal?.querySelectorAll('.levelup-tab') || [];
-        tabButtons.forEach(btn => {
-            const targetTab = btn.getAttribute('data-tab');
-            const handler = (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                this.switchLevelUpTab(targetTab);
-            };
-            btn.addEventListener('click', handler);
-            btn.addEventListener('touchstart', handler, { passive: false });
-        });
-
-        // Add menu navigation styles
-        this.addMenuNavigationStyles();
-
-        // Initialize first render for guide/status panes
-        this.renderLevelUpGuidePane();
-        this.renderLevelUpStatusPane();
-
-        // Activate default tab
-        this.switchLevelUpTab('levelup');
-
-        // Add event listeners to choices
-        choices.forEach((choice, index) => {
-            const choiceElement = document.querySelector(`[data-choice="${index}"]`);
-            if (!choiceElement) return;
-            choiceElement.addEventListener('click', () => {
-                this.resetMenuNavigation();
-                this.selectUpgrade(choice);
-
-                // Clean up level up scrolling handlers before removing modal
-                this.disableLevelUpScrolling();
-                this.decrementOverlayLock();
-                this.activeLevelUpTab = 'levelup';
-
-                const modalElement = document.getElementById('levelup-modal');
-                if (modalElement) {
-                    modalElement.remove();
-                }
-                
-                
-                
-                // Process any remaining deferred level ups, or resume game
-                this.processPendingLevelUps();
-
-                // If no more pending level ups, resume game
-                if (this.pendingLevelUps === 0) {
-                    this.gameRunning = true;
-                    this.timePaused = false;
-                    this.startAnimationLoop();
-                }
-            });
-        });
-    }
-    */
-
-    // Phase 12c - OBSOLETE: Responsive modal styling is now managed by LevelUpModal class
-    /*
-    applyResponsiveModalStyles(modal, choiceCount, isMobile) {
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
-
-        let contentWidth;
-        let modalMaxHeight;
-        let choiceWidth;
-
-        if (isMobile) {
-            contentWidth = Math.min(viewportWidth * 0.95, 400);
-            modalMaxHeight = viewportHeight * 0.85;
-            choiceWidth = contentWidth - 60;
-        } else {
-            contentWidth = Math.min(viewportWidth * 0.92, 400);
-            modalMaxHeight = viewportHeight * 0.8;
-            const columns = Math.max(1, Math.min(choiceCount, 3));
-            choiceWidth = Math.min(220, (contentWidth - 100) / columns);
-        }
-
-        // Apply styles to the modal content instead of the modal backdrop
-        const modalContent = modal.querySelector('.levelup-content');
-        if (modalContent) {
-            modalContent.style.setProperty('max-width', `${contentWidth}px`, 'important');
-            modalContent.style.setProperty('width', `${contentWidth}px`, 'important');
-            modalContent.style.setProperty('min-width', `${Math.min(contentWidth, 360)}px`, 'important');
-            modalContent.style.setProperty('max-height', `${modalMaxHeight}px`, 'important');
-            modalContent.style.setProperty('height', 'auto', 'important');
-        }
-        
-        // Style the container for scrolling
-        const container = modal.querySelector('.upgrade-choices-container');
-        if (container) {
-            // Let CSS handle responsive container sizing, only set scroll behavior
-            container.style.setProperty('max-height', `calc(${modalMaxHeight}px - 8rem)`, 'important');
-            container.style.setProperty('padding', '0 10px', 'important');
-            container.style.setProperty('margin', '10px -10px', 'important');
-            container.style.setProperty('overflow-y', 'auto', 'important');
-            container.style.setProperty('-webkit-overflow-scrolling', 'touch', 'important');
-            container.style.setProperty('touch-action', 'pan-y', 'important');
-            container.style.setProperty('scrollbar-width', 'thin', 'important');
-            container.style.setProperty('scrollbar-color', '#9B59B6 transparent', 'important');
-        }
-
-        const additionalScrollAreas = modal.querySelectorAll('.levelup-scroll');
-        additionalScrollAreas.forEach(area => {
-            area.style.setProperty('max-height', `calc(${modalMaxHeight}px - 8rem)`, 'important');
-            area.style.setProperty('overflow-y', 'auto', 'important');
-            area.style.setProperty('-webkit-overflow-scrolling', 'touch', 'important');
-            area.style.setProperty('touch-action', 'pan-y', 'important');
-        });
-        
-        // Style the choices grid
-        const choicesGrid = modal.querySelector('.upgrade-choices');
-        if (choicesGrid) {
-            choicesGrid.style.setProperty('display', 'flex', 'important');
-            choicesGrid.style.setProperty('flex-direction', 'column', 'important');
-            choicesGrid.style.setProperty('gap', '16px', 'important');
-            choicesGrid.style.setProperty('padding', '0', 'important');
-        }
-        
-        // Style individual choices
-        const choices = modal.querySelectorAll('.upgrade-choice');
-        choices.forEach(choice => {
-            choice.style.setProperty('width', `100%`, 'important');
-            choice.style.setProperty('min-height', 'auto', 'important');
-            choice.style.setProperty('padding', '16px', 'important');
-            choice.style.setProperty('font-size', '14px', 'important');
-        });
-
-
-    }
-    */
-
     addMenuNavigationStyles() {
         // Add CSS styles for keyboard navigation if not already added
         if (document.getElementById('menu-navigation-styles')) return;
@@ -10519,6 +10001,7 @@ class VibeSurvivor {
             // Hide all modals to trigger cleanup (only if initialized)
             if (this.modals.pause && this.modals.pause.element) {
                 this.modals.pause.hide();
+                this.setPauseMenuOverlayState(false);
             }
             if (this.modals.levelUp && this.modals.levelUp.element) {
                 this.modals.levelUp.hide();
@@ -11149,19 +10632,22 @@ class VibeSurvivor {
         const helpStatusTab = document.getElementById('help-tab-status');
         if (helpStatusTab) helpStatusTab.textContent = this.t('statusTab');
 
-        const levelUpModal = document.getElementById('levelup-modal');
-        if (levelUpModal) {
-            const levelUpTabBtn = levelUpModal.querySelector('[data-tab="levelup"]');
-            const levelUpGuideTabBtn = levelUpModal.querySelector('[data-tab="guide"]');
-            const levelUpStatusTabBtn = levelUpModal.querySelector('[data-tab="status"]');
+        const levelUpModalInstance = this.modals.levelUp;
+        const levelUpModalElement = levelUpModalInstance?.element || document.getElementById('levelup-modal');
+        if (levelUpModalElement) {
+            const levelUpTabBtn = levelUpModalElement.querySelector('[data-tab=\"levelup\"]');
+            const levelUpGuideTabBtn = levelUpModalElement.querySelector('[data-tab=\"guide\"]');
+            const levelUpStatusTabBtn = levelUpModalElement.querySelector('[data-tab=\"status\"]');
 
             if (levelUpTabBtn) levelUpTabBtn.textContent = this.t('levelUp');
             if (levelUpGuideTabBtn) levelUpGuideTabBtn.textContent = this.t('guideTab');
             if (levelUpStatusTabBtn) levelUpStatusTabBtn.textContent = this.t('statusTab');
 
-            this.renderLevelUpGuidePane();
-            this.renderLevelUpStatusPane();
-            this.enableLevelUpScrolling();
+            if (levelUpModalInstance) {
+                levelUpModalInstance.renderGuidePane();
+                levelUpModalInstance.renderStatusPane();
+                levelUpModalInstance.setupTouchScrolling();
+            }
         }
 
         const helpGuideTitle = document.getElementById('help-guide-title');
