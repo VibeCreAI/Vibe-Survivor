@@ -22,6 +22,9 @@ export class GameOverModal extends Modal {
         this.selectedButtonIndex = 0;
         this.buttons = [];
         this.keyboardUsed = false;
+
+        // Touch scroll handler (needed to stop event bubbling to canvas)
+        this.touchScrollHandler = null;
     }
 
     /**
@@ -323,6 +326,9 @@ export class GameOverModal extends Modal {
         // Set up keyboard handlers
         this.setupKeyboardHandlers();
 
+        // Enable touch scrolling (critical for mobile)
+        this.enableTouchScrolling();
+
         // Focus the scrollable content for keyboard scrolling
         const scrollContent = this.element?.querySelector('.game-over-scroll-content');
         if (scrollContent) {
@@ -336,5 +342,55 @@ export class GameOverModal extends Modal {
     onHide() {
         // Clean up keyboard handlers
         this.cleanupKeyboardHandlers();
+
+        // Disable touch scrolling
+        this.disableTouchScrolling();
+    }
+
+    /**
+     * Enables touch scrolling for mobile devices
+     * Uses stopPropagation to prevent events from bubbling to canvas
+     */
+    enableTouchScrolling() {
+        const scrollContent = this.element?.querySelector('.game-over-scroll-content');
+        if (!scrollContent) return;
+
+        // Remove existing handlers if any
+        if (this.touchScrollHandler) {
+            scrollContent.removeEventListener('touchstart', this.touchScrollHandler.start, { passive: true });
+            scrollContent.removeEventListener('touchmove', this.touchScrollHandler.move, { passive: true });
+            scrollContent.removeEventListener('touchend', this.touchScrollHandler.end, { passive: true });
+        }
+
+        // Create handlers that stop event bubbling (prevents canvas touch handlers from interfering)
+        this.touchScrollHandler = {
+            start: (e) => {
+                e.stopPropagation(); // Critical: prevents bubbling to canvas
+            },
+            move: (e) => {
+                e.stopPropagation(); // Critical: prevents bubbling to canvas
+            },
+            end: (e) => {
+                e.stopPropagation(); // Critical: prevents bubbling to canvas
+            }
+        };
+
+        // Add touch listeners with passive: true for smooth native scrolling
+        scrollContent.addEventListener('touchstart', this.touchScrollHandler.start, { passive: true });
+        scrollContent.addEventListener('touchmove', this.touchScrollHandler.move, { passive: true });
+        scrollContent.addEventListener('touchend', this.touchScrollHandler.end, { passive: true });
+    }
+
+    /**
+     * Disables touch scrolling handlers
+     */
+    disableTouchScrolling() {
+        const scrollContent = this.element?.querySelector('.game-over-scroll-content');
+        if (!scrollContent || !this.touchScrollHandler) return;
+
+        scrollContent.removeEventListener('touchstart', this.touchScrollHandler.start, { passive: true });
+        scrollContent.removeEventListener('touchmove', this.touchScrollHandler.move, { passive: true });
+        scrollContent.removeEventListener('touchend', this.touchScrollHandler.end, { passive: true });
+        this.touchScrollHandler = null;
     }
 }

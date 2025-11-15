@@ -271,7 +271,7 @@ export class InputManager {
      * @param {TouchEvent} e
      */
     handleTouchStart(e) {
-        if (!this.game.gameRunning || this.game.isPaused) return;
+        if (!this.game.gameRunning || this.game.isPaused || this.game.playerDead) return;
 
         e.preventDefault();
 
@@ -294,6 +294,12 @@ export class InputManager {
                 this.touchControls.joystick.startY = pos.y;
                 this.touchControls.joystick.moveX = 0;
                 this.touchControls.joystick.moveY = 0;
+
+                // Phase 12c.12 - Show and position joystick at touch location
+                if (this.game.touchControlsUI) {
+                    this.game.touchControlsUI.positionJoystick(pos.x, pos.y);
+                    this.game.touchControlsUI.showJoystick();
+                }
             }
         }
     }
@@ -303,7 +309,7 @@ export class InputManager {
      * @param {TouchEvent} e
      */
     handleTouchMove(e) {
-        if (!this.game.gameRunning || this.game.isPaused) return;
+        if (!this.game.gameRunning || this.game.isPaused || this.game.playerDead) return;
 
         e.preventDefault();
 
@@ -354,6 +360,11 @@ export class InputManager {
                 this.touchControls.joystick.moveX = 0;
                 this.touchControls.joystick.moveY = 0;
                 this.touchControls.joystick.touchId = null;
+
+                // Phase 12c.12 - Hide joystick when touch ends
+                if (this.game.touchControlsUI) {
+                    this.game.touchControlsUI.hideJoystick();
+                }
             }
         }
     }
@@ -368,6 +379,11 @@ export class InputManager {
             this.touchControls.joystick.moveY = 0;
             this.touchControls.joystick.visible = false;
             this.touchControls.joystick.touchId = null;
+
+            // Phase 12c.12 - Hide joystick on reset
+            if (this.game?.touchControlsUI) {
+                this.game.touchControlsUI.hideJoystick();
+            }
         }
     }
 

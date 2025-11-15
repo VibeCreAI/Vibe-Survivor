@@ -80,6 +80,7 @@ class VibeSurvivor {
         this.gameTime = 0;
         this.gameRunning = false;
         this.playerDead = false;
+        this.gameFullyInitialized = false; // Track if initGame() completed successfully
 
         // Initialize input manager
         this.inputManager = new InputManager();
@@ -628,24 +629,60 @@ class VibeSurvivor {
 
             // Set up button callbacks
             this.modals.startScreenModal.onStart(() => {
+                console.log('Start button clicked', {
+                    gameFullyInitialized: this.gameFullyInitialized,
+                    hasCanvas: !!this.canvas,
+                    hasCtx: !!this.ctx,
+                    hasTouchControlsUI: !!this.touchControlsUI,
+                    touchControlsUIInitialized: this.touchControlsUI?.elements?.dashButton != null
+                });
+
+                // Guard: Check if game is ready before doing anything
+                if (!this.gameFullyInitialized) {
+                    console.warn('Game not ready yet. Please wait for loading to complete.');
+                    return;
+                }
+
+                // Additional safety check for touchControlsUI
+                if (!this.touchControlsUI || !this.touchControlsUI.elements || !this.touchControlsUI.elements.dashButton) {
+                    console.error('TouchControlsUI not properly initialized yet. Waiting...');
+                    return;
+                }
+
                 this.resetMenuNavigation();
                 this.startGame();
             });
 
             this.modals.startScreenModal.onOptions(() => {
+                // Guard: Check if game is ready
+                if (!this.gameFullyInitialized) {
+                    console.warn('Please wait for loading to complete.');
+                    return;
+                }
                 this.showOptionsMenu();
             });
 
             this.modals.startScreenModal.onAbout(() => {
+                // Guard: Check if game is ready
+                if (!this.gameFullyInitialized) {
+                    console.warn('Please wait for loading to complete.');
+                    return;
+                }
                 this.showAboutMenu();
             });
 
             this.modals.startScreenModal.onRestart(() => {
+                // Guard: Check if game is ready
+                if (!this.gameFullyInitialized) {
+                    console.warn('Please wait for loading to complete.');
+                    return;
+                }
                 this.resetMenuNavigation();
                 this.restartGame();
             });
 
             this.modals.startScreenModal.onExit(() => {
+                // Exit is allowed even before game is ready (user might want to close immediately)
                 this.resetMenuNavigation();
                 this.closeGame();
             });
@@ -671,14 +708,17 @@ class VibeSurvivor {
             this._aboutModalInitialized = true;
         }
 
-        // Preload assets with loading screen
+        // Initialize canvas first (during loading screen)
         setTimeout(() => {
-            this.preloadAssets().then(() => {
-                // Wait for background to start appearing before showing start screen
-                // Background has 0.6s ease-in transition when 'loaded' class is added
-                setTimeout(() => {
-                    this.showStartScreen();
-                }, 300);
+            this.initializeCanvas().then(() => {
+                // Then preload assets
+                this.preloadAssets().then(() => {
+                    // Wait for background to start appearing before showing start screen
+                    // Background has 0.6s ease-in transition when 'loaded' class is added
+                    setTimeout(() => {
+                        this.showStartScreen();
+                    }, 300);
+                });
             });
         }, 100);
 
@@ -690,44 +730,8 @@ class VibeSurvivor {
             this.updateAllText();
         }, 100);
 
-        // Initialize canvas after modal creation with proper timing
-        setTimeout(() => {
-            try {
-                // Initialize canvas using rendering module
-                const canvasResult = initCanvas('survivor-canvas');
-                this.canvas = canvasResult.canvas;
-                this.ctx = canvasResult.ctx;
-
-                if (this.canvas) {
-                    // Resize canvas to fit container
-                    resizeCanvas(this.canvas);
-
-                    // Load sprites with progress tracking
-                    this.spriteManager.loadSprites((loaded, total) => {
-                        // Optional: Track sprite loading progress
-                        console.log(`Sprites loading: ${loaded}/${total}`);
-                    });
-
-                    // Load item icons
-                    this.spriteManager.loadItemIcons();
-
-                    // Initialize input manager after canvas is ready
-                    this.inputManager.initialize(this);
-
-                    // Ensure canvas gets proper dimensions after CSS settles
-                    setTimeout(() => {
-                        resizeCanvas(this.canvas);
-                        if (!this.gameRunning) {
-                            this.renderStartScreenBackground();
-                        }
-                        // Ensure stats are hidden on start screen
-                        this.showModalHeader();
-                    }, 100);
-                }
-            } catch (e) {
-                console.error('Initial canvas setup error:', e);
-            }
-        }, 50);
+        // Canvas initialization moved to initializeCanvas() method
+        // which is called during loading screen before preloadAssets()
     }
     
     createGameModal() {
@@ -1050,11 +1054,11 @@ class VibeSurvivor {
                         </div>
 
                         <!-- Game Over Modal (Phase 12c - Static HTML) -->
-                        <div id="game-over-modal" class="survivor-game-over-overlay" style="display: none;">
-                            <div class="survivor-game-over-content">
+                        <div id="game-over-modal" class="survivor-game-over-overlay" style="display: none; touch-action: auto;">
+                            <div class="survivor-game-over-content" style="touch-action: auto;">
                                 <div class="gameover-title">GAME OVER</div>
 
-                                <div class="game-over-scroll-content" tabindex="0">
+                                <div class="game-over-scroll-content" tabindex="0" style="overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y;">
                                     <!-- Basic Stats Section -->
                                     <div class="gameover-basic-stats">
                                         <div class="gameover-stat-row">
@@ -2800,7 +2804,7 @@ class VibeSurvivor {
                 padding: 30px;
                 text-align: center;
                 width: min(400px, 92vw);
-                max-height: 80%;
+                max-height: 92%;
                 overflow-y: auto;
                 box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
                 backdrop-filter: blur(10px);
@@ -3074,17 +3078,18 @@ class VibeSurvivor {
                 backdrop-filter: blur(3px);
                 display: none; /* Hidden by default for floating mode */
                 opacity: 0;
-                transform: scale(0.8);
+                transform: translate(-50%, -50%) scale(0.8); /* Center on touch point */
+                transform-origin: center;
                 transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
                 z-index: 16000; /* Above other controls */
-                box-shadow: 0 0 20px rgba(0, 255, 255, 0.3), 
+                box-shadow: 0 0 20px rgba(0, 255, 255, 0.3),
                            0 0 40px rgba(0, 255, 255, 0.1);
                 animation: joystickPulse 2s ease-in-out infinite;
             }
             
             .virtual-joystick.active {
                 opacity: 0.9;
-                transform: scale(1);
+                transform: translate(-50%, -50%) scale(1); /* Keep centered when active */
                 background: rgba(0, 255, 255, 0.4);
                 border-color: rgba(0, 255, 255, 0.8);
                 box-shadow: 0 0 25px rgba(0, 255, 255, 0.6),
@@ -3502,8 +3507,64 @@ class VibeSurvivor {
 
         // NOTE: Resize handler removed - now handled by InputManager
 
-        // Setup mobile controls and dash button
-        this.setupMobileControls();
+        // Phase 12c.12 - Initialize touch controls UI with dash button
+        const touchControlsInitResult = this.touchControlsUI.init(this.touchControls, this.isMobile);
+        console.log('TouchControlsUI init result:', touchControlsInitResult, {
+            hasDashButton: !!this.touchControlsUI.elements?.dashButton,
+            hasJoystick: !!this.touchControlsUI.elements?.joystick
+        });
+    }
+
+    /**
+     * Initialize canvas and related systems (called during loading screen)
+     * Returns a Promise that resolves when initialization is complete
+     */
+    async initializeCanvas() {
+        return new Promise((resolve, reject) => {
+            try {
+                // Initialize canvas using rendering module
+                const canvasResult = initCanvas('survivor-canvas');
+                this.canvas = canvasResult.canvas;
+                this.ctx = canvasResult.ctx;
+
+                if (this.canvas) {
+                    // Resize canvas to fit container
+                    resizeCanvas(this.canvas);
+
+                    // Load sprites with progress tracking
+                    this.spriteManager.loadSprites((loaded, total) => {
+                        // Optional: Track sprite loading progress
+                        console.log(`Sprites loading: ${loaded}/${total}`);
+                    });
+
+                    // Load item icons
+                    this.spriteManager.loadItemIcons();
+
+                    // Initialize input manager after canvas is ready
+                    this.inputManager.initialize(this);
+
+                    // Ensure canvas gets proper dimensions after CSS settles
+                    setTimeout(() => {
+                        resizeCanvas(this.canvas);
+                        if (!this.gameRunning) {
+                            this.renderStartScreenBackground();
+                        }
+                        // Ensure stats are hidden on start screen
+                        this.showModalHeader();
+
+                        // Don't mark as fully initialized yet - wait for background to load
+                        console.log('✓ Canvas initialized, waiting for background...');
+
+                        resolve();
+                    }, 100);
+                } else {
+                    reject(new Error('Canvas initialization failed'));
+                }
+            } catch (e) {
+                console.error('Canvas initialization error:', e);
+                reject(e);
+            }
+        });
     }
 
     launchGame() {
@@ -3801,6 +3862,32 @@ class VibeSurvivor {
                 if (startButtons.length > 0) {
                     this.initializeMenuNavigation('start', startButtons);
                 }
+
+                // Keep ALL buttons disabled initially - will enable after background loads
+                const allButtons = [startBtn, optionsBtn, aboutBtn, restartBtn, exitBtn];
+                allButtons.forEach(btn => {
+                    if (btn) {
+                        btn.disabled = true;
+                        btn.style.opacity = '0.5';
+                        btn.style.cursor = 'not-allowed';
+                    }
+                });
+
+                // Wait for background transition to complete (600ms CSS transition)
+                // Then enable buttons and mark game as ready
+                setTimeout(() => {
+                    console.log('✓ Background loaded, game fully ready');
+                    this.gameFullyInitialized = true;
+
+                    // Enable ALL buttons now
+                    allButtons.forEach(btn => {
+                        if (btn) {
+                            btn.disabled = false;
+                            btn.style.opacity = '1';
+                            btn.style.cursor = 'pointer';
+                        }
+                    });
+                }, 700); // 600ms transition + 100ms safety margin
             }, 100);
             
             
@@ -3811,6 +3898,12 @@ class VibeSurvivor {
     
     startGame() {
         // Starting game with complete reinitialization
+
+        // Guard: Ensure game is fully initialized before starting
+        if (!this.gameFullyInitialized) {
+            console.warn('Game not fully initialized yet. Please wait for loading to complete.');
+            return;
+        }
 
         // Reset death flag
         this.playerDead = false;
@@ -3827,7 +3920,12 @@ class VibeSurvivor {
 
         // Add body class to prevent terminal height changes during gameplay
         document.body.classList.add('game-modal-open');
-        
+
+        // Hide start screen bot when game starts
+        if (window.startScreenBot && typeof window.startScreenBot.hide === 'function') {
+            window.startScreenBot.hide();
+        }
+
         // Reset pause state and hide pause menu
         this.isPaused = false;
         const pauseMenu = document.getElementById('pause-menu');
@@ -3835,10 +3933,10 @@ class VibeSurvivor {
             pauseMenu.style.display = 'none';
         }
         this.disablePauseScrolling();
-        
+
         // CRITICAL FIX: Hide modal header during gameplay
         this.hideModalHeader();
-        
+
         // CRITICAL FIX: Explicitly hide start screen by clearing inline styles
         const startScreen = document.getElementById('survivor-start-overlay');
         if (startScreen) {
@@ -3853,52 +3951,22 @@ class VibeSurvivor {
             pauseBtn.style.display = 'flex';
             pauseBtn.textContent = '||'; // Reset to pause symbol
         }
-        
-        // Force complete canvas reinitialization on every start
-        this.canvas = null;
-        this.ctx = null;
-        
+
         // Cancel any existing game loop first
         if (this.gameLoopId) {
             cancelAnimationFrame(this.gameLoopId);
             this.gameLoopId = null;
         }
-        
-        // Ensure canvas element exists and get fresh reference
-        const canvasElement = document.getElementById('survivor-canvas');
-        if (!canvasElement) {
-            console.error('Canvas element not found! Recreating modal...');
-            // If canvas missing, recreate the entire modal
-            this.createGameModal();
-            // Try again with new modal
-            const newCanvas = document.getElementById('survivor-canvas');
-            if (!newCanvas) {
-                console.error('Still no canvas after modal recreation!');
-                return;
-            }
-            this.canvas = newCanvas;
-        } else {
-            this.canvas = canvasElement;
+
+        // Canvas and context are already initialized during loading screen
+        // Just verify they exist and are valid
+        if (!this.canvas || !this.ctx) {
+            console.error('Canvas not initialized! This should not happen.');
+            return;
         }
-        
+
         try {
-            // Get browser-specific optimization profile
-            const browserProfile = this.getBrowserOptimizationProfile();
-            
-            this.ctx = this.canvas.getContext('2d', { 
-                        alpha: false,  // No transparency - better performance
-                        willReadFrequently: false, // Force GPU acceleration
-                        ...browserProfile.contextOptions  // Apply browser-specific settings
-                    });
-            if (!this.ctx) {
-                throw new Error('Could not get canvas context');
-            }
-            
-            // Optimize canvas settings for maximum performance
-            this.ctx.imageSmoothingEnabled = false; // Disable antialiasing for speed
-            this.ctx.globalCompositeOperation = 'source-over'; // Fastest composite mode
-            
-            // Canvas ready
+            // Canvas ready - just resize it
             this.resizeCanvas();
 
             // Initialize offscreen canvases for performance
@@ -4133,14 +4201,12 @@ class VibeSurvivor {
         // Phase 12c.5 - Options menu modal already initialized in launchGame()
         // (needs to be available on start screen, not just when game starts)
 
-        // Setup mobile controls and dash button when game starts
-        this.setupMobileControls();
-
-        // Ensure dash button is positioned correctly after canvas setup
+        // Phase 12c.12 - Ensure dash button is shown and positioned correctly when game starts
         setTimeout(() => {
-            const dashBtn = document.getElementById('mobile-dash-btn');
-            if (dashBtn) {
-                this.ensureDashButtonInBounds(dashBtn);
+            if (this.touchControlsUI && this.touchControlsUI.showDashButton) {
+                const position = this.touchControls?.dashButton?.position || 'right';
+                this.touchControlsUI.showDashButton();
+                this.touchControlsUI.setDashButtonPosition(position);
             }
         }, 100);
 
@@ -4521,10 +4587,8 @@ class VibeSurvivor {
         // Sync the main class property
         this.dashButtonPosition = this.touchControls.dashButton.position;
 
-        const dashBtn = document.getElementById('mobile-dash-btn');
-        if (dashBtn) {
-            this.ensureDashButtonInBounds(dashBtn);
-        }
+        // Phase 12c.12 - Update dash button position via TouchControlsUI
+        this.touchControlsUI.setDashButtonPosition(this.touchControls.dashButton.position);
 
         this.updateDashPositionButtonLabel();
     }
@@ -4896,57 +4960,9 @@ class VibeSurvivor {
     }
     */
 
-    enableGameOverScrolling() {
-        const gameOverContent = document.querySelector('.game-over-scroll-content');
-        if (!gameOverContent) return;
-
-        // Remove any existing touch event listeners to avoid duplicates
-        if (this.gameOverScrollHandler) {
-            gameOverContent.removeEventListener('touchstart', this.gameOverScrollHandler.start, { passive: false });
-            gameOverContent.removeEventListener('touchmove', this.gameOverScrollHandler.move, { passive: false });
-            gameOverContent.removeEventListener('touchend', this.gameOverScrollHandler.end, { passive: false });
-        }
-
-        // Create touch scroll handlers that allow native scrolling
-        this.gameOverScrollHandler = {
-            start: (e) => {
-                // Allow button touches to bubble normally
-                if (e.target.closest('button')) return;
-                // Don't prevent default - allow native touch scrolling
-                e.stopPropagation(); // Stop it from bubbling to modal
-            },
-            move: (e) => {
-                // Allow button touches to bubble normally
-                if (e.target.closest('button')) return;
-                // Don't prevent default - allow native touch scrolling
-                e.stopPropagation(); // Stop it from bubbling to modal
-            },
-            end: (e) => {
-                // Allow button touches to bubble normally
-                if (e.target.closest('button')) return;
-                // Don't prevent default - allow native touch scrolling
-                e.stopPropagation(); // Stop it from bubbling to modal
-            }
-        };
-
-        // Add touch event listeners that explicitly allow scrolling
-        gameOverContent.addEventListener('touchstart', this.gameOverScrollHandler.start, { passive: true });
-        gameOverContent.addEventListener('touchmove', this.gameOverScrollHandler.move, { passive: true });
-        gameOverContent.addEventListener('touchend', this.gameOverScrollHandler.end, { passive: true });
-    }
-
-    disableGameOverScrolling() {
-        const gameOverContent = document.querySelector('.game-over-scroll-content');
-        if (!gameOverContent || !this.gameOverScrollHandler) return;
-
-        // Remove touch event listeners
-        gameOverContent.removeEventListener('touchstart', this.gameOverScrollHandler.start, { passive: true });
-        gameOverContent.removeEventListener('touchmove', this.gameOverScrollHandler.move, { passive: true });
-        gameOverContent.removeEventListener('touchend', this.gameOverScrollHandler.end, { passive: true });
-
-        // Clear the handler reference
-        this.gameOverScrollHandler = null;
-    }
+    // Phase 12c.2 - Game Over touch scrolling moved to GameOverModal class
+    // enableGameOverScrolling() and disableGameOverScrolling() removed
+    // Modal now handles its own touch scroll behavior in game-over.js
 
     // Phase 12c.7 - Victory scrolling methods removed, handled by VictoryModal class
 
@@ -5378,12 +5394,13 @@ class VibeSurvivor {
                                 target.closest('#overlay-exit-btn') ||
                                 target.closest('#survivor-game-over-overlay');
 
-            // Allow scrolling within help content and level up modal
+            // Allow scrolling within help content, level up modal, victory, and game over modals
             const isHelpContent = target.closest('.help-content');
             const isLevelUpContent = target.closest('.levelup-scroll');
             const isVictoryContent = target.closest('.victory-scroll-content');
+            const isGameOverContent = target.closest('.game-over-scroll-content');
 
-            if (!isGameControl && !isHelpContent && !isLevelUpContent && !isVictoryContent) {
+            if (!isGameControl && !isHelpContent && !isLevelUpContent && !isVictoryContent && !isGameOverContent) {
                 e.preventDefault();
                 e.stopPropagation();
             }
@@ -5425,113 +5442,14 @@ class VibeSurvivor {
         document.body.style.width = '';
         document.body.style.height = '';
     }
-    
-    setupMobileControls() {
-        const mobileControls = document.getElementById('mobile-controls');
-        const joystick = document.getElementById('virtual-joystick');
-        const dashBtn = document.getElementById('mobile-dash-btn');
-        
-        if (mobileControls && this.isMobile) {
-            mobileControls.style.display = 'block';
-        }
-        
-        if (joystick) {
-            this.setupVirtualJoystick(joystick);
-        }
-        
-        if (dashBtn) {
-            // Show dash button on both mobile and desktop
-            dashBtn.style.display = 'flex';
-            this.ensureDashButtonInBounds(dashBtn);
-            this.setupDashButton(dashBtn);
-        }
-    }
-    
-    ensureDashButtonInBounds(dashBtn) {
-        if (!dashBtn) return;
 
-        dashBtn.style.bottom = '20px';
-        dashBtn.classList.remove('mobile-dash-left', 'mobile-dash-right');
+    // Phase 12c.12 - Touch control methods removed, now handled by TouchControlsUI class
+    // - setupMobileControls() moved to TouchControlsUI.init()
+    // - ensureDashButtonInBounds() moved to TouchControlsUI.setDashButtonPosition()
+    // - setupDashButton() moved to TouchControlsUI.setupDashButton()
+    // - setupVirtualJoystick() was already a no-op (InputManager handles joystick events)
+    // - updateTouchControlsPositioning() removed (no longer needed)
 
-        const preferredPosition = this.touchControls?.dashButton?.position === 'left'
-            ? 'mobile-dash-left'
-            : 'mobile-dash-right';
-
-        dashBtn.classList.add(preferredPosition);
-    }
-    
-    updateTouchControlsPositioning() {
-        if (!this.isMobile) return;
-        
-        const mobileControls = document.getElementById('mobile-controls');
-        const dashBtn = document.getElementById('mobile-dash-btn');
-        
-        if (!mobileControls) return;
-        
-        // Only ensure mobile controls are visible - let CSS handle positioning
-        if (mobileControls) {
-            mobileControls.style.display = 'block';
-        }
-        
-        // Ensure dash button is visible and properly positioned within canvas bounds
-        if (dashBtn) {
-            // Make sure it's displayed and positioned by CSS responsive breakpoints
-            dashBtn.style.display = 'flex';
-            
-            // Only check bounds, don't override CSS positioning
-            this.ensureDashButtonInBounds(dashBtn);
-        }
-        
-        // Let CSS responsive breakpoints handle all positioning
-        // JavaScript only ensures visibility and bounds checking
-    }
-    
-    setupVirtualJoystick(joystick) {
-        // NOTE: Touch event handlers removed - now handled by InputManager
-        // InputManager sets up all touch events on the canvas in input.js
-        // This method is kept for compatibility but no longer sets up event listeners
-    }
-    
-    setupDashButton(dashBtn) {
-        // Click events for desktop
-        dashBtn.addEventListener('mousedown', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            this.touchControls.dashButton.pressed = true;
-            dashBtn.classList.add('dash-pressed');
-        });
-
-        const endDashClick = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            this.touchControls.dashButton.pressed = false;
-            dashBtn.classList.remove('dash-pressed');
-        };
-
-        dashBtn.addEventListener('mouseup', endDashClick);
-        dashBtn.addEventListener('mouseleave', endDashClick);
-
-        // Touch events for mobile
-        dashBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            e.stopPropagation(); // Prevent event from bubbling to modal
-            this.touchControls.dashButton.pressed = true;
-            // Add visual flash effect for mobile
-            dashBtn.classList.add('dash-pressed');
-        }, { passive: false });
-
-        const endDashTouch = (e) => {
-            e.preventDefault();
-            e.stopPropagation(); // Prevent event from bubbling to modal
-            this.touchControls.dashButton.pressed = false;
-            // Remove visual flash effect for mobile
-            dashBtn.classList.remove('dash-pressed');
-        };
-
-        dashBtn.addEventListener('touchend', endDashTouch, { passive: false });
-        dashBtn.addEventListener('touchcancel', endDashTouch, { passive: false });
-    }
-    
     fireWeapon(weapon) {
         // Phase 12b integration - Delegate to WeaponSystem
         this.weaponSystem.fireWeapon(weapon, {
@@ -6898,6 +6816,7 @@ class VibeSurvivor {
                 justify-content: center;
                 z-index: 99999;
                 backdrop-filter: blur(5px);
+                touch-action: auto !important;
             }
 
             /* When visible, use flex layout for centering */
@@ -6917,6 +6836,7 @@ class VibeSurvivor {
                 min-width: 400px !important;
                 max-height: 80vh !important;
                 box-shadow: 0 0 30px rgba(0, 255, 255, 0.5) !important;
+                touch-action: auto !important;
                 font-family: 'NeoDunggeunmoPro', Arial, sans-serif !important;
                 display: flex !important;
                 flex-direction: column !important;
@@ -6938,6 +6858,7 @@ class VibeSurvivor {
                 margin-bottom: 10px !important;
                 flex: 1 1 auto !important;
                 -webkit-overflow-scrolling: touch !important;
+                touch-action: pan-y !important;
                 outline: none !important;
             }
 
@@ -10083,6 +10004,16 @@ class VibeSurvivor {
             this.getWeaponIconForHeader.bind(this),
             this.getWeaponName.bind(this)
         );
+
+        // Phase 12c.12 - Update touch controls visual position
+        if (this.touchControls && this.touchControls.joystick.active) {
+            const maxDistance = 50;
+            const normalizedX = this.touchControls.joystick.moveX / maxDistance;
+            const normalizedY = this.touchControls.joystick.moveY / maxDistance;
+            this.touchControlsUI.updateJoystick(normalizedX, normalizedY);
+        } else if (this.touchControls) {
+            this.touchControlsUI.updateJoystick(null, null);
+        }
     }
     
     gameOver() {
@@ -10382,7 +10313,7 @@ class VibeSurvivor {
             this._gameOverHandlersSet = true;
         }
 
-        // Show the modal (modal handles all keyboard interaction internally)
+        // Show the modal (modal handles touch scrolling and keyboard interaction internally)
         this.modals.gameOver.show();
     }
 
