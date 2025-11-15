@@ -739,8 +739,13 @@ class VibeSurvivor {
                     // Background has 0.6s ease-in transition when 'loaded' class is added
                     setTimeout(() => {
                         this.showStartScreen();
-                        // Play start menu sound
-                        this.audioManager.playSound('startMenu');
+
+                        // Attempt to play start menu sound
+                        // Chrome's Media Engagement Index (MEI) allows autoplay for returning users
+                        // who have previously interacted with media on this domain.
+                        // For new users, this will fail silently (caught below).
+                        // For returning users with sufficient MEI, this will play automatically.
+                        this.tryAutoplayStartMenuSound();
                     }, 300);
                 });
             });
@@ -4146,6 +4151,8 @@ class VibeSurvivor {
                 if (this.pendingLevelUps === 0) {
                     this.gameRunning = true;
                     this.timePaused = false;
+                    // Resume gatling gun looping sound if it was playing
+                    this.audioManager.resumeLoopingSound('weaponGatlingGun');
                     this.startAnimationLoop();
                 }
             });
@@ -4572,7 +4579,8 @@ class VibeSurvivor {
             this.spriteConfig,
             this.cachedSqrt,
             () => this.createDashParticles(),
-            this.qualitySettings
+            this.qualitySettings,
+            this.audioManager
         );
     }
     
@@ -4613,6 +4621,9 @@ class VibeSurvivor {
 
             // Pause background music (Phase 11 - AudioManager)
             this.audioManager.pauseMusic();
+
+            // Pause gatling gun looping sound if playing
+            this.audioManager.pauseLoopingSound('weaponGatlingGun');
         } else {
             // Update pause button to show pause symbol
             if (pauseBtn) pauseBtn.textContent = '||';
@@ -4623,6 +4634,9 @@ class VibeSurvivor {
 
             // Resume background music (Phase 11 - AudioManager)
             this.audioManager.resumeMusic();
+
+            // Resume gatling gun looping sound if it was playing
+            this.audioManager.resumeLoopingSound('weaponGatlingGun');
         }
     }
 
@@ -4789,11 +4803,17 @@ class VibeSurvivor {
             // Update help button text
             this.modals.helpMenu.updateHelpButtonText(true);
 
+            // Pause gatling gun looping sound if playing
+            this.audioManager.pauseLoopingSound('weaponGatlingGun');
+
             // Show the modal (modal handles all keyboard interaction internally)
             this.modals.helpMenu.show();
         } else {
             // Update help button text
             this.modals.helpMenu.updateHelpButtonText(false);
+
+            // Resume gatling gun looping sound if it was playing
+            this.audioManager.resumeLoopingSound('weaponGatlingGun');
 
             // Hide the modal (modal handles all cleanup internally)
             this.modals.helpMenu.hide();
@@ -5278,7 +5298,8 @@ class VibeSurvivor {
             fastCos: this.fastCos,
             fastSin: this.fastSin,
             recordDamage: (weaponType, damage, enemy) => this.recordWeaponDamage(weaponType, damage, enemy),
-            createHitParticles: (x, y, color) => this.createHitParticles(x, y, color)
+            createHitParticles: (x, y, color) => this.createHitParticles(x, y, color),
+            audioManager: this.audioManager
         });
     }
     
@@ -5961,7 +5982,8 @@ class VibeSurvivor {
             this.player,
             this.cachedSqrt,
             (message, type) => this.showToastNotification(message, type),
-            this.bossDefeating
+            this.bossDefeating,
+            this.audioManager
         );
     }
 
@@ -5972,7 +5994,8 @@ class VibeSurvivor {
             this.player,
             this.cachedSqrt,
             (message, type) => this.showToastNotification(message, type),
-            this.bossDefeating
+            this.bossDefeating,
+            this.audioManager
         );
     }
     
@@ -6086,6 +6109,9 @@ class VibeSurvivor {
         // Phase 12c integration - Use LevelUpModal class (Option B: Proper Encapsulation)
         this.gameRunning = false;
         this.timePaused = true;  // Pause time during weapon upgrade menu
+
+        // Pause gatling gun looping sound if playing
+        this.audioManager.pauseLoopingSound('weaponGatlingGun');
 
         // Generate upgrade choices
         const choices = this.generateUpgradeChoices();
@@ -6878,6 +6904,10 @@ class VibeSurvivor {
      */
     handlePlayerDeath() {
         this.playerDead = true; // Mark player as dead to stop game logic
+
+        // Stop gatling gun looping sound immediately on death
+        this.audioManager.stopLoopingSound('weaponGatlingGun');
+
         // Delay stopping the game to let red flash complete
         setTimeout(() => {
             this.gameRunning = false;
@@ -7008,8 +7038,10 @@ class VibeSurvivor {
     
     showBossNotification() {
         this.showToastNotification("BOSS APPEARED!", 'boss');
-        // Play boss alert sound
-        this.audioManager.playSound('bossAlert');
+        // Play boss alert sound 3 times at 250% volume
+        this.audioManager.playSound('bossAlert', 2.5);
+        setTimeout(() => this.audioManager.playSound('bossAlert', 2.5), 300);
+        setTimeout(() => this.audioManager.playSound('bossAlert', 2.5), 600);
     }
     
     showContinueNotification() {
@@ -10264,6 +10296,9 @@ class VibeSurvivor {
             startScreen.classList.add('active');
             startScreen.style.display = 'flex';
 
+            // Play start menu sound when returning to start screen
+            this.audioManager.playSound('startMenu');
+
             requestAnimationFrame(() => this.updateStartOverlayLayout());
 
             // Phase 12c.4b - Initialize keyboard navigation for start screen after quit
@@ -10307,7 +10342,37 @@ class VibeSurvivor {
             this.startGame();
         }, 200);
     }
-    
+
+    /**
+     * Attempts to autoplay start menu sound for returning users
+     * Chrome's Media Engagement Index (MEI) allows autoplay for users who have
+     * previously engaged with media on this domain (>7s of unmuted playback).
+     * This will succeed for returning users and fail silently for new users.
+     */
+    tryAutoplayStartMenuSound() {
+        if (!this.audioManager || this.audioManager.isSfxMuted()) {
+            return; // Don't attempt if audio system not ready or SFX muted
+        }
+
+        const sound = this.audioManager.sounds.get('startMenu');
+        if (!sound) {
+            return; // Sound not loaded
+        }
+
+        // Clone the audio to avoid affecting the cached version
+        const autoplayAttempt = sound.cloneNode();
+        autoplayAttempt.volume = this.audioManager.sfxVolume;
+
+        // Attempt to play - will succeed for returning users with MEI
+        autoplayAttempt.play().then(() => {
+            // Success - user has sufficient Media Engagement Index
+            // Sound is now playing
+        }).catch(() => {
+            // Expected failure for new users or low MEI
+            // Silently ignore - user will hear sound on first interaction (quit to menu)
+        });
+    }
+
     cleanExit() {
 
         // Phase 12c.4b - Clean up main game keyboard handler (complete exit to landing page)
@@ -10830,6 +10895,9 @@ class VibeSurvivor {
             this.audioManager.sfxVolume
         );
 
+        // Pause gatling gun looping sound if playing
+        this.audioManager.pauseLoopingSound('weaponGatlingGun');
+
         this.modals.options.show();
     }
 
@@ -10837,6 +10905,9 @@ class VibeSurvivor {
         if (!this.modals.options) return;
 
         this.modals.options.hide();
+
+        // Resume gatling gun looping sound if it was playing
+        this.audioManager.resumeLoopingSound('weaponGatlingGun');
 
         if (!this.gameRunning && window.startScreenBot) {
             window.startScreenBot.show();

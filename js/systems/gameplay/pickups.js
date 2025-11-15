@@ -101,8 +101,9 @@ export class PickupSystem {
      * @param {Function} cachedSqrt - Cached square root function
      * @param {Function} showToastNotification - Toast notification callback
      * @param {boolean} bossDefeating - Skip updates during boss defeat
+     * @param {Object} audioManager - Audio manager for sound effects
      */
-    updateHPOrbs(hpOrbs, player, cachedSqrt, showToastNotification, bossDefeating) {
+    updateHPOrbs(hpOrbs, player, cachedSqrt, showToastNotification, bossDefeating, audioManager) {
         // Skip HP orb collection during boss defeat animation
         if (bossDefeating) {
             return;
@@ -139,6 +140,11 @@ export class PickupSystem {
                     showToastNotification(`+${actualHeal} HP`, 'heal');
                 }
 
+                // Play pickup sound
+                if (audioManager) {
+                    audioManager.playSound('upgrade');
+                }
+
                 // Return to pool
                 orb.active = false;
                 hpOrbs.splice(i, 1);
@@ -157,8 +163,9 @@ export class PickupSystem {
      * @param {Function} cachedSqrt - Cached square root function
      * @param {Function} showToastNotification - Toast notification callback
      * @param {boolean} bossDefeating - Skip updates during boss defeat
+     * @param {Object} audioManager - Audio manager for sound effects
      */
-    updateMagnetOrbs(magnetOrbs, player, cachedSqrt, showToastNotification, bossDefeating) {
+    updateMagnetOrbs(magnetOrbs, player, cachedSqrt, showToastNotification, bossDefeating, audioManager) {
         // Skip magnet orb collection during boss defeat animation
         if (bossDefeating) {
             return;
@@ -190,6 +197,11 @@ export class PickupSystem {
                 // Show magnet activation notification
                 if (showToastNotification) {
                     showToastNotification(`MAGNET ACTIVATED!`, 'magnet');
+                }
+
+                // Play pickup sound
+                if (audioManager) {
+                    audioManager.playSound('upgrade');
                 }
 
                 // Return to pool

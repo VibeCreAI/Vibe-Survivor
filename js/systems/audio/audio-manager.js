@@ -10,6 +10,7 @@
 export class AudioManager {
     constructor() {
         this.sounds = new Map();
+        this.loopingSounds = new Map(); // Tracks currently looping sounds
         this.music = null;
         this.musicVolume = 0.3;
         this.sfxVolume = 0.5;
@@ -24,7 +25,7 @@ export class AudioManager {
      */
     async init() {
         try {
-            this.music = new Audio('sound/Vibe_Survivor.mp3');
+            this.music = new Audio('sound/Vibe_Survivor.mp3?v=2');
             this.music.loop = true;
             this.music.volume = this.musicVolume;
             this.initialized = true;
@@ -117,15 +118,16 @@ export class AudioManager {
     /**
      * Plays a sound effect
      * @param {string} name - Sound identifier
+     * @param {number} volumeMultiplier - Optional volume multiplier (0.0 to 1.0), defaults to 1.0
      */
-    playSound(name) {
+    playSound(name, volumeMultiplier = 1.0) {
         if (this.sfxMuted) return;
 
         const sound = this.sounds.get(name);
         if (sound) {
             // Clone audio for overlapping sounds
             const clone = sound.cloneNode();
-            clone.volume = this.sfxVolume;
+            clone.volume = this.sfxVolume * volumeMultiplier;
             clone.play().catch(e => {
                 console.warn(`Sound ${name} playback failed:`, e);
             });
@@ -227,10 +229,84 @@ export class AudioManager {
     }
 
     /**
+     * Starts looping a sound effect
+     * @param {string} name - Sound identifier
+     * @param {number} volumeMultiplier - Optional volume multiplier (0.0 to 1.0), defaults to 1.0
+     */
+    loopSound(name, volumeMultiplier = 1.0) {
+        if (this.sfxMuted) return;
+        if (this.loopingSounds.has(name)) return; // Already looping
+
+        const sound = this.sounds.get(name);
+        if (sound) {
+            const loopingAudio = sound.cloneNode();
+            loopingAudio.loop = true;
+            loopingAudio.volume = this.sfxVolume * volumeMultiplier;
+            loopingAudio.play().catch(e => {
+                console.warn(`Looping sound ${name} playback failed:`, e);
+            });
+            this.loopingSounds.set(name, loopingAudio);
+        }
+    }
+
+    /**
+     * Stops a looping sound effect
+     * @param {string} name - Sound identifier
+     */
+    stopLoopingSound(name) {
+        const loopingAudio = this.loopingSounds.get(name);
+        if (loopingAudio) {
+            loopingAudio.pause();
+            loopingAudio.currentTime = 0;
+            this.loopingSounds.delete(name);
+        }
+    }
+
+    /**
+     * Pauses a looping sound effect
+     * @param {string} name - Sound identifier
+     */
+    pauseLoopingSound(name) {
+        const loopingAudio = this.loopingSounds.get(name);
+        if (loopingAudio) {
+            loopingAudio.pause();
+        }
+    }
+
+    /**
+     * Resumes a looping sound effect
+     * @param {string} name - Sound identifier
+     */
+    resumeLoopingSound(name) {
+        if (this.sfxMuted) return;
+
+        const loopingAudio = this.loopingSounds.get(name);
+        if (loopingAudio) {
+            loopingAudio.play().catch(e => {
+                console.warn(`Resuming looping sound ${name} failed:`, e);
+            });
+        }
+    }
+
+    /**
+     * Checks if a sound is currently looping
+     * @param {string} name - Sound identifier
+     * @returns {boolean}
+     */
+    isLooping(name) {
+        return this.loopingSounds.has(name);
+    }
+
+    /**
      * Cleans up audio resources
      */
     destroy() {
         this.stopMusic();
+        // Stop all looping sounds
+        this.loopingSounds.forEach((audio, name) => {
+            audio.pause();
+        });
+        this.loopingSounds.clear();
         this.sounds.clear();
         this.music = null;
         this.initialized = false;

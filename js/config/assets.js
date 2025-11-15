@@ -47,12 +47,26 @@ export const ASSET_PATHS = {
         logo: 'images/VibeCreAI_Logo.png'
     },
     audio: {
-        bgMusic: 'sound/Vibe_Survivor.mp3',
-        startMenu: 'sound/startMenu.mp3',
-        bossAlert: 'sound/bossAlert.mp3',
-        bossDefeat: 'sound/bossDefeat.mp3',
-        gameOver: 'sound/gameOver.mp3',
-        upgrade: 'sound/upgrade.mp3'
+        bgMusic: 'sound/Vibe_Survivor.mp3?v=2',
+        startMenu: 'sound/startMenu.mp3?v=2',
+        bossAlert: 'sound/bossAlert.mp3?v=2',
+        bossDefeat: 'sound/bossDefeat.mp3?v=2',
+        gameOver: 'sound/gameOver.mp3?v=2',
+        upgrade: 'sound/upgrade.mp3?v=2',
+        dash: 'sound/dash.mp3?v=2',
+        // Weapon sounds
+        weaponBasicMissile: 'sound/weapon/basicMissile.mp3?v=2',
+        weaponSpreadShot: 'sound/weapon/spreadShot.mp3?v=2',
+        weaponLaserBeam: 'sound/weapon/laserBeam.mp3?v=2',
+        weaponPlasmaBolt: 'sound/weapon/plasmaBolt.mp3?v=2',
+        weaponShotgun: 'sound/weapon/shotgun.mp3?v=2',
+        weaponLightningBolt: 'sound/weapon/lightningBolt.mp3?v=2',
+        weaponFlameThrower: 'sound/weapon/flameThrower.mp3?v=2',
+        weaponRailgun: 'sound/weapon/railgun.mp3?v=2',
+        weaponHomingMissile: 'sound/weapon/homingMissile.mp3?v=2',
+        weaponHomingLaser: 'sound/weapon/homingLaser.mp3?v=2',
+        weaponShockBurst: 'sound/weapon/shockBurst.mp3?v=2',
+        weaponGatlingGun: 'sound/weapon/gatlingGun.mp3?v=2'
     }
 };
 

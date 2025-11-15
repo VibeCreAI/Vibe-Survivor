@@ -17,8 +17,9 @@ export class PlayerSystem {
      * @param {Function} cachedSqrt - Cached square root function
      * @param {Function} createDashParticles - Dash particle creation callback
      * @param {Object} qualitySettings - Quality settings for trail
+     * @param {Object} audioManager - Audio manager for sound effects
      */
-    updatePlayer(player, inputManager, animationController, spriteConfig, cachedSqrt, createDashParticles, qualitySettings) {
+    updatePlayer(player, inputManager, animationController, spriteConfig, cachedSqrt, createDashParticles, qualitySettings, audioManager) {
         const keys = inputManager.keys;
         const touchControls = inputManager.touchControls;
         const isMobile = inputManager.isMobile;
@@ -105,6 +106,11 @@ export class PlayerSystem {
             player.dashCooldown = 30;
             player.invulnerable = 30;
             createDashParticles();
+
+            // Play dash sound effect
+            if (audioManager) {
+                audioManager.playSound('dash');
+            }
 
             // Reset dash button state after use
             touchControls.dashButton.pressed = false;

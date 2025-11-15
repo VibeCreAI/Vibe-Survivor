@@ -196,7 +196,7 @@ export class WeaponSystem {
      * @param {Function} context.recordDamage - Optional damage tracking callback
      */
     fireWeapon(weapon, context) {
-        const { player, enemies, cachedSqrt } = context;
+        const { player, enemies, cachedSqrt, audioManager } = context;
 
         // Find nearest enemy within range
         let nearestEnemy = null;
@@ -214,6 +214,25 @@ export class WeaponSystem {
         });
 
         if (!nearestEnemy) return;
+
+        // Play weapon sound
+        if (audioManager) {
+            const soundName = this.getWeaponSoundName(weapon.type);
+            if (soundName) {
+                // Special handling for gatling gun - loop instead of playing once
+                if (weapon.type === 'gatling_gun') {
+                    // Start looping on first fire at 70% volume
+                    if (!audioManager.isLooping(soundName)) {
+                        audioManager.loopSound(soundName, 0.7);
+                    }
+                } else {
+                    // Play sound once for other weapons
+                    // Flamethrower, homing missile, and plasma bolt at 70% volume (30% reduction)
+                    const volumeMultiplier = (weapon.type === 'flamethrower' || weapon.type === 'missiles' || weapon.type === 'plasma') ? 0.7 : 1.0;
+                    audioManager.playSound(soundName, volumeMultiplier);
+                }
+            }
+        }
 
         const dx = nearestEnemy.x - player.x;
         const dy = nearestEnemy.y - player.y;
@@ -813,6 +832,31 @@ export class WeaponSystem {
                 '#FFD700'
             );
         }
+    }
+
+    /**
+     * Gets the sound name for a weapon type
+     * @param {string} weaponType - Weapon type
+     * @returns {string|null} Sound name or null if no sound
+     */
+    getWeaponSoundName(weaponType) {
+        const soundMap = {
+            'basic': 'weaponBasicMissile',
+            'rapid': 'weaponBasicMissile',
+            'spread': 'weaponSpreadShot',
+            'spread_shot': 'weaponSpreadShot',
+            'laser': 'weaponLaserBeam',
+            'plasma': 'weaponPlasmaBolt',
+            'shotgun': 'weaponShotgun',
+            'lightning': 'weaponLightningBolt',
+            'flamethrower': 'weaponFlameThrower',
+            'railgun': 'weaponRailgun',
+            'missiles': 'weaponHomingMissile',
+            'homing_laser': 'weaponHomingLaser',
+            'shockburst': 'weaponShockBurst',
+            'gatling_gun': 'weaponGatlingGun'
+        };
+        return soundMap[weaponType] || null;
     }
 
     /**
