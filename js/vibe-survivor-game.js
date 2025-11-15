@@ -2975,7 +2975,6 @@ class VibeSurvivor {
 
             .upgrade-choice:hover {
                 background: rgba(0, 255, 255, 0.2);
-                transform: scale(1.03);
                 box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
             }
 
@@ -3002,7 +3001,6 @@ class VibeSurvivor {
                 background: rgba(255, 215, 0, 0.3) !important;
                 border: 2px solid #FFD700 !important;
                 box-shadow: 0 0 25px rgba(255, 215, 0, 0.6) !important;
-                transform: scale(1.05) !important;
             }
 
             .upgrade-choice-merge:hover h3 {
@@ -6427,7 +6425,6 @@ class VibeSurvivor {
                 box-shadow: 0 0 15px rgba(0, 255, 255, 0.8) !important;
                 border: 2px solid #00ffff !important;
                 background: rgba(0, 255, 255, 0.1) !important;
-                transform: scale(1.03) !important;
                 transition: all 0.2s ease !important;
             }
             
@@ -6441,7 +6438,6 @@ class VibeSurvivor {
                 box-shadow: 0 0 25px rgba(255, 215, 0, 0.9) !important;
                 border: 2px solid #FFD700 !important;
                 background: rgba(255, 215, 0, 0.3) !important;
-                transform: scale(1.05) !important;
             }
 
             .upgrade-choice-merge.menu-selected h3 {
