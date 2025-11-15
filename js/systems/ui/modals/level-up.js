@@ -533,13 +533,13 @@ export class LevelUpModal extends Modal {
             }
 
             .upgrade-choice.menu-selected {
-                box-shadow: 0 0 20px rgba(0, 255, 255, 0.9) !important;
-                border: 2px solid #00ffff !important;
+                box-shadow: 0 0 15px rgba(0, 255, 255, 0.4) !important;
+                border: 2px solid #FFFFFF !important;
                 background: rgba(0, 255, 255, 0.15) !important;
             }
 
             .upgrade-choice-merge.menu-selected {
-                box-shadow: 0 0 25px rgba(255, 215, 0, 0.9) !important;
+                box-shadow: 0 0 25px rgba(255, 215, 0, 0.6) !important;
                 border: 2px solid #FFD700 !important;
                 background: rgba(255, 215, 0, 0.3) !important;
             }
