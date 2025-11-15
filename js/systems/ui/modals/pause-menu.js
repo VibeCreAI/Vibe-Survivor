@@ -69,6 +69,10 @@ export class PauseMenu extends Modal {
             if (this.exitButton) {
                 this.exitButton.addEventListener('click', () => this.handleExit());
             }
+
+            if (this.getTranslation) {
+                this.updateLocalization();
+            }
         }
         return result;
     }
@@ -133,6 +137,10 @@ export class PauseMenu extends Modal {
         this.getAudioMutedState = getAudioMutedState;
         this.getDashPositionState = getDashPositionState;
         this.getTranslation = getTranslation;
+
+        if (this.element) {
+            this.updateLocalization();
+        }
     }
 
     /**
@@ -201,9 +209,35 @@ export class PauseMenu extends Modal {
         if (this.dashPositionButton && this.getDashPositionState) {
             const position = this.getDashPositionState();
             if (position) {
-                this.dashPositionButton.textContent = `DASH BUTTON: ${position.toUpperCase()}`;
+                if (this.getTranslation) {
+                    const key = position === 'left' ? 'dashButtonLeft' : 'dashButtonRight';
+                    this.dashPositionButton.textContent = this.getTranslation(key);
+                } else {
+                    this.dashPositionButton.textContent = `DASH BUTTON: ${position.toUpperCase()}`;
+                }
             }
         }
+    }
+
+    /**
+     * Updates all localized text in the pause menu
+     */
+    updateLocalization() {
+        if (!this.getTranslation) return;
+
+        const t = this.getTranslation;
+
+        const title = this.element?.querySelector('h2');
+        if (title) title.textContent = t('gamePaused');
+
+        if (this.resumeButton) this.resumeButton.textContent = t('resume');
+        if (this.restartButton) this.restartButton.textContent = t('restart');
+        if (this.exitButton) this.exitButton.textContent = t('quitGame');
+
+        const pauseHint = this.element?.querySelector('.pause-hint');
+        if (pauseHint) pauseHint.textContent = t('pauseHint');
+
+        this.updateButtonLabels();
     }
 
     /**

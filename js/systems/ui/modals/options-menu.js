@@ -35,6 +35,7 @@ export class OptionsMenu {
         this.getAudioMutedState = null;
         this.getDashPositionState = null;
         this.getLanguageState = null;
+        this.getTranslation = null;
 
         // Parent keyboard management (for nested modals)
         this.disableParentKeyboardCallback = null;
@@ -144,10 +145,15 @@ export class OptionsMenu {
     /**
      * Set game state callbacks for dynamic button labels
      */
-    setGameStateCallbacks(getAudioMutedState, getDashPositionState, getLanguageState) {
+    setGameStateCallbacks(getAudioMutedState, getDashPositionState, getLanguageState, getTranslation) {
         this.getAudioMutedState = getAudioMutedState;
         this.getDashPositionState = getDashPositionState;
         this.getLanguageState = getLanguageState;
+        this.getTranslation = getTranslation;
+
+        if (this.element) {
+            this.updateLocalization();
+        }
     }
 
     /**
@@ -206,14 +212,22 @@ export class OptionsMenu {
         // Update mute button
         if (this.muteButton && this.getAudioMutedState) {
             const isMuted = this.getAudioMutedState();
-            this.muteButton.textContent = isMuted ? 'UNMUTE' : 'MUTE';
+            if (this.getTranslation) {
+                this.muteButton.textContent = isMuted ? this.getTranslation('unmute') : this.getTranslation('mute');
+            } else {
+                this.muteButton.textContent = isMuted ? 'UNMUTE' : 'MUTE';
+            }
         }
 
         // Update dash position button
         if (this.dashPositionButton && this.getDashPositionState) {
             const position = this.getDashPositionState();
             if (position) {
-                this.dashPositionButton.textContent = position.toUpperCase();
+                if (this.getTranslation) {
+                    this.dashPositionButton.textContent = this.getTranslation(position).toUpperCase();
+                } else {
+                    this.dashPositionButton.textContent = position.toUpperCase();
+                }
             }
         }
 
@@ -223,6 +237,43 @@ export class OptionsMenu {
             if (language) {
                 this.languageSelect.value = language;
             }
+        }
+    }
+
+    /**
+     * Updates localized labels/hints
+     */
+    updateLocalization() {
+        if (!this.getTranslation) return;
+
+        const t = this.getTranslation;
+
+        const title = this.element?.querySelector('h2');
+        if (title) title.textContent = t('optionsTitle');
+
+        const labels = this.element?.querySelectorAll('.option-item label');
+        if (labels && labels.length >= 3) {
+            labels[0].textContent = t('language');
+            labels[1].textContent = t('audio');
+            labels[2].textContent = t('dashPosition');
+        }
+
+        const closeBtn = this.closeButton;
+        if (closeBtn) closeBtn.textContent = t('close');
+
+        const hint = this.element?.querySelector('.options-hint');
+        if (hint) hint.textContent = t('optionsHint');
+
+        this.updateButtonLabels();
+    }
+
+    /**
+     * Sets language select value
+     * @param {string} value - Language code
+     */
+    setLanguageValue(value) {
+        if (this.languageSelect && value) {
+            this.languageSelect.value = value;
         }
     }
 

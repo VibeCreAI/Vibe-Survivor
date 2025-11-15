@@ -531,7 +531,8 @@ class VibeSurvivor {
             this.modals.options.setGameStateCallbacks(
                 () => this.audioMuted,
                 () => this.touchControls?.dashButton?.position || this.dashButtonPosition || 'right',
-                () => this.currentLanguage
+                () => this.currentLanguage,
+                this.t.bind(this)
             );
 
             // Set up overlay lock callbacks
@@ -559,6 +560,11 @@ class VibeSurvivor {
                 if (previousState) {
                     this.menuNavigationState = previousState;
                     this.updateMenuSelection();
+                    this.modals.options.setPreviousNavigationState(null);
+                }
+
+                if (!this.gameRunning && window.startScreenBot) {
+                    window.startScreenBot.show();
                 }
             });
 
@@ -682,6 +688,8 @@ class VibeSurvivor {
                 this.closeGame();
             });
 
+            this.modals.startScreenModal.setTranslationFunction(this.t.bind(this));
+
             this._startScreenModalInitialized = true;
         }
 
@@ -699,6 +707,8 @@ class VibeSurvivor {
             this.modals.aboutModal.onClose(() => {
                 this.hideAboutMenu();
             });
+
+            this.modals.aboutModal.setTranslationFunction(this.t.bind(this));
 
             this._aboutModalInitialized = true;
         }
@@ -3375,7 +3385,9 @@ class VibeSurvivor {
         // Phase 12c.6 - Help menu event listeners removed (handled by HelpMenu modal - Option B pattern)
         // The modal owns all button behavior including close button and tab switching
 
-        this.updateDashPositionButtonLabel();
+        if (this.modals.pause) {
+            this.modals.pause.updateButtonLabels();
+        }
 
         // Keyboard controls
         // Phase 12c.4b - Store keyboard handler reference for cleanup
@@ -3508,6 +3520,7 @@ class VibeSurvivor {
 
         // Phase 12c.12 - Initialize touch controls UI with dash button
         const touchControlsInitResult = this.touchControlsUI.init(this.touchControls, this.isMobile);
+        this.touchControlsUI.setTranslationFunction(this.t.bind(this));
         console.log('TouchControlsUI init result:', touchControlsInitResult, {
             hasDashButton: !!this.touchControlsUI.elements?.dashButton,
             hasJoystick: !!this.touchControlsUI.elements?.joystick
@@ -4051,6 +4064,7 @@ class VibeSurvivor {
         // Phase 12c - Initialize game-over modal (if not already initialized)
         if (!this._gameOverModalInitialized) {
             this.modals.gameOver.init();
+            this.modals.gameOver.setTranslationFunction(this.t.bind(this));
             this._gameOverModalInitialized = true;
         }
 
@@ -4093,6 +4107,11 @@ class VibeSurvivor {
         // Phase 12c.4 - Initialize pause modal (if not already initialized)
         if (!this._pauseModalInitialized) {
             this.modals.pause.init();
+
+            // Ensure dashButtonPosition is initialized from settings or touchControls
+            if (!this.dashButtonPosition) {
+                this.dashButtonPosition = this.touchControls?.dashButton?.position || 'right';
+            }
 
             // Set up game state callbacks for dynamic button labels
             this.modals.pause.setGameStateCallbacks(
@@ -4160,6 +4179,8 @@ class VibeSurvivor {
                 // Just close the confirmation dialog
             });
 
+            this.modals.restartConfirmation.setTranslationFunction(this.t.bind(this));
+
             this._restartConfirmationModalInitialized = true;
         }
 
@@ -4207,6 +4228,8 @@ class VibeSurvivor {
                     this.exitConfirmationDefaultCallbacks.enable
                 );
             });
+
+            this.modals.exitConfirmation.setTranslationFunction(this.t.bind(this));
 
             this._exitConfirmationModalInitialized = true;
         }
@@ -4538,19 +4561,15 @@ class VibeSurvivor {
 
     toggleAudioMute() {
         this.audioMuted = !this.audioMuted;
-        const muteBtn = document.getElementById('mute-btn');
 
-        // Use AudioManager (Phase 11)
         this.audioManager.setMuted(this.audioMuted);
 
-        if (this.audioMuted) {
-            if (muteBtn) muteBtn.textContent = this.t('unmute');
-        } else {
-            if (muteBtn) muteBtn.textContent = this.t('mute');
+        if (this.modals.pause) {
+            this.modals.pause.updateButtonLabels();
         }
-
-        // Keep options menu button in sync with current locale
-        this.updateOptionsAudioButton();
+        if (this.modals.options) {
+            this.modals.options.updateButtonLabels();
+        }
     }
 
     showExitConfirmation() {
@@ -4622,16 +4641,12 @@ class VibeSurvivor {
         // Phase 12c.12 - Update dash button position via TouchControlsUI
         this.touchControlsUI.setDashButtonPosition(this.touchControls.dashButton.position);
 
-        this.updateDashPositionButtonLabel();
-    }
-
-    updateDashPositionButtonLabel() {
-        const dashPositionBtn = document.getElementById('dash-position-btn');
-        if (!dashPositionBtn) return;
-
-        const position = (this.touchControls?.dashButton?.position === 'left') ? 'left' : 'right';
-        const positionText = this.t(position).toUpperCase();
-        dashPositionBtn.textContent = `${this.t('dash').toUpperCase()} ${this.t('button', 'ui').toUpperCase()}: ${positionText}`;
+        if (this.modals.pause) {
+            this.modals.pause.updateButtonLabels();
+        }
+        if (this.modals.options) {
+            this.modals.options.updateButtonLabels();
+        }
     }
 
     loadSettings() {
@@ -9647,13 +9662,23 @@ class VibeSurvivor {
     generatePassivesSection() {
         const p = this.translations[this.currentLanguage].passives;
         const passiveNames = {
-            'health_boost': p.healthBoost + ' (+25 Max HP)',
-            'speed_boost': p.speedBoost + ' (+10% Speed)',
-            'regeneration': p.regeneration + ' (Auto-heal)',
-            'magnet': p.magnet + ' (XP Attraction)',
-            'armor': p.armor + ' (Damage Reduction)',
-            'critical': p.criticalStrike + ' (Critical Hits)',
-            'dash_boost': p.dashBoost + ' (+50% Distance)'
+            'health_boost': p.healthBoost,
+            'speed_boost': p.speedBoost,
+            'regeneration': p.regeneration,
+            'magnet': p.magnet,
+            'armor': p.armor,
+            'critical': p.criticalStrike,
+            'dash_boost': p.dashBoost
+        };
+
+        const passiveDescriptions = {
+            'health_boost': p.healthBoostDesc,
+            'speed_boost': p.speedBoostDesc,
+            'regeneration': p.regenerationDesc,
+            'magnet': p.magnetDesc,
+            'armor': p.armorDesc,
+            'critical': p.criticalStrikeDesc,
+            'dash_boost': p.dashBoostDesc
         };
 
         const activePassives = Object.keys(this.player.passives).filter(key =>
@@ -9664,6 +9689,10 @@ class VibeSurvivor {
 
         const passivesHtml = activePassives.map(passive => {
             let displayName = passiveNames[passive];
+            const description = passiveDescriptions[passive];
+            if (description) {
+                displayName += ` - ${description}`;
+            }
 
             // Add count for stackable passives
             if (['health_boost', 'speed_boost', 'armor', 'critical', 'dash_boost'].includes(passive)) {
@@ -10309,7 +10338,9 @@ class VibeSurvivor {
                     victoryTitle: "Victory!",
                     bossDefeatedBanner: "Boss Defeated",
                     bossLevelDefeated: "Boss Level {level} Defeated",
-                    nextBoss: "Next: Boss Level {level}"
+                    nextBoss: "Next: Boss Level {level}",
+                    noWeapons: "No weapons acquired",
+                    noPassives: "No passives acquired"
                 },
                 weapons: {
                     // Base weapons
@@ -10463,7 +10494,9 @@ class VibeSurvivor {
                     victoryTitle: "승리!",
                     bossDefeatedBanner: "보스를 처치했습니다",
                     bossLevelDefeated: "보스 레벨 {level} 처치",
-                    nextBoss: "다음: 보스 레벨 {level}"
+                    nextBoss: "다음: 보스 레벨 {level}",
+                    noWeapons: "획득한 무기가 없습니다",
+                    noPassives: "획득한 패시브가 없습니다"
                 },
                 weapons: {
                     // Base weapons
@@ -10560,310 +10593,101 @@ class VibeSurvivor {
 
     // Update all text elements with current language
     updateAllText() {
-        // Start screen
-        const startTitle = document.querySelector('.survivor-title h1');
-        if (startTitle) startTitle.textContent = this.t('gameTitle');
+        const t = this.t.bind(this);
 
-        const startTaglines = document.querySelectorAll('.survivor-title p');
-        if (startTaglines.length > 0) startTaglines[0].textContent = this.t('gameTagline');
-
-        // Control instructions
-        const controlsPC = document.querySelector('.controls-info:not(.mobile-only)');
-        if (controlsPC) controlsPC.textContent = this.t('controlsPC');
-
-        const controlsMobile = document.querySelector('.controls-info.mobile-only');
-        if (controlsMobile) controlsMobile.textContent = this.t('controlsMobile');
-
-        // Buttons
-        const startBtn = document.getElementById('start-survivor');
-        if (startBtn) startBtn.textContent = this.t('startGame');
-
-        const optionsBtn = document.getElementById('options-btn');
-        if (optionsBtn) optionsBtn.textContent = this.t('options');
-
-        const aboutBtn = document.getElementById('about-btn');
-        if (aboutBtn) aboutBtn.textContent = this.t('about');
-
-        // Pause menu
-        const pauseTitle = document.querySelector('#pause-menu h2');
-        if (pauseTitle) pauseTitle.textContent = this.t('gamePaused');
-
-        const resumeBtn = document.getElementById('resume-btn');
-        if (resumeBtn) resumeBtn.textContent = this.t('resume');
-
-        const restartBtn = document.getElementById('pause-restart-btn');
-        if (restartBtn) restartBtn.textContent = this.t('restart');
-
-        const muteBtn = document.getElementById('mute-btn');
-        if (muteBtn) muteBtn.textContent = this.audioMuted ? this.t('unmute') : this.t('mute');
-
-        const quitBtn = document.getElementById('exit-to-menu-btn');
-        if (quitBtn) quitBtn.textContent = this.t('quitGame');
-
-        // Confirmation modals
-        const exitTitle = document.querySelector('#exit-confirmation-modal h2');
-        if (exitTitle) exitTitle.textContent = this.t('quitConfirm');
-
-        const exitWarning = document.querySelector('#exit-confirmation-modal p');
-        if (exitWarning) exitWarning.innerHTML = this.t('quitWarning');
-
-        const exitYes = document.getElementById('exit-confirm-yes');
-        if (exitYes) exitYes.textContent = this.t('yesQuit');
-
-        const exitNo = document.getElementById('exit-confirm-no');
-        if (exitNo) exitNo.textContent = this.t('noContinue');
-
-        const restartTitle = document.querySelector('#restart-confirmation-modal h2');
-        if (restartTitle) restartTitle.textContent = this.t('restartConfirm');
-
-        const restartWarning = document.querySelector('#restart-confirmation-modal p');
-        if (restartWarning) restartWarning.innerHTML = this.t('restartWarning');
-
-        const restartYes = document.getElementById('restart-confirm-yes');
-        if (restartYes) restartYes.textContent = this.t('yesRestart');
-
-        const restartConfirmNo = document.getElementById('restart-confirm-no');
-        if (restartConfirmNo) restartConfirmNo.textContent = this.t('noContinue');
-
-        // Help menu
-        const helpGuideTab = document.getElementById('help-tab-guide');
-        if (helpGuideTab) helpGuideTab.textContent = this.t('guideTab');
-
-        const helpStatusTab = document.getElementById('help-tab-status');
-        if (helpStatusTab) helpStatusTab.textContent = this.t('statusTab');
-
-        const levelUpModalInstance = this.modals.levelUp;
-        const levelUpModalElement = levelUpModalInstance?.element || document.getElementById('levelup-modal');
-        if (levelUpModalElement) {
-            const levelUpTabBtn = levelUpModalElement.querySelector('[data-tab=\"levelup\"]');
-            const levelUpGuideTabBtn = levelUpModalElement.querySelector('[data-tab=\"guide\"]');
-            const levelUpStatusTabBtn = levelUpModalElement.querySelector('[data-tab=\"status\"]');
-
-            if (levelUpTabBtn) levelUpTabBtn.textContent = this.t('levelUp');
-            if (levelUpGuideTabBtn) levelUpGuideTabBtn.textContent = this.t('guideTab');
-            if (levelUpStatusTabBtn) levelUpStatusTabBtn.textContent = this.t('statusTab');
-
-            if (levelUpModalInstance) {
-                levelUpModalInstance.renderGuidePane();
-                levelUpModalInstance.renderStatusPane();
-                levelUpModalInstance.setupTouchScrolling();
-            }
+        if (this.modals.startScreenModal) {
+            this.modals.startScreenModal.setTranslationFunction(t);
+            this.modals.startScreenModal.updateLocalization();
         }
 
-        const helpGuideTitle = document.getElementById('help-guide-title');
-        if (helpGuideTitle) helpGuideTitle.innerHTML = this.t('weaponMergers', 'help');
-
-        const closeHelpBtn = document.getElementById('close-help-btn');
-        if (closeHelpBtn) closeHelpBtn.textContent = this.t('close');
-
-        const helpHint = document.querySelector('#help-menu .help-hint');
-        if (helpHint) helpHint.textContent = this.t('helpHint');
-
-        // Help menu recipe details
-        const homingLaserTitle = document.getElementById('homing-laser-title');
-        if (homingLaserTitle) homingLaserTitle.innerHTML = `<img src="images/weapons/homingLaser.png" alt="Homing Laser"> ${this.t('homingLaser', 'weapons')}`;
-
-        const homingLaserRecipe = document.getElementById('homing-laser-recipe');
-        if (homingLaserRecipe) homingLaserRecipe.textContent = this.t('homingLaserRecipe', 'help');
-
-        const homingLaserDesc = document.getElementById('homing-laser-desc');
-        if (homingLaserDesc) homingLaserDesc.textContent = this.t('homingLaserDesc', 'help');
-
-        const shockburstTitle = document.getElementById('shockburst-title');
-        if (shockburstTitle) shockburstTitle.innerHTML = `<img src="images/weapons/shockburst.png" alt="Shockburst"> ${this.t('shockburst', 'weapons')}`;
-
-        const shockburstRecipe = document.getElementById('shockburst-recipe');
-        if (shockburstRecipe) shockburstRecipe.textContent = this.t('shockburstRecipe', 'help');
-
-        const shockburstDesc = document.getElementById('shockburst-desc');
-        if (shockburstDesc) shockburstDesc.textContent = this.t('shockburstDesc', 'help');
-
-        const gatlingGunTitle = document.getElementById('gatling-gun-title');
-        if (gatlingGunTitle) gatlingGunTitle.innerHTML = `<img src="images/weapons/gatlingGun.png" alt="Gatling Gun"> ${this.t('gatlingGun', 'weapons')}`;
-
-        const gatlingGunRecipe = document.getElementById('gatling-gun-recipe');
-        if (gatlingGunRecipe) gatlingGunRecipe.textContent = this.t('gatlingGunRecipe', 'help');
-
-        const gatlingGunDesc = document.getElementById('gatling-gun-desc');
-        if (gatlingGunDesc) gatlingGunDesc.textContent = this.t('gatlingGunDesc', 'help');
-
-        // Help menu additional sections
-        const weaponTipsTitle = document.getElementById('weapon-tips-title');
-        if (weaponTipsTitle) weaponTipsTitle.remove();
-
-        const weaponLimitTip = document.getElementById('weapon-limit-tip');
-        if (weaponLimitTip) weaponLimitTip.parentElement?.removeChild(weaponLimitTip);
-
-        const weaponEvolutionTitle = document.getElementById('weapon-evolution-title');
-        if (weaponEvolutionTitle) weaponEvolutionTitle.innerHTML = `<img src="images/passives/evolution.png" alt="${this.t('weaponEvolution', 'help')}" class="section-icon"> ${this.t('weaponEvolution', 'help')}`;
-
-        const rapidFireEvolution = document.getElementById('rapid-fire-evolution');
-        if (rapidFireEvolution) rapidFireEvolution.textContent = this.t('rapidFireEvolution', 'help');
-
-        this.renderHelpStatusTab();
-
-        // Game over screen
-        const gameOverTitle = document.querySelector('#survivor-game-over-screen h2');
-        if (gameOverTitle) gameOverTitle.textContent = this.t('gameOver');
-
-        const playAgainBtn = document.getElementById('restart-survivor');
-        if (playAgainBtn) playAgainBtn.textContent = this.t('playAgain');
-
-        const exitGameBtn = document.getElementById('exit-survivor');
-        if (exitGameBtn) exitGameBtn.textContent = this.t('exit');
-
-        // Mobile dash button
-        const mobileDash = document.querySelector('#mobile-dash-btn span');
-        if (mobileDash) mobileDash.textContent = this.t('dash');
-
-        // Pause hint
-        const pauseHint = document.querySelector('.pause-hint');
-        if (pauseHint) pauseHint.textContent = this.t('pauseHint');
-
-        // Options menu
-        this.updateOptionsMenu();
-
-        // About menu
-        this.updateAboutMenu();
-
-        // Update dash button position label
-        this.updateDashPositionButtonLabel();
-    }
-
-    // Update options menu text
-    updateOptionsMenu() {
-        const labels = document.querySelectorAll('.option-item label');
-        if (labels.length >= 3) {
-            labels[0].textContent = this.t('language');
-            labels[1].textContent = this.t('audio');
-            labels[2].textContent = this.t('dashPosition');
+        if (this.modals.pause) {
+            this.modals.pause.updateLocalization();
         }
 
-        const closeBtn = document.getElementById('close-options-btn');
-        if (closeBtn) closeBtn.textContent = this.t('close');
-
-        const hint = document.querySelector('.options-hint');
-        if (hint) hint.textContent = this.t('optionsHint');
-
-        // Update the button texts immediately
-        this.updateOptionsAudioButton();
-        this.updateOptionsDashButton();
-    }
-
-    // Update about menu text
-    updateAboutMenu() {
-        const aboutTitle = document.querySelector('#about-menu h2');
-        if (aboutTitle) aboutTitle.textContent = this.t('aboutTitle');
-
-        const vibeCodingTitle = document.querySelector('.vibe-coding-title');
-        if (vibeCodingTitle) vibeCodingTitle.textContent = this.t('vibeCodingTitle');
-
-        const vibeCodingSubtitle = document.querySelector('.vibe-coding-subtitle');
-        if (vibeCodingSubtitle) vibeCodingSubtitle.textContent = this.t('vibeCodingSubtitle');
-
-        const creditLabels = document.querySelectorAll('.credit-label');
-        const creditValues = document.querySelectorAll('.credit-value');
-
-        if (creditLabels.length >= 4 && creditValues.length >= 4) {
-            creditLabels[0].textContent = this.t('codingLabel');
-            creditValues[0].textContent = this.t('codingValue');
-            creditLabels[1].textContent = this.t('musicLabel');
-            creditValues[1].textContent = this.t('musicValue');
-            creditLabels[2].textContent = this.t('soundEffectsLabel');
-            creditValues[2].textContent = this.t('soundEffectsValue');
-            creditLabels[3].textContent = this.t('artworkLabel');
-            creditValues[3].textContent = this.t('artworkValue');
+        if (this.modals.restartConfirmation) {
+            this.modals.restartConfirmation.setTranslationFunction(t);
+            this.modals.restartConfirmation.updateLocalization();
         }
 
-        const connectWithUs = document.querySelector('.social-links h3');
-        if (connectWithUs) connectWithUs.textContent = this.t('connectWithUs');
+        if (this.modals.exitConfirmation) {
+            this.modals.exitConfirmation.setTranslationFunction(t);
+            this.modals.exitConfirmation.updateLocalization();
+        }
 
-        const closeAboutBtn = document.getElementById('close-about-btn');
-        if (closeAboutBtn) closeAboutBtn.textContent = this.t('close');
+        if (this.modals.helpMenu) {
+            this.modals.helpMenu.updateLocalization();
+        }
 
-        const aboutHint = document.querySelector('.about-hint');
-        if (aboutHint) aboutHint.textContent = this.t('aboutHint');
-    }
+        if (this.modals.levelUp) {
+            this.modals.levelUp.updateLocalization();
+        }
 
-    // Load user settings from localStorage
-    loadUserSettings() {
-        try {
-            const saved = localStorage.getItem('vibesurvior-settings');
-            if (saved) {
-                const settings = JSON.parse(saved);
-                this.currentLanguage = settings.language || 'en';
-                this.audioMuted = settings.audioMuted || false;
-                this.dashButtonPosition = settings.dashButtonPosition || 'right';
-            }
-        } catch (e) {
-            console.warn('Failed to load settings:', e);
+        if (this.modals.options) {
+            this.modals.options.updateLocalization();
+            this.modals.options.setLanguageValue(this.currentLanguage);
+        }
+
+        if (this.modals.aboutModal) {
+            this.modals.aboutModal.setTranslationFunction(t);
+            this.modals.aboutModal.updateLocalization();
+        }
+
+        if (this.modals.gameOver) {
+            this.modals.gameOver.setTranslationFunction(t);
+            this.modals.gameOver.updateLocalization();
+        }
+
+        if (this.touchControlsUI) {
+            this.touchControlsUI.setTranslationFunction(t);
+            this.touchControlsUI.updateLocalization();
         }
     }
 
-    // Save user settings to localStorage
     saveUserSettings() {
         try {
-            const settings = {
+            const storedSettings = {
                 language: this.currentLanguage,
                 audioMuted: this.audioMuted,
-                dashButtonPosition: this.dashButtonPosition || 'right'
+                dashButtonPosition: this.touchControls?.dashButton?.position || this.dashButtonPosition || 'right'
             };
-            localStorage.setItem('vibesurvior-settings', JSON.stringify(settings));
-        } catch (e) {
-            console.warn('Failed to save settings:', e);
+            if (typeof window !== 'undefined' && window.localStorage) {
+                window.localStorage.setItem('vibe-survivor-settings', JSON.stringify(storedSettings));
+            }
+        } catch (error) {
+            console.warn('Failed to save Vibe Survivor settings:', error);
         }
     }
 
-    // Phase 12c.5 - Options Menu Methods (using OptionsMenu modal - Option B pattern)
+    // Options Menu Methods
     showOptionsMenu() {
-        // Store previous navigation state if we're on the start screen
+        if (!this.modals.options) return;
+
         if (this.menuNavigationState.menuType === 'start') {
-            const previousState = {
+            this.modals.options.setPreviousNavigationState({
                 active: this.menuNavigationState.active,
                 selectedIndex: this.menuNavigationState.selectedIndex,
                 menuType: this.menuNavigationState.menuType,
                 menuButtons: [...this.menuNavigationState.menuButtons],
                 keyboardUsed: this.menuNavigationState.keyboardUsed
-            };
-            this.modals.options.setPreviousNavigationState(previousState);
+            });
+        } else {
+            this.modals.options.setPreviousNavigationState(null);
         }
 
-        // Show the modal (modal handles all keyboard interaction internally)
+        if (window.startScreenBot) {
+            window.startScreenBot.hide();
+        }
+
         this.modals.options.show();
     }
 
     hideOptionsMenu() {
-        // Hide the modal (modal handles all cleanup internally)
+        if (!this.modals.options) return;
+
         this.modals.options.hide();
-    }
 
-    updateOptionsMenuState() {
-        // Set language dropdown
-        const langSelect = document.getElementById('language-select');
-        if (langSelect) {
-            langSelect.value = this.currentLanguage;
-        }
-
-        // Update audio button
-        this.updateOptionsAudioButton();
-
-        // Update dash button
-        this.updateOptionsDashButton();
-    }
-
-    updateOptionsAudioButton() {
-        const audioBtn = document.getElementById('options-mute-btn');
-        if (audioBtn) {
-            audioBtn.textContent = this.audioMuted ? this.t('unmute') : this.t('mute');
-        }
-    }
-
-    updateOptionsDashButton() {
-        const dashBtn = document.getElementById('options-dash-position-btn');
-        if (dashBtn) {
-            const position = this.touchControls?.dashButton?.position ||
-                           this.settings?.dashButtonPosition || 'right';
-            dashBtn.textContent = this.t(position).toUpperCase();
+        if (!this.gameRunning && window.startScreenBot) {
+            window.startScreenBot.show();
         }
     }
 

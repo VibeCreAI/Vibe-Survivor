@@ -25,6 +25,9 @@ export class GameOverModal extends Modal {
 
         // Touch scroll handler (needed to stop event bubbling to canvas)
         this.touchScrollHandler = null;
+
+        // Localization
+        this.getTranslation = null;
     }
 
     /**
@@ -41,6 +44,9 @@ export class GameOverModal extends Modal {
             }
             if (this.exitButton) {
                 this.exitButton.addEventListener('click', () => this.handleExit());
+            }
+            if (this.getTranslation) {
+                this.updateLocalization();
             }
         }
         return result;
@@ -60,6 +66,15 @@ export class GameOverModal extends Modal {
      */
     onExit(callback) {
         this.onExitCallback = callback;
+    }
+
+    /**
+     * Sets translation function
+     * @param {Function} getTranslation - Translation lookup
+     */
+    setTranslationFunction(getTranslation) {
+        this.getTranslation = getTranslation;
+        this.updateLocalization();
     }
 
     /**
@@ -138,7 +153,8 @@ export class GameOverModal extends Modal {
             </div>
         `).join('');
 
-        weaponsContainer.innerHTML = weaponsHTML || '<p>No weapons acquired</p>';
+        const emptyText = this.getTranslation ? this.getTranslation('noWeapons') : 'No weapons acquired';
+        weaponsContainer.innerHTML = weaponsHTML || `<p>${emptyText}</p>`;
     }
 
     /**
@@ -157,7 +173,8 @@ export class GameOverModal extends Modal {
             </div>
         `).join('');
 
-        passivesContainer.innerHTML = passivesHTML || '<p>No passives acquired</p>';
+        const emptyText = this.getTranslation ? this.getTranslation('noPassives') : 'No passives acquired';
+        passivesContainer.innerHTML = passivesHTML || `<p>${emptyText}</p>`;
     }
 
     /**
@@ -166,14 +183,21 @@ export class GameOverModal extends Modal {
      * @returns {string} Display name
      */
     getPassiveName(passiveKey) {
+        if (this.getTranslation) {
+            const translated = this.getTranslation(passiveKey, 'passives');
+            if (translated && translated !== passiveKey) {
+                return translated;
+            }
+        }
+
         const names = {
-            'health_boost': 'Health Boost',
-            'speed_boost': 'Speed Boost',
-            'regeneration': 'Regeneration',
-            'magnet': 'Magnet',
-            'armor': 'Armor',
-            'critical': 'Critical Hit',
-            'dash_boost': 'Dash Boost'
+            health_boost: 'Health Boost',
+            speed_boost: 'Speed Boost',
+            regeneration: 'Regeneration',
+            magnet: 'Magnet',
+            armor: 'Armor',
+            critical: 'Critical Hit',
+            dash_boost: 'Dash Boost'
         };
         return names[passiveKey] || passiveKey;
     }
@@ -392,5 +416,35 @@ export class GameOverModal extends Modal {
         scrollContent.removeEventListener('touchmove', this.touchScrollHandler.move, { passive: true });
         scrollContent.removeEventListener('touchend', this.touchScrollHandler.end, { passive: true });
         this.touchScrollHandler = null;
+    }
+
+    /**
+     * Updates localized text (title/buttons)
+     */
+    updateLocalization() {
+        if (!this.getTranslation || !this.element) return;
+
+        const t = this.getTranslation;
+
+        const title = this.element.querySelector('.gameover-title');
+        if (title) title.textContent = t('gameOver');
+
+        const restartBtn = this.element.querySelector('.gameover-restart-btn');
+        if (restartBtn) restartBtn.textContent = t('playAgain');
+
+        const exitBtn = this.element.querySelector('.gameover-exit-btn');
+        if (exitBtn) exitBtn.textContent = t('exit');
+
+        const levelLabel = this.element.querySelector('[data-i18n="level"]');
+        if (levelLabel) levelLabel.textContent = t('level');
+
+        const timeLabel = this.element.querySelector('[data-i18n="time"]');
+        if (timeLabel) timeLabel.textContent = t('time');
+
+        const enemiesLabel = this.element.querySelector('[data-i18n="enemies"]');
+        if (enemiesLabel) enemiesLabel.textContent = t('enemies');
+
+        const bossesLabel = this.element.querySelector('[data-i18n="bosses"]');
+        if (bossesLabel) bossesLabel.textContent = t('bossesDefeated');
     }
 }

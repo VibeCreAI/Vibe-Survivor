@@ -31,6 +31,8 @@ export class RestartConfirmationModal extends Modal {
         // Parent modal keyboard management
         this.disableParentKeyboardCallback = null;
         this.enableParentKeyboardCallback = null;
+
+        this.getTranslation = null;
     }
 
     /**
@@ -42,12 +44,15 @@ export class RestartConfirmationModal extends Modal {
             this.yesButton = this.element.querySelector('#restart-confirm-yes');
             this.noButton = this.element.querySelector('#restart-confirm-no');
 
-            // Set up button event listeners
             if (this.yesButton) {
                 this.yesButton.addEventListener('click', () => this.handleConfirm());
             }
             if (this.noButton) {
                 this.noButton.addEventListener('click', () => this.handleCancel());
+            }
+
+            if (this.getTranslation) {
+                this.updateLocalization();
             }
         }
         return result;
@@ -77,6 +82,15 @@ export class RestartConfirmationModal extends Modal {
     setOverlayLockCallbacks(incrementFn, decrementFn) {
         this.incrementOverlayLockCallback = incrementFn;
         this.decrementOverlayLockCallback = decrementFn;
+    }
+
+    /**
+     * Sets translation function
+     * @param {Function} getTranslation - Translation lookup
+     */
+    setTranslationFunction(getTranslation) {
+        this.getTranslation = getTranslation;
+        this.updateLocalization();
     }
 
     /**
@@ -281,5 +295,23 @@ export class RestartConfirmationModal extends Modal {
 
         // Clean up keyboard handlers
         this.cleanupKeyboardHandlers();
+    }
+
+    /**
+     * Updates localized text for restart confirmation modal
+     */
+    updateLocalization() {
+        if (!this.getTranslation || !this.element) return;
+
+        const t = this.getTranslation;
+
+        const title = this.element.querySelector('h2');
+        if (title) title.textContent = t('restartConfirm');
+
+        const warning = this.element.querySelector('p');
+        if (warning) warning.innerHTML = t('restartWarning');
+
+        if (this.yesButton) this.yesButton.textContent = t('yesRestart');
+        if (this.noButton) this.noButton.textContent = t('noContinue');
     }
 }

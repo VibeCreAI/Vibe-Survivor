@@ -21,6 +21,7 @@ export class TouchControlsUI {
 
         // Reference to InputManager's touchControls for state management
         this.touchControlsState = null;
+        this.getTranslation = null;
     }
 
     /**
@@ -187,6 +188,14 @@ export class TouchControlsUI {
     }
 
     /**
+     * Sets translation function for dash button text
+     */
+    setTranslationFunction(getTranslation) {
+        this.getTranslation = getTranslation;
+        this.updateLocalization();
+    }
+
+    /**
      * Sets up dash button event listeners
      * Phase 12c.12: Moved from main game file
      */
@@ -232,6 +241,8 @@ export class TouchControlsUI {
 
         dashBtn.addEventListener('touchend', endDashTouch, { passive: false });
         dashBtn.addEventListener('touchcancel', endDashTouch, { passive: false });
+
+        this.updateLocalization();
     }
 
     /**
@@ -265,6 +276,19 @@ export class TouchControlsUI {
     hideDashButton() {
         if (this.elements.dashButton) {
             this.elements.dashButton.style.display = 'none';
+        }
+    }
+
+    /**
+     * Updates localized text for dash button
+     */
+    updateLocalization() {
+        if (!this.getTranslation || !this.elements.dashButton) return;
+
+        const label = `${this.getTranslation('dash').toUpperCase()} ${this.getTranslation('button', 'ui').toUpperCase()}`;
+        const span = this.elements.dashButton.querySelector('span');
+        if (span) {
+            span.textContent = label;
         }
     }
 }

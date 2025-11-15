@@ -284,6 +284,25 @@ export class LevelUpModal extends Modal {
     }
 
     /**
+     * Updates localized labels and re-renders panes
+     */
+    updateLocalization() {
+        if (!this.getTranslation || !this.element) return;
+
+        const levelupBtn = this.element.querySelector('[data-tab="levelup"]');
+        const guideBtn = this.element.querySelector('[data-tab="guide"]');
+        const statusBtn = this.element.querySelector('[data-tab="status"]');
+
+        if (levelupBtn) levelupBtn.textContent = this.getTranslation('levelUp');
+        if (guideBtn) guideBtn.textContent = this.getTranslation('guideTab');
+        if (statusBtn) statusBtn.textContent = this.getTranslation('statusTab');
+
+        this.renderGuidePane();
+        this.renderStatusPane();
+        this.setupTouchScrolling();
+    }
+
+    /**
      * Scrolls the active pane content
      * @param {string} direction - 'up' or 'down'
      */

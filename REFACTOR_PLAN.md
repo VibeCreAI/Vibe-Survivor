@@ -67,6 +67,27 @@ Track your progress through the refactoring. Check off each phase as you complet
 - [ ] **Final Testing**: Complete smoke test on multiple browsers
 - [ ] **Git**: Commit final state and tag release
 
+#### Cleanup Sub-Phases
+1. **Phase 13a** ✅: Extract Localization UI Updates
+   - Moved `updateAllText()` responsibilities into modal-specific localization hooks
+   - Added `updateLocalization()` methods for Pause/Options/About/Start screens and related UI systems
+
+2. **Phase 13b**: Start Screen & Menu Navigation Controller
+   - Move remaining `menuNavigationState` handling out of `VibeSurvivor`
+   - Let `StartScreenModal` own keyboard/touch navigation fully
+
+3. **Phase 13c**: Notification & Toast Utilities
+   - Extract toast/notification logic into a dedicated module
+   - Remove legacy notification arrays from the monolith
+
+4. **Phase 13d**: Game State Reset Manager
+   - Centralize `resetGame()` logic using new manager/helpers
+   - Delegate resets to systems (Player/Enemy/Weapons/etc.)
+
+5. **Phase 13e**: Global Shortcut/Input Manager
+   - Move `mainKeyboardHandler` responsibilities into InputManager or a ShortcutManager
+   - Keep `VibeSurvivor` focused on orchestration only
+
 **Progress Tracking:**
 - Phases Completed: 15 / 18 (83%)
 - Checkpoints Passed: 3 / 4 ✅

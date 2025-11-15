@@ -24,6 +24,9 @@ export class StartScreenModal {
 
         // Initialization flag
         this.initialized = false;
+
+        // Localization
+        this.getTranslation = null;
     }
 
     /**
@@ -43,7 +46,60 @@ export class StartScreenModal {
         this.setupButtonHandlers();
 
         this.initialized = true;
+
+        if (this.getTranslation) {
+            this.updateLocalization();
+        }
+
         return true;
+    }
+
+    /**
+     * Sets translation function
+     * @param {Function} getTranslation - Translation lookup function
+     */
+    setTranslationFunction(getTranslation) {
+        this.getTranslation = getTranslation;
+        this.updateLocalization();
+    }
+
+    /**
+     * Updates localized text for start screen elements
+     */
+    updateLocalization() {
+        if (!this.getTranslation) return;
+
+        const t = this.getTranslation;
+
+        const title = document.querySelector('.survivor-title h1');
+        if (title) title.textContent = t('gameTitle');
+
+        const taglines = document.querySelectorAll('.survivor-title p');
+        if (taglines.length > 0) {
+            taglines[0].textContent = t('gameTagline');
+        }
+
+        const controlsPC = document.querySelector('.controls-info:not(.mobile-only)');
+        if (controlsPC) controlsPC.textContent = t('controlsPC');
+
+        const controlsMobile = document.querySelector('.controls-info.mobile-only');
+        if (controlsMobile) controlsMobile.textContent = t('controlsMobile');
+
+        if (this.startButton) this.startButton.textContent = t('startGame');
+        if (this.optionsButton) this.optionsButton.textContent = t('options');
+        if (this.aboutButton) this.aboutButton.textContent = t('about');
+
+        const playAgainBtn = document.getElementById('restart-survivor');
+        if (playAgainBtn) playAgainBtn.textContent = t('playAgain');
+
+        const exitBtn = document.getElementById('exit-survivor');
+        if (exitBtn) exitBtn.textContent = t('exit');
+
+        const startScreenGameOverTitle = document.querySelector('#survivor-game-over-screen h2');
+        if (startScreenGameOverTitle) startScreenGameOverTitle.textContent = t('gameOver');
+
+        const startScreenGameOver = document.querySelector('#survivor-game-over-screen h2');
+        if (startScreenGameOver) startScreenGameOver.textContent = t('gameOver');
     }
 
     /**

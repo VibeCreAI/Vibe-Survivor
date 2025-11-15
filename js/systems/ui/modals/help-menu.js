@@ -89,6 +89,73 @@ export class HelpMenu {
     }
 
     /**
+     * Updates localized text for help menu
+     */
+    updateLocalization() {
+        if (!this.getTranslation) return;
+
+        const t = this.getTranslation;
+
+        if (this.guideTab) this.guideTab.textContent = t('guideTab');
+        if (this.statusTab) this.statusTab.textContent = t('statusTab');
+
+        const guideTitle = document.getElementById('help-guide-title');
+        if (guideTitle) guideTitle.innerHTML = t('weaponMergers', 'help');
+
+        if (this.closeButton) this.closeButton.textContent = t('close');
+
+        const helpHint = this.element?.querySelector('.help-hint');
+        if (helpHint) helpHint.textContent = t('helpHint');
+
+        const homingLaserTitle = document.getElementById('homing-laser-title');
+        if (homingLaserTitle) homingLaserTitle.innerHTML = `<img src="images/weapons/homingLaser.png" alt="Homing Laser"> ${t('homingLaser', 'weapons')}`;
+
+        const homingLaserRecipe = document.getElementById('homing-laser-recipe');
+        if (homingLaserRecipe) homingLaserRecipe.textContent = t('homingLaserRecipe', 'help');
+
+        const homingLaserDesc = document.getElementById('homing-laser-desc');
+        if (homingLaserDesc) homingLaserDesc.textContent = t('homingLaserDesc', 'help');
+
+        const shockburstTitle = document.getElementById('shockburst-title');
+        if (shockburstTitle) shockburstTitle.innerHTML = `<img src="images/weapons/shockburst.png" alt="Shockburst"> ${t('shockburst', 'weapons')}`;
+
+        const shockburstRecipe = document.getElementById('shockburst-recipe');
+        if (shockburstRecipe) shockburstRecipe.textContent = t('shockburstRecipe', 'help');
+
+        const shockburstDesc = document.getElementById('shockburst-desc');
+        if (shockburstDesc) shockburstDesc.textContent = t('shockburstDesc', 'help');
+
+        const gatlingTitle = document.getElementById('gatling-gun-title');
+        if (gatlingTitle) gatlingTitle.innerHTML = `<img src="images/weapons/gatlingGun.png" alt="Gatling Gun"> ${t('gatlingGun', 'weapons')}`;
+
+        const gatlingRecipe = document.getElementById('gatling-gun-recipe');
+        if (gatlingRecipe) gatlingRecipe.textContent = t('gatlingGunRecipe', 'help');
+
+        const gatlingDesc = document.getElementById('gatling-gun-desc');
+        if (gatlingDesc) gatlingDesc.textContent = t('gatlingGunDesc', 'help');
+
+        const weaponTipsTitle = document.getElementById('weapon-tips-title');
+        if (weaponTipsTitle) weaponTipsTitle.remove();
+
+        const weaponLimitTip = document.getElementById('weapon-limit-tip');
+        if (weaponLimitTip && weaponLimitTip.parentElement) {
+            weaponLimitTip.parentElement.removeChild(weaponLimitTip);
+        }
+
+        const weaponEvolutionTitle = document.getElementById('weapon-evolution-title');
+        if (weaponEvolutionTitle) {
+            weaponEvolutionTitle.innerHTML = `<img src="images/passives/evolution.png" alt="${t('weaponEvolution', 'help')}" class="section-icon"> ${t('weaponEvolution', 'help')}`;
+        }
+
+        const rapidFireEvolution = document.getElementById('rapid-fire-evolution');
+        if (rapidFireEvolution) rapidFireEvolution.textContent = t('rapidFireEvolution', 'help');
+
+        if (this.renderStatusTab) {
+            this.renderStatusTab();
+        }
+    }
+
+    /**
      * Set up tab click handlers
      */
     setupTabHandlers() {
@@ -124,6 +191,10 @@ export class HelpMenu {
         this.isPauseMenuOpen = isPauseMenuOpen;
         this.getTranslation = getTranslation;
         this.renderStatusTab = renderStatusTab;
+
+        if (this.element) {
+            this.updateLocalization();
+        }
     }
 
     /**
