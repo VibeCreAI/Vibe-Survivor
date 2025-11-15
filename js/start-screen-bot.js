@@ -23,6 +23,8 @@ class StartScreenBot {
         this.animationFrameId = null;
         this.lastFrameTime = 0;
         this.container = null;
+        this.hasFadedIn = false;
+        this.initialFadeTimeout = null;
 
         this.init();
     }
@@ -45,6 +47,7 @@ class StartScreenBot {
             opacity: 0;
             z-index: 10001;
             pointer-events: none;
+            transition: none;
         `;
     }
 
@@ -127,15 +130,48 @@ class StartScreenBot {
     }
 
     show() {
-        if (this.container) {
+        if (!this.container) return;
+
+        // First appearance should fade in
+        if (!this.hasFadedIn) {
+            // Cancel pending timers to avoid multiple transitions
+            if (this.initialFadeTimeout) {
+                clearTimeout(this.initialFadeTimeout);
+                this.initialFadeTimeout = null;
+            }
+
+            this.container.style.transition = 'opacity 0.6s ease-in';
+
+            // Ensure opacity starts at 0 before triggering transition
+            this.container.style.opacity = '0';
+
+            requestAnimationFrame(() => {
+                this.container.style.opacity = '1';
+
+                // After fade completes, lock state and remove transition for snappy toggles
+                this.initialFadeTimeout = setTimeout(() => {
+                    this.hasFadedIn = true;
+                    this.container.style.transition = 'none';
+                    this.initialFadeTimeout = null;
+                }, 600);
+            });
+        } else {
+            // Subsequent shows are immediate with no fade
+            this.container.style.transition = 'none';
             this.container.style.opacity = '1';
         }
     }
 
     hide() {
-        if (this.container) {
-            this.container.style.opacity = '0';
+        if (!this.container) return;
+
+        // Hide instantly for menu interactions
+        if (this.initialFadeTimeout) {
+            clearTimeout(this.initialFadeTimeout);
+            this.initialFadeTimeout = null;
         }
+        this.container.style.transition = 'none';
+        this.container.style.opacity = '0';
     }
 
     attachToStartScreen() {
@@ -143,6 +179,9 @@ class StartScreenBot {
         const startOverlay = document.getElementById('survivor-start-overlay');
         console.log('Start overlay found:', !!startOverlay);
         if (startOverlay && this.container) {
+            // Ensure bot starts hidden
+            this.hide();
+
             // Attach directly to body so it won't be clipped by any parent containers
             document.body.appendChild(this.container);
             console.log('Bot attached to body (fixed position)');
@@ -153,18 +192,9 @@ class StartScreenBot {
             // Calculate initial size based on modal width
             this.updateSize();
 
-            // Update position with multiple attempts to ensure layout is settled
-            const updateWithRetry = (attempts = 0) => {
-                this.updatePosition();
-
-                // Retry position calculation a few times to handle layout settling
-                if (attempts < 5) {
-                    requestAnimationFrame(() => updateWithRetry(attempts + 1));
-                }
-            };
-
-            // Start position updates after a brief delay
-            setTimeout(() => updateWithRetry(), 100);
+            // Don't auto-update position during init - title is hidden (display: none)
+            // The game will call updatePosition() after making title visible
+            // updateWithRetry() removed - position will be set when game calls updatePosition()
 
             // Watch for start overlay visibility changes
             this.observeStartOverlay(startOverlay);
@@ -258,7 +288,8 @@ class StartScreenBot {
                     if (isActive) {
                         // Update position when showing (in case layout changed)
                         this.updatePosition();
-                        this.show();
+                        // Don't auto-show - let the game control when to show via show() method
+                        // this.show();
                     } else {
                         this.hide();
                     }
@@ -275,8 +306,8 @@ class StartScreenBot {
         // Check initial state - but don't show until loading finishes
         if (startOverlay.classList.contains('active')) {
             this.updatePosition();
-            // Don't show yet - wait for loading screen
-            // this.show();
+            // Don't show yet - wait for game to call show() after background loads
+            // this.hide(); // Already hidden via opacity: 0
         } else {
             this.hide();
         }

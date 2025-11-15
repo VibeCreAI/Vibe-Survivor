@@ -508,7 +508,7 @@ class VibeSurvivor {
         await new Promise(resolve => setTimeout(resolve, 600));
         this.modals.loading.hide();
 
-        // Show footer, background, and start screen bot after loading
+        // Show footer and background after loading
         const footer = document.querySelector('.footer-bar');
         if (footer) {
             footer.classList.add('loaded');
@@ -517,10 +517,6 @@ class VibeSurvivor {
         // Show background
         document.body.classList.add('loaded');
 
-        // Show start screen bot
-        if (window.startScreenBot && typeof window.startScreenBot.show === 'function') {
-            window.startScreenBot.show();
-        }
     }
 
     initGame() {
@@ -813,7 +809,7 @@ class VibeSurvivor {
                         
                         <!-- Separate Start Screen Overlay -->
                         <div id="survivor-start-overlay" class="survivor-start-overlay active">
-                            <div class="survivor-title">
+                            <div class="survivor-title" style="display: none;">
                                 <img src="images/Title.png" alt="VIBE SURVIVOR" class="title-logo">
                                 <p>Survive the endless waves!</p>
                                 <p class="controls-info">PC: WASD/Arrow Keys to move, SPACEBAR to dash</p>
@@ -1885,6 +1881,8 @@ class VibeSurvivor {
                 text-align: center;
                 margin-bottom: 20px;
                 color: white;
+                opacity: 0;
+                transition: opacity 0.6s ease-in;
             }
 
             .survivor-title .title-logo {
@@ -3863,29 +3861,42 @@ class VibeSurvivor {
                     this.initializeMenuNavigation('start', startButtons);
                 }
 
-                // Keep ALL buttons disabled initially - will enable after background loads
+                // Title content is hidden in HTML initially (display: none on .survivor-title)
+                // Show everything after background loads and mark game as ready
                 const allButtons = [startBtn, optionsBtn, aboutBtn, restartBtn, exitBtn];
-                allButtons.forEach(btn => {
-                    if (btn) {
-                        btn.disabled = true;
-                        btn.style.opacity = '0.5';
-                        btn.style.cursor = 'not-allowed';
-                    }
-                });
+                const titleContent = document.querySelector('.survivor-title');
+                const startScreenBot = window.startScreenBot;
 
                 // Wait for background transition to complete (600ms CSS transition)
-                // Then enable buttons and mark game as ready
                 setTimeout(() => {
                     console.log('✓ Background loaded, game fully ready');
                     this.gameFullyInitialized = true;
 
-                    // Enable ALL buttons now
-                    allButtons.forEach(btn => {
-                        if (btn) {
-                            btn.disabled = false;
-                            btn.style.opacity = '1';
-                            btn.style.cursor = 'pointer';
-                        }
+                    // Prepare title content (make it visible but still transparent)
+                    if (titleContent) {
+                        titleContent.style.display = '';
+                    }
+
+                    // Use double requestAnimationFrame to ensure display is fully processed
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => {
+                            // Update bot position now that title is in layout
+                            if (startScreenBot && typeof startScreenBot.updatePosition === 'function') {
+                                startScreenBot.updatePosition();
+                            }
+
+                            // Wait one more frame to ensure position is calculated
+                            requestAnimationFrame(() => {
+                                // Now fade in both elements at exactly the same time
+                                if (titleContent) {
+                                    titleContent.style.opacity = '1';
+                                }
+
+                                if (startScreenBot && typeof startScreenBot.show === 'function') {
+                                    startScreenBot.show();
+                                }
+                            });
+                        });
                     });
                 }, 700); // 600ms transition + 100ms safety margin
             }, 100);
