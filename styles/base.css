@@ -232,7 +232,7 @@ body::after {
     position: fixed;
     bottom: 0;
     left: 0;
-    z-index: 10001;
+    z-index: 100;
     background: transparent;
     text-shadow:
         -2px -2px 0 #000,

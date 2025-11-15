@@ -2757,7 +2757,7 @@ class VibeSurvivor {
             @media (max-width: 768px) {
                 .about-content {
                     padding: 25px 20px;
-                    max-height: 90vh;
+                    max-height: 80vh;
                 }
 
                 .about-content h2 {
@@ -4945,6 +4945,48 @@ class VibeSurvivor {
 
         // Clear the handler reference
         this.aboutScrollHandler = null;
+    }
+
+    enableOptionsScrolling() {
+        const optionsContent = document.querySelector('.options-content');
+        if (!optionsContent) return;
+
+        // Remove any existing touch event listeners to avoid duplicates
+        if (this.optionsScrollHandler) {
+            optionsContent.removeEventListener('touchstart', this.optionsScrollHandler.start, { passive: false });
+            optionsContent.removeEventListener('touchmove', this.optionsScrollHandler.move, { passive: false });
+            optionsContent.removeEventListener('touchend', this.optionsScrollHandler.end, { passive: false });
+        }
+
+        this.optionsScrollHandler = {
+            start: (e) => {
+                e.stopPropagation();
+            },
+            move: (e) => {
+                e.stopPropagation();
+            },
+            end: (e) => {
+                e.stopPropagation();
+            }
+        };
+
+        // Add touch event listeners that explicitly allow scrolling
+        optionsContent.addEventListener('touchstart', this.optionsScrollHandler.start, { passive: true });
+        optionsContent.addEventListener('touchmove', this.optionsScrollHandler.move, { passive: true });
+        optionsContent.addEventListener('touchend', this.optionsScrollHandler.end, { passive: true });
+    }
+
+    disableOptionsScrolling() {
+        const optionsContent = document.querySelector('.options-content');
+        if (!optionsContent || !this.optionsScrollHandler) return;
+
+        // Remove touch event listeners
+        optionsContent.removeEventListener('touchstart', this.optionsScrollHandler.start, { passive: true });
+        optionsContent.removeEventListener('touchmove', this.optionsScrollHandler.move, { passive: true });
+        optionsContent.removeEventListener('touchend', this.optionsScrollHandler.end, { passive: true });
+
+        // Clear the handler reference
+        this.optionsScrollHandler = null;
     }
 
     // Phase 12c.7 - scrollVictoryContent removed, handled by VictoryModal class
@@ -10899,12 +10941,18 @@ class VibeSurvivor {
         this.audioManager.pauseLoopingSound('weaponGatlingGun');
 
         this.modals.options.show();
+
+        // Enable scrolling for mobile
+        this.enableOptionsScrolling();
     }
 
     hideOptionsMenu() {
         if (!this.modals.options) return;
 
         this.modals.options.hide();
+
+        // Disable scrolling handlers
+        this.disableOptionsScrolling();
 
         // Resume gatling gun looping sound if it was playing
         this.audioManager.resumeLoopingSound('weaponGatlingGun');
