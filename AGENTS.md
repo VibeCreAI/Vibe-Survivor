@@ -5,33 +5,79 @@ Vibe Survivor is a standalone JavaScript arcade-style survival game built with H
 ## Architecture
 
 ### Core Structure
-- **index.html**: Entry point with minimal pixel-styled landing page featuring a "Press Start" button
-- **js/vibe-survivor-game.js**: Complete game engine (~9300+ lines) containing all game logic, rendering, and systems
-- **js/main.js**: Landing page controller that handles game initialization and UI wiring
-- **styles/base.css**: Complete styling for landing page with custom fonts and pixel aesthetic
-- **fonts/**: Custom fonts (Born2bSporty, Minecraft) for authentic pixel game styling
-- **sound/**: Contains Vibe_Survivor.mp3 background music
+- **index.html**: Entry point with pixel-styled landing page and in-page game modal
+- **styles/base.css**: Complete styling for landing page and in-game UI (fonts, layout, responsive tweaks)
+- **js/main.js**: Landing page controller that wires the "Press Start" button and game modal lifecycle
+- **js/vibe-survivor-game.js**: Orchestration layer for the game, responsible for wiring systems, lifecycle, and high-level UI flow
+- **js/core/**: Core engine utilities (state, input, physics, engine loop/timing)
+- **js/config/**: Game configuration and asset maps (constants, sprite configs, loading phases)
+- **js/utils/**: Shared utilities (Vector2 math, general math helpers, performance monitor)
+- **js/systems/**: Modular systems extracted from the original monolith
+  - **audio/**: `audio-manager.js` – central audio orchestration (music, SFX, mute state)
+  - **gameplay/**:
+    - `player.js` – PlayerSystem (movement, dash, passives)
+    - `pickups.js` – XP/HP/magnet orbs
+    - `enemies/` – EnemySystem and behavior groups
+    - `weapons/` – WeaponSystem, ProjectileSystem
+    - `progression/` – XPSystem, UpgradeSystem
+  - **rendering/**: canvas init/resize, sprites, animations, particles, screen effects
+  - **ui/**:
+    - `hud.js` – in-game HUD (HP/XP/time/weapons)
+    - `touch-controls.js` – mobile joystick + dash button
+    - `modals/` – Pause, Game Over, Level Up, Options, Help, Victory, Start Screen, Loading, About, etc.
+- **fonts/**: Custom fonts (NeoDunggeunmoPro, etc.) for authentic pixel styling
+- **sound/**: Contains `Vibe_Survivor.mp3` background music
+- **images/**: Title art, background, icons, and sprite sheets (including AI bot and weapon/passive icons)
 
-### Game Engine Architecture (vibe-survivor-game.js)
+### Game Engine Architecture (current modular design)
 
-The game uses a single-file architecture with these key components:
+The game now uses a **modular architecture** with `VibeSurvivor` acting as the high-level coordinator:
 
-1. **Vector2 Class**: Utility class for optimized 2D vector operations (normalize, distance, direction, etc.)
+1. **Core Engine & Utilities**
+   - `core/engine.js`: GameLoop, EngineTimer, FrameRateCounter
+   - `core/state.js`: State factories and reset helpers for player, enemies, projectiles, pickups, UI, etc.
+   - `core/input.js`: InputManager (keyboard, mouse, touch, menu navigation)
+   - `core/physics.js`: PhysicsManager (movement helpers, cached trig/sqrt)
+   - `utils/vector2.js`, `utils/math.js`, `utils/performance.js`
 
-2. **VibeSurvivor Main Class**: Core game controller with properties for:
-   - Player state (position, health, XP, level, abilities)
-   - Enemy management with behavior-based grouping (chase, dodge, tank, fly, teleport, boss)
-   - Weapon systems and projectiles
-   - Particle effects and visual systems
-   - Audio management
-   - UI overlays and modals
+2. **Gameplay Systems (`systems/gameplay/`)**
+   - `player.js`: PlayerSystem – handles movement, dash, collision hooks, passives updates
+   - `pickups.js`: PickupSystem – XP/HP/magnet orbs and magnet behavior
+   - `enemies/enemy-system.js`: EnemySystem – enemy waves, behaviors, boss hooks
+   - `weapons/weapon-base.js`: WeaponSystem – weapon creation/merging/upgrades
+   - `weapons/projectiles.js`: ProjectileSystem – projectile pool and updates
+   - `progression/xp-system.js`: XPSystem – level, XP thresholds, pending level-ups
+   - `progression/upgrades.js`: UpgradeSystem – upgrade choice generation and application
 
-3. **Key Systems**:
-   - Canvas-based rendering with world-to-screen coordinate transformation
-   - Frame-based game loop with deltaTime calculations
-   - Event-driven input handling (keyboard, mouse, touch)
-   - Modal system for in-game UI (pause, level-up, death screens)
-   - Sound management with fallback handling
+3. **Rendering Systems (`systems/rendering/`)**
+   - `canvas.js`: Canvas init/resize, camera abstraction
+   - `sprites.js`: SpriteManager – sprite loading/caching
+   - `animation.js`: AnimationController – sprite frame timing
+   - `particles.js`: ParticleSystem – particles + explosions
+   - `effects.js`: EffectsManager – screen shake, flashes, overlays
+
+4. **UI Systems (`systems/ui/`)**
+   - `hud.js`: HUD overlay (HP, XP, time, weapons, bosses)
+   - `touch-controls.js`: TouchControlsUI – joystick + dash button for mobile
+   - `modals/`:
+     - `pause-menu.js`: Pause overlay (keyboard navigation, mute, dash position, resume/restart/exit)
+     - `game-over.js`: Game Over modal (scrollable stats, weapon/passive summaries)
+     - `level-up.js`: Level Up modal (tabs: upgrades/guide/status)
+     - `options-menu.js`: Language/audio/dash-position menu
+     - `help-menu.js`: In-game help with recipes and status tab
+     - `victory.js`, `loading-screen.js`, `start-screen.js`, `start-screen-modal.js`, `about-modal.js`, etc.
+   - `modals/modal-base.js`: Base `Modal` and `ModalManager` for all overlays
+
+5. **Audio (`systems/audio/audio-manager.js`)**
+   - Centralized audio with lazy init, mute state, music control, and SFX hooks
+
+6. **VibeSurvivor Orchestration (`js/vibe-survivor-game.js`)**
+   - Owns the high-level lifecycle:
+     - Creates the modal DOM, injects styles, wires InputManager
+     - Calls `initializeCanvas()`, preloads assets, shows loading/start screens
+     - Wires systems together (player/enemies/weapons/xp/UI/audio)
+     - Runs the fixed-timestep game loop (using EngineTimer + PerformanceMonitor)
+   - Keeps only glue logic and compatibility shims; individual behaviors live in their modules
 
 ### Initialization Flow
 

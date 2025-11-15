@@ -4,18 +4,41 @@ This folder now contains an operational build of the Vibe Survivor game, detache
 
 ## Structure
 
-- `index.html` – Pixel-styled landing screen with a single press-to-start button that loads the in-game modal on demand.
-- `styles/` – Global styling (`base.css`) including `Born2bSporty` and `Minecraft` font faces used by the landing UI.
-- `js/` – `vibe-survivor-game.js` (full game logic) and `main.js` (launch/cleanup wiring for the start button).
-- `sound/` – Contains `Vibe_Survivor.mp3`, the background track referenced by the game.
-- `fonts/` – Bundles `Born2bSportyFS.otf` and `MinecraftRegular.otf` for the standalone presentation layer.
-- `images/` – Reserved for future artwork if you add bespoke assets.
+- `index.html` – Pixel-styled landing screen and in-page game modal.
+- `styles/` – Global styling (`base.css`) including custom pixel fonts and responsive layout.
+- `js/main.js` – Landing/host page controller (start button → game modal lifecycle).
+- `js/vibe-survivor-game.js` – Orchestration layer that wires all systems, manages lifecycle, and owns the high-level game loop.
+- `js/core/` – Core engine pieces:
+  - `engine.js` – GameLoop, EngineTimer, FrameRateCounter
+  - `state.js` – State factories and reset helpers
+  - `input.js` – InputManager (keyboard, mouse, touch, menu navigation)
+  - `physics.js` – PhysicsManager (movement, cached trig/sqrt)
+- `js/config/` – `constants.js`, `assets.js` – configuration, balance values, asset paths, loading phases.
+- `js/utils/` – `vector2.js`, `math.js`, `performance.js` – math & performance utilities.
+- `js/systems/` – Modular systems extracted from the original monolith:
+  - `audio/audio-manager.js` – music/SFX orchestration.
+  - `gameplay/` – `player.js`, `pickups.js`, `enemies/enemy-system.js`, `weapons/weapon-base.js`, `weapons/projectiles.js`, `progression/xp-system.js`, `progression/upgrades.js`.
+  - `rendering/` – `canvas.js`, `sprites.js`, `animation.js`, `particles.js`, `effects.js`.
+  - `ui/` – `hud.js`, `touch-controls.js`, and `modals/*` (pause, game over, level up, options, help, victory, start screen, loading, about, etc.).
+- `sound/` – `Vibe_Survivor.mp3` background track.
+- `fonts/` – Pixel fonts (e.g. NeoDunggeunmoPro) used across landing and in-game UI.
+- `images/` – Title art, background, weapon/passive icons, AI bot sprite, and other UI assets.
 
-## Migration Checklist
+## Running Locally
 
-1. Copy the `Vibe-Survivor` folder into a clean project root or new repository.
-2. Keep `js/vibe-survivor-game.js`, `sound/Vibe_Survivor.mp3`, and the custom fonts together; the game expects these relative paths.
-3. Update the back-link and eventual production URL in `index.html` once your Vercel deployment is live.
-4. Run the manual regression suite (controls, collisions, pause/resume, touch, audio) before shipping.
+Any static HTTP server will work. From this folder:
+
+```bash
+# Python 3
+python -m http.server 8000
+
+# or with Node.js (http-server)
+npx http-server
+
+# or PHP
+php -S localhost:8000
+```
+
+Then open `http://localhost:8000` in your browser.
 
 Auto-initialization is disabled via `window.VIBE_SURVIVOR_AUTO_INIT = false;`, so the landing page shows first and the game modal appears only after pressing **Press Start**.
