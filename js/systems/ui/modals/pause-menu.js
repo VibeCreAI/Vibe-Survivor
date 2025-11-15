@@ -15,13 +15,19 @@ export class PauseMenu extends Modal {
         super(id, { closeOnEscape: false, closeOnBackdropClick: false });
         this.resumeButton = null;
         this.restartButton = null;
-        this.muteButton = null;
+        this.musicMuteButton = null;
+        this.sfxMuteButton = null;
+        this.musicVolumeSlider = null;
+        this.sfxVolumeSlider = null;
         this.dashPositionButton = null;
         this.exitButton = null;
 
         this.onResumeCallback = null;
         this.onRestartCallback = null;
-        this.onMuteCallback = null;
+        this.onMusicMuteCallback = null;
+        this.onSfxMuteCallback = null;
+        this.onMusicVolumeCallback = null;
+        this.onSfxVolumeCallback = null;
         this.onDashPositionCallback = null;
         this.onExitCallback = null;
 
@@ -36,7 +42,8 @@ export class PauseMenu extends Modal {
         this.decrementOverlayLockCallback = null;
 
         // Game state callbacks for dynamic button labels
-        this.getAudioMutedState = null;
+        this.getMusicMutedState = null;
+        this.getSfxMutedState = null;
         this.getDashPositionState = null;
         this.getTranslation = null;
     }
@@ -49,7 +56,10 @@ export class PauseMenu extends Modal {
         if (result) {
             this.resumeButton = this.element.querySelector('#resume-btn');
             this.restartButton = this.element.querySelector('#pause-restart-btn');
-            this.muteButton = this.element.querySelector('#mute-btn');
+            this.musicMuteButton = this.element.querySelector('#music-mute-btn');
+            this.sfxMuteButton = this.element.querySelector('#sfx-mute-btn');
+            this.musicVolumeSlider = this.element.querySelector('#pause-music-volume');
+            this.sfxVolumeSlider = this.element.querySelector('#pause-sfx-volume');
             this.dashPositionButton = this.element.querySelector('#dash-position-btn');
             this.exitButton = this.element.querySelector('#exit-to-menu-btn');
 
@@ -60,8 +70,37 @@ export class PauseMenu extends Modal {
             if (this.restartButton) {
                 this.restartButton.addEventListener('click', () => this.handleRestart());
             }
-            if (this.muteButton) {
-                this.muteButton.addEventListener('click', () => this.handleMute());
+            if (this.musicMuteButton) {
+                this.musicMuteButton.addEventListener('click', () => this.handleMusicMute());
+            }
+            if (this.sfxMuteButton) {
+                this.sfxMuteButton.addEventListener('click', () => this.handleSfxMute());
+            }
+            if (this.musicVolumeSlider) {
+                this.musicVolumeSlider.addEventListener('input', (e) => {
+                    const volume = parseFloat(e.target.value);
+                    if (this.onMusicVolumeCallback) {
+                        this.onMusicVolumeCallback(volume);
+                    }
+                    // Update percentage display
+                    const percentDisplay = document.getElementById('pause-music-percent');
+                    if (percentDisplay) {
+                        percentDisplay.textContent = `${Math.round(volume * 100)}%`;
+                    }
+                });
+            }
+            if (this.sfxVolumeSlider) {
+                this.sfxVolumeSlider.addEventListener('input', (e) => {
+                    const volume = parseFloat(e.target.value);
+                    if (this.onSfxVolumeCallback) {
+                        this.onSfxVolumeCallback(volume);
+                    }
+                    // Update percentage display
+                    const percentDisplay = document.getElementById('pause-sfx-percent');
+                    if (percentDisplay) {
+                        percentDisplay.textContent = `${Math.round(volume * 100)}%`;
+                    }
+                });
             }
             if (this.dashPositionButton) {
                 this.dashPositionButton.addEventListener('click', () => this.handleDashPosition());
@@ -94,11 +133,35 @@ export class PauseMenu extends Modal {
     }
 
     /**
-     * Sets callback for mute action
-     * @param {Function} callback - Mute callback
+     * Sets callback for music mute action
+     * @param {Function} callback - Music mute callback
      */
-    onMute(callback) {
-        this.onMuteCallback = callback;
+    onMusicMute(callback) {
+        this.onMusicMuteCallback = callback;
+    }
+
+    /**
+     * Sets callback for SFX mute action
+     * @param {Function} callback - SFX mute callback
+     */
+    onSfxMute(callback) {
+        this.onSfxMuteCallback = callback;
+    }
+
+    /**
+     * Sets callback for music volume action
+     * @param {Function} callback - Music volume callback
+     */
+    onMusicVolume(callback) {
+        this.onMusicVolumeCallback = callback;
+    }
+
+    /**
+     * Sets callback for SFX volume action
+     * @param {Function} callback - SFX volume callback
+     */
+    onSfxVolume(callback) {
+        this.onSfxVolumeCallback = callback;
     }
 
     /**
@@ -129,12 +192,14 @@ export class PauseMenu extends Modal {
 
     /**
      * Sets game state callbacks for dynamic button labels
-     * @param {Function} getAudioMutedState - Gets current audio mute state
+     * @param {Function} getMusicMutedState - Gets current music mute state
+     * @param {Function} getSfxMutedState - Gets current SFX mute state
      * @param {Function} getDashPositionState - Gets current dash button position
      * @param {Function} getTranslation - Translation function
      */
-    setGameStateCallbacks(getAudioMutedState, getDashPositionState, getTranslation) {
-        this.getAudioMutedState = getAudioMutedState;
+    setGameStateCallbacks(getMusicMutedState, getSfxMutedState, getDashPositionState, getTranslation) {
+        this.getMusicMutedState = getMusicMutedState;
+        this.getSfxMutedState = getSfxMutedState;
         this.getDashPositionState = getDashPositionState;
         this.getTranslation = getTranslation;
 
@@ -164,11 +229,22 @@ export class PauseMenu extends Modal {
     }
 
     /**
-     * Handles mute button click
+     * Handles music mute button click
      */
-    handleMute() {
-        if (this.onMuteCallback) {
-            this.onMuteCallback();
+    handleMusicMute() {
+        if (this.onMusicMuteCallback) {
+            this.onMusicMuteCallback();
+        }
+        // Update button label
+        this.updateButtonLabels();
+    }
+
+    /**
+     * Handles SFX mute button click
+     */
+    handleSfxMute() {
+        if (this.onSfxMuteCallback) {
+            this.onSfxMuteCallback();
         }
         // Update button label
         this.updateButtonLabels();
@@ -199,10 +275,22 @@ export class PauseMenu extends Modal {
      * Updates dynamic button labels based on game state
      */
     updateButtonLabels() {
-        // Update mute button
-        if (this.muteButton && this.getAudioMutedState && this.getTranslation) {
-            const isMuted = this.getAudioMutedState();
-            this.muteButton.textContent = isMuted ? this.getTranslation('unmute') : this.getTranslation('mute');
+        // SVG icons for mute states
+        const volumeUpIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="vertical-align: middle; margin-left: 8px;"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>';
+        const volumeOffIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="vertical-align: middle; margin-left: 8px;"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>';
+
+        // Update music mute button (just icon, since we have label above)
+        if (this.musicMuteButton && this.getMusicMutedState) {
+            const isMuted = this.getMusicMutedState();
+            const icon = isMuted ? volumeOffIcon : volumeUpIcon;
+            this.musicMuteButton.innerHTML = icon;
+        }
+
+        // Update SFX mute button (just icon, since we have label above)
+        if (this.sfxMuteButton && this.getSfxMutedState) {
+            const isMuted = this.getSfxMutedState();
+            const icon = isMuted ? volumeOffIcon : volumeUpIcon;
+            this.sfxMuteButton.innerHTML = icon;
         }
 
         // Update dash position button
@@ -215,6 +303,30 @@ export class PauseMenu extends Modal {
                 } else {
                     this.dashPositionButton.textContent = `DASH BUTTON: ${position.toUpperCase()}`;
                 }
+            }
+        }
+    }
+
+    /**
+     * Update volume slider values and percentages
+     * @param {number} musicVolume - Music volume (0-1)
+     * @param {number} sfxVolume - SFX volume (0-1)
+     */
+    updateVolumeSliders(musicVolume, sfxVolume) {
+        if (this.musicVolumeSlider && musicVolume !== undefined) {
+            this.musicVolumeSlider.value = musicVolume;
+            // Update percentage display
+            const musicPercentDisplay = document.getElementById('pause-music-percent');
+            if (musicPercentDisplay) {
+                musicPercentDisplay.textContent = `${Math.round(musicVolume * 100)}%`;
+            }
+        }
+        if (this.sfxVolumeSlider && sfxVolume !== undefined) {
+            this.sfxVolumeSlider.value = sfxVolume;
+            // Update percentage display
+            const sfxPercentDisplay = document.getElementById('pause-sfx-percent');
+            if (sfxPercentDisplay) {
+                sfxPercentDisplay.textContent = `${Math.round(sfxVolume * 100)}%`;
             }
         }
     }
@@ -233,6 +345,13 @@ export class PauseMenu extends Modal {
         if (this.resumeButton) this.resumeButton.textContent = t('resume');
         if (this.restartButton) this.restartButton.textContent = t('restart');
         if (this.exitButton) this.exitButton.textContent = t('quitGame');
+
+        // Update audio section labels
+        const audioSections = this.element?.querySelectorAll('.pause-audio-section label');
+        if (audioSections && audioSections.length >= 2) {
+            audioSections[0].textContent = t('music');
+            audioSections[1].textContent = t('sfx');
+        }
 
         const pauseHint = this.element?.querySelector('.pause-hint');
         if (pauseHint) pauseHint.textContent = t('pauseHint');
@@ -394,11 +513,14 @@ export class PauseMenu extends Modal {
         // Set up keyboard handlers
         this.setupKeyboardHandlers();
 
-        // Set up navigable buttons
+        // Set up navigable buttons (including volume sliders)
         this.navigableButtons = [
             this.resumeButton,
             this.restartButton,
-            this.muteButton,
+            this.musicMuteButton,
+            this.musicVolumeSlider,
+            this.sfxMuteButton,
+            this.sfxVolumeSlider,
             this.dashPositionButton,
             this.exitButton
         ].filter(Boolean);

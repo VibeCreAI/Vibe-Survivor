@@ -748,7 +748,7 @@ export class EnemySystem {
             updateEnemyGroupings, processBatchedEnemies,
             createXPOrb, createDeathParticles, createHitParticles,
             recordWeaponDamage, createBossDefeatAnimation, setBossDefeating,
-            clearProjectiles, bossDefeated, cachedSqrt
+            clearProjectiles, bossDefeated, audioManager, cachedSqrt
         } = params;
 
         // Update enemy groupings for optimized batch processing
@@ -815,6 +815,11 @@ export class EnemySystem {
 
                     // Trigger boss defeat animation with saved position/size
                     createBossDefeatAnimation(bossX, bossY, bossRadius);
+
+                    // Play boss defeat sound
+                    if (audioManager) {
+                        audioManager.playSound('bossDefeat');
+                    }
 
                     // Remove boss from enemies array after a short delay
                     // This ensures rendering has time to skip it via isDefeated flag

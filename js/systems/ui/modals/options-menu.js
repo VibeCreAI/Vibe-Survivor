@@ -11,7 +11,10 @@ export class OptionsMenu {
 
         // Button references
         this.languageSelect = null;
-        this.muteButton = null;
+        this.musicMuteButton = null;
+        this.sfxMuteButton = null;
+        this.musicVolumeSlider = null;
+        this.sfxVolumeSlider = null;
         this.dashPositionButton = null;
         this.closeButton = null;
 
@@ -24,7 +27,10 @@ export class OptionsMenu {
         // Callbacks
         this.onCloseCallback = null;
         this.onLanguageChangeCallback = null;
-        this.onMuteCallback = null;
+        this.onMusicMuteCallback = null;
+        this.onSfxMuteCallback = null;
+        this.onMusicVolumeCallback = null;
+        this.onSfxVolumeCallback = null;
         this.onDashPositionCallback = null;
 
         // Overlay lock callbacks
@@ -32,7 +38,8 @@ export class OptionsMenu {
         this.decrementOverlayLockCallback = null;
 
         // Game state callbacks for dynamic button labels
-        this.getAudioMutedState = null;
+        this.getMusicMutedState = null;
+        this.getSfxMutedState = null;
         this.getDashPositionState = null;
         this.getLanguageState = null;
         this.getTranslation = null;
@@ -59,7 +66,10 @@ export class OptionsMenu {
 
         // Get button references
         this.languageSelect = document.getElementById('language-select');
-        this.muteButton = document.getElementById('options-mute-btn');
+        this.musicMuteButton = document.getElementById('options-music-mute-btn');
+        this.sfxMuteButton = document.getElementById('options-sfx-mute-btn');
+        this.musicVolumeSlider = document.getElementById('options-music-volume');
+        this.sfxVolumeSlider = document.getElementById('options-sfx-volume');
         this.dashPositionButton = document.getElementById('options-dash-position-btn');
         this.closeButton = document.getElementById('close-options-btn');
 
@@ -96,20 +106,64 @@ export class OptionsMenu {
             }, { passive: true });
         }
 
-        if (this.muteButton) {
-            const muteHandler = (e) => {
+        if (this.musicMuteButton) {
+            const musicMuteHandler = (e) => {
                 if (e) {
                     e.preventDefault();
                     e.stopPropagation();
                 }
-                if (this.onMuteCallback) {
-                    this.onMuteCallback();
+                if (this.onMusicMuteCallback) {
+                    this.onMusicMuteCallback();
                     this.updateButtonLabels();
                 }
             };
 
-            this.muteButton.addEventListener('click', muteHandler);
-            this.muteButton.addEventListener('touchstart', muteHandler, { passive: false });
+            this.musicMuteButton.addEventListener('click', musicMuteHandler);
+            this.musicMuteButton.addEventListener('touchstart', musicMuteHandler, { passive: false });
+        }
+
+        if (this.sfxMuteButton) {
+            const sfxMuteHandler = (e) => {
+                if (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                if (this.onSfxMuteCallback) {
+                    this.onSfxMuteCallback();
+                    this.updateButtonLabels();
+                }
+            };
+
+            this.sfxMuteButton.addEventListener('click', sfxMuteHandler);
+            this.sfxMuteButton.addEventListener('touchstart', sfxMuteHandler, { passive: false });
+        }
+
+        if (this.musicVolumeSlider) {
+            this.musicVolumeSlider.addEventListener('input', (e) => {
+                const volume = parseFloat(e.target.value);
+                if (this.onMusicVolumeCallback) {
+                    this.onMusicVolumeCallback(volume);
+                }
+                // Update percentage display
+                const percentDisplay = document.getElementById('options-music-percent');
+                if (percentDisplay) {
+                    percentDisplay.textContent = `${Math.round(volume * 100)}%`;
+                }
+            });
+        }
+
+        if (this.sfxVolumeSlider) {
+            this.sfxVolumeSlider.addEventListener('input', (e) => {
+                const volume = parseFloat(e.target.value);
+                if (this.onSfxVolumeCallback) {
+                    this.onSfxVolumeCallback(volume);
+                }
+                // Update percentage display
+                const percentDisplay = document.getElementById('options-sfx-percent');
+                if (percentDisplay) {
+                    percentDisplay.textContent = `${Math.round(volume * 100)}%`;
+                }
+            });
         }
 
         if (this.dashPositionButton) {
@@ -145,8 +199,9 @@ export class OptionsMenu {
     /**
      * Set game state callbacks for dynamic button labels
      */
-    setGameStateCallbacks(getAudioMutedState, getDashPositionState, getLanguageState, getTranslation) {
-        this.getAudioMutedState = getAudioMutedState;
+    setGameStateCallbacks(getMusicMutedState, getSfxMutedState, getDashPositionState, getLanguageState, getTranslation) {
+        this.getMusicMutedState = getMusicMutedState;
+        this.getSfxMutedState = getSfxMutedState;
         this.getDashPositionState = getDashPositionState;
         this.getLanguageState = getLanguageState;
         this.getTranslation = getTranslation;
@@ -183,8 +238,20 @@ export class OptionsMenu {
         this.onLanguageChangeCallback = callback;
     }
 
-    onMute(callback) {
-        this.onMuteCallback = callback;
+    onMusicMute(callback) {
+        this.onMusicMuteCallback = callback;
+    }
+
+    onSfxMute(callback) {
+        this.onSfxMuteCallback = callback;
+    }
+
+    onMusicVolume(callback) {
+        this.onMusicVolumeCallback = callback;
+    }
+
+    onSfxVolume(callback) {
+        this.onSfxVolumeCallback = callback;
     }
 
     onDashPosition(callback) {
@@ -206,17 +273,23 @@ export class OptionsMenu {
     }
 
     /**
-     * Update button labels based on current game state
+     * Update button labels and slider values based on current game state
      */
     updateButtonLabels() {
-        // Update mute button
-        if (this.muteButton && this.getAudioMutedState) {
-            const isMuted = this.getAudioMutedState();
-            if (this.getTranslation) {
-                this.muteButton.textContent = isMuted ? this.getTranslation('unmute') : this.getTranslation('mute');
-            } else {
-                this.muteButton.textContent = isMuted ? 'UNMUTE' : 'MUTE';
-            }
+        // SVG icons for mute states
+        const volumeUpIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>';
+        const volumeOffIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>';
+
+        // Update music mute button
+        if (this.musicMuteButton && this.getMusicMutedState) {
+            const isMuted = this.getMusicMutedState();
+            this.musicMuteButton.innerHTML = isMuted ? volumeOffIcon : volumeUpIcon;
+        }
+
+        // Update SFX mute button
+        if (this.sfxMuteButton && this.getSfxMutedState) {
+            const isMuted = this.getSfxMutedState();
+            this.sfxMuteButton.innerHTML = isMuted ? volumeOffIcon : volumeUpIcon;
         }
 
         // Update dash position button
@@ -241,6 +314,28 @@ export class OptionsMenu {
     }
 
     /**
+     * Update volume slider values from audio manager
+     */
+    updateVolumeSliders(musicVolume, sfxVolume) {
+        if (this.musicVolumeSlider && musicVolume !== undefined) {
+            this.musicVolumeSlider.value = musicVolume;
+            // Update percentage display
+            const musicPercentDisplay = document.getElementById('options-music-percent');
+            if (musicPercentDisplay) {
+                musicPercentDisplay.textContent = `${Math.round(musicVolume * 100)}%`;
+            }
+        }
+        if (this.sfxVolumeSlider && sfxVolume !== undefined) {
+            this.sfxVolumeSlider.value = sfxVolume;
+            // Update percentage display
+            const sfxPercentDisplay = document.getElementById('options-sfx-percent');
+            if (sfxPercentDisplay) {
+                sfxPercentDisplay.textContent = `${Math.round(sfxVolume * 100)}%`;
+            }
+        }
+    }
+
+    /**
      * Updates localized labels/hints
      */
     updateLocalization() {
@@ -252,10 +347,11 @@ export class OptionsMenu {
         if (title) title.textContent = t('optionsTitle');
 
         const labels = this.element?.querySelectorAll('.option-item label');
-        if (labels && labels.length >= 3) {
+        if (labels && labels.length >= 4) {
             labels[0].textContent = t('language');
-            labels[1].textContent = t('audio');
-            labels[2].textContent = t('dashPosition');
+            labels[1].textContent = t('music');
+            labels[2].textContent = t('soundEffects');
+            labels[3].textContent = t('dashPosition');
         }
 
         const closeBtn = this.closeButton;
@@ -329,7 +425,10 @@ export class OptionsMenu {
         // Set up navigable elements
         this.navigableElements = [
             this.languageSelect,
-            this.muteButton,
+            this.musicMuteButton,
+            this.musicVolumeSlider,
+            this.sfxMuteButton,
+            this.sfxVolumeSlider,
             this.dashPositionButton,
             this.closeButton
         ].filter(Boolean);

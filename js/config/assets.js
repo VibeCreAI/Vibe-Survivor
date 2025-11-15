@@ -47,7 +47,12 @@ export const ASSET_PATHS = {
         logo: 'images/VibeCreAI_Logo.png'
     },
     audio: {
-        bgMusic: 'sound/Vibe_Survivor.mp3'
+        bgMusic: 'sound/Vibe_Survivor.mp3',
+        startMenu: 'sound/startMenu.mp3',
+        bossAlert: 'sound/bossAlert.mp3',
+        bossDefeat: 'sound/bossDefeat.mp3',
+        gameOver: 'sound/gameOver.mp3',
+        upgrade: 'sound/upgrade.mp3'
     }
 };
 

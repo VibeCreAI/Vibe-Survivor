@@ -260,6 +260,119 @@ body::after {
     }
 }
 
+/* Audio Controls */
+.audio-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.audio-controls .survivor-btn svg,
+.pause-buttons .survivor-btn svg {
+    vertical-align: middle;
+    transition: transform 0.2s ease;
+}
+
+.audio-controls .survivor-btn:hover svg,
+.pause-buttons .survivor-btn:hover svg {
+    transform: scale(1.1);
+}
+
+.volume-slider {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: #1a1a1a;
+    border: 2px solid #00ffcc;
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+    min-width: 100px;
+    max-width: 120px;
+}
+
+.volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #1a1a1a;
+    border: 3px solid #00ffcc;
+    border-radius: 2px;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(0, 255, 204, 0.6);
+    transition: all 0.2s ease;
+}
+
+.volume-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: #1a1a1a;
+    border: 3px solid #00ffcc;
+    border-radius: 2px;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(0, 255, 204, 0.6);
+    transition: all 0.2s ease;
+}
+
+.volume-slider::-webkit-slider-thumb:hover {
+    background: #00ffcc;
+    border-color: #ff00ff;
+    box-shadow: 0 0 15px rgba(0, 255, 204, 1);
+}
+
+.volume-slider::-moz-range-thumb:hover {
+    background: #00ffcc;
+    border-color: #ff00ff;
+    box-shadow: 0 0 15px rgba(0, 255, 204, 1);
+}
+
+.volume-slider:focus {
+    border-color: #ff00ff;
+}
+
+.volume-slider::-webkit-slider-thumb:active {
+    background: #00ffcc;
+    transform: scale(1.2);
+}
+
+.volume-slider::-moz-range-thumb:active {
+    background: #00ffcc;
+    transform: scale(1.2);
+}
+
+/* Volume percentage display */
+.volume-percent {
+    min-width: 35px;
+    text-align: right;
+    font-family: 'NeoDunggeunmoPro', monospace;
+    font-size: 0.85rem;
+    color: #00ffcc;
+}
+
+/* Pause menu audio sections */
+.pause-audio-section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.pause-audio-section label {
+    font-family: 'NeoDunggeunmoPro', monospace;
+    font-size: 0.9rem;
+    color: #00ffcc;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    text-align: center;
+}
+
+.pause-audio-section .audio-controls {
+    justify-content: center;
+}
+
 @media (max-width: 600px) {
     .landing {
         padding: 3rem 1.25rem 2.5rem;

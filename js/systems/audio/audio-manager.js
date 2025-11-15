@@ -13,7 +13,8 @@ export class AudioManager {
         this.music = null;
         this.musicVolume = 0.3;
         this.sfxVolume = 0.5;
-        this.muted = false;
+        this.musicMuted = false;
+        this.sfxMuted = false;
         this.initialized = false;
     }
 
@@ -34,10 +35,25 @@ export class AudioManager {
     }
 
     /**
+     * Loads all game sound effects from asset configuration
+     * @param {Object} audioAssets - Audio assets from ASSET_PATHS.audio
+     */
+    loadGameSounds(audioAssets) {
+        if (!audioAssets) return;
+
+        // Load all SFX sounds (skip bgMusic)
+        Object.entries(audioAssets).forEach(([name, path]) => {
+            if (name !== 'bgMusic') {
+                this.loadSound(name, path);
+            }
+        });
+    }
+
+    /**
      * Plays background music
      */
     playMusic() {
-        if (this.music && !this.muted && this.initialized) {
+        if (this.music && !this.musicMuted && this.initialized) {
             this.music.play().catch(e => {
                 console.warn('Music playback failed:', e);
             });
@@ -67,7 +83,7 @@ export class AudioManager {
      * Resumes background music
      */
     resumeMusic() {
-        if (this.music && !this.muted && this.initialized) {
+        if (this.music && !this.musicMuted && this.initialized) {
             this.music.play().catch(e => {
                 console.warn('Music resume failed:', e);
             });
@@ -103,7 +119,7 @@ export class AudioManager {
      * @param {string} name - Sound identifier
      */
     playSound(name) {
-        if (this.muted) return;
+        if (this.sfxMuted) return;
 
         const sound = this.sounds.get(name);
         if (sound) {
@@ -123,7 +139,7 @@ export class AudioManager {
     setMusicVolume(volume) {
         this.musicVolume = Math.max(0, Math.min(1, volume));
         if (this.music) {
-            this.music.volume = this.muted ? 0 : this.musicVolume;
+            this.music.volume = this.musicMuted ? 0 : this.musicVolume;
         }
     }
 
@@ -139,34 +155,59 @@ export class AudioManager {
     }
 
     /**
-     * Toggles mute state
-     * @returns {boolean} New mute state
+     * Toggles music mute state
+     * @returns {boolean} New music mute state
      */
-    toggleMute() {
-        this.muted = !this.muted;
+    toggleMusicMute() {
+        this.musicMuted = !this.musicMuted;
         if (this.music) {
-            this.music.volume = this.muted ? 0 : this.musicVolume;
+            this.music.volume = this.musicMuted ? 0 : this.musicVolume;
         }
-        return this.muted;
+        return this.musicMuted;
     }
 
     /**
-     * Sets mute state
-     * @param {boolean} muted - Mute state
+     * Sets music mute state
+     * @param {boolean} muted - Music mute state
      */
-    setMuted(muted) {
-        this.muted = muted;
+    setMusicMuted(muted) {
+        this.musicMuted = muted;
         if (this.music) {
-            this.music.volume = this.muted ? 0 : this.musicVolume;
+            this.music.volume = this.musicMuted ? 0 : this.musicVolume;
         }
     }
 
     /**
-     * Gets current mute state
+     * Gets current music mute state
      * @returns {boolean}
      */
-    isMuted() {
-        return this.muted;
+    isMusicMuted() {
+        return this.musicMuted;
+    }
+
+    /**
+     * Toggles SFX mute state
+     * @returns {boolean} New SFX mute state
+     */
+    toggleSfxMute() {
+        this.sfxMuted = !this.sfxMuted;
+        return this.sfxMuted;
+    }
+
+    /**
+     * Sets SFX mute state
+     * @param {boolean} muted - SFX mute state
+     */
+    setSfxMuted(muted) {
+        this.sfxMuted = muted;
+    }
+
+    /**
+     * Gets current SFX mute state
+     * @returns {boolean}
+     */
+    isSfxMuted() {
+        return this.sfxMuted;
     }
 
     /**

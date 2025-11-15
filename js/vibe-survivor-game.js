@@ -217,7 +217,7 @@ class VibeSurvivor {
         // Background music
         // NOTE: Audio now managed by AudioManager (Phase 11)
         // Audio initialization happens in audioManager.init()
-        this.audioMuted = false; // Legacy flag - delegates to audioManager
+        // Mute state now managed by AudioManager (musicMuted, sfxMuted)
 
         // NOTE: Sprite loading now handled by SpriteManager
         // this.playerSprites, this.itemIcons, and this.spriteConfig are delegated to spriteManager
@@ -479,6 +479,10 @@ class VibeSurvivor {
         // Then destroy and reinitialize our audio manager
         this.audioManager.destroy();
         await this.audioManager.init();
+        // Load game sound effects
+        this.audioManager.loadGameSounds(ASSET_PATHS.audio);
+        // Load and restore user settings (audio preferences, language, etc.)
+        this.loadUserSettings();
         if (this.audioManager.music && this.audioManager.music.readyState < 2) {
             await new Promise(resolve => {
                 this.audioManager.music.addEventListener('canplaythrough', resolve, { once: true });
@@ -529,7 +533,8 @@ class VibeSurvivor {
 
             // Set up game state callbacks for dynamic button labels
             this.modals.options.setGameStateCallbacks(
-                () => this.audioMuted,
+                () => this.audioManager.isMusicMuted(),
+                () => this.audioManager.isSfxMuted(),
                 () => this.touchControls?.dashButton?.position || this.dashButtonPosition || 'right',
                 () => this.currentLanguage,
                 this.t.bind(this)
@@ -546,8 +551,20 @@ class VibeSurvivor {
                 this.setLanguage(language);
             });
 
-            this.modals.options.onMute(() => {
-                this.toggleAudioMute();
+            this.modals.options.onMusicMute(() => {
+                this.toggleMusicMute();
+            });
+
+            this.modals.options.onSfxMute(() => {
+                this.toggleSfxMute();
+            });
+
+            this.modals.options.onMusicVolume((volume) => {
+                this.setMusicVolume(volume);
+            });
+
+            this.modals.options.onSfxVolume((volume) => {
+                this.setSfxVolume(volume);
             });
 
             this.modals.options.onDashPosition(() => {
@@ -722,6 +739,8 @@ class VibeSurvivor {
                     // Background has 0.6s ease-in transition when 'loaded' class is added
                     setTimeout(() => {
                         this.showStartScreen();
+                        // Play start menu sound
+                        this.audioManager.playSound('startMenu');
                     }, 300);
                 });
             });
@@ -842,8 +861,20 @@ class VibeSurvivor {
                                         </select>
                                     </div>
                                     <div class="option-item">
-                                        <label>Audio</label>
-                                        <button id="options-mute-btn" class="survivor-btn small">MUTE</button>
+                                        <label>Music</label>
+                                        <div class="audio-controls">
+                                            <button id="options-music-mute-btn" class="survivor-btn small">MUTE</button>
+                                            <input type="range" id="options-music-volume" class="volume-slider" min="0" max="1" step="0.01" value="0.3">
+                                            <span id="options-music-percent" class="volume-percent">30%</span>
+                                        </div>
+                                    </div>
+                                    <div class="option-item">
+                                        <label>Sound Effects</label>
+                                        <div class="audio-controls">
+                                            <button id="options-sfx-mute-btn" class="survivor-btn small">MUTE</button>
+                                            <input type="range" id="options-sfx-volume" class="volume-slider" min="0" max="1" step="0.01" value="0.5">
+                                            <span id="options-sfx-percent" class="volume-percent">50%</span>
+                                        </div>
                                     </div>
                                     <div class="option-item">
                                         <label>Dash Button Position</label>
@@ -937,7 +968,22 @@ class VibeSurvivor {
                                     <div class="pause-buttons">
                                         <button id="resume-btn" class="survivor-btn primary">RESUME</button>
                                         <button id="pause-restart-btn" class="survivor-btn">RESTART</button>
-                                        <button id="mute-btn" class="survivor-btn">MUTE</button>
+                                        <div class="pause-audio-section">
+                                            <label>Music</label>
+                                            <div class="audio-controls">
+                                                <button id="music-mute-btn" class="survivor-btn small">MUTE</button>
+                                                <input type="range" id="pause-music-volume" class="volume-slider" min="0" max="1" step="0.01" value="0.3">
+                                                <span id="pause-music-percent" class="volume-percent">30%</span>
+                                            </div>
+                                        </div>
+                                        <div class="pause-audio-section">
+                                            <label>SFX</label>
+                                            <div class="audio-controls">
+                                                <button id="sfx-mute-btn" class="survivor-btn small">MUTE</button>
+                                                <input type="range" id="pause-sfx-volume" class="volume-slider" min="0" max="1" step="0.01" value="0.5">
+                                                <span id="pause-sfx-percent" class="volume-percent">50%</span>
+                                            </div>
+                                        </div>
                                         <button id="dash-position-btn" class="survivor-btn">DASH BUTTON: RIGHT</button>
                                         <button id="exit-to-menu-btn" class="survivor-btn">QUIT GAME</button>
                                     </div>
@@ -4090,6 +4136,9 @@ class VibeSurvivor {
             this.modals.levelUp.onUpgradeSelected((choice, choiceIndex) => {
                 this.selectUpgrade(choice);
 
+                // Play upgrade sound
+                this.audioManager.playSound('upgrade');
+
                 // Process any remaining deferred level ups, or resume game
                 this.processPendingLevelUps();
 
@@ -4115,7 +4164,8 @@ class VibeSurvivor {
 
             // Set up game state callbacks for dynamic button labels
             this.modals.pause.setGameStateCallbacks(
-                () => this.audioMuted,
+                () => this.audioManager.isMusicMuted(),
+                () => this.audioManager.isSfxMuted(),
                 () => this.dashButtonPosition,
                 this.t.bind(this)
             );
@@ -4135,8 +4185,20 @@ class VibeSurvivor {
                 this.showRestartConfirmation();
             });
 
-            this.modals.pause.onMute(() => {
-                this.toggleAudioMute();
+            this.modals.pause.onMusicMute(() => {
+                this.toggleMusicMute();
+            });
+
+            this.modals.pause.onSfxMute(() => {
+                this.toggleSfxMute();
+            });
+
+            this.modals.pause.onMusicVolume((volume) => {
+                this.setMusicVolume(volume);
+            });
+
+            this.modals.pause.onSfxVolume((volume) => {
+                this.setSfxVolume(volume);
             });
 
             this.modals.pause.onDashPosition(() => {
@@ -4261,7 +4323,6 @@ class VibeSurvivor {
         // Start background music when game actually begins (Phase 11 - AudioManager)
         try {
             this.audioManager.resetMusic();
-            this.audioManager.setMuted(this.audioMuted);
             this.audioManager.playMusic();
             // Background music started
         } catch (e) {
@@ -4541,6 +4602,13 @@ class VibeSurvivor {
 
             // Show pause modal (modal handles all keyboard interaction internally)
             this.modals.pause.show();
+
+            // Sync volume sliders with current audio manager state
+            this.modals.pause.updateVolumeSliders(
+                this.audioManager.musicVolume,
+                this.audioManager.sfxVolume
+            );
+
             this.setPauseMenuOverlayState(true);
 
             // Pause background music (Phase 11 - AudioManager)
@@ -4554,15 +4622,12 @@ class VibeSurvivor {
             this.setPauseMenuOverlayState(false);
 
             // Resume background music (Phase 11 - AudioManager)
-            this.audioManager.setMuted(this.audioMuted);
             this.audioManager.resumeMusic();
         }
     }
 
-    toggleAudioMute() {
-        this.audioMuted = !this.audioMuted;
-
-        this.audioManager.setMuted(this.audioMuted);
+    toggleMusicMute() {
+        this.audioManager.toggleMusicMute();
 
         if (this.modals.pause) {
             this.modals.pause.updateButtonLabels();
@@ -4570,6 +4635,35 @@ class VibeSurvivor {
         if (this.modals.options) {
             this.modals.options.updateButtonLabels();
         }
+
+        // Save settings
+        this.saveUserSettings();
+    }
+
+    toggleSfxMute() {
+        this.audioManager.toggleSfxMute();
+
+        if (this.modals.pause) {
+            this.modals.pause.updateButtonLabels();
+        }
+        if (this.modals.options) {
+            this.modals.options.updateButtonLabels();
+        }
+
+        // Save settings
+        this.saveUserSettings();
+    }
+
+    setMusicVolume(volume) {
+        this.audioManager.setMusicVolume(volume);
+        // Save settings
+        this.saveUserSettings();
+    }
+
+    setSfxVolume(volume) {
+        this.audioManager.setSFXVolume(volume);
+        // Save settings
+        this.saveUserSettings();
     }
 
     showExitConfirmation() {
@@ -5813,6 +5907,7 @@ class VibeSurvivor {
             setBossDefeating: (value) => { this.bossDefeating = value; },
             clearProjectiles: () => { this.projectiles.length = 0; },
             bossDefeated: () => this.bossDefeated(),
+            audioManager: this.audioManager,
             cachedSqrt: this.cachedSqrt
         });
     }
@@ -6913,6 +7008,8 @@ class VibeSurvivor {
     
     showBossNotification() {
         this.showToastNotification("BOSS APPEARED!", 'boss');
+        // Play boss alert sound
+        this.audioManager.playSound('bossAlert');
     }
     
     showContinueNotification() {
@@ -9855,6 +9952,9 @@ class VibeSurvivor {
             this._gameOverHandlersSet = true;
         }
 
+        // Play game over sound
+        this.audioManager.playSound('gameOver');
+
         // Show the modal (modal handles touch scrolling and keyboard interaction internally)
         this.modals.gameOver.show();
     }
@@ -10274,6 +10374,9 @@ class VibeSurvivor {
                     optionsTitle: "OPTIONS",
                     language: "Language",
                     audio: "Audio",
+                    music: "Music",
+                    sfx: "SFX",
+                    soundEffects: "Sound Effects",
                     dashPosition: "Dash Button Position",
                     close: "CLOSE",
                     optionsHint: "Press ESC to close",
@@ -10430,6 +10533,9 @@ class VibeSurvivor {
                     optionsTitle: "설정",
                     language: "언어",
                     audio: "오디오",
+                    music: "음악",
+                    sfx: "효과음",
+                    soundEffects: "효과음",
                     dashPosition: "대시 버튼 위치",
                     close: "닫기",
                     optionsHint: "ESC를 눌러 닫기",
@@ -10643,11 +10749,51 @@ class VibeSurvivor {
         }
     }
 
+    loadUserSettings() {
+        try {
+            if (typeof window !== 'undefined' && window.localStorage) {
+                const stored = window.localStorage.getItem('vibe-survivor-settings');
+                if (stored) {
+                    const settings = JSON.parse(stored);
+
+                    // Restore language
+                    if (settings.language && this.translations[settings.language]) {
+                        this.currentLanguage = settings.language;
+                    }
+
+                    // Restore audio settings
+                    if (settings.musicMuted !== undefined) {
+                        this.audioManager.setMusicMuted(settings.musicMuted);
+                    }
+                    if (settings.sfxMuted !== undefined) {
+                        this.audioManager.setSfxMuted(settings.sfxMuted);
+                    }
+                    if (settings.musicVolume !== undefined) {
+                        this.audioManager.setMusicVolume(settings.musicVolume);
+                    }
+                    if (settings.sfxVolume !== undefined) {
+                        this.audioManager.setSFXVolume(settings.sfxVolume);
+                    }
+
+                    // Restore dash button position
+                    if (settings.dashButtonPosition) {
+                        this.dashButtonPosition = settings.dashButtonPosition;
+                    }
+                }
+            }
+        } catch (error) {
+            console.warn('Failed to load Vibe Survivor settings:', error);
+        }
+    }
+
     saveUserSettings() {
         try {
             const storedSettings = {
                 language: this.currentLanguage,
-                audioMuted: this.audioMuted,
+                musicMuted: this.audioManager.isMusicMuted(),
+                sfxMuted: this.audioManager.isSfxMuted(),
+                musicVolume: this.audioManager.musicVolume,
+                sfxVolume: this.audioManager.sfxVolume,
                 dashButtonPosition: this.touchControls?.dashButton?.position || this.dashButtonPosition || 'right'
             };
             if (typeof window !== 'undefined' && window.localStorage) {
@@ -10677,6 +10823,12 @@ class VibeSurvivor {
         if (window.startScreenBot) {
             window.startScreenBot.hide();
         }
+
+        // Sync volume sliders with current audio manager state
+        this.modals.options.updateVolumeSliders(
+            this.audioManager.musicVolume,
+            this.audioManager.sfxVolume
+        );
 
         this.modals.options.show();
     }
