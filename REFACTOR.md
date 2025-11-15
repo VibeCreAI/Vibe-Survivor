@@ -62,37 +62,42 @@ Track your progress through the refactoring. Check off each phase as you complet
 - [ ] **Checkpoint #4**: Integration Test (15 min) - All new systems fully integrated
 
 ### Post-Refactoring
-- [ ] **Cleanup**: Remove old monolith code and dead imports
-- [ ] **Documentation**: Update README, ARCHITECTURE
-- [ ] **Final Testing**: Complete smoke test on multiple browsers
-- [ ] **Git**: Commit final state and tag release
+- [x] **Cleanup**: Remove the biggest chunks of legacy monolith UI code and duplicate helpers
+- [x] **Documentation**: Update README structure and AGENTS.md to reflect the modular architecture
+- [x] **Final Testing**: Manual smoke tests on desktop + mobile (controls, pause/resume, level-up, game over, options, help, localization)
+- [ ] **Git**: Commit final state and tag release (to be done by human)
 
 #### Cleanup Sub-Phases
 1. **Phase 13a** ✅: Extract Localization UI Updates
    - Moved `updateAllText()` responsibilities into modal-specific localization hooks
-   - Added `updateLocalization()` methods for Pause/Options/About/Start screens and related UI systems
+   - Added `updateLocalization()` methods for Pause/Options/About/Start screens, Help, Game Over, touch controls, and confirmation dialogs
+   - Centralized KO/EN strings in the translation tables and verified runtime switching on desktop + mobile
 
-2. **Phase 13b**: Start Screen & Menu Navigation Controller
-   - Move remaining `menuNavigationState` handling out of `VibeSurvivor`
+2. **Phase 13b** (Deferred): Start Screen & Menu Navigation Controller
+   - Goal: Move remaining `menuNavigationState` handling out of `VibeSurvivor`
    - Let `StartScreenModal` own keyboard/touch navigation fully
+   - Status: **Not started** – safe to do post-competition
 
-3. **Phase 13c**: Notification & Toast Utilities
-   - Extract toast/notification logic into a dedicated module
-   - Remove legacy notification arrays from the monolith
+3. **Phase 13c** (Deferred): Notification & Toast Utilities
+   - Goal: Extract toast/notification logic into a dedicated module
+   - Remove legacy notification arrays and inline DOM manipulation from the monolith
+   - Status: **Not started**
 
-4. **Phase 13d**: Game State Reset Manager
-   - Centralize `resetGame()` logic using new manager/helpers
-   - Delegate resets to systems (Player/Enemy/Weapons/etc.)
+4. **Phase 13d** (Deferred): Game State Reset Manager
+   - Goal: Centralize `resetGame()` logic in a dedicated manager/helper
+   - Delegate resets to systems (Player/Enemy/Weapons/UI/etc.) instead of manual field-by-field reset
+   - Status: **Not started**
 
-5. **Phase 13e**: Global Shortcut/Input Manager
-   - Move `mainKeyboardHandler` responsibilities into InputManager or a ShortcutManager
+5. **Phase 13e** (Deferred): Global Shortcut/Input Manager
+   - Goal: Move `mainKeyboardHandler` responsibilities into InputManager or a ShortcutManager
    - Keep `VibeSurvivor` focused on orchestration only
+   - Status: **Not started**
 
 **Progress Tracking:**
-- Phases Completed: 15 / 18 (83%)
+- Phases Completed: 15 / 18 (83%) – all core refactors + all 12a–12d + 13a
 - Checkpoints Passed: 3 / 4 ✅
-- Estimated Time Remaining: ~2.75 hours (~165 min)
-- Actual Time Spent: ~11.66 hours (~700 min)
+- Estimated Time Remaining (if continuing 13b–13e): ~2.75 hours (~165 min)
+- Actual Time Spent (to date): ~11.66 hours (~700 min) + additional localization/bugfix time
 
 ---
 
