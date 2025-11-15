@@ -7076,10 +7076,13 @@ class VibeSurvivor {
     
     showBossNotification() {
         this.showToastNotification("BOSS APPEARED!", 'boss');
-        // Play boss alert sound 3 times at 250% volume
+        if (!this.audioManager) return;
+
+        // bossAlert is ~2.0 seconds long; play 3 times at 2.0s intervals
+        const intervalMs = 2000;
         this.audioManager.playSound('bossAlert', 2.5);
-        setTimeout(() => this.audioManager.playSound('bossAlert', 2.5), 300);
-        setTimeout(() => this.audioManager.playSound('bossAlert', 2.5), 600);
+        setTimeout(() => this.audioManager.playSound('bossAlert', 2.5), intervalMs);
+        setTimeout(() => this.audioManager.playSound('bossAlert', 2.5), intervalMs * 2);
     }
     
     showContinueNotification() {

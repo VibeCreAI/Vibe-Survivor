@@ -135,6 +135,43 @@ export class AudioManager {
     }
 
     /**
+     * Plays a sound effect multiple times in sequence (non-overlapping)
+     * @param {string} name - Sound identifier
+     * @param {number} times - Number of times to play the sound
+     * @param {number} volumeMultiplier - Optional volume multiplier, defaults to 1.0
+     */
+    playSoundRepeated(name, times = 1, volumeMultiplier = 1.0) {
+        if (this.sfxMuted) return;
+        if (times <= 0) return;
+
+        const sound = this.sounds.get(name);
+        if (!sound) return;
+
+        let remaining = times;
+
+        const playNext = () => {
+            if (this.sfxMuted || remaining <= 0) return;
+
+            remaining -= 1;
+
+            const clone = sound.cloneNode();
+            clone.volume = this.sfxVolume * volumeMultiplier;
+
+            clone.addEventListener('ended', () => {
+                if (remaining > 0) {
+                    playNext();
+                }
+            });
+
+            clone.play().catch(e => {
+                console.warn(`Sound ${name} playback failed:`, e);
+            });
+        };
+
+        playNext();
+    }
+
+    /**
      * Sets music volume
      * @param {number} volume - Volume level (0.0 to 1.0)
      */
