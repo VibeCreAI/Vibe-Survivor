@@ -16,6 +16,14 @@ export class PickupSystem {
         this.magnetOrbSpawnChance = 0.08; // 8% chance per check
         this.maxMagnetOrbs = 1; // Maximum magnet orbs on map
 
+        // Subtle hint timing (frames @60fps)
+        this.pickupHintDelay = 360;     // Wait ~6s before first hint
+        this.pickupHintDuration = 90;   // Arrow visible for ~1.5s
+        this.pickupHintCooldown = 1800;  // ~30s cooldown between hints
+        this.hintPulseActive = false;
+        this.hintPulseFramesRemaining = 0;
+        this.hintPulseCooldownTimer = this.pickupHintDelay;
+
         // Object pools (will be injected)
         this.xpOrbPool = null;
         this.hpOrbPool = null;
@@ -104,6 +112,8 @@ export class PickupSystem {
      * @param {Object} audioManager - Audio manager for sound effects
      */
     updateHPOrbs(hpOrbs, player, cachedSqrt, showToastNotification, bossDefeating, audioManager) {
+        this.updatePickupHintPulse();
+
         // Skip HP orb collection during boss defeat animation
         if (bossDefeating) {
             return;
@@ -112,6 +122,7 @@ export class PickupSystem {
         // Use reverse iteration for safe and efficient removal
         for (let i = hpOrbs.length - 1; i >= 0; i--) {
             const orb = hpOrbs[i];
+            this.updatePickupHintState(orb);
             const dx = player.x - orb.x;
             const dy = player.y - orb.y;
             const distanceSquared = dx * dx + dy * dy;
@@ -147,6 +158,7 @@ export class PickupSystem {
 
                 // Return to pool
                 orb.active = false;
+                this.resetPickupHintState(orb);
                 hpOrbs.splice(i, 1);
             }
         }
@@ -170,6 +182,7 @@ export class PickupSystem {
         // Use reverse iteration for safe and efficient removal
         for (let i = magnetOrbs.length - 1; i >= 0; i--) {
             const orb = magnetOrbs[i];
+            this.updatePickupHintState(orb);
             const dx = player.x - orb.x;
             const dy = player.y - orb.y;
             const distanceSquared = dx * dx + dy * dy;
@@ -202,6 +215,7 @@ export class PickupSystem {
 
                 // Return to pool
                 orb.active = false;
+                this.resetPickupHintState(orb);
                 magnetOrbs.splice(i, 1);
             }
         }
@@ -333,5 +347,64 @@ export class PickupSystem {
     reset() {
         this.hpOrbSpawnTimer = 0;
         this.magnetOrbSpawnTimer = 0;
+        this.hintPulseActive = false;
+        this.hintPulseFramesRemaining = 0;
+        this.hintPulseCooldownTimer = this.pickupHintDelay;
+    }
+
+    /**
+     * Initializes and updates hint timing for persistent field pickups
+     * @param {Object} orb - Pickup orb
+     */
+    updatePickupHintState(orb) {
+        if (!orb) return;
+
+        if (!orb.__hintInitialized) {
+            orb.__hintInitialized = true;
+            orb.hintVisible = false;
+            orb.hintFramesRemaining = 0;
+        }
+
+        if (this.hintPulseActive) {
+            orb.hintVisible = true;
+            orb.hintFramesRemaining = this.hintPulseFramesRemaining;
+        } else if (orb.hintVisible) {
+            orb.hintVisible = false;
+            orb.hintFramesRemaining = 0;
+        }
+    }
+
+    /**
+     * Clears hint metadata when an orb is recycled
+     * @param {Object} orb - Pickup orb
+     */
+    resetPickupHintState(orb) {
+        if (!orb) return;
+        orb.__hintInitialized = false;
+        orb.hintVisible = false;
+        orb.hintFramesRemaining = 0;
+    }
+
+    /**
+     * Advances the global hint pulse timer
+     */
+    updatePickupHintPulse() {
+        if (this.hintPulseActive) {
+            this.hintPulseFramesRemaining = Math.max(0, this.hintPulseFramesRemaining - 1);
+            if (this.hintPulseFramesRemaining <= 0) {
+                this.hintPulseActive = false;
+                this.hintPulseCooldownTimer = this.pickupHintCooldown;
+            }
+            return;
+        }
+
+        if (this.hintPulseCooldownTimer > 0) {
+            this.hintPulseCooldownTimer = Math.max(0, this.hintPulseCooldownTimer - 1);
+        }
+
+        if (this.hintPulseCooldownTimer <= 0) {
+            this.hintPulseActive = true;
+            this.hintPulseFramesRemaining = this.pickupHintDuration;
+        }
     }
 }

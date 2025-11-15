@@ -598,11 +598,13 @@ class VibeSurvivor {
                     // Pause game
                     this.isPaused = true;
                     this.timePaused = true;
+                    this.pauseLoopingWeaponSounds();
                 },
                 () => {
                     // Resume game
                     this.isPaused = false;
                     this.timePaused = false;
+                    this.resumeLoopingWeaponSounds();
                 },
                 () => {
                     // Check if pause menu is open
@@ -4620,8 +4622,8 @@ class VibeSurvivor {
             // Pause background music (Phase 11 - AudioManager)
             this.audioManager.pauseMusic();
 
-            // Pause gatling gun looping sound if playing
-            this.audioManager.pauseLoopingSound('weaponGatlingGun');
+            // Pause looping weapon sounds (gatling gun, etc.)
+            this.pauseLoopingWeaponSounds();
         } else {
             // Update pause button to show pause symbol
             if (pauseBtn) pauseBtn.textContent = '||';
@@ -4633,9 +4635,22 @@ class VibeSurvivor {
             // Resume background music (Phase 11 - AudioManager)
             this.audioManager.resumeMusic();
 
-            // Resume gatling gun looping sound if it was playing
-            this.audioManager.resumeLoopingSound('weaponGatlingGun');
+            // Resume looping weapon sounds if appropriate
+            this.resumeLoopingWeaponSounds();
         }
+    }
+
+    pauseLoopingWeaponSounds() {
+        if (!this.audioManager) return;
+        this.audioManager.pauseLoopingSound('weaponGatlingGun');
+    }
+
+    resumeLoopingWeaponSounds() {
+        if (!this.audioManager) return;
+        if (this.isPaused || this.timePaused || !this.gameRunning) {
+            return;
+        }
+        this.audioManager.resumeLoopingSound('weaponGatlingGun');
     }
 
     toggleMusicMute() {
@@ -9357,9 +9372,12 @@ class VibeSurvivor {
 
     drawHPOrbs() {
         this.hpOrbs.forEach(orb => {
+            // Always show hint when active, even if the orb is visible
+            this.drawPickupHint(orb, '#FF5555');
+
             // Enhanced frustum culling: Skip HP orbs that shouldn't be rendered
             if (!this.shouldRender(orb, 'hp')) {
-                return; // Skip rendering this orb
+                return; // Skip entirely if far outside range
             }
             this.ctx.save();
             
@@ -9391,9 +9409,12 @@ class VibeSurvivor {
     drawMagnetOrbs() {
         // Removed excessive drawing logging
         this.magnetOrbs.forEach(orb => {
+            // Always show hint when active, even if the orb is visible
+            this.drawPickupHint(orb, '#6C63FF');
+
             // Enhanced frustum culling: Skip magnet orbs that shouldn't be rendered
             if (!this.shouldRender(orb, 'magnet')) {
-                return; // Skip rendering this orb
+                return; // Skip entirely if far outside range
             }
             this.ctx.save();
             
@@ -9420,6 +9441,45 @@ class VibeSurvivor {
 
             this.ctx.restore();
         });
+    }
+
+    drawPickupHint(target, color) {
+        if (!target?.hintVisible || !this.player || !this.ctx) {
+            return;
+        }
+
+        // Avoid hint if we're already very close (naturally visible)
+        const dx = target.x - this.player.x;
+        const dy = target.y - this.player.y;
+        const distanceSquared = dx * dx + dy * dy;
+        if (distanceSquared < 2000) {
+            return;
+        }
+
+        const distance = Math.sqrt(distanceSquared) || 1;
+        const arrowDistance = 90;
+        const arrowX = this.player.x + (dx / distance) * arrowDistance;
+        const arrowY = this.player.y + (dy / distance) * arrowDistance;
+        const duration = this.pickupSystem?.pickupHintDuration || 1;
+        const alphaBase = Math.min(1, (target.hintFramesRemaining || 0) / duration);
+        const alpha = 0.25 + 0.5 * alphaBase;
+
+        this.ctx.save();
+        this.ctx.translate(arrowX, arrowY);
+        this.ctx.rotate(Math.atan2(dy, dx));
+        this.ctx.globalAlpha = alpha;
+        this.ctx.fillStyle = color;
+        this.ctx.beginPath();
+        this.ctx.moveTo(16, 0);
+        this.ctx.lineTo(-10, 7);
+        this.ctx.lineTo(-10, -7);
+        this.ctx.closePath();
+        this.ctx.fill();
+
+        this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.65)';
+        this.ctx.lineWidth = 2;
+        this.ctx.stroke();
+        this.ctx.restore();
     }
     
     drawExplosions() {
@@ -10049,6 +10109,7 @@ class VibeSurvivor {
         this.timePaused = true;             // Pause game time during victory
         this.bossDefeating = false;         // Reset animation state
         this.gameRunning = false;
+        this.pauseLoopingWeaponSounds();
 
         // Cancel any running game loop
         if (this.gameLoopId) {
@@ -10116,6 +10177,7 @@ class VibeSurvivor {
         // Resume the game with increased difficulty after beating the boss
         this.gameRunning = true;
         this.timePaused = false;
+        this.resumeLoopingWeaponSounds();
 
         // Reset touch controls to ensure clean state when continuing after boss defeat
         if (this.touchControls && this.touchControls.joystick) {
