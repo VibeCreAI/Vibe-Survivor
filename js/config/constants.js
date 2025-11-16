@@ -231,7 +231,8 @@ export const PASSIVES = {
     REGENERATION: {
         name: 'Regeneration',
         description: 'Auto-heal over time',
-        stackable: false
+        stackable: false,
+        isUnique: true
     },
     MAGNET: {
         name: 'Magnet',

@@ -1155,15 +1155,36 @@ class VibeSurvivor {
 
                         <!-- Chest Modal (Passive Upgrades) -->
                         <div id="chest-modal" class="chest-modal" style="display: none;">
-                            <div class="chest-content">
-                                <h2 class="chest-title">UPGRADE CHEST</h2>
-                                <p class="chest-subtitle">Choose one passive upgrade</p>
-                                <div class="chest-scroll">
-                                    <div class="chest-choices-container">
-                                        <!-- 3 upgrade choices will be populated dynamically -->
+                            <div class="chest-content" tabindex="-1">
+                                <div class="chest-tabs">
+                                    <button class="chest-tab active" data-tab="upgrades">CHEST</button>
+                                    <button class="chest-tab" data-tab="guide">GUIDE</button>
+                                    <button class="chest-tab" data-tab="status">STATUS</button>
+                                </div>
+                                <div id="chest-pane-upgrades" class="chest-pane active">
+                                    <h2 class="chest-title">UPGRADE CHEST</h2>
+                                    <p class="chest-subtitle">Choose one passive upgrade</p>
+                                    <div class="chest-scroll chest-upgrades-scroll">
+                                        <div class="chest-choices">
+                                            <!-- Upgrade choices populated dynamically -->
+                                        </div>
+                                    </div>
+                                    <p class="chest-hint">↑↓ Navigate • Enter Select</p>
+                                </div>
+                                <div id="chest-pane-guide" class="chest-pane">
+                                    <div class="chest-scroll">
+                                        <div class="chest-guide-pane">
+                                            <!-- Guide content populated dynamically -->
+                                        </div>
                                     </div>
                                 </div>
-                                <p class="chest-hint">↑↓ Navigate • Enter Select</p>
+                                <div id="chest-pane-status" class="chest-pane">
+                                    <div class="chest-scroll">
+                                        <div class="chest-status-pane help-pane">
+                                            <!-- Status content populated dynamically -->
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -3151,54 +3172,99 @@ class VibeSurvivor {
             }
 
             .chest-content {
-                background: linear-gradient(135deg, #1a0a0a, #2a1a0a);
-                border: 3px solid #FFD700;
-                border-radius: 15px;
-                padding: 30px;
+                background: linear-gradient(135deg, #2a0035, #15001f);
+                border: 2px solid rgba(255, 110, 255, 0.8);
+                border-radius: 18px;
+                padding: 26px 28px 20px;
                 text-align: center;
-                width: min(420px, 92vw);
-                max-height: 85vh;
-                box-shadow: 0 0 40px rgba(255, 215, 0, 0.6);
-                backdrop-filter: blur(10px);
+                width: min(440px, 92vw);
+                max-height: 90vh;
+                box-shadow: 0 0 40px rgba(255, 16, 240, 0.35);
+                backdrop-filter: blur(12px);
                 outline: none;
             }
 
-            .chest-title {
-                color: #FFD700;
-                font-size: 2rem;
-                margin: 0 0 8px 0;
-                text-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+            .chest-tabs {
+                display: flex;
+                justify-content: center;
+                gap: 12px;
+                margin-bottom: 18px;
+                flex-wrap: wrap;
+            }
+
+            .chest-tab {
+                background: transparent;
+                border: 2px solid rgba(255, 110, 255, 0.8);
+                color: #ff8eff;
+                padding: 8px 18px;
+                border-radius: 999px;
+                cursor: pointer;
+                font-size: 14px;
                 font-weight: bold;
+                transition: all 0.25s ease;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+            }
+
+            .chest-tab.active {
+                background: #ff1ad8;
+                border-color: #ff1ad8;
+                color: #1b001f;
+                box-shadow: 0 0 15px rgba(255, 26, 216, 0.5);
+            }
+
+            .chest-tab:not(.active):hover {
+                background: rgba(255, 16, 240, 0.12);
+                box-shadow: 0 0 10px rgba(255, 16, 240, 0.25);
+            }
+
+            .chest-pane {
+                display: none;
+                text-align: left;
+            }
+
+            .chest-pane.active {
+                display: block;
+            }
+
+            .chest-title {
+                color: #ff8eff;
+                font-size: 1.6rem;
+                margin: 0 0 6px 0;
+                text-align: center;
+                text-shadow: 0 0 12px rgba(255, 16, 240, 0.45);
+                letter-spacing: 0.12em;
             }
 
             .chest-subtitle {
-                color: #FFA500;
-                font-size: 1rem;
-                margin: 0 0 20px 0;
-                opacity: 0.9;
+                color: rgba(255, 255, 255, 0.82);
+                font-size: 0.95rem;
+                margin: 0 0 18px 0;
+                text-align: center;
+                letter-spacing: 0.05em;
             }
 
             .chest-scroll {
                 max-height: 60vh;
                 overflow-y: auto;
                 overflow-x: hidden;
-                padding: 0 10px;
-                margin-bottom: 15px;
+                padding: 0 6px;
+                margin-bottom: 12px;
             }
 
-            .chest-choices-container {
+            .chest-choices {
                 display: flex;
                 flex-direction: column;
                 gap: 15px;
             }
 
             .chest-choice {
-                background: rgba(255, 215, 0, 0.12);
-                border: 2px solid #FFD700;
-                border-radius: 10px;
-                padding: 15px;
+                background: rgba(255, 16, 240, 0.08);
+                border: 2px solid rgba(255, 16, 240, 0.35);
+                border-radius: 12px;
+                padding: 14px 16px;
                 cursor: pointer;
-                transition: all 0.3s ease;
+                transition: all 0.25s ease;
                 text-align: center;
                 display: flex;
                 flex-direction: column;
@@ -3207,9 +3273,21 @@ class VibeSurvivor {
             }
 
             .chest-choice:hover {
-                background: rgba(255, 215, 0, 0.25);
-                border: 2px solid #FFFFFF;
-                box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+                background: rgba(255, 16, 240, 0.18);
+                border-color: #ff8eff;
+                box-shadow: 0 0 18px rgba(255, 16, 240, 0.35);
+            }
+
+            .chest-choice-unique {
+                background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 140, 0, 0.1));
+                border: 2px solid rgba(255, 215, 0, 0.55);
+                box-shadow: 0 0 18px rgba(255, 215, 0, 0.2);
+            }
+
+            .chest-choice-unique:hover {
+                background: linear-gradient(135deg, rgba(255, 215, 0, 0.25), rgba(255, 165, 0, 0.2));
+                border-color: #ffd700;
+                box-shadow: 0 0 24px rgba(255, 215, 0, 0.45);
             }
 
             .chest-choice-icon {
@@ -3218,42 +3296,115 @@ class VibeSurvivor {
                 justify-content: center;
                 gap: 12px;
                 width: 100%;
+                flex-wrap: wrap;
             }
 
             .chest-choice-icon-image {
                 width: 48px;
                 height: 48px;
-                display: inline-block;
                 image-rendering: pixelated;
                 object-fit: contain;
             }
 
             .chest-choice-title {
-                font-size: 20px;
+                font-size: 1.1rem;
                 font-weight: bold;
-                color: #FFD700;
-                text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+                color: #ffb3ff;
+                text-shadow: 0 0 6px rgba(255, 16, 240, 0.35);
+            }
+
+            .chest-choice-unique .chest-choice-title {
+                color: #ffd700;
+                text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+            }
+
+            .chest-choice-badge {
+                background: rgba(255, 215, 0, 0.15);
+                border: 1px solid rgba(255, 215, 0, 0.8);
+                color: #ffd700;
+                text-transform: uppercase;
+                letter-spacing: 0.12em;
+                font-size: 0.65rem;
+                padding: 2px 10px;
+                border-radius: 999px;
             }
 
             .chest-choice p {
-                color: white;
+                color: rgba(255, 255, 255, 0.92);
                 margin: 0;
                 font-size: 0.95rem;
-                opacity: 0.95;
+                line-height: 1.4;
             }
 
             .chest-stack-info {
-                color: #FFA500;
+                color: rgba(255, 255, 255, 0.7);
                 font-size: 0.85rem;
-                opacity: 0.8;
                 font-style: italic;
             }
 
             .chest-hint {
-                color: #FFD700;
+                color: rgba(255, 255, 255, 0.65);
                 font-size: 0.85rem;
-                margin: 10px 0 0 0;
-                opacity: 0.7;
+                text-align: center;
+                margin: 6px 0 0;
+                letter-spacing: 0.15em;
+            }
+
+            .chest-guide-title,
+            .chest-status-title {
+                color: #ff8eff;
+                margin-bottom: 10px;
+                text-align: center;
+                font-size: 1.2rem;
+                text-shadow: 0 0 8px rgba(255, 16, 240, 0.4);
+            }
+
+            .chest-guide-description {
+                color: rgba(255, 255, 255, 0.75);
+                text-align: center;
+                margin: 0 0 16px 0;
+                font-size: 0.9rem;
+            }
+
+            .chest-guide-list {
+                display: flex;
+                flex-direction: column;
+                gap: 14px;
+            }
+
+            .chest-guide-item {
+                display: flex;
+                gap: 14px;
+                align-items: center;
+                padding: 12px;
+                border-radius: 12px;
+                background: rgba(255, 16, 240, 0.08);
+                border: 1px solid rgba(255, 16, 240, 0.2);
+            }
+
+            .chest-guide-icon img {
+                width: 44px;
+                height: 44px;
+                image-rendering: pixelated;
+            }
+
+            .chest-guide-text h3 {
+                margin: 0 0 4px;
+                color: #ffb3ff;
+                font-size: 1rem;
+            }
+
+            .chest-guide-text p {
+                margin: 0;
+                color: rgba(255, 255, 255, 0.8);
+                font-size: 0.9rem;
+            }
+
+            .chest-guide-empty {
+                text-align: center;
+                color: rgba(255, 255, 255, 0.7);
+                font-size: 0.95rem;
+                margin: 16px 0;
             }
 
             /* Mobile Touch Controls */
@@ -4314,6 +4465,13 @@ class VibeSurvivor {
 
             // Set up translation function
             this.modals.chest.setTranslationFunction(this.t.bind(this));
+
+            // Share render callbacks for guide/status panes
+            this.modals.chest.setRenderCallbacks({
+                generateWeaponsSection: this.generateWeaponsSection.bind(this),
+                generatePassivesSection: this.generatePassivesSection.bind(this),
+                generatePlayerStatsSection: this.generatePlayerStatsSection.bind(this)
+            });
 
             // Set up upgrade selection callback
             this.modals.chest.onUpgradeSelected((choice, choiceIndex) => {
@@ -6499,7 +6657,7 @@ class VibeSurvivor {
 
         // Return 3-4 random choices (weapons only)
         const shuffled = choices.sort(() => Math.random() - 0.5);
-        return shuffled.slice(0, Math.min(4, shuffled.length));
+        return shuffled.slice(0, Math.min(3, shuffled.length));
     }
     
     getWeaponName(type) {
@@ -10243,6 +10401,8 @@ class VibeSurvivor {
     }
 
     generatePassivesSection() {
+        const uiTranslations = this.translations[this.currentLanguage].ui;
+        const uniqueLabel = uiTranslations.uniqueBadgeLabel || 'Unique';
         const p = this.translations[this.currentLanguage].passives;
         const passiveNames = {
             'health_boost': p.healthBoost,
@@ -10272,6 +10432,8 @@ class VibeSurvivor {
 
         const passivesHtml = activePassives.map(passive => {
             const displayName = passiveNames[passive];
+            const passiveConfig = PASSIVES[passive.toUpperCase()];
+            const isUnique = !!passiveConfig?.isUnique;
 
             // Get stack count for stackable passives
             let stackCount = '';
@@ -10293,25 +10455,53 @@ class VibeSurvivor {
             };
             const iconName = passiveIconMap[passive] || 'upgrade';
 
-            return `
-                <div style="
+            const wrapperStyles = `
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
                     margin: 6px 0;
                     font-size: 14px;
-                    color: #ff00ff;
-                ">
+                    padding: 8px 10px;
+                    border-radius: 8px;
+                    ${isUnique
+                        ? `
+                            background: linear-gradient(135deg, rgba(255, 215, 0, 0.18), rgba(255, 165, 0, 0.08));
+                            border: 1px solid rgba(255, 215, 0, 0.5);
+                            color: #ffd700;
+                            box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+                        `
+                        : `
+                            color: #ff00ff;
+                        `
+                    }
+                `;
+
+            const badge = isUnique ? `<span style="
+                    background: rgba(255, 215, 0, 0.15);
+                    border: 1px solid rgba(255, 215, 0, 0.5);
+                    color: #ffd700;
+                    padding: 2px 10px;
+                    border-radius: 999px;
+                    font-size: 11px;
+                    letter-spacing: 0.08em;
+                    text-transform: uppercase;
+                ">${uniqueLabel}</span>` : '';
+
+            const stackMarkup = stackCount ? `<span style="font-weight: bold; color: ${isUnique ? '#fff5b0' : '#ff88ff'};">${stackCount}</span>` : '';
+
+            return `
+                <div style="${wrapperStyles}">
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <img src="images/passives/${iconName}.png" alt="${passive}" style="width: 32px; height: 32px; image-rendering: pixelated;">
                         <span>${displayName}</span>
+                        ${badge}
                     </div>
-                    ${stackCount ? `<span style="font-weight: bold; color: #ff88ff;">${stackCount}</span>` : ''}
+                    ${stackMarkup}
                 </div>
             `;
         }).join('');
 
-        const t = this.translations[this.currentLanguage].ui;
+        const t = uiTranslations;
         return `
             <div style="
                 margin: 15px 0;
@@ -10925,6 +11115,14 @@ class VibeSurvivor {
                     quitConfirm: "QUIT GAME?",
                     restartConfirm: "RESTART GAME?",
                     levelUp: "LEVEL UP!",
+                    chestTitle: "UPGRADE CHEST",
+                    chestSubtitle: "Choose one passive upgrade",
+                    chestHint: "↑↓ Navigate • Enter Select",
+                    chestTabUpgrades: "Rewards",
+                    uniqueItemsTitle: "Unique Items",
+                    uniqueItemsDescription: "These rare passives have a lower chance to appear in chests.",
+                    uniqueItemsEmpty: "No unique passives discovered yet.",
+                    uniqueBadgeLabel: "Unique",
 
                     // Confirmations
                     quitWarning: "Are you sure you want to quit?<br>All progress will be lost!",
@@ -11084,6 +11282,14 @@ class VibeSurvivor {
                     quitConfirm: "게임을 종료할까요?",
                     restartConfirm: "게임을 다시 시작할까요?",
                     levelUp: "레벨 업!",
+                    chestTitle: "보상 상자",
+                    chestSubtitle: "패시브 업그레이드를 1개 선택하세요",
+                    chestHint: "↑↓ 이동 • Enter 선택",
+                    chestTabUpgrades: "보상",
+                    uniqueItemsTitle: "유니크 아이템",
+                    uniqueItemsDescription: "희귀 패시브는 낮은 확률로 상자에서만 등장합니다.",
+                    uniqueItemsEmpty: "획득 가능한 유니크 패시브가 없습니다.",
+                    uniqueBadgeLabel: "유니크",
 
                     // Confirmations
                     quitWarning: "정말로 종료하시겠습니까?<br>모든 진행상황이 사라집니다!",
@@ -11251,6 +11457,13 @@ class VibeSurvivor {
 
         if (this.modals.levelUp) {
             this.modals.levelUp.updateLocalization();
+        }
+
+        if (this.modals.chest) {
+            this.modals.chest.setTranslationFunction(t);
+            if (typeof this.modals.chest.updateLocalization === 'function') {
+                this.modals.chest.updateLocalization();
+            }
         }
 
         if (this.modals.options) {

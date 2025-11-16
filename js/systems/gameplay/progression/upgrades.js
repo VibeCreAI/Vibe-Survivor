@@ -6,6 +6,9 @@
 
 import { WEAPONS, PASSIVES, WEAPON_UPGRADES } from '../../../config/constants.js';
 
+const NORMAL_PASSIVE_WEIGHT = 4;
+const UNIQUE_PASSIVE_WEIGHT = 1;
+
 /**
  * UpgradeSystem - Manages upgrade choices and passive abilities
  */
@@ -26,15 +29,18 @@ export class UpgradeSystem {
         const availableWeapons = Object.keys(WEAPONS);
         const availablePassives = Object.keys(PASSIVES);
 
-        // Build pool of possible upgrades
+        // Build pool of possible upgrades with optional weighting
         const upgradePool = [];
+        const addChoiceToPool = (choice, weight = 1) => {
+            upgradePool.push({ choice, weight });
+        };
 
         // Add weapon upgrades (if upgradeType allows)
         if (upgradeType === 'all' || upgradeType === 'weapons') {
             // Add existing weapon upgrades (if not max level)
             weapons.forEach(weapon => {
                 if (weapon.level < WEAPON_UPGRADES.MAX_LEVEL) {
-                    upgradePool.push({
+                    addChoiceToPool({
                         type: 'weapon_upgrade',
                         weaponType: weapon.type,
                         weaponName: weapon.name,
@@ -51,7 +57,7 @@ export class UpgradeSystem {
                     const hasWeapon = weapons.some(w => w.type === weaponType);
 
                     if (!hasWeapon) {
-                        upgradePool.push({
+                        addChoiceToPool({
                             type: 'weapon_new',
                             weaponType: weaponType,
                             weaponName: WEAPONS[weaponKey].name,
@@ -78,23 +84,41 @@ export class UpgradeSystem {
                     return; // Skip passives at max stacks
                 }
 
-                upgradePool.push({
+                const isUnique = !!passive.isUnique;
+                addChoiceToPool({
                     type: 'passive',
                     passiveKey: passiveId,
                     passiveName: passive.name,
                     passiveDescription: passive.description,
                     currentStacks: currentStacks,
                     maxStacks: passive.maxStacks || Infinity,
+                    isUnique,
                     id: `passive_${passiveId}`
-                });
+                }, isUnique ? UNIQUE_PASSIVE_WEIGHT : NORMAL_PASSIVE_WEIGHT);
             });
         }
 
-        // Randomly select choices from pool
+        // Randomly select choices from pool (weighted)
         const poolCopy = [...upgradePool];
         while (choices.length < choiceCount && poolCopy.length > 0) {
-            const randomIndex = Math.floor(Math.random() * poolCopy.length);
-            choices.push(poolCopy.splice(randomIndex, 1)[0]);
+            const totalWeight = poolCopy.reduce((sum, entry) => sum + (entry.weight || 1), 0);
+            if (totalWeight <= 0) {
+                break;
+            }
+
+            let randomWeight = Math.random() * totalWeight;
+            let selectedIndex = 0;
+
+            for (let i = 0; i < poolCopy.length; i++) {
+                randomWeight -= poolCopy[i].weight || 1;
+                if (randomWeight <= 0) {
+                    selectedIndex = i;
+                    break;
+                }
+            }
+
+            const [selectedEntry] = poolCopy.splice(selectedIndex, 1);
+            choices.push(selectedEntry.choice);
         }
 
         return choices;
