@@ -26,6 +26,7 @@ class StartScreenBot {
         this.hasFadedIn = false;
         this.initialFadeTimeout = null;
         this.anchorElement = null;
+        this.inlineMode = false;
 
         this.init();
     }
@@ -183,12 +184,30 @@ class StartScreenBot {
             // Ensure bot starts hidden
             this.hide();
 
-            // Attach directly to body so it won't be clipped by any parent containers
-            document.body.appendChild(this.container);
-            console.log('Bot attached to body (fixed position)');
+            // Prefer to place inside the start title container so it sits above the logo
+            const titleContainer = startOverlay.querySelector('.survivor-title');
+            const vibeLogo = startOverlay.querySelector('#vibe-survivor-logo');
+            if (titleContainer) {
+                this.container.style.position = 'relative';
+                this.container.style.left = '0';
+                this.container.style.transform = 'none';
+                this.container.style.margin = '0 auto 12px';
+                this.container.style.zIndex = '2';
+                this.inlineMode = true;
+                if (vibeLogo && vibeLogo.parentNode === titleContainer) {
+                    titleContainer.insertBefore(this.container, vibeLogo);
+                } else {
+                    titleContainer.insertBefore(this.container, titleContainer.firstChild);
+                }
+            } else {
+                // Fallback: attach to body as before
+                document.body.appendChild(this.container);
+                this.inlineMode = false;
+            }
+            console.log('Bot attached', this.inlineMode ? 'inside title container' : 'to body');
 
             // Store reference to title container for position updates
-            this.titleContainer = startOverlay.querySelector('.survivor-title');
+            this.titleContainer = titleContainer || startOverlay.querySelector('.survivor-title');
             this.anchorElement = startOverlay.querySelector('.chroma-awards-block') || this.titleContainer;
 
             // Calculate initial size based on modal width
@@ -260,6 +279,11 @@ class StartScreenBot {
 
         // Update size first
         this.updateSize();
+
+        // If we're inline inside the title container, no need to manually position
+        if (this.inlineMode) {
+            return;
+        }
 
         // Use Chroma block as anchor if present, otherwise fall back to title
         const anchor = this.anchorElement || this.titleContainer;

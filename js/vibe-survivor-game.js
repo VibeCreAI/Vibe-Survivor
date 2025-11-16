@@ -860,13 +860,15 @@ class VibeSurvivor {
                                 </div>
                             </div>
                             <div class="survivor-title" style="display: none;">
-                                <img src="images/Title.png" alt="VIBE SURVIVOR" class="title-logo">
+                                <img src="images/Title.png" alt="VIBE SURVIVOR" id="vibe-survivor-logo" class="title-logo" role="button" tabindex="0" aria-label="Play the Vibe Survivor theme">
                                 <p class="game-tagline">Survive the endless waves!</p>
                                 <p class="controls-info">PC: WASD/Arrow Keys to move, SPACEBAR to dash</p>
                                 <p class="controls-info mobile-only">Mobile: Touch screen to move, tap DASH button</p>
-                                <button id="start-survivor" class="survivor-btn primary">START</button>
-                                <button id="options-btn" class="survivor-btn">OPTIONS</button>
-                                <button id="about-btn" class="survivor-btn">ABOUT</button>
+                                <div class="start-actions">
+                                    <button id="start-survivor" class="survivor-btn primary">START</button>
+                                    <button id="options-btn" class="survivor-btn">OPTIONS</button>
+                                    <button id="about-btn" class="survivor-btn">ABOUT</button>
+                                </div>
                             </div>
                         </div>
 
@@ -1277,16 +1279,17 @@ class VibeSurvivor {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                gap: 24px;
-                /* Shift content down so logo is vertically centered */
-                transform: translateY(90px);
+                gap: 16px;
+                justify-content: center;
+                transform: translateY(0);
+                height: 100%;
             }
 
             .loading-logo {
-                max-width: min(80%, 500px);
+                max-width: min(50%, 340px);
                 width: 100%;
                 height: auto;
-                margin-bottom: 20px;
+                margin-bottom: 8px;
                 image-rendering: pixelated;
             }
 
@@ -1986,6 +1989,8 @@ class VibeSurvivor {
                 padding: 8px 12px;
                 z-index: 200;
                 pointer-events: none;
+                opacity: 0;
+                transition: opacity 0.4s ease;
             }
 
             .vibe-survivor-screen {
@@ -2055,12 +2060,37 @@ class VibeSurvivor {
                 outline: none;
             }
 
+            .title-logo:hover,
+            .title-logo:focus-visible,
+            .title-logo.vibe-active {
+                transform: scale(1.02);
+                filter:
+                    drop-shadow(0 0 14px rgba(0, 255, 255, 0.6))
+                    drop-shadow(0 0 28px rgba(0, 255, 255, 0.4));
+                outline: none;
+            }
+
             .survivor-title h1 {
                 color: #00ffff;
                 font-size: 32px;
                 margin-bottom: 20px;
                 font-family: 'NeoDunggeunmoPro', 'Arial Black', sans-serif;
                 animation: neonPulse 2s ease-in-out infinite;
+            }
+
+            .start-actions {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                align-items: center;
+                width: min(280px, 100%);
+                margin: 16px auto 0;
+            }
+
+            .start-actions .survivor-btn {
+                width: 100%;
+                max-width: 100%;
+                margin: 0;
             }
 
             .chroma-awards-block {
@@ -4374,13 +4404,15 @@ class VibeSurvivor {
                     this.initializeMenuNavigation('start', startButtons);
                 }
 
-                this.setupChromaAwardsLogoInteraction();
+            this.setupChromaAwardsLogoInteraction();
+            this.setupVibeSurvivorLogoInteraction();
 
                 // Title content is hidden in HTML initially (display: none on .survivor-title)
                 // Show everything after background loads and mark game as ready
                 const allButtons = [startBtn, optionsBtn, aboutBtn, restartBtn, exitBtn];
                 const titleContent = document.querySelector('.survivor-title');
                 const startScreenBot = window.startScreenBot;
+                const chromaHeader = document.querySelector('.chroma-awards-header');
 
                 // Wait for background transition to complete (600ms CSS transition)
                 setTimeout(() => {
@@ -4405,6 +4437,10 @@ class VibeSurvivor {
                                 // Now fade in both elements at exactly the same time
                                 if (titleContent) {
                                     titleContent.style.opacity = '1';
+                                }
+
+                                if (chromaHeader) {
+                                    chromaHeader.style.opacity = '1';
                                 }
 
                                 if (startScreenBot && typeof startScreenBot.show === 'function') {
@@ -4470,6 +4506,42 @@ class VibeSurvivor {
 
             chromaLink.dataset.bound = 'true';
         }
+    }
+
+    setupVibeSurvivorLogoInteraction() {
+        const vibeLogo = document.getElementById('vibe-survivor-logo');
+        if (!vibeLogo || vibeLogo.dataset.bound === 'true') {
+            return;
+        }
+
+        const playSound = () => {
+            this.playStartMenuThemes();
+        };
+
+        const addActive = () => vibeLogo.classList.add('vibe-active');
+        const removeActive = () => vibeLogo.classList.remove('vibe-active');
+
+        vibeLogo.addEventListener('click', playSound);
+        vibeLogo.addEventListener('touchstart', (event) => {
+            event.preventDefault();
+            addActive();
+            playSound();
+        }, { passive: false });
+        vibeLogo.addEventListener('touchend', removeActive);
+        vibeLogo.addEventListener('touchcancel', removeActive);
+        vibeLogo.addEventListener('mousedown', addActive);
+        vibeLogo.addEventListener('mouseup', removeActive);
+        vibeLogo.addEventListener('mouseleave', removeActive);
+        vibeLogo.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                addActive();
+                playSound();
+            }
+        });
+        vibeLogo.addEventListener('keyup', removeActive);
+
+        vibeLogo.dataset.bound = 'true';
     }
 
     playStartMenuThemes() {
