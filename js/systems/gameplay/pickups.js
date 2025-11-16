@@ -3,7 +3,7 @@
  * Manages XP orbs, HP orbs, and magnet orbs spawning, collection, and behavior
  */
 
-import { PICKUP_SPAWNS } from '../../config/constants.js';
+import { PICKUP_SPAWNS, PASSIVES } from '../../config/constants.js';
 
 export class PickupSystem {
     constructor() {
@@ -36,6 +36,22 @@ export class PickupSystem {
         this.hpOrbPool = null;
         this.magnetOrbPool = null;
         this.chestOrbPool = null;
+    }
+
+    getMagnetStacks(player) {
+        if (!player || !player.passives) return 0;
+        const value = player.passives.magnet;
+        if (typeof value === 'number') {
+            return Math.max(0, Math.min(3, value));
+        }
+        return value ? 1 : 0;
+    }
+
+    getBaseMagnetRange(player) {
+        const stacks = this.getMagnetStacks(player);
+        const perStack = PASSIVES?.MAGNET?.rangePerStack ?? 40;
+        const baseRange = PASSIVES?.MAGNET?.baseRange ?? 80;
+        return baseRange + stacks * perStack;
     }
 
     /**
@@ -75,7 +91,7 @@ export class PickupSystem {
             const distanceSquared = dx * dx + dy * dy;
 
             // Player magnet effect (enhanced when magnetBoost is active)
-            let magnetRange = player.passives.magnet ? 80 : 40;
+            let magnetRange = this.getBaseMagnetRange(player);
 
             // Enhanced magnet range and strength when magnetBoost is active
             if (player.magnetBoost > 0) {
@@ -138,7 +154,7 @@ export class PickupSystem {
             const distanceSquared = dx * dx + dy * dy;
 
             // Magnet effect - same as XP orbs
-            const magnetRange = player.passives.magnet ? 80 : 40;
+            const magnetRange = this.getBaseMagnetRange(player);
             const magnetRangeSquared = magnetRange * magnetRange;
             if (distanceSquared < magnetRangeSquared) {
                 const distance = cachedSqrt(distanceSquared);
@@ -198,7 +214,7 @@ export class PickupSystem {
             const distanceSquared = dx * dx + dy * dy;
 
             // Magnet effect - same as other orbs
-            const magnetRange = player.passives.magnet ? 80 : 40;
+            const magnetRange = this.getBaseMagnetRange(player);
             const magnetRangeSquared = magnetRange * magnetRange;
             if (distanceSquared < magnetRangeSquared) {
                 const distance = cachedSqrt(distanceSquared);

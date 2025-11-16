@@ -74,6 +74,8 @@ import { ChestModal } from './systems/ui/modals/chest-modal.js';
 import { AudioManager } from './systems/audio/audio-manager.js';
 import { GameLoop, EngineTimer, FrameRateCounter } from './core/engine.js';
 
+const BOSS_HEALTH_MULTIPLIER = 1.5;
+
 class VibeSurvivor {
     constructor() {
         this.canvas = null;
@@ -5788,6 +5790,12 @@ class VibeSurvivor {
             case 'titan':
                 this.fireSingularityTitanPattern(boss);
                 return;
+            case 'solar':
+                this.fireSolarWardenPattern(boss);
+                return;
+            case 'prism':
+                this.firePrismSeraphPattern(boss);
+                return;
             default:
                 this.firePulseHunterPattern(boss, healthPercent);
         }
@@ -6061,6 +6069,97 @@ class VibeSurvivor {
             });
         }
     }
+
+    fireSolarWardenPattern(boss) {
+        const bolts = 12;
+        const baseSpeed = 3.2;
+        for (let i = 0; i < bolts; i++) {
+            const angle = (Math.PI * 2 * i) / bolts;
+            this.projectiles.push({
+                x: boss.x,
+                y: boss.y,
+                vx: this.fastCos(angle) * baseSpeed,
+                vy: this.fastSin(angle) * baseSpeed,
+                damage: 30,
+                life: 220,
+                type: 'boss-missile',
+                color: '#FFB347',
+                size: 5,
+                homing: false,
+                explosionRadius: 45,
+                speed: baseSpeed,
+                owner: 'enemy'
+            });
+        }
+
+        const beamOffset = 0.12;
+        const angleToPlayer = Math.atan2(this.player.y - boss.y, this.player.x - boss.x);
+        for (let i = -1; i <= 1; i += 2) {
+            const beamAngle = angleToPlayer + beamOffset * i;
+            const speed = 5.5;
+            this.projectiles.push({
+                x: boss.x,
+                y: boss.y,
+                vx: Math.cos(beamAngle) * speed,
+                vy: Math.sin(beamAngle) * speed,
+                damage: 16,
+                life: 160,
+                type: 'boss-missile',
+                color: '#FFD27F',
+                size: 4,
+                homing: false,
+                explosionRadius: 25,
+                speed,
+                owner: 'enemy'
+            });
+        }
+    }
+
+    firePrismSeraphPattern(boss) {
+        const angleToPlayer = Math.atan2(this.player.y - boss.y, this.player.x - boss.x);
+        const shardCount = 6;
+        for (let i = 0; i < shardCount; i++) {
+            const offset = (Math.PI * 2 * i) / shardCount;
+            const speed = 4;
+            this.projectiles.push({
+                x: boss.x,
+                y: boss.y,
+                vx: Math.cos(angleToPlayer + offset) * speed,
+                vy: Math.sin(angleToPlayer + offset) * speed,
+                damage: 24,
+                life: 200,
+                type: 'boss-missile',
+                color: '#7CFFE8',
+                size: 4,
+                homing: true,
+                homingStrength: 0.08,
+                explosionRadius: 30,
+                speed,
+                owner: 'enemy'
+            });
+        }
+
+        const prismBeams = 3;
+        for (let i = 0; i < prismBeams; i++) {
+            const beamAngle = angleToPlayer + (-0.3 + 0.3 * i);
+            const speed = 6;
+            this.projectiles.push({
+                x: boss.x,
+                y: boss.y,
+                vx: Math.cos(beamAngle) * speed,
+                vy: Math.sin(beamAngle) * speed,
+                damage: 20,
+                life: 140,
+                type: 'boss-missile',
+                color: '#C5FFF5',
+                size: 3,
+                homing: false,
+                explosionRadius: 20,
+                speed,
+                owner: 'enemy'
+            });
+        }
+    }
     
     spawnEnemies() {
         // Delegate to EnemySystem
@@ -6158,7 +6257,9 @@ class VibeSurvivor {
         if (!Array.isArray(BOSS_VARIANTS) || BOSS_VARIANTS.length === 0) {
             return null;
         }
-        const index = Math.min(BOSS_VARIANTS.length - 1, Math.max(0, (level || 1) - 1));
+        const total = BOSS_VARIANTS.length;
+        const normalized = Math.max(1, level || 1);
+        const index = (normalized - 1) % total;
         return BOSS_VARIANTS[index];
     }
 
@@ -6179,15 +6280,19 @@ class VibeSurvivor {
         const variantConfig = this.getBossVariantForLevel(this.bossLevel);
         const sizeMultiplier = variantConfig?.sizeMultiplier || 1;
         const bossColor = variantConfig?.color || config.color;
+        const baseHealth = config.health * (1 + Math.floor(this.gameTime / 30) * 0.3);
+        const scaledHealth = Math.floor(baseHealth * BOSS_HEALTH_MULTIPLIER);
         
         this.enemies.push({
             x: x,
             y: y,
             radius: config.radius * sizeMultiplier,
+            renderRadius: config.radius * sizeMultiplier,
+            baseRadius: config.radius * sizeMultiplier,
             speed: scaledSpeed,
             baseSpeed: config.speed,
-            maxHealth: config.health * (1 + Math.floor(this.gameTime / 30) * 0.3),
-            health: config.health * (1 + Math.floor(this.gameTime / 30) * 0.3),
+            maxHealth: scaledHealth,
+            health: scaledHealth,
             contactDamage: config.contactDamage,
             color: bossColor,
             behavior: config.behavior,
@@ -6208,6 +6313,7 @@ class VibeSurvivor {
             },
             variantId: variantConfig?.id || 'pulse_hunter',
             variantName: variantConfig?.name || 'Pulse Hunter',
+            variantShape: variantConfig?.shape || 'octagon',
             variantState: {},
             missileInterval: variantConfig?.missileInterval || 200,
             bossLevel: this.bossLevel
@@ -6234,9 +6340,8 @@ class VibeSurvivor {
         const sizeMultiplier = this.fastPow(1.05, this.bossesKilled);
         const variantSize = variantConfig?.sizeMultiplier || 1;
         
-        // Use effective first boss HP (4000) as base instead of config HP (1000)
-        // First boss HP = 1000 * (1 + Math.floor(300 / 30) * 0.3) = 1000 * (1 + 10 * 0.3) = 4000
-        const effectiveBaseHP = 4000; // Match first boss effective HP after time scaling
+        // Use effective first boss HP baseline and boost it
+        const effectiveBaseHP = 4000 * BOSS_HEALTH_MULTIPLIER;
         const scaledHealth = Math.floor(effectiveBaseHP * healthMultiplier);
         const scaledSpeed = baseConfig.speed * speedMultiplier;
         const scaledDamage = Math.floor(baseConfig.contactDamage * damageMultiplier);
@@ -6246,6 +6351,8 @@ class VibeSurvivor {
             x: x,
             y: y,
             radius: scaledRadius,
+            renderRadius: scaledRadius,
+            baseRadius: scaledRadius,
             speed: scaledSpeed,
             baseSpeed: scaledSpeed,
             health: scaledHealth,
@@ -6272,6 +6379,7 @@ class VibeSurvivor {
             },
             variantId: variantConfig?.id || 'pulse_hunter',
             variantName: variantConfig?.name || 'Pulse Hunter',
+            variantShape: variantConfig?.shape || 'octagon',
             variantState: {},
             missileInterval: variantConfig?.missileInterval || 200
         });
@@ -6572,6 +6680,12 @@ class VibeSurvivor {
                 case 'titan':
                     this.updateSingularityTitanMovement(enemy, dirX, dirY, distance, playerX, playerY);
                     break;
+                case 'solar':
+                    this.updateSolarWardenMovement(enemy, dirX, dirY, distance, playerX, playerY);
+                    break;
+                case 'prism':
+                    this.updatePrismSeraphMovement(enemy, dirX, dirY, playerX, playerY);
+                    break;
                 default:
                     this.updatePulseHunterMovement(enemy, dirX, dirY, distance, bossHealthPercent, playerX, playerY);
                     break;
@@ -6748,13 +6862,58 @@ class VibeSurvivor {
         enemy.x += dirX * enemy.speed;
         enemy.y += dirY * enemy.speed;
 
-        state.warpCooldown = (state.warpCooldown || 420) - 1;
-        if (state.warpCooldown <= 0) {
-            enemy.x = playerX + (Math.random() - 0.5) * 220;
-            enemy.y = playerY + (Math.random() - 0.5) * 220;
-            state.warpCooldown = 420;
+        state.rumbleTimer = (state.rumbleTimer || 240) - 1;
+        if (state.rumbleTimer <= 0) {
+            state.rumbleTimer = 240;
             this.createHitParticles(enemy.x, enemy.y, '#FFE34D');
         }
+    }
+
+    updateSolarWardenMovement(enemy, dirX, dirY, distance, playerX, playerY) {
+        enemy.variantState = enemy.variantState || {};
+        const state = enemy.variantState;
+        const desiredDistance = 260;
+        const delta = distance - desiredDistance;
+
+        if (Math.abs(delta) > 20) {
+            const approach = delta > 0 ? 1 : -1;
+            enemy.x += dirX * enemy.speed * 0.85 * approach;
+            enemy.y += dirY * enemy.speed * 0.85 * approach;
+        }
+
+        state.orbitPhase = (state.orbitPhase || 0) + 0.035;
+        enemy.x += this.fastCos(state.orbitPhase) * enemy.speed * 0.8;
+        enemy.y += this.fastSin(state.orbitPhase) * enemy.speed * 0.8;
+
+        state.flarePulse = (state.flarePulse || 0) + 0.08;
+        const pulse = 1 + Math.sin(state.flarePulse) * 0.15;
+        enemy.renderRadius = (enemy.baseRadius || enemy.radius || 40) * pulse;
+    }
+
+    updatePrismSeraphMovement(enemy, dirX, dirY, playerX, playerY) {
+        enemy.variantState = enemy.variantState || {};
+        const state = enemy.variantState;
+        state.targetTimer = (state.targetTimer || 0) - 1;
+
+        if (!state.target || state.targetTimer <= 0) {
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 220 + Math.random() * 120;
+            state.target = {
+                x: playerX + this.fastCos(angle) * distance,
+                y: playerY + this.fastSin(angle) * distance
+            };
+            state.targetTimer = 90;
+        }
+
+        const [moveX, moveY] = Vector2.direction(enemy.x, enemy.y, state.target.x, state.target.y);
+        enemy.x += moveX * enemy.speed * 2.1;
+        enemy.y += moveY * enemy.speed * 2.1;
+
+        if (Vector2.distanceSquared(enemy.x, enemy.y, state.target.x, state.target.y) < 1600) {
+            state.targetTimer = 0;
+        }
+
+        enemy.angle = (enemy.angle || 0) + 0.12;
     }
 
     updateEnemies() {
@@ -7792,7 +7951,13 @@ class VibeSurvivor {
                 this.player.passives.regeneration = { timer: 0 };
                 break;
             case 'magnet':
-                this.player.passives.magnet = true;
+                if (typeof this.player.passives.magnet === 'number') {
+                    this.player.passives.magnet = Math.min(3, this.player.passives.magnet + 1);
+                } else if (this.player.passives.magnet) {
+                    this.player.passives.magnet = Math.min(3, 2);
+                } else {
+                    this.player.passives.magnet = 1;
+                }
                 break;
             case 'armor':
                 // Track count for stackable passive
@@ -7841,7 +8006,7 @@ class VibeSurvivor {
         }
 
         // Only set to true for non-stackable passives
-        if (!['health_boost', 'speed_boost', 'armor', 'critical', 'dash_boost'].includes(passiveId)) {
+        if (!['health_boost', 'speed_boost', 'armor', 'critical', 'dash_boost', 'magnet'].includes(passiveId)) {
             this.player.passives[passiveId] = true;
         }
     }
@@ -9429,6 +9594,83 @@ class VibeSurvivor {
         
         this.ctx.restore();
     }
+
+    drawBossShape(enemy) {
+        const shape = enemy.variantShape || 'octagon';
+        const radius = enemy.renderRadius || enemy.radius || 40;
+        this.ctx.beginPath();
+
+        switch (shape) {
+            case 'triangle':
+                this.drawRegularPolygon(3, radius);
+                break;
+            case 'square':
+                this.drawRegularPolygon(4, radius);
+                break;
+            case 'diamond':
+                this.ctx.moveTo(0, -radius);
+                this.ctx.lineTo(radius, 0);
+                this.ctx.lineTo(0, radius);
+                this.ctx.lineTo(-radius, 0);
+                this.ctx.closePath();
+                break;
+            case 'hexagon':
+                this.drawRegularPolygon(6, radius);
+                break;
+            case 'pentagon':
+                this.drawRegularPolygon(5, radius);
+                break;
+            case 'star':
+                this.drawStarShape(radius);
+                break;
+            case 'circle':
+                this.ctx.arc(0, 0, radius, 0, Math.PI * 2);
+                break;
+            case 'octagon':
+            default:
+                this.drawRegularPolygon(8, radius);
+                break;
+        }
+
+        this.ctx.stroke();
+    }
+
+    drawRegularPolygon(sides, radius) {
+        const step = (Math.PI * 2) / sides;
+        const offset = Math.PI / 2;
+        for (let i = 0; i <= sides; i++) {
+            const angle = i * step - offset;
+            const x = this.fastCos(angle) * radius;
+            const y = this.fastSin(angle) * radius;
+            if (i === 0) {
+                this.ctx.moveTo(x, y);
+            } else {
+                this.ctx.lineTo(x, y);
+            }
+        }
+        this.ctx.closePath();
+    }
+
+    drawStarShape(radius) {
+        const spikes = 5;
+        const innerRadius = radius * 0.45;
+        const step = Math.PI / spikes;
+        let rot = Math.PI / 2 * 3;
+        this.ctx.moveTo(0, -radius);
+        for (let i = 0; i < spikes; i++) {
+            let x = this.fastCos(rot) * radius;
+            let y = this.fastSin(rot) * radius;
+            this.ctx.lineTo(x, y);
+            rot += step;
+
+            x = this.fastCos(rot) * innerRadius;
+            y = this.fastSin(rot) * innerRadius;
+            this.ctx.lineTo(x, y);
+            rot += step;
+        }
+        this.ctx.lineTo(0, -radius);
+        this.ctx.closePath();
+    }
     
     // Return projectile to pool
     returnProjectileToPool(projectile) {
@@ -9977,21 +10219,8 @@ class VibeSurvivor {
                         break;
                         
                     case 'boss':
-                        // Large octagon wireframe
-                        const rb = enemy.radius || 40;
-                        this.ctx.beginPath();
-                        for (let i = 0; i < 8; i++) {
-                            const angle = (Math.PI * 2 * i) / 8;
-                            const x = this.fastCos(angle) * rb;
-                            const y = this.fastSin(angle) * rb;
-                            if (i === 0) {
-                                this.ctx.moveTo(x, y);
-                            } else {
-                                this.ctx.lineTo(x, y);
-                            }
-                        }
-                        this.ctx.closePath();
-                        this.ctx.stroke();
+                        const rb = enemy.renderRadius || enemy.radius || 40;
+                        this.drawBossShape(enemy);
                         
                         // Inner cross pattern with reduced shadow for inner details
                         const originalShadowBlur = this.ctx.shadowBlur;
@@ -10004,6 +10233,7 @@ class VibeSurvivor {
                         this.ctx.moveTo(-rb * 0.7, rb * 0.7);
                         this.ctx.lineTo(rb * 0.7, -rb * 0.7);
                         this.ctx.stroke();
+                        this.ctx.shadowBlur = originalShadowBlur;
                         
                         // Reset alpha after boss drawing is complete
                         this.ctx.globalAlpha = 1.0;
@@ -10012,15 +10242,15 @@ class VibeSurvivor {
                 
                 // Health bar for special enemies
                 if (enemy.health < enemy.maxHealth) {
-                    const barWidth = (enemy.radius || 20) * 2;
+                    const barWidth = (enemy.renderRadius || enemy.radius || 20) * 2;
                     const barHeight = 3;
                     const healthPercent = enemy.health / enemy.maxHealth;
                     
                     this.ctx.fillStyle = '#333';
-                    this.ctx.fillRect(-barWidth / 2, -(enemy.radius || 20) - 8, barWidth, barHeight);
+                    this.ctx.fillRect(-barWidth / 2, -(enemy.renderRadius || enemy.radius || 20) - 8, barWidth, barHeight);
                     
                     this.ctx.fillStyle = healthPercent > 0.5 ? '#0f0' : healthPercent > 0.25 ? '#ff0' : '#f00';
-                    this.ctx.fillRect(-barWidth / 2, -(enemy.radius || 20) - 8, barWidth * healthPercent, barHeight);
+                    this.ctx.fillRect(-barWidth / 2, -(enemy.renderRadius || enemy.radius || 20) - 8, barWidth * healthPercent, barHeight);
                 }
                 
                 this.ctx.restore();

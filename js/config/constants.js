@@ -100,6 +100,7 @@ export const BOSS_VARIANTS = [
         attackPattern: 'pulse',
         missileInterval: 200,
         sizeMultiplier: 1.0,
+        shape: 'octagon',
         description: 'Classic homing missile barrages with dash finishers.'
     },
     {
@@ -110,6 +111,7 @@ export const BOSS_VARIANTS = [
         attackPattern: 'shock',
         missileInterval: 170,
         sizeMultiplier: 1.05,
+        shape: 'square',
         description: 'Orbits the player while unleashing beam sweeps and shock mines.'
     },
     {
@@ -120,6 +122,7 @@ export const BOSS_VARIANTS = [
         attackPattern: 'rift',
         missileInterval: 150,
         sizeMultiplier: 1.1,
+        shape: 'diamond',
         description: 'Relentless dash assassin that rains void shards.'
     },
     {
@@ -130,6 +133,7 @@ export const BOSS_VARIANTS = [
         attackPattern: 'carrier',
         missileInterval: 140,
         sizeMultiplier: 1.2,
+        shape: 'hexagon',
         description: 'Launches drone waves and heavy ordinance.'
     },
     {
@@ -140,7 +144,41 @@ export const BOSS_VARIANTS = [
         attackPattern: 'titan',
         missileInterval: 130,
         sizeMultiplier: 1.3,
+        shape: 'circle',
         description: 'Final form wielding gravity wells and radiant bursts.'
+    },
+    {
+        id: 'solar_warden',
+        name: 'Solar Warden',
+        color: '#FFB347',
+        behavior: 'solar',
+        attackPattern: 'solar',
+        missileInterval: 140,
+        sizeMultiplier: 1.25,
+        shape: 'pentagon',
+        description: 'Radiant guardian that floods the arena with solar flares.'
+    },
+    {
+        id: 'prism_seraph',
+        name: 'Prism Seraph',
+        color: '#7CFFE8',
+        behavior: 'prism',
+        attackPattern: 'prism',
+        missileInterval: 135,
+        sizeMultiplier: 1.2,
+        shape: 'triangle',
+        description: 'Shifts angles constantly while firing prismatic shards.'
+    },
+    {
+        id: 'void_architect',
+        name: 'Void Architect',
+        color: '#AA66FF',
+        behavior: 'rift',
+        attackPattern: 'rift',
+        missileInterval: 145,
+        sizeMultiplier: 1.15,
+        shape: 'star',
+        description: 'A crystalline vortex that warps space with mirror shards.'
     }
 ];
 
@@ -295,7 +333,10 @@ export const PASSIVES = {
         name: 'Magnet',
         description: 'Attract XP orbs',
         range: 1000,
-        stackable: false
+        stackable: true,
+        maxStacks: 3,
+        rangePerStack: 40,
+        baseRange: 80
     },
     ARMOR: {
         name: 'Armor',
