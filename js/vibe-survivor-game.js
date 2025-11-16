@@ -6298,6 +6298,7 @@ class VibeSurvivor {
         const enemyTypes = this.getAvailableEnemyTypes();
         const type = this.selectEnemyType(enemyTypes);
         const config = this.getEnemyConfig(type);
+        const variant = this.selectEnemyVariant(type);
         
         // Calculate scaled speed - keep enemy speed constant to maintain gameplay feel
         const baseSpeed = config.speed; // Removed time-based speed scaling
@@ -6319,24 +6320,46 @@ class VibeSurvivor {
         const totalHealthMultiplier = config.health * timeScaling * bossScaling;
         const totalDamageMultiplier = config.contactDamage * (1 + (this.bossesKilled || 0) * 0.1); // 10% damage per boss
         
+        const sizeMult = variant?.sizeMult || 1;
+        const speedMult = variant?.speedMult || 1;
+        const healthMult = variant?.healthMult || 1;
+        const radius = Math.max(4, Math.floor(config.radius * sizeMult));
+        const enemySpeed = scaledSpeed * speedMult;
+        const enemyHealth = Math.floor(totalHealthMultiplier * healthMult);
+        const enemyDamage = Math.floor(totalDamageMultiplier);
+        
         const enemy = {
             x: x,
             y: y,
-            radius: config.radius,
-            speed: scaledSpeed,
-            baseSpeed: baseSpeed, // Store base speed for future scaling updates
-            maxHealth: Math.floor(totalHealthMultiplier),
-            health: Math.floor(totalHealthMultiplier),
-            contactDamage: Math.floor(totalDamageMultiplier),
-            color: config.color,
+            radius: radius,
+            speed: enemySpeed,
+            baseSpeed: enemySpeed, // Store base speed for future scaling updates
+            maxHealth: enemyHealth,
+            health: enemyHealth,
+            contactDamage: enemyDamage,
+            color: variant?.color || config.color,
             behavior: config.behavior,
             specialCooldown: 0,
             burning: null,
-            spawnedMinions: false
+            spawnedMinions: false,
+            variantId: variant?.id || 'standard',
+            variantShape: variant?.shape || 'circle',
+            variantColor: variant?.color || null,
+            variantState: {},
+            orbitStrength: variant?.orbitStrength || 0,
+            orbitDirection: Math.random() < 0.5 ? -1 : 1,
+            zigzagStrength: variant?.zigzagStrength || 0,
+            zigzagPeriod: variant?.zigzagPeriod || 0,
+            burstDuration: variant?.burstDuration || 0,
+            burstCooldown: variant?.burstCooldown || 0,
+            burstSpeedMultiplier: variant?.burstSpeedMultiplier || 0,
+            teleportDistance: variant?.teleportDistance || 80,
+            teleportCooldown: variant?.teleportCooldown || 180,
+            driftStrength: variant?.driftStrength || 0
         };
 
         // Give every enemy a small spin for visual motion
-        const rotSpeed = config.rotSpeed ?? 0.02;
+        const rotSpeed = (variant?.rotSpeed ?? config.rotSpeed) ?? 0.02;
         enemy.angle = Math.random() * Math.PI * 2;
         enemy.rotSpeed = rotSpeed * (Math.random() < 0.5 ? -1 : 1);
         
@@ -6582,6 +6605,63 @@ class VibeSurvivor {
         };
         
         return configs[type] || configs.basic;
+    }
+
+    getEnemyVariantPool() {
+        return {
+            basic: [
+                { id: 'standard', shape: 'circle', weight: 1, minBosses: 0 },
+                { id: 'orbiter', shape: 'triangle', color: '#00e5ff', weight: 0.9, minBosses: 1, orbitStrength: 0.45, speedMult: 1.05 },
+                { id: 'spiral', shape: 'pentagon', color: '#ffa640', weight: 0.7, minBosses: 2, orbitStrength: 0.65, healthMult: 1.2, rotSpeed: 0.022 },
+                { id: 'swarmling', shape: 'diamond', color: '#ff66cc', weight: 0.6, minBosses: 3, sizeMult: 0.85, speedMult: 1.25, healthMult: 0.8 }
+            ],
+            fast: [
+                { id: 'striker', shape: 'circle', weight: 1, minBosses: 0 },
+                { id: 'zigzag', shape: 'chevron', color: '#baff29', weight: 0.8, minBosses: 1, zigzagStrength: 0.55, zigzagPeriod: 26, speedMult: 1.05, healthMult: 0.95, rotSpeed: 0.03 }
+            ],
+            tank: [
+                { id: 'bulwark', shape: 'square', weight: 1, minBosses: 0 },
+                { id: 'roller', shape: 'hex', color: '#ff3366', weight: 0.7, minBosses: 1, healthMult: 1.2, speedMult: 0.85, rotSpeed: 0.07 }
+            ],
+            flyer: [
+                { id: 'winger', shape: 'circle', weight: 1, minBosses: 0 },
+                { id: 'dive-bomber', shape: 'triangle', color: '#ff7f50', weight: 0.9, minBosses: 2, burstDuration: 18, burstCooldown: 90, burstSpeedMultiplier: 2.2 }
+            ],
+            phantom: [
+                { id: 'wisp', shape: 'circle', weight: 1, minBosses: 0 },
+                { id: 'phase-walker', shape: 'star', color: '#3ef2a6', weight: 0.7, minBosses: 2, teleportDistance: 110, teleportCooldown: 140, driftStrength: 0.25, speedMult: 1.1 }
+            ]
+        };
+    }
+
+    selectEnemyVariant(type) {
+        const pool = this.getEnemyVariantPool()[type];
+        if (!pool || pool.length === 0) return null;
+
+        const unlocked = pool.filter(variant => (variant.minBosses || 0) <= (this.bossesKilled || 0));
+        if (unlocked.length === 0) {
+            return pool[0];
+        }
+
+        let totalWeight = 0;
+        const weights = unlocked.map(variant => {
+            const growthSteps = Math.max(0, (this.bossesKilled || 0) - (variant.minBosses || 0));
+            const weightGrowth = 1 + growthSteps * 0.35;
+            const weight = (variant.weight || 1) * weightGrowth;
+            totalWeight += weight;
+            return weight;
+        });
+
+        const roll = Math.random() * totalWeight;
+        let cumulative = 0;
+        for (let i = 0; i < unlocked.length; i++) {
+            cumulative += weights[i];
+            if (roll <= cumulative) {
+                return unlocked[i];
+            }
+        }
+
+        return unlocked[unlocked.length - 1];
     }
     
     // Update enemy groupings for batch processing
@@ -10229,20 +10309,77 @@ class VibeSurvivor {
                 this.ctx.save();
                 this.ctx.translate(enemy.x, enemy.y);
                 
-                // Remove shadow for better performance and visibility on black background
-                
-                // Simple wireframe circle - ALWAYS render
                 const r = enemy.radius || 15;
-                this.ctx.strokeStyle = enemy.color || '#00ffff';
-                this.ctx.lineWidth = 2;
-                this.ctx.beginPath();
-                this.ctx.arc(0, 0, r, 0, Math.PI * 2);
-                this.ctx.stroke();
-                
-                // Always show inner cross pattern for visibility
+                const color = enemy.variantColor || enemy.color || '#00ffff';
+                const shape = enemy.variantShape || 'circle';
+
+                // Draw body shape with rotation
                 this.ctx.save();
                 this.ctx.rotate(enemy.angle || 0);
-                this.ctx.strokeStyle = (enemy.color || '#00ffff') + '80';
+                this.ctx.strokeStyle = color;
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+
+                const drawPolygon = (sides, rotation = 0) => {
+                    for (let i = 0; i < sides; i++) {
+                        const angle = rotation + (Math.PI * 2 * i) / sides;
+                        const px = Math.cos(angle) * r;
+                        const py = Math.sin(angle) * r;
+                        if (i === 0) {
+                            this.ctx.moveTo(px, py);
+                        } else {
+                            this.ctx.lineTo(px, py);
+                        }
+                    }
+                    this.ctx.closePath();
+                };
+
+                switch (shape) {
+                    case 'triangle':
+                        drawPolygon(3, -Math.PI / 2);
+                        break;
+                    case 'diamond':
+                        drawPolygon(4, Math.PI / 4);
+                        break;
+                    case 'square':
+                        drawPolygon(4, 0);
+                        break;
+                    case 'pentagon':
+                        drawPolygon(5, -Math.PI / 2);
+                        break;
+                    case 'hex':
+                        drawPolygon(6, Math.PI / 6);
+                        break;
+                    case 'chevron':
+                        this.ctx.moveTo(-r * 0.8, -r * 0.2);
+                        this.ctx.lineTo(0, r * 0.8);
+                        this.ctx.lineTo(r * 0.8, -r * 0.2);
+                        break;
+                    case 'star': {
+                        const points = 5;
+                        const innerR = r * 0.5;
+                        for (let i = 0; i < points * 2; i++) {
+                            const angle = -Math.PI / 2 + (Math.PI * i) / points;
+                            const radius = i % 2 === 0 ? r : innerR;
+                            const px = Math.cos(angle) * radius;
+                            const py = Math.sin(angle) * radius;
+                            if (i === 0) {
+                                this.ctx.moveTo(px, py);
+                            } else {
+                                this.ctx.lineTo(px, py);
+                            }
+                        }
+                        this.ctx.closePath();
+                        break;
+                    }
+                    default:
+                        this.ctx.arc(0, 0, r, 0, Math.PI * 2);
+                        break;
+                }
+                this.ctx.stroke();
+
+                // Cross overlay for readability
+                this.ctx.strokeStyle = color + '80';
                 this.ctx.lineWidth = 1;
                 this.ctx.beginPath();
                 this.ctx.moveTo(-r * 0.7, 0);
@@ -10308,12 +10445,28 @@ class VibeSurvivor {
                 
                 switch (type) {
                     case 'tank':
-                        // Wireframe square
+                        // Variant shapes (default square)
                         const r = enemy.radius || 20;
-                        this.ctx.strokeRect(-r, -r, r * 2, r * 2);
+                        const tankShape = enemy.variantShape || 'square';
+                        const tankColor = enemy.variantColor || enemy.color || '#ff00ff';
+                        this.ctx.strokeStyle = tankColor;
+                        this.ctx.lineWidth = 2;
+                        this.ctx.beginPath();
+                        if (tankShape === 'hex') {
+                            for (let i = 0; i < 6; i++) {
+                                const angle = Math.PI / 6 + (Math.PI * 2 * i) / 6;
+                                const px = Math.cos(angle) * r;
+                                const py = Math.sin(angle) * r;
+                                if (i === 0) this.ctx.moveTo(px, py); else this.ctx.lineTo(px, py);
+                            }
+                            this.ctx.closePath();
+                            this.ctx.stroke();
+                        } else {
+                            this.ctx.strokeRect(-r, -r, r * 2, r * 2);
+                        }
                         
                         // Grid pattern
-                        this.ctx.strokeStyle = (enemy.color || '#ff00ff') + '60';
+                        this.ctx.strokeStyle = (tankColor) + '60';
                         this.ctx.lineWidth = 1;
                         this.ctx.beginPath();
                         this.ctx.moveTo(-r, 0);

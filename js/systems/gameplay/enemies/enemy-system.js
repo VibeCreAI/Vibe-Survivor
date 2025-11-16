@@ -112,6 +112,7 @@ export class EnemySystem {
         const enemyTypes = getAvailableEnemyTypes();
         const type = selectEnemyType(enemyTypes);
         const config = getEnemyConfig(type);
+        const variant = this.selectEnemyVariant(type, bossesKilled || 0);
 
         // Calculate scaled speed - keep enemy speed constant to maintain gameplay feel
         const baseSpeed = config.speed;
@@ -133,24 +134,47 @@ export class EnemySystem {
         const totalHealthMultiplier = config.health * timeScaling * bossScaling;
         const totalDamageMultiplier = config.contactDamage * (1 + (bossesKilled || 0) * 0.1); // 10% damage per boss
 
+        // Apply variant stat tweaks
+        const sizeMult = variant?.sizeMult || 1;
+        const speedMult = variant?.speedMult || 1;
+        const healthMult = variant?.healthMult || 1;
+        const radius = Math.max(4, Math.floor(config.radius * sizeMult));
+        const enemySpeed = scaledSpeed * speedMult;
+        const enemyHealth = Math.floor(totalHealthMultiplier * healthMult);
+        const enemyDamage = Math.floor(totalDamageMultiplier);
+
         const enemy = {
             x: x,
             y: y,
-            radius: config.radius,
-            speed: scaledSpeed,
-            baseSpeed: baseSpeed,
-            maxHealth: Math.floor(totalHealthMultiplier),
-            health: Math.floor(totalHealthMultiplier),
-            contactDamage: Math.floor(totalDamageMultiplier),
-            color: config.color,
+            radius: radius,
+            speed: enemySpeed,
+            baseSpeed: enemySpeed,
+            maxHealth: enemyHealth,
+            health: enemyHealth,
+            contactDamage: enemyDamage,
+            color: variant?.color || config.color,
             behavior: config.behavior,
             specialCooldown: 0,
             burning: null,
-            spawnedMinions: false
+            spawnedMinions: false,
+            variantId: variant?.id || 'standard',
+            variantShape: variant?.shape || 'circle',
+            variantColor: variant?.color || null,
+            variantState: {},
+            orbitStrength: variant?.orbitStrength || 0,
+            orbitDirection: Math.random() < 0.5 ? -1 : 1,
+            zigzagStrength: variant?.zigzagStrength || 0,
+            zigzagPeriod: variant?.zigzagPeriod || 0,
+            burstDuration: variant?.burstDuration || 0,
+            burstCooldown: variant?.burstCooldown || 0,
+            burstSpeedMultiplier: variant?.burstSpeedMultiplier || 0,
+            teleportDistance: variant?.teleportDistance || 80,
+            teleportCooldown: variant?.teleportCooldown || 180,
+            driftStrength: variant?.driftStrength || 0
         };
 
         // Spin every enemy for added motion
-        const rotSpeed = config.rotSpeed ?? 0.02;
+        const rotSpeed = (variant?.rotSpeed ?? config.rotSpeed) ?? 0.02;
         enemy.angle = Math.random() * Math.PI * 2;
         enemy.rotSpeed = rotSpeed * (Math.random() < 0.5 ? -1 : 1);
 
@@ -402,6 +426,68 @@ export class EnemySystem {
     }
 
     /**
+     * Variant pools for normal enemies, unlocked by bosses defeated
+     */
+    getEnemyVariantPool() {
+        return {
+            basic: [
+                { id: 'standard', shape: 'circle', weight: 1, minBosses: 0 },
+                { id: 'orbiter', shape: 'triangle', color: '#00e5ff', weight: 0.9, minBosses: 1, orbitStrength: 0.45, speedMult: 1.05 },
+                { id: 'spiral', shape: 'pentagon', color: '#ffa640', weight: 0.7, minBosses: 2, orbitStrength: 0.65, healthMult: 1.2, rotSpeed: 0.022 },
+                { id: 'swarmling', shape: 'diamond', color: '#ff66cc', weight: 0.6, minBosses: 3, sizeMult: 0.85, speedMult: 1.25, healthMult: 0.8 }
+            ],
+            fast: [
+                { id: 'striker', shape: 'circle', weight: 1, minBosses: 0 },
+                { id: 'zigzag', shape: 'chevron', color: '#baff29', weight: 0.8, minBosses: 1, zigzagStrength: 0.55, zigzagPeriod: 26, speedMult: 1.05, healthMult: 0.95, rotSpeed: 0.03 }
+            ],
+            tank: [
+                { id: 'bulwark', shape: 'square', weight: 1, minBosses: 0 },
+                { id: 'roller', shape: 'hex', color: '#ff3366', weight: 0.7, minBosses: 1, healthMult: 1.2, speedMult: 0.85, rotSpeed: 0.07 }
+            ],
+            flyer: [
+                { id: 'winger', shape: 'circle', weight: 1, minBosses: 0 },
+                { id: 'dive-bomber', shape: 'triangle', color: '#ff7f50', weight: 0.9, minBosses: 2, burstDuration: 18, burstCooldown: 90, burstSpeedMultiplier: 2.2 }
+            ],
+            phantom: [
+                { id: 'wisp', shape: 'circle', weight: 1, minBosses: 0 },
+                { id: 'phase-walker', shape: 'star', color: '#3ef2a6', weight: 0.7, minBosses: 2, teleportDistance: 110, teleportCooldown: 140, driftStrength: 0.25, speedMult: 1.1 }
+            ]
+        };
+    }
+
+    /**
+     * Weighted selection for variants with boss-based unlocks
+     */
+    selectEnemyVariant(type, bossesKilled) {
+        const pool = this.getEnemyVariantPool()[type];
+        if (!pool || pool.length === 0) return null;
+
+        const unlocked = pool.filter(variant => (variant.minBosses || 0) <= (bossesKilled || 0));
+        if (unlocked.length === 0) {
+            return pool[0];
+        }
+
+        let totalWeight = 0;
+        const weights = unlocked.map(variant => {
+            const growthSteps = Math.max(0, (bossesKilled || 0) - (variant.minBosses || 0));
+            const weightGrowth = 1 + growthSteps * 0.35;
+            const weight = (variant.weight || 1) * weightGrowth;
+            totalWeight += weight;
+            return weight;
+        });
+
+        const roll = Math.random() * totalWeight;
+        let cumulative = 0;
+        for (let i = 0; i < unlocked.length; i++) {
+            cumulative += weights[i];
+            if (roll <= cumulative) {
+                return unlocked[i];
+            }
+        }
+        return unlocked[unlocked.length - 1];
+    }
+
+    /**
      * Organize enemies by behavior type for batch processing
      * Groups enemies for optimized behavior handling
      * @param {Array} enemies - All enemies
@@ -462,8 +548,22 @@ export class EnemySystem {
 
         for (const enemy of chaseEnemies) {
             const [dirX, dirY] = direction(enemy.x, enemy.y, playerX, playerY);
-            enemy.x += dirX * enemy.speed;
-            enemy.y += dirY * enemy.speed;
+            let moveX = dirX;
+            let moveY = dirY;
+
+            // Orbiting variants add perpendicular movement for a curved chase
+            if (enemy.orbitStrength) {
+                const orbitX = -dirY * enemy.orbitDirection;
+                const orbitY = dirX * enemy.orbitDirection;
+                moveX += orbitX * enemy.orbitStrength;
+                moveY += orbitY * enemy.orbitStrength;
+                const len = Math.hypot(moveX, moveY) || 1;
+                moveX /= len;
+                moveY /= len;
+            }
+
+            enemy.x += moveX * enemy.speed;
+            enemy.y += moveY * enemy.speed;
         }
     }
 
@@ -501,19 +601,40 @@ export class EnemySystem {
 
             // Apply movement
             const [dirX, dirY] = direction(enemy.x, enemy.y, playerX, playerY);
+            let moveX, moveY;
             if (dodgeX !== 0 || dodgeY !== 0) {
                 const [normDodgeX, normDodgeY] = normalize(dodgeX, dodgeY);
                 const [blendX, blendY] = add(
                     normDodgeX * 0.7, normDodgeY * 0.7,
                     dirX * 0.3, dirY * 0.3
                 );
-                const [finalDirX, finalDirY] = normalize(blendX, blendY);
-                enemy.x += finalDirX * enemy.speed;
-                enemy.y += finalDirY * enemy.speed;
+                [moveX, moveY] = normalize(blendX, blendY);
             } else {
-                enemy.x += dirX * enemy.speed;
-                enemy.y += dirY * enemy.speed;
+                moveX = dirX;
+                moveY = dirY;
             }
+
+            // Zig-zag variants strafe side-to-side on a timer
+            if (enemy.zigzagStrength) {
+                const state = enemy.variantState || (enemy.variantState = {});
+                if (typeof state.zigDir !== 'number') {
+                    state.zigDir = Math.random() < 0.5 ? -1 : 1;
+                }
+                state.zigTimer = (state.zigTimer || 0) + 1;
+                const period = enemy.zigzagPeriod || 24;
+                if (state.zigTimer >= period) {
+                    state.zigTimer = 0;
+                    state.zigDir *= -1;
+                }
+                moveX += -dirY * enemy.zigzagStrength * state.zigDir;
+                moveY += dirX * enemy.zigzagStrength * state.zigDir;
+                const len = Math.hypot(moveX, moveY) || 1;
+                moveX /= len;
+                moveY /= len;
+            }
+
+            enemy.x += moveX * enemy.speed;
+            enemy.y += moveY * enemy.speed;
         }
     }
 
@@ -562,16 +683,33 @@ export class EnemySystem {
         for (const enemy of flyEnemies) {
             const [dirX, dirY] = direction(enemy.x, enemy.y, playerX, playerY);
             const distSq = distanceSquared(enemy.x, enemy.y, playerX, playerY);
+            let speed = enemy.speed;
+
+            // Dive-bomber variants periodically burst toward the player
+            if (enemy.burstDuration && enemy.burstSpeedMultiplier) {
+                const state = enemy.variantState || (enemy.variantState = {});
+                state.burstCooldown = Math.max(0, (state.burstCooldown || 0) - 1);
+                if (state.burstDuration > 0) {
+                    speed *= enemy.burstSpeedMultiplier;
+                    state.burstDuration--;
+                    if (state.burstDuration === 0) {
+                        state.burstCooldown = enemy.burstCooldown || 60;
+                    }
+                } else if (state.burstCooldown === 0 && distSq > orbitRadiusSq * 0.4) {
+                    state.burstDuration = enemy.burstDuration;
+                    speed *= enemy.burstSpeedMultiplier;
+                }
+            }
 
             if (distSq > orbitRadiusSq) {
                 // Move towards player when far
-                enemy.x += dirX * enemy.speed;
-                enemy.y += dirY * enemy.speed;
+                enemy.x += dirX * speed;
+                enemy.y += dirY * speed;
             } else {
                 // Orbital movement when close
                 const [orbitX, orbitY] = rotate(dirX, dirY, Math.PI / 2);
-                enemy.x += orbitX * enemy.speed;
-                enemy.y += orbitY * enemy.speed;
+                enemy.x += orbitX * speed;
+                enemy.y += orbitY * speed;
             }
         }
     }
@@ -595,20 +733,29 @@ export class EnemySystem {
 
         for (const enemy of teleportEnemies) {
             const distSq = distanceSquared(enemy.x, enemy.y, playerX, playerY);
+            const teleportDistance = enemy.teleportDistance || 80;
+            const teleportCooldown = enemy.teleportCooldown || 180;
 
             if (enemy.specialCooldown <= 0 && distSq > teleportRangeSq) {
                 createTeleportParticles(enemy.x, enemy.y);
-                const teleportDistance = 80;
                 const angle = Math.random() * Math.PI * 2;
                 const [teleportX, teleportY] = rotate(teleportDistance, 0, angle);
                 enemy.x = playerX + teleportX;
                 enemy.y = playerY + teleportY;
                 createTeleportParticles(enemy.x, enemy.y);
-                enemy.specialCooldown = 180;
+                enemy.specialCooldown = teleportCooldown;
             } else {
                 const [dirX, dirY] = direction(enemy.x, enemy.y, playerX, playerY);
                 enemy.x += dirX * enemy.speed * 0.5;
                 enemy.y += dirY * enemy.speed * 0.5;
+
+                // Phase variants drift sideways while closing in
+                if (enemy.driftStrength) {
+                    const driftX = -dirY * enemy.driftStrength;
+                    const driftY = dirX * enemy.driftStrength;
+                    enemy.x += driftX * enemy.speed * 0.5;
+                    enemy.y += driftY * enemy.speed * 0.5;
+                }
             }
         }
     }
