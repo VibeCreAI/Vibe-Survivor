@@ -4504,8 +4504,6 @@ class VibeSurvivor {
                 if (this.pendingLevelUps === 0) {
                     this.gameRunning = true;
                     this.timePaused = false;
-                    // Resume gatling gun looping sound if it was playing
-                    this.audioManager.resumeLoopingSound('weaponGatlingGun');
                     this.startAnimationLoop();
                 }
             });
@@ -4544,9 +4542,6 @@ class VibeSurvivor {
                 // Resume game
                 this.gameRunning = true;
                 this.timePaused = false;
-
-                // Resume looping weapon sounds
-                this.audioManager.resumeLoopingSound('weaponGatlingGun');
 
                 // Restart animation loop if needed
                 this.startAnimationLoop();
@@ -4992,9 +4987,16 @@ class VibeSurvivor {
             let canFire = true;
 
             if (weapon.type === 'gatling_gun') {
+                const triggerBurstSound = () => {
+                    if (this.audioManager) {
+                        this.audioManager.playSound('weaponGatlingGun', 0.7);
+                    }
+                };
+
                 if (!weapon.burstState) {
                     weapon.burstState = 'firing';
                     weapon.burstTimer = weapon.gatlingFireDuration || 60;
+                    triggerBurstSound();
                 }
 
                 weapon.burstTimer = (weapon.burstTimer ?? 0) - 1;
@@ -5004,6 +5006,10 @@ class VibeSurvivor {
                     weapon.burstTimer = nextState === 'firing'
                         ? (weapon.gatlingFireDuration || 60)
                         : (weapon.gatlingBreakDuration || 30);
+
+                    if (nextState === 'firing') {
+                        triggerBurstSound();
+                    }
                 }
 
                 canFire = weapon.burstState === 'firing';
@@ -5058,18 +5064,9 @@ class VibeSurvivor {
         }
     }
 
-    pauseLoopingWeaponSounds() {
-        if (!this.audioManager) return;
-        this.audioManager.pauseLoopingSound('weaponGatlingGun');
-    }
+    pauseLoopingWeaponSounds() {}
 
-    resumeLoopingWeaponSounds() {
-        if (!this.audioManager) return;
-        if (this.isPaused || this.timePaused || !this.gameRunning) {
-            return;
-        }
-        this.audioManager.resumeLoopingSound('weaponGatlingGun');
-    }
+    resumeLoopingWeaponSounds() {}
 
     toggleMusicMute() {
         this.audioManager.toggleMusicMute();
@@ -5234,17 +5231,11 @@ class VibeSurvivor {
             // Update help button text
             this.modals.helpMenu.updateHelpButtonText(true);
 
-            // Pause gatling gun looping sound if playing
-            this.audioManager.pauseLoopingSound('weaponGatlingGun');
-
             // Show the modal (modal handles all keyboard interaction internally)
             this.modals.helpMenu.show();
         } else {
             // Update help button text
             this.modals.helpMenu.updateHelpButtonText(false);
-
-            // Resume gatling gun looping sound if it was playing
-            this.audioManager.resumeLoopingSound('weaponGatlingGun');
 
             // Hide the modal (modal handles all cleanup internally)
             this.modals.helpMenu.hide();
@@ -6610,9 +6601,6 @@ class VibeSurvivor {
         this.gameRunning = false;
         this.timePaused = true;
 
-        // Pause gatling gun looping sound if playing
-        this.audioManager.pauseLoopingSound('weaponGatlingGun');
-
         // Generate 3 passive upgrade choices using UpgradeSystem
         const passiveChoices = this.upgradeSystem.getUpgradeChoices(
             this.weapons,
@@ -6663,9 +6651,6 @@ class VibeSurvivor {
         // Phase 12c integration - Use LevelUpModal class (Option B: Proper Encapsulation)
         this.gameRunning = false;
         this.timePaused = true;  // Pause time during weapon upgrade menu
-
-        // Pause gatling gun looping sound if playing
-        this.audioManager.pauseLoopingSound('weaponGatlingGun');
 
         // Generate upgrade choices
         const choices = this.generateUpgradeChoices();
@@ -7489,9 +7474,6 @@ class VibeSurvivor {
      */
     handlePlayerDeath() {
         this.playerDead = true; // Mark player as dead to stop game logic
-
-        // Stop gatling gun looping sound immediately on death
-        this.audioManager.stopLoopingSound('weaponGatlingGun');
 
         // Delay stopping the game to let red flash complete
         setTimeout(() => {
@@ -11753,9 +11735,6 @@ class VibeSurvivor {
             this.audioManager.sfxVolume
         );
 
-        // Pause gatling gun looping sound if playing
-        this.audioManager.pauseLoopingSound('weaponGatlingGun');
-
         this.modals.options.show();
 
         // Enable scrolling for mobile
@@ -11769,9 +11748,6 @@ class VibeSurvivor {
 
         // Disable scrolling handlers
         this.disableOptionsScrolling();
-
-        // Resume gatling gun looping sound if it was playing
-        this.audioManager.resumeLoopingSound('weaponGatlingGun');
 
         if (!this.gameRunning && window.startScreenBot) {
             window.startScreenBot.show();
