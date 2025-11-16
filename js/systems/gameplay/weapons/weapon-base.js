@@ -819,6 +819,7 @@ export class WeaponSystem {
         projectile.life = 60;
         projectile.type = 'gatling_gun';
         projectile.color = '#FFD700';
+        projectile.size = 2;
         projectile.active = true;
         projectile.sourceType = weapon.type;
 
