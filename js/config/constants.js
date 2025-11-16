@@ -207,7 +207,8 @@ export const WEAPONS = {
 export const WEAPON_UPGRADES = {
     DAMAGE_PER_LEVEL: 0.3, // +30% per level
     MAX_LEVEL: 10,
-    MAX_WEAPONS: 4
+    MAX_WEAPONS: 4,
+    MAX_PROJECTILES: 5
 };
 
 /**
@@ -262,6 +263,36 @@ export const PASSIVES = {
         value: 0.5,
         stackable: true,
         maxStacks: 3
+    },
+    TURBO_FLUX_CYCLER: {
+        name: 'Turbo-Flux Cycler',
+        description: 'Increase fire rate of all weapons by 25%',
+        stackable: false,
+        isUnique: true
+    },
+    AEGIS_IMPACT_CORE: {
+        name: 'Aegis Impact Core',
+        description: 'Increase damage of all weapons by 50%',
+        stackable: false,
+        isUnique: true
+    },
+    SPLITSTREAM_MATRIX: {
+        name: 'Splitstream Matrix',
+        description: 'Weapons fire +1 projectile',
+        stackable: false,
+        isUnique: true
+    },
+    MACRO_CHARGE_AMPLIFIER: {
+        name: 'Macro-Charge Amplifier',
+        description: 'Increase explosion radius of weapons by 50%',
+        stackable: false,
+        isUnique: true
+    },
+    MOD_BAY_EXPANDER: {
+        name: 'Mod-Bay Expander',
+        description: 'Increase max weapon slots to 5',
+        stackable: false,
+        isUnique: true
     }
 };
 

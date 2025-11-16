@@ -44,7 +44,8 @@ export class WeaponSystem {
             pelletCount: config.pelletCount || 0,
             isMergeWeapon: config.isMergeWeapon || false,
             lastFire: 0,
-            projectileCount: 1
+            projectileCount: 1,
+            maxProjectileCount: WEAPON_UPGRADES.MAX_PROJECTILES
         };
     }
 
@@ -66,11 +67,10 @@ export class WeaponSystem {
         // Projectile count increases every level from level 2 onwards
         // Game-specific behavior: more generous than every-other-level
         if (weapon.level === 2 && (!weapon.projectileCount || weapon.projectileCount === 1)) {
-            // Double projectile count at level 2
             weapon.projectileCount = 2;
-        } else if (weapon.level >= 2 && weapon.projectileCount && weapon.projectileCount < 5) {
-            // Increment each level, capped at 5
-            weapon.projectileCount = Math.min(weapon.projectileCount + 1, 5);
+        } else if (weapon.level >= 2 && weapon.projectileCount && weapon.projectileCount < (weapon.maxProjectileCount || WEAPON_UPGRADES.MAX_PROJECTILES)) {
+            const projectileCap = weapon.maxProjectileCount || WEAPON_UPGRADES.MAX_PROJECTILES;
+            weapon.projectileCount = Math.min(weapon.projectileCount + 1, projectileCap);
         }
     }
 

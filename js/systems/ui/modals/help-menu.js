@@ -4,6 +4,23 @@
  * Phase 12c.6 - Refactored from inline implementation
  */
 
+import { PASSIVES } from '../../../config/constants.js';
+
+const PASSIVE_TRANSLATION_KEY_MAP = {
+    'health_boost': 'healthBoost',
+    'speed_boost': 'speedBoost',
+    'regeneration': 'regeneration',
+    'magnet': 'magnet',
+    'armor': 'armor',
+    'critical': 'criticalStrike',
+    'dash_boost': 'dashBoost',
+    'turbo_flux_cycler': 'turboFlux',
+    'aegis_impact_core': 'aegisCore',
+    'splitstream_matrix': 'splitstreamMatrix',
+    'macro_charge_amplifier': 'macroCharge',
+    'mod_bay_expander': 'modBay'
+};
+
 export class HelpMenu {
     constructor() {
         this.element = null;
@@ -149,6 +166,8 @@ export class HelpMenu {
 
         const rapidFireEvolution = document.getElementById('rapid-fire-evolution');
         if (rapidFireEvolution) rapidFireEvolution.textContent = t('rapidFireEvolution', 'help');
+
+        this.renderUniqueItemsGuide();
 
         if (this.renderStatusTab) {
             this.renderStatusTab();
@@ -306,6 +325,93 @@ export class HelpMenu {
         if (this.contentElement) {
             this.contentElement.scrollTop = 0;
         }
+    }
+
+    renderUniqueItemsGuide() {
+        if (!this.getTranslation) return;
+
+        const listElement = document.getElementById('help-unique-list');
+        if (!listElement) return;
+
+        const titleEl = document.getElementById('help-unique-title');
+        if (titleEl) {
+            titleEl.innerHTML = `<img src="images/passives/upgrade.png" alt="${this.getTranslation('uniqueItemsTitle')}" class="section-icon"> ${this.getTranslation('uniqueItemsTitle')}`;
+        }
+
+        const descriptionEl = document.getElementById('help-unique-description');
+        if (descriptionEl) {
+            descriptionEl.textContent = this.getTranslation('uniqueItemsDescription');
+        }
+
+        const uniquePassives = this.getUniquePassivesList();
+        if (uniquePassives.length === 0) {
+            listElement.innerHTML = `<p class="help-unique-empty">${this.getTranslation('uniqueItemsEmpty')}</p>`;
+            return;
+        }
+
+        const itemsHtml = uniquePassives.map(passive => `
+            <div class="help-unique-item">
+                <img src="${this.getPassiveIconPath(passive.key)}" alt="${this.getLocalizedPassiveName(passive.key)}">
+                <div class="help-unique-text">
+                    <h3>${this.getLocalizedPassiveName(passive.key)}</h3>
+                    <p>${this.getLocalizedPassiveDescription(passive.key)}</p>
+                </div>
+            </div>
+        `).join('');
+
+        listElement.innerHTML = itemsHtml;
+    }
+
+    getUniquePassivesList() {
+        return Object.entries(PASSIVES)
+            .filter(([, passive]) => passive.isUnique)
+            .map(([key]) => ({
+                key: key.toLowerCase()
+            }));
+    }
+
+    getLocalizedPassiveName(passiveKey) {
+        const translationKey = PASSIVE_TRANSLATION_KEY_MAP[passiveKey] || passiveKey;
+        if (this.getTranslation) {
+            const translated = this.getTranslation(translationKey, 'passives');
+            if (translated && translated !== translationKey) {
+                return translated;
+            }
+        }
+
+        const passiveConfig = PASSIVES[passiveKey.toUpperCase()];
+        return passiveConfig?.name || passiveKey;
+    }
+
+    getLocalizedPassiveDescription(passiveKey) {
+        const translationKey = `${PASSIVE_TRANSLATION_KEY_MAP[passiveKey] || passiveKey}Desc`;
+        if (this.getTranslation) {
+            const translated = this.getTranslation(translationKey, 'passives');
+            if (translated && translated !== translationKey) {
+                return translated;
+            }
+        }
+
+        const passiveConfig = PASSIVES[passiveKey.toUpperCase()];
+        return passiveConfig?.description || '';
+    }
+
+    getPassiveIconPath(passiveKey) {
+        const iconMap = {
+            'health_boost': 'images/passives/healthBoost.png',
+            'speed_boost': 'images/passives/speedBoost.png',
+            'regeneration': 'images/passives/regeneration.png',
+            'magnet': 'images/passives/magnet.png',
+            'armor': 'images/passives/armor.png',
+            'critical': 'images/passives/criticalStrike.png',
+            'dash_boost': 'images/passives/dashBoost.png',
+            'turbo_flux_cycler': 'images/passives/weaponFirerate.png',
+            'aegis_impact_core': 'images/passives/weaponPower.png',
+            'splitstream_matrix': 'images/passives/weaponProjectile.png',
+            'macro_charge_amplifier': 'images/passives/weaponSize.png',
+            'mod_bay_expander': 'images/passives/weaponSlot.png'
+        };
+        return iconMap[passiveKey] || 'images/passives/passive.png';
     }
 
     /**

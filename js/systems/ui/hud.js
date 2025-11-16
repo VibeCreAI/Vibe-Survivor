@@ -44,7 +44,8 @@ export class HUDSystem {
         this.updateHealth(gameState.player);
         this.updateXP(gameState.player);
         this.updateTime(gameState.game.gameTime);
-        this.updateWeapons(gameState.weapons, getWeaponIconCallback, getWeaponNameCallback);
+        const maxWeaponSlots = gameState.game?.maxWeaponSlots;
+        this.updateWeapons(gameState.weapons, getWeaponIconCallback, getWeaponNameCallback, maxWeaponSlots);
         this.updateBossCounter(gameState.game.bossesKilled);
     }
 
@@ -96,10 +97,10 @@ export class HUDSystem {
      * @param {Function} getWeaponIconCallback - Callback to get weapon icon URL
      * @param {Function} getWeaponNameCallback - Callback to get weapon display name
      */
-    updateWeapons(weapons, getWeaponIconCallback, getWeaponNameCallback) {
+    updateWeapons(weapons, getWeaponIconCallback, getWeaponNameCallback, dynamicSlotCount) {
         if (!this.elements.weaponDisplay) return;
 
-        const maxWeaponSlots = 4;
+        const maxWeaponSlots = Math.max(1, dynamicSlotCount || 4);
         const weaponSlots = [];
 
         // Fill slots with acquired weapons

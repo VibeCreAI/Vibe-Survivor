@@ -14,7 +14,12 @@ const PASSIVE_TRANSLATION_KEY_MAP = {
     'magnet': 'magnet',
     'armor': 'armor',
     'critical': 'criticalStrike',
-    'dash_boost': 'dashBoost'
+    'dash_boost': 'dashBoost',
+    'turbo_flux_cycler': 'turboFlux',
+    'aegis_impact_core': 'aegisCore',
+    'splitstream_matrix': 'splitstreamMatrix',
+    'macro_charge_amplifier': 'macroCharge',
+    'mod_bay_expander': 'modBay'
 };
 
 /**
@@ -211,7 +216,12 @@ export class ChestModal extends Modal {
             'magnet': 'images/passives/magnet.png',
             'armor': 'images/passives/armor.png',
             'critical': 'images/passives/criticalStrike.png',
-            'dash_boost': 'images/passives/dashBoost.png'
+            'dash_boost': 'images/passives/dashBoost.png',
+            'turbo_flux_cycler': 'images/passives/weaponFirerate.png',
+            'aegis_impact_core': 'images/passives/weaponPower.png',
+            'splitstream_matrix': 'images/passives/weaponProjectile.png',
+            'macro_charge_amplifier': 'images/passives/weaponSize.png',
+            'mod_bay_expander': 'images/passives/weaponSlot.png'
         };
         return iconMap[passiveKey] || 'images/passives/passive.png';
     }

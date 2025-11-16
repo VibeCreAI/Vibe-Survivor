@@ -207,6 +207,7 @@ class VibeSurvivor {
         this.chestOrbs = []; // Chest orbs for passive upgrades
 
         this.weapons = createWeaponsState();
+        this.maxWeaponSlots = WEAPON_UPGRADES.MAX_WEAPONS;
 
         // Track per-weapon cumulative damage
         this.weaponStats = createWeaponStatsState();
@@ -386,7 +387,9 @@ class VibeSurvivor {
         // All passive icons
         const passiveIcons = [
             'healthBoost', 'speedBoost', 'regeneration', 'magnet', 'armor',
-            'criticalStrike', 'dashBoost', 'upgrade', 'evolution', 'passive', 'stats'
+            'criticalStrike', 'dashBoost', 'weaponFirerate', 'weaponPower',
+            'weaponProjectile', 'weaponSize', 'weaponSlot',
+            'upgrade', 'evolution', 'passive', 'stats'
         ];
 
         // Create image preload promises
@@ -1056,6 +1059,12 @@ class VibeSurvivor {
                                         <h2 id="weapon-evolution-title"><img src="images/passives/evolution.png" alt="Weapon Evolution" class="section-icon"> WEAPON EVOLUTION</h2>
                                         <div class="help-section">
                                             <p id="rapid-fire-evolution">Basic Missile evolves into Rapid Fire at level 5 - this creates a powerful automatic weapon with increased fire rate.</p>
+                                        </div>
+
+                                        <h2 id="help-unique-title"><img src="images/passives/upgrade.png" alt="Unique Items" class="section-icon"> UNIQUE ITEMS</h2>
+                                        <p id="help-unique-description" class="help-unique-description">Unlock these rare passives via upgrade chests.</p>
+                                        <div id="help-unique-list" class="help-unique-list">
+                                            <!-- Unique items will be populated dynamically -->
                                         </div>
                                     </div>
 
@@ -3166,6 +3175,57 @@ class VibeSurvivor {
                 -webkit-backdrop-filter: blur(6px);
             }
 
+            .help-unique-description {
+                text-align: center;
+                color: rgba(255, 255, 255, 0.78);
+                margin-bottom: 16px;
+                font-size: 0.9rem;
+            }
+
+            .help-unique-list {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .help-unique-item {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                align-items: center;
+                padding: 14px 12px;
+                border-radius: 10px;
+                background: rgba(255, 16, 240, 0.08);
+                border: 1px solid rgba(255, 16, 240, 0.2);
+                text-align: center;
+            }
+
+            .help-unique-item img {
+                width: 40px;
+                height: 40px;
+                image-rendering: pixelated;
+            }
+
+            .help-unique-text h3 {
+                margin: 0 0 6px;
+                color: #ffb3ff;
+                font-size: 1rem;
+                text-align: center;
+            }
+
+            .help-unique-text p {
+                margin: 0;
+                font-size: 0.85rem;
+                color: rgba(255, 255, 255, 0.82);
+                text-align: center;
+            }
+
+            .help-unique-empty {
+                text-align: center;
+                color: rgba(255, 255, 255, 0.7);
+                font-size: 0.95rem;
+            }
+
             .chest-modal[style*="display: block"],
             .chest-modal[style*="display: flex"] {
                 display: flex !important;
@@ -4743,6 +4803,7 @@ class VibeSurvivor {
         this.xpOrbs.length = 0;
         this.hpOrbs.length = 0;
         this.magnetOrbs.length = 0;
+        this.maxWeaponSlots = WEAPON_UPGRADES.MAX_WEAPONS;
 
         // Reset object pools - mark all as inactive
         if (this.projectilePool) {
@@ -6599,6 +6660,10 @@ class VibeSurvivor {
         this.modals.levelUp.show();
     }
     
+    getMaxWeapons() {
+        return this.maxWeaponSlots || WEAPON_UPGRADES.MAX_WEAPONS;
+    }
+    
     generateUpgradeChoices() {
         const choices = [];
         
@@ -6635,7 +6700,7 @@ class VibeSurvivor {
         });
         
         // New weapons (if not at max weapons)
-        if (this.weapons.length < 4) {
+        if (this.weapons.length < this.getMaxWeapons()) {
             const availableWeapons = ['spread', 'laser', 'plasma', 'shotgun', 'lightning', 'flamethrower', 'railgun', 'missiles'];
             const currentTypes = this.weapons.map(w => w.type);
             
@@ -6782,7 +6847,12 @@ class VibeSurvivor {
             'magnet': 'magnet',
             'armor': 'armor',
             'critical': 'criticalStrike',
-            'dash_boost': 'dashBoost'
+            'dash_boost': 'dashBoost',
+            'turbo_flux_cycler': 'weaponFirerate',
+            'aegis_impact_core': 'weaponPower',
+            'splitstream_matrix': 'weaponProjectile',
+            'macro_charge_amplifier': 'weaponSize',
+            'mod_bay_expander': 'weaponSlot'
         };
 
         const iconName = passiveIconMap[passiveId] || 'upgrade';
@@ -7190,7 +7260,12 @@ class VibeSurvivor {
             'magnet': 'images/passives/magnet.png',
             'armor': 'images/passives/armor.png',
             'critical': 'images/passives/criticalStrike.png',
-            'dash_boost': 'images/passives/dashBoost.png'
+            'dash_boost': 'images/passives/dashBoost.png',
+            'turbo_flux_cycler': 'images/passives/weaponFirerate.png',
+            'aegis_impact_core': 'images/passives/weaponPower.png',
+            'splitstream_matrix': 'images/passives/weaponProjectile.png',
+            'macro_charge_amplifier': 'images/passives/weaponSize.png',
+            'mod_bay_expander': 'images/passives/weaponSlot.png'
         };
         const iconPath = iconMap[passiveKey] || 'images/passives/passive.png';
         return `<img src="${iconPath}" alt="${passiveKey}" style="width: 48px; height: 48px; image-rendering: pixelated; vertical-align: middle; margin-right: 8px;">`;
@@ -7225,6 +7300,7 @@ class VibeSurvivor {
         // Phase 9 integration - Use WeaponSystem to create weapons
         const newWeapon = this.weaponSystem.createWeapon(weaponType);
         if (newWeapon) {
+            this.applyPassiveModifiersToWeapon(newWeapon);
             this.weapons.push(newWeapon);
         } else {
             console.error(`Failed to create weapon: ${weaponType}`);
@@ -7240,6 +7316,8 @@ class VibeSurvivor {
                 if (mergedType) {
                     // Perform merge using WeaponSystem
                     if (this.weaponSystem.mergeWeapons(this.weapons, i, j)) {
+                        const mergedWeapon = this.weapons[this.weapons.length - 1];
+                        this.applyPassiveModifiersToWeapon(mergedWeapon);
                         // Show merge notification
                         setTimeout(() => {
                             this.showUpgradeNotification(
@@ -7261,6 +7339,8 @@ class VibeSurvivor {
 
         if (index1 !== -1 && index2 !== -1) {
             if (this.weaponSystem.mergeWeapons(this.weapons, index1, index2)) {
+                const mergedWeapon = this.weapons[this.weapons.length - 1];
+                this.applyPassiveModifiersToWeapon(mergedWeapon);
                 setTimeout(() => {
                     this.showUpgradeNotification(
                         `${this.getWeaponName(mergeWeaponType)} - WEAPONS MERGED!`,
@@ -7269,6 +7349,35 @@ class VibeSurvivor {
                 }, 100);
             }
         }
+    }
+
+    applyPassiveModifiersToWeapon(weapon) {
+        if (!weapon) return;
+
+        if (this.player.passives.turbo_flux_cycler && !weapon._turboFluxApplied) {
+            weapon.fireRate = Math.max(2, Math.floor(weapon.fireRate * 0.75));
+            weapon._turboFluxApplied = true;
+        }
+
+        if (this.player.passives.aegis_impact_core && !weapon._aegisCoreApplied) {
+            weapon.damage = Math.floor(weapon.damage * 1.5);
+            weapon._aegisCoreApplied = true;
+        }
+
+        if (this.player.passives.splitstream_matrix && !weapon._splitstreamApplied) {
+            weapon.maxProjectileCount = (weapon.maxProjectileCount || WEAPON_UPGRADES.MAX_PROJECTILES) + 1;
+            weapon.projectileCount = Math.min((weapon.projectileCount || 1) + 1, weapon.maxProjectileCount);
+            weapon._splitstreamApplied = true;
+        }
+
+        if (this.player.passives.macro_charge_amplifier && weapon.explosionRadius && weapon.explosionRadius > 0 && !weapon._macroChargeApplied) {
+            weapon.explosionRadius = Math.floor(weapon.explosionRadius * 1.5);
+            weapon._macroChargeApplied = true;
+        }
+    }
+
+    applyPassiveModifiersToAllWeapons() {
+        this.weapons.forEach(weapon => this.applyPassiveModifiersToWeapon(weapon));
     }
 
     addPassiveAbility(passiveId) {
@@ -7321,6 +7430,26 @@ class VibeSurvivor {
                 } else {
                     this.player.passives.dash_boost = 1;
                 }
+                break;
+            case 'turbo_flux_cycler':
+                this.player.passives.turbo_flux_cycler = true;
+                this.applyPassiveModifiersToAllWeapons();
+                break;
+            case 'aegis_impact_core':
+                this.player.passives.aegis_impact_core = true;
+                this.applyPassiveModifiersToAllWeapons();
+                break;
+            case 'splitstream_matrix':
+                this.player.passives.splitstream_matrix = true;
+                this.applyPassiveModifiersToAllWeapons();
+                break;
+            case 'macro_charge_amplifier':
+                this.player.passives.macro_charge_amplifier = true;
+                this.applyPassiveModifiersToAllWeapons();
+                break;
+            case 'mod_bay_expander':
+                this.player.passives.mod_bay_expander = true;
+                this.maxWeaponSlots = Math.max(this.getMaxWeapons(), WEAPON_UPGRADES.MAX_WEAPONS + 1);
                 break;
         }
 
@@ -10267,7 +10396,8 @@ class VibeSurvivor {
                 weapons: this.weapons,
                 game: {
                     gameTime: this.gameTime,
-                    bossesKilled: this.bossesKilled
+                    bossesKilled: this.bossesKilled,
+                    maxWeaponSlots: this.getMaxWeapons()
                 }
             },
             this.getWeaponIconForHeader.bind(this),
@@ -10411,7 +10541,12 @@ class VibeSurvivor {
             'magnet': p.magnet,
             'armor': p.armor,
             'critical': p.criticalStrike,
-            'dash_boost': p.dashBoost
+            'dash_boost': p.dashBoost,
+            'turbo_flux_cycler': p.turboFlux,
+            'aegis_impact_core': p.aegisCore,
+            'splitstream_matrix': p.splitstreamMatrix,
+            'macro_charge_amplifier': p.macroCharge,
+            'mod_bay_expander': p.modBay
         };
 
         const passiveDescriptions = {
@@ -10421,7 +10556,12 @@ class VibeSurvivor {
             'magnet': p.magnetDesc,
             'armor': p.armorDesc,
             'critical': p.criticalStrikeDesc,
-            'dash_boost': p.dashBoostDesc
+            'dash_boost': p.dashBoostDesc,
+            'turbo_flux_cycler': p.turboFluxDesc,
+            'aegis_impact_core': p.aegisCoreDesc,
+            'splitstream_matrix': p.splitstreamMatrixDesc,
+            'macro_charge_amplifier': p.macroChargeDesc,
+            'mod_bay_expander': p.modBayDesc
         };
 
         const activePassives = Object.keys(this.player.passives).filter(key =>
@@ -10451,7 +10591,12 @@ class VibeSurvivor {
                 'magnet': 'magnet',
                 'armor': 'armor',
                 'critical': 'criticalStrike',
-                'dash_boost': 'dashBoost'
+                'dash_boost': 'dashBoost',
+                'turbo_flux_cycler': 'weaponFirerate',
+                'aegis_impact_core': 'weaponPower',
+                'splitstream_matrix': 'weaponProjectile',
+                'macro_charge_amplifier': 'weaponSize',
+                'mod_bay_expander': 'weaponSlot'
             };
             const iconName = passiveIconMap[passive] || 'upgrade';
 
@@ -11204,6 +11349,11 @@ class VibeSurvivor {
                     armor: "Armor",
                     criticalStrike: "Critical Strike",
                     dashBoost: "Dash Boost",
+                    turboFlux: "Turbo-Flux Cycler",
+                    aegisCore: "Aegis Impact Core",
+                    splitstreamMatrix: "Splitstream Matrix",
+                    macroCharge: "Macro-Charge Amplifier",
+                    modBay: "Mod-Bay Expander",
 
                     // Descriptions
                     healthBoostDesc: "+25 Max Health (Stackable)",
@@ -11212,7 +11362,12 @@ class VibeSurvivor {
                     magnetDesc: "Attract XP from further away",
                     armorDesc: "Reduce damage taken by 15% (Stackable up to 3 times)",
                     criticalStrikeDesc: "15% chance for double damage (Stackable up to 3 times)",
-                    dashBoostDesc: "+50% Dash Distance (Stackable up to 3 times)"
+                    dashBoostDesc: "+50% Dash Distance (Stackable up to 3 times)",
+                    turboFluxDesc: "Increase the fire rate of all weapons by 25%",
+                    aegisCoreDesc: "Increase the damage of all weapons by 50%",
+                    splitstreamMatrixDesc: "All weapons fire +1 projectile",
+                    macroChargeDesc: "Increase explosion radius of weapon projectiles by 50%",
+                    modBayDesc: "Increase max weapon slots to 5"
                 },
                 help: {
                     weaponMergers: "<img src='images/passives/upgrade.png' alt='upgrade' class='section-icon'> WEAPON MERGERS",
@@ -11371,6 +11526,11 @@ class VibeSurvivor {
                     armor: "방어구",
                     criticalStrike: "치명타",
                     dashBoost: "대시 강화",
+                    turboFlux: "터보-플럭스 순환기",
+                    aegisCore: "에이제스 임팩트 코어",
+                    splitstreamMatrix: "스플릿스트림 매트릭스",
+                    macroCharge: "매크로 차지 증폭기",
+                    modBay: "모드 베이 확장기",
 
                     // Descriptions
                     healthBoostDesc: "+25 최대 체력 (중첩 가능)",
@@ -11379,7 +11539,12 @@ class VibeSurvivor {
                     magnetDesc: "더 멀리서 경험치 흡수",
                     armorDesc: "받는 피해 15% 감소 (최대 3번까지 중첩 가능)",
                     criticalStrikeDesc: "15% 확률로 2배 피해 (최대 3번까지 중첩 가능)",
-                    dashBoostDesc: "+50% 대시 거리 (최대 3번까지 중첩 가능)"
+                    dashBoostDesc: "+50% 대시 거리 (최대 3번까지 중첩 가능)",
+                    turboFluxDesc: "모든 무기의 발사 속도를 25% 증가시킵니다.",
+                    aegisCoreDesc: "모든 무기의 공격력을 50% 증가시킵니다.",
+                    splitstreamMatrixDesc: "모든 무기가 추가 발사체 1개를 발사합니다.",
+                    macroChargeDesc: "모든 무기 폭발 반경을 50% 증가시킵니다.",
+                    modBayDesc: "무기 슬롯 최대치를 5개로 확장합니다."
                 },
                 help: {
                     weaponMergers: "<img src='images/passives/upgrade.png' alt='upgrade' class='section-icon'> 무기 합성",
