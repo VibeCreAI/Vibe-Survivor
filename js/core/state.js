@@ -22,6 +22,7 @@ export function createPlayerState(x = 0, y = 0) {
         maxHealth: PLAYER.MAX_HEALTH,
         xp: 0,
         level: PLAYER.STARTING_LEVEL,
+        chestsCollected: 0,
 
         // Visual and effects
         glow: 0,
@@ -229,6 +230,7 @@ export function resetPlayerState(player) {
     player.maxHealth = PLAYER.MAX_HEALTH;
     player.xp = 0;
     player.level = PLAYER.STARTING_LEVEL;
+    player.chestsCollected = 0;
     player.glow = 0;
     player.invulnerable = 0;
     player.dashCooldown = 0;

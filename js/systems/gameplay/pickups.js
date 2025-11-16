@@ -3,6 +3,8 @@
  * Manages XP orbs, HP orbs, and magnet orbs spawning, collection, and behavior
  */
 
+import { PICKUP_SPAWNS } from '../../config/constants.js';
+
 export class PickupSystem {
     constructor() {
         // Spawn timers and configuration
@@ -16,6 +18,11 @@ export class PickupSystem {
         this.magnetOrbSpawnChance = 0.08; // 8% chance per check
         this.maxMagnetOrbs = 1; // Maximum magnet orbs on map
 
+        this.chestOrbSpawnTimer = 0;
+        this.chestOrbSpawnRate = PICKUP_SPAWNS.CHEST_ORB.spawnRate; // Read from constants
+        this.chestOrbSpawnChance = PICKUP_SPAWNS.CHEST_ORB.chance;
+        this.maxChestOrbs = PICKUP_SPAWNS.CHEST_ORB.maxActive;
+
         // Subtle hint timing (frames @60fps)
         this.pickupHintDelay = 360;     // Wait ~6s before first hint
         this.pickupHintDuration = 90;   // Arrow visible for ~1.5s
@@ -28,6 +35,7 @@ export class PickupSystem {
         this.xpOrbPool = null;
         this.hpOrbPool = null;
         this.magnetOrbPool = null;
+        this.chestOrbPool = null;
     }
 
     /**
@@ -35,11 +43,13 @@ export class PickupSystem {
      * @param {Array} xpOrbPool - XP orb pool
      * @param {Array} hpOrbPool - HP orb pool
      * @param {Array} magnetOrbPool - Magnet orb pool
+     * @param {Array} chestOrbPool - Chest orb pool
      */
-    setPools(xpOrbPool, hpOrbPool, magnetOrbPool) {
+    setPools(xpOrbPool, hpOrbPool, magnetOrbPool, chestOrbPool) {
         this.xpOrbPool = xpOrbPool;
         this.hpOrbPool = hpOrbPool;
         this.magnetOrbPool = magnetOrbPool;
+        this.chestOrbPool = chestOrbPool;
     }
 
     /**
@@ -342,11 +352,123 @@ export class PickupSystem {
     }
 
     /**
+     * Updates chest orbs (lifetime, collection, hint state)
+     * @param {Array} chestOrbs - Chest orb array
+     * @param {Object} player - Player object
+     * @param {Function} cachedSqrt - Cached square root function
+     * @param {Function} onChestCollected - Callback when chest is collected
+     * @param {boolean} bossDefeating - Skip updates during boss defeat
+     */
+    updateChestOrbs(chestOrbs, player, cachedSqrt, onChestCollected, bossDefeating) {
+        // Skip chest orb collection during boss defeat animation
+        if (bossDefeating) {
+            return;
+        }
+
+        // Use reverse iteration for safe and efficient removal
+        for (let i = chestOrbs.length - 1; i >= 0; i--) {
+            const orb = chestOrbs[i];
+
+            // Update hint state for arrow rendering
+            this.updatePickupHintState(orb);
+
+            // Update glow animation
+            orb.glow = (orb.glow + 0.2) % (Math.PI * 2);
+
+            // Update lifetime
+            orb.life++;
+
+            // Remove if lifetime expired
+            if (orb.life >= orb.lifetime) {
+                orb.active = false;
+                this.resetPickupHintState(orb);
+                chestOrbs.splice(i, 1);
+                continue;
+            }
+
+            // Check collection
+            const dx = player.x - orb.x;
+            const dy = player.y - orb.y;
+            const distanceSquared = dx * dx + dy * dy;
+
+            // Collect chest (40 unit radius = 1600 squared)
+            if (distanceSquared < 1600) {
+                // Trigger chest modal callback
+                if (onChestCollected) {
+                    onChestCollected(orb);
+                }
+
+                // Return to pool
+                orb.active = false;
+                orb.life = 0;
+                this.resetPickupHintState(orb);
+                chestOrbs.splice(i, 1);
+            }
+        }
+    }
+
+    /**
+     * Spawns chest orbs at timed intervals
+     * @param {Array} chestOrbs - Chest orb array
+     * @param {boolean} playerDead - Skip spawning if player is dead
+     * @param {boolean} isPaused - Skip spawning if paused
+     * @param {boolean} bossDefeating - Skip spawning during boss defeat
+     */
+    spawnChestOrbs(chestOrbs, playerDead, isPaused, bossDefeating) {
+        // Only spawn chest orbs during active gameplay
+        if (playerDead || isPaused || bossDefeating) {
+            return;
+        }
+
+        // Check if it's time to attempt chest orb spawn
+        this.chestOrbSpawnTimer++;
+        if (this.chestOrbSpawnTimer >= this.chestOrbSpawnRate) {
+            this.chestOrbSpawnTimer = 0;
+
+            // Don't spawn if we already have maximum chest orbs
+            if (chestOrbs.length >= this.maxChestOrbs) {
+                return;
+            }
+
+            // Random chance to spawn chest orb (100% when timer triggers)
+            if (Math.random() < this.chestOrbSpawnChance) {
+                return true; // Signal to create chest orb
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Creates a chest orb at a random location
+     * @param {Array} chestOrbs - Chest orb array
+     * @param {Object} player - Player object for positioning
+     * @param {Function} getPooledChestOrb - Object pool getter
+     * @param {Function} fastCos - Fast cosine function
+     * @param {Function} fastSin - Fast sine function
+     */
+    createChestOrb(chestOrbs, player, getPooledChestOrb, fastCos, fastSin) {
+        const orb = getPooledChestOrb();
+        if (orb) {
+            // Spawn at random angle and distance from player (400-1000 units)
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 400 + Math.random() * 600;
+            orb.x = player.x + fastCos(angle) * distance;
+            orb.y = player.y + fastSin(angle) * distance;
+            orb.life = 0; // Reset lifetime counter
+            orb.active = true;
+            chestOrbs.push(orb);
+            return orb; // Return for spawn notification/effects
+        }
+        return null;
+    }
+
+    /**
      * Resets pickup system state
      */
     reset() {
         this.hpOrbSpawnTimer = 0;
         this.magnetOrbSpawnTimer = 0;
+        this.chestOrbSpawnTimer = 0;
         this.hintPulseActive = false;
         this.hintPulseFramesRemaining = 0;
         this.hintPulseCooldownTimer = this.pickupHintDelay;

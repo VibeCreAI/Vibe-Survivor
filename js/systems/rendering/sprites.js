@@ -21,7 +21,8 @@ export class SpriteManager {
         // Item pickup icons
         this.itemIcons = {
             health: new Image(),
-            magnet: new Image()
+            magnet: new Image(),
+            upgradeBox: new Image()
         };
 
         // Sprite sheet configuration (3 columns x 4 rows = 12 frames)
@@ -95,6 +96,7 @@ export class SpriteManager {
     loadItemIcons() {
         this.itemIcons.health.src = 'images/passives/healthBoost.png';
         this.itemIcons.magnet.src = 'images/passives/magnet.png';
+        this.itemIcons.upgradeBox.src = 'images/passives/upgradeBox.png';
     }
 
     /**

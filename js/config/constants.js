@@ -307,6 +307,16 @@ export const PICKUP_SPAWNS = {
         range: 1000,
         minDistance: 300,
         maxDistance: 800
+    },
+    CHEST_ORB: {
+        spawnRate: 2700,       // 45 seconds at 60 FPS (45s * 60)
+        chance: 1.0,           // 100% chance when timer triggers
+        maxActive: 1,          // Only 1 chest on map at a time
+        lifetime: 9000,        // 2.5 minutes visible (150s * 60)
+        minDistance: 400,      // Spawn 400-1000 units away
+        maxDistance: 1000,
+        collectionRadius: 40,  // Collection radius
+        size: 30               // Visual size
     }
 };
 
@@ -439,5 +449,6 @@ export const COLORS = {
     ACCENT_GOLD: '#FFD700',
     ACCENT_BLUE: '#0080ff',
     ACCENT_GREEN: '#74EE15',
-    ACCENT_PURPLE: '#F000FF'
+    ACCENT_PURPLE: '#F000FF',
+    CHEST_GLOW: 'rgba(255, 215, 0, 0.8)'
 };

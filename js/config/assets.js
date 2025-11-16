@@ -39,7 +39,8 @@ export const ASSET_PATHS = {
         upgrade: 'images/passives/upgrade.png',
         evolution: 'images/passives/evolution.png',
         passive: 'images/passives/passive.png',
-        stats: 'images/passives/stats.png'
+        stats: 'images/passives/stats.png',
+        upgradeBox: 'images/passives/upgradeBox.png'
     },
     ui: {
         title: 'images/Title.png',
@@ -54,6 +55,7 @@ export const ASSET_PATHS = {
         gameOver: 'sound/gameOver.mp3?v=2',
         upgrade: 'sound/upgrade.mp3?v=2',
         dash: 'sound/dash.mp3?v=2',
+        upgradeBox: 'sound/upgradeBox.mp3?v=2',
         // Weapon sounds
         weaponBasicMissile: 'sound/weapon/basicMissile.mp3?v=2',
         weaponSpreadShot: 'sound/weapon/spreadShot.mp3?v=2',

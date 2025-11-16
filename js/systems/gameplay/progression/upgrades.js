@@ -21,7 +21,7 @@ export class UpgradeSystem {
      * @param {number} choiceCount - Number of choices to offer (default: 3)
      * @returns {Array} Array of upgrade choice objects
      */
-    getUpgradeChoices(weapons, passives, choiceCount = 3) {
+    getUpgradeChoices(weapons, passives, choiceCount = 3, upgradeType = 'all') {
         const choices = [];
         const availableWeapons = Object.keys(WEAPONS);
         const availablePassives = Object.keys(PASSIVES);
@@ -29,61 +29,66 @@ export class UpgradeSystem {
         // Build pool of possible upgrades
         const upgradePool = [];
 
-        // Add existing weapon upgrades (if not max level)
-        weapons.forEach(weapon => {
-            if (weapon.level < WEAPON_UPGRADES.MAX_LEVEL) {
-                upgradePool.push({
-                    type: 'weapon_upgrade',
-                    weaponType: weapon.type,
-                    weaponName: weapon.name,
-                    currentLevel: weapon.level,
-                    id: `upgrade_${weapon.type}`
-                });
-            }
-        });
-
-        // Add new weapons (if not at max weapons and weapon not already owned)
-        if (weapons.length < WEAPON_UPGRADES.MAX_WEAPONS) {
-            availableWeapons.forEach(weaponKey => {
-                const weaponType = weaponKey.toLowerCase();
-                const hasWeapon = weapons.some(w => w.type === weaponType);
-
-                if (!hasWeapon) {
+        // Add weapon upgrades (if upgradeType allows)
+        if (upgradeType === 'all' || upgradeType === 'weapons') {
+            // Add existing weapon upgrades (if not max level)
+            weapons.forEach(weapon => {
+                if (weapon.level < WEAPON_UPGRADES.MAX_LEVEL) {
                     upgradePool.push({
-                        type: 'weapon_new',
-                        weaponType: weaponType,
-                        weaponName: WEAPONS[weaponKey].name,
-                        id: `new_${weaponType}`
+                        type: 'weapon_upgrade',
+                        weaponType: weapon.type,
+                        weaponName: weapon.name,
+                        currentLevel: weapon.level,
+                        id: `upgrade_${weapon.type}`
                     });
                 }
             });
+
+            // Add new weapons (if not at max weapons and weapon not already owned)
+            if (weapons.length < WEAPON_UPGRADES.MAX_WEAPONS) {
+                availableWeapons.forEach(weaponKey => {
+                    const weaponType = weaponKey.toLowerCase();
+                    const hasWeapon = weapons.some(w => w.type === weaponType);
+
+                    if (!hasWeapon) {
+                        upgradePool.push({
+                            type: 'weapon_new',
+                            weaponType: weaponType,
+                            weaponName: WEAPONS[weaponKey].name,
+                            id: `new_${weaponType}`
+                        });
+                    }
+                });
+            }
         }
 
-        // Add passives
-        availablePassives.forEach(passiveKey => {
-            const passive = PASSIVES[passiveKey];
-            const passiveId = passiveKey.toLowerCase();
-            const currentStacks = passives[passiveId] || 0;
+        // Add passives (if upgradeType allows)
+        if (upgradeType === 'all' || upgradeType === 'passives') {
+            availablePassives.forEach(passiveKey => {
+                const passive = PASSIVES[passiveKey];
+                const passiveId = passiveKey.toLowerCase();
+                const currentStacks = passives[passiveId] || 0;
 
-            // Check if passive can be added/stacked
-            if (!passive.stackable && currentStacks > 0) {
-                return; // Skip non-stackable passives that are already acquired
-            }
+                // Check if passive can be added/stacked
+                if (!passive.stackable && currentStacks > 0) {
+                    return; // Skip non-stackable passives that are already acquired
+                }
 
-            if (passive.maxStacks && currentStacks >= passive.maxStacks) {
-                return; // Skip passives at max stacks
-            }
+                if (passive.maxStacks && currentStacks >= passive.maxStacks) {
+                    return; // Skip passives at max stacks
+                }
 
-            upgradePool.push({
-                type: 'passive',
-                passiveKey: passiveId,
-                passiveName: passive.name,
-                passiveDescription: passive.description,
-                currentStacks: currentStacks,
-                maxStacks: passive.maxStacks || Infinity,
-                id: `passive_${passiveId}`
+                upgradePool.push({
+                    type: 'passive',
+                    passiveKey: passiveId,
+                    passiveName: passive.name,
+                    passiveDescription: passive.description,
+                    currentStacks: currentStacks,
+                    maxStacks: passive.maxStacks || Infinity,
+                    id: `passive_${passiveId}`
+                });
             });
-        });
+        }
 
         // Randomly select choices from pool
         const poolCopy = [...upgradePool];

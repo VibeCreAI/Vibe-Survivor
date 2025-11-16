@@ -68,6 +68,7 @@ import { OptionsMenu } from './systems/ui/modals/options-menu.js';
 import { HelpMenu } from './systems/ui/modals/help-menu.js';
 import { StartScreenModal } from './systems/ui/modals/start-screen-modal.js';
 import { AboutModal } from './systems/ui/modals/about-modal.js';
+import { ChestModal } from './systems/ui/modals/chest-modal.js';
 
 // Import Phase 11 systems - Engine & Audio
 import { AudioManager } from './systems/audio/audio-manager.js';
@@ -140,7 +141,8 @@ class VibeSurvivor {
             options: new OptionsMenu(),
             helpMenu: new HelpMenu(),
             startScreenModal: new StartScreenModal(),
-            aboutModal: new AboutModal()
+            aboutModal: new AboutModal(),
+            chest: new ChestModal()
         };
 
         // Initialize Phase 11 systems - Engine & Audio
@@ -202,6 +204,7 @@ class VibeSurvivor {
         this.xpOrbs = pickupsState.xpOrbs;
         this.hpOrbs = pickupsState.hpOrbs;
         this.magnetOrbs = pickupsState.magnetOrbs;
+        this.chestOrbs = []; // Chest orbs for passive upgrades
 
         this.weapons = createWeaponsState();
 
@@ -259,7 +262,7 @@ class VibeSurvivor {
 
         // Inject pools into PickupSystem (pools are created in initializeProjectilePool)
         // Note: This must be called after initializeProjectilePool()
-        this.pickupSystem.setPools(this.xpOrbPool, this.hpOrbPool, this.magnetOrbPool);
+        this.pickupSystem.setPools(this.xpOrbPool, this.hpOrbPool, this.magnetOrbPool, this.chestOrbPool);
 
         // Initialize smart garbage collection system
         this.initializeSmartGarbageCollection();
@@ -1147,6 +1150,20 @@ class VibeSurvivor {
                                     <button class="gameover-restart-btn survivor-btn primary">RETRY</button>
                                     <button class="gameover-exit-btn survivor-btn">EXIT</button>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Chest Modal (Passive Upgrades) -->
+                        <div id="chest-modal" class="chest-modal" style="display: none;">
+                            <div class="chest-content">
+                                <h2 class="chest-title">UPGRADE CHEST</h2>
+                                <p class="chest-subtitle">Choose one passive upgrade</p>
+                                <div class="chest-scroll">
+                                    <div class="chest-choices-container">
+                                        <!-- 3 upgrade choices will be populated dynamically -->
+                                    </div>
+                                </div>
+                                <p class="chest-hint">↑↓ Navigate • Enter Select</p>
                             </div>
                         </div>
                     </div>
@@ -3115,6 +3132,130 @@ class VibeSurvivor {
                 margin-bottom: 12px;
             }
 
+            /* Chest Modal Styles */
+            .chest-modal {
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.85);
+                display: none;
+                align-items: center;
+                justify-content: center;
+                z-index: 120000;
+                backdrop-filter: blur(6px);
+                -webkit-backdrop-filter: blur(6px);
+            }
+
+            .chest-modal[style*="display: block"],
+            .chest-modal[style*="display: flex"] {
+                display: flex !important;
+            }
+
+            .chest-content {
+                background: linear-gradient(135deg, #1a0a0a, #2a1a0a);
+                border: 3px solid #FFD700;
+                border-radius: 15px;
+                padding: 30px;
+                text-align: center;
+                width: min(420px, 92vw);
+                max-height: 85vh;
+                box-shadow: 0 0 40px rgba(255, 215, 0, 0.6);
+                backdrop-filter: blur(10px);
+                outline: none;
+            }
+
+            .chest-title {
+                color: #FFD700;
+                font-size: 2rem;
+                margin: 0 0 8px 0;
+                text-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+                font-weight: bold;
+            }
+
+            .chest-subtitle {
+                color: #FFA500;
+                font-size: 1rem;
+                margin: 0 0 20px 0;
+                opacity: 0.9;
+            }
+
+            .chest-scroll {
+                max-height: 60vh;
+                overflow-y: auto;
+                overflow-x: hidden;
+                padding: 0 10px;
+                margin-bottom: 15px;
+            }
+
+            .chest-choices-container {
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .chest-choice {
+                background: rgba(255, 215, 0, 0.12);
+                border: 2px solid #FFD700;
+                border-radius: 10px;
+                padding: 15px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                text-align: center;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .chest-choice:hover {
+                background: rgba(255, 215, 0, 0.25);
+                border: 2px solid #FFFFFF;
+                box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            }
+
+            .chest-choice-icon {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 12px;
+                width: 100%;
+            }
+
+            .chest-choice-icon-image {
+                width: 48px;
+                height: 48px;
+                display: inline-block;
+                image-rendering: pixelated;
+                object-fit: contain;
+            }
+
+            .chest-choice-title {
+                font-size: 20px;
+                font-weight: bold;
+                color: #FFD700;
+                text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+            }
+
+            .chest-choice p {
+                color: white;
+                margin: 0;
+                font-size: 0.95rem;
+                opacity: 0.95;
+            }
+
+            .chest-stack-info {
+                color: #FFA500;
+                font-size: 0.85rem;
+                opacity: 0.8;
+                font-style: italic;
+            }
+
+            .chest-hint {
+                color: #FFD700;
+                font-size: 0.85rem;
+                margin: 10px 0 0 0;
+                opacity: 0.7;
+            }
+
             /* Mobile Touch Controls */
             .mobile-controls {
                 position: absolute;
@@ -4161,6 +4302,41 @@ class VibeSurvivor {
             this._levelUpModalInitialized = true;
         }
 
+        // Initialize chest modal (if not already initialized)
+        if (!this._chestModalInitialized) {
+            this.modals.chest.init();
+
+            // Set up overlay lock callbacks for pausing game
+            this.modals.chest.setOverlayLockCallbacks(
+                this.incrementOverlayLock.bind(this),
+                this.decrementOverlayLock.bind(this)
+            );
+
+            // Set up translation function
+            this.modals.chest.setTranslationFunction(this.t.bind(this));
+
+            // Set up upgrade selection callback
+            this.modals.chest.onUpgradeSelected((choice, choiceIndex) => {
+                // Apply passive upgrade
+                this.selectUpgrade(choice);
+
+                // Play upgrade sound
+                this.audioManager.playSound('upgrade');
+
+                // Resume game
+                this.gameRunning = true;
+                this.timePaused = false;
+
+                // Resume looping weapon sounds
+                this.audioManager.resumeLoopingSound('weaponGatlingGun');
+
+                // Restart animation loop if needed
+                this.startAnimationLoop();
+            });
+
+            this._chestModalInitialized = true;
+        }
+
         // Phase 12c.4 - Initialize pause modal (if not already initialized)
         if (!this._pauseModalInitialized) {
             this.modals.pause.init();
@@ -4560,6 +4736,8 @@ class VibeSurvivor {
         this.updateHPOrbs();
         this.spawnMagnetOrbs();
         this.updateMagnetOrbs();
+        this.spawnChestOrbs();
+        this.updateChestOrbs();
 
         this.checkScheduledBossSpawn();
 
@@ -6111,14 +6289,14 @@ class VibeSurvivor {
 
     createMagnetOrb() {
         const orb = this.getPooledMagnetOrb();
-        
+
         if (orb) {
             // Spawn at random location within reasonable distance from player (same as HP orbs)
             const angle = Math.random() * Math.PI * 2;
             const minDistance = 300;
             const maxDistance = 800;
             const distance = minDistance + Math.random() * (maxDistance - minDistance);
-            
+
             orb.x = this.player.x + Math.cos(angle) * distance;
             orb.y = this.player.y + Math.sin(angle) * distance;
             orb.attractionRange = 1000;
@@ -6126,7 +6304,88 @@ class VibeSurvivor {
             // Magnet orb created successfully
         }
     }
-    
+
+    spawnChestOrbs() {
+        // Delegate to PickupSystem
+        const shouldCreate = this.pickupSystem.spawnChestOrbs(
+            this.chestOrbs,
+            this.playerDead,
+            this.isPaused,
+            this.bossDefeating
+        );
+
+        if (shouldCreate) {
+            this.createChestOrb();
+        }
+    }
+
+    createChestOrb() {
+        // Delegate to PickupSystem to create chest orb
+        const orb = this.pickupSystem.createChestOrb(
+            this.chestOrbs,
+            this.player,
+            () => this.getPooledChestOrb(),
+            (angle) => Math.cos(angle),
+            (angle) => Math.sin(angle)
+        );
+
+        if (orb) {
+            // Trigger spawn notification and effects
+            this.showChestSpawnNotification();
+            this.audioManager.playSound('upgradeBox');
+            this.createChestSpawnParticles(orb.x, orb.y);
+        }
+    }
+
+    updateChestOrbs() {
+        // Delegate to PickupSystem
+        this.pickupSystem.updateChestOrbs(
+            this.chestOrbs,
+            this.player,
+            this.cachedSqrt,
+            (orb) => this.onChestCollected(orb),
+            this.bossDefeating
+        );
+    }
+
+    onChestCollected(orb) {
+        // Play collection sound and effects
+        this.audioManager.playSound('upgradeBox');
+        this.createChestCollectionParticles(orb.x, orb.y);
+
+        // Increment chest stats
+        if (this.player.chestsCollected !== undefined) {
+            this.player.chestsCollected++;
+        } else {
+            this.player.chestsCollected = 1;
+        }
+
+        // Show chest modal with passive upgrades
+        this.showChestModal();
+    }
+
+    showChestModal() {
+        if (!this.modals.chest) return;
+
+        // Pause game (same as level-up modal)
+        this.gameRunning = false;
+        this.timePaused = true;
+
+        // Pause gatling gun looping sound if playing
+        this.audioManager.pauseLoopingSound('weaponGatlingGun');
+
+        // Generate 3 passive upgrade choices using UpgradeSystem
+        const passiveChoices = this.upgradeSystem.getUpgradeChoices(
+            this.weapons,
+            this.player.passives,
+            3,
+            'passives'
+        );
+
+        // Show modal with choices
+        this.modals.chest.show(passiveChoices);
+    }
+
     updateNotifications() {
         // Legacy notification system has been replaced with DOM-based toast notifications
         // This method is kept for compatibility but notifications array is no longer used
@@ -6235,68 +6494,10 @@ class VibeSurvivor {
             });
         }
         
-        // Passive abilities
-        const passiveChoices = [
-            { id: 'health_boost', name: this.t('healthBoost', 'passives'), description: this.t('healthBoostDesc', 'passives'), icon: this.getPassiveIcon('health_boost') },
-            { id: 'speed_boost', name: this.t('speedBoost', 'passives'), description: this.t('speedBoostDesc', 'passives'), icon: this.getPassiveIcon('speed_boost') },
-            { id: 'regeneration', name: this.t('regeneration', 'passives'), description: this.t('regenerationDesc', 'passives'), icon: this.getPassiveIcon('regeneration') },
-            { id: 'magnet', name: this.t('magnet', 'passives'), description: this.t('magnetDesc', 'passives'), icon: this.getPassiveIcon('magnet') },
-            { id: 'armor', name: this.t('armor', 'passives'), description: this.t('armorDesc', 'passives'), icon: this.getPassiveIcon('armor') },
-            { id: 'critical', name: this.t('criticalStrike', 'passives'), description: this.t('criticalStrikeDesc', 'passives'), icon: this.getPassiveIcon('critical') },
-            { id: 'dash_boost', name: this.t('dashBoost', 'passives'), description: this.t('dashBoostDesc', 'passives'), icon: this.getPassiveIcon('dash_boost') }
-        ];
-        
-        passiveChoices.forEach(passive => {
-            // Allow health_boost, speed_boost, armor, critical, and dash_boost to be acquired multiple times
-            const canStack = ['health_boost', 'speed_boost', 'armor', 'critical', 'dash_boost'].includes(passive.id);
-            const alreadyHas = this.player.passives[passive.id];
+        // NOTE: Passive abilities removed - now only available from upgrade chests
+        // Chest system provides passive upgrades separately from level-up
 
-            // Check for caps on stackable items
-            let canAcquire = true;
-            if (passive.id === 'speed_boost' && typeof alreadyHas === 'number' && alreadyHas >= 3) {
-                canAcquire = false; // Speed boost is capped at 3 stacks
-            }
-            if (passive.id === 'critical' && typeof alreadyHas === 'number' && alreadyHas >= 3) {
-                canAcquire = false; // Critical is capped at 3 stacks
-            }
-            if (passive.id === 'dash_boost' && typeof alreadyHas === 'number' && alreadyHas >= 3) {
-                canAcquire = false; // Dash boost is capped at 3 stacks
-            }
-
-            if ((!alreadyHas || canStack) && canAcquire) {
-                // Update description for stackable items
-                let description = passive.description;
-                if (canStack && alreadyHas) {
-                    if (passive.id === 'health_boost') {
-                        description = '+25 Max Health (Stackable)';
-                    } else if (passive.id === 'speed_boost') {
-                        const currentStacks = typeof alreadyHas === 'number' ? alreadyHas : 0;
-                        const nextStacks = Math.min(3, currentStacks + 1);
-                        description = `+10% Movement Speed (${nextStacks}/3 Stacks)`;
-                    } else if (passive.id === 'armor') {
-                        description = '+15% Damage Reduction (Stackable)';
-                    } else if (passive.id === 'critical') {
-                        const currentStacks = typeof alreadyHas === 'number' ? alreadyHas : 0;
-                        const nextStacks = Math.min(3, currentStacks + 1);
-                        description = `+15% Crit Chance (${nextStacks}/3 Stacks)`;
-                    } else if (passive.id === 'dash_boost') {
-                        const currentStacks = typeof alreadyHas === 'number' ? alreadyHas : 0;
-                        const nextStacks = Math.min(3, currentStacks + 1);
-                        description = `+50% Dash Distance (${nextStacks}/3 Stacks)`;
-                    }
-                }
-
-                choices.push({
-                    type: 'passive',
-                    passiveId: passive.id,
-                    name: passive.name,
-                    description: description,
-                    icon: passive.icon
-                });
-            }
-        });
-        
-        // Return 3-4 random choices
+        // Return 3-4 random choices (weapons only)
         const shuffled = choices.sort(() => Math.random() - 0.5);
         return shuffled.slice(0, Math.min(4, shuffled.length));
     }
@@ -6803,17 +7004,40 @@ class VibeSurvivor {
                 this.addNewWeapon(choice.weaponType);
                 break;
             case 'passive':
-                this.addPassiveAbility(choice.passiveId);
+                this.addPassiveAbility(choice.passiveKey || choice.passiveId);
                 break;
         }
 
         this.player.health = Math.min(this.player.maxHealth, this.player.health + 10);
-        this.showUpgradeNotification(choice.name, choice.icon);
+
+        // Get name and icon for notification
+        const upgradeName = choice.passiveName || choice.weaponName || choice.name || 'Upgrade';
+        const upgradeIcon = choice.icon || this.getPassiveIconForNotification(choice.passiveKey);
+        this.showUpgradeNotification(upgradeName, upgradeIcon);
 
         // Check if help button should be shown
         this.checkHelpButtonVisibility();
     }
-    
+
+    /**
+     * Gets icon HTML for passive type for notifications
+     * @param {string} passiveKey - Passive key
+     * @returns {string} Icon HTML
+     */
+    getPassiveIconForNotification(passiveKey) {
+        const iconMap = {
+            'health_boost': 'images/passives/healthBoost.png',
+            'speed_boost': 'images/passives/speedBoost.png',
+            'regeneration': 'images/passives/regeneration.png',
+            'magnet': 'images/passives/magnet.png',
+            'armor': 'images/passives/armor.png',
+            'critical_strike': 'images/passives/criticalStrike.png',
+            'dash_boost': 'images/passives/dashBoost.png'
+        };
+        const iconPath = iconMap[passiveKey] || 'images/passives/passive.png';
+        return `<img src="${iconPath}" alt="${passiveKey}" style="width: 64px; height: 64px; image-rendering: pixelated; vertical-align: middle; margin-right: 8px;">`;
+    }
+
     upgradeExistingWeapon(weaponIndex) {
         const weapon = this.weapons[weaponIndex];
 
@@ -7104,7 +7328,63 @@ class VibeSurvivor {
     showContinueNotification() {
         this.showToastNotification("BOSS DEFEATED! DIFFICULTY INCREASED!", 'victory');
     }
-    
+
+    showChestSpawnNotification() {
+        // Show notification that upgrade chest has appeared
+        const chestIcon = '<img src="images/passives/upgradeBox.png" alt="Chest" style="width: 64px; height: 64px; image-rendering: pixelated; vertical-align: middle; margin-right: 8px;">';
+        this.showToastNotification("UPGRADE CHEST HAS APPEARED!", 'upgrade', chestIcon);
+    }
+
+    createChestSpawnParticles(x, y) {
+        // Create gold sparkle particles around chest spawn point
+        if (!this.particleSystem) return;
+
+        for (let i = 0; i < 15; i++) {
+            const particle = this.particleSystem.getPooledParticle();
+            if (particle) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 1 + Math.random() * 2;
+
+                particle.x = x;
+                particle.y = y;
+                particle.vx = Math.cos(angle) * speed;
+                particle.vy = Math.sin(angle) * speed;
+                particle.size = 2 + Math.random() * 2;
+                particle.color = '#FFD700'; // Gold
+                particle.life = 0.3 + Math.random() * 0.3;
+                particle.maxLife = particle.life;
+                particle.type = 'chest_spawn';
+
+                this.particleSystem.particles.push(particle);
+            }
+        }
+    }
+
+    createChestCollectionParticles(x, y) {
+        // Create explosion burst of gold particles when chest collected
+        if (!this.particleSystem) return;
+
+        for (let i = 0; i < 30; i++) {
+            const particle = this.particleSystem.getPooledParticle();
+            if (particle) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 2 + Math.random() * 4;
+
+                particle.x = x;
+                particle.y = y;
+                particle.vx = Math.cos(angle) * speed;
+                particle.vy = Math.sin(angle) * speed;
+                particle.size = 3 + Math.random() * 3;
+                particle.color = i % 2 === 0 ? '#FFD700' : '#FFA500'; // Gold and orange
+                particle.life = 0.5 + Math.random() * 0.5;
+                particle.maxLife = particle.life;
+                particle.type = 'chest_collect';
+
+                this.particleSystem.particles.push(particle);
+            }
+        }
+    }
+
     calculateNotificationPosition(type) {
         // This method has been replaced by the toast notification system
         // Kept for compatibility but no longer used
@@ -7313,12 +7593,28 @@ class VibeSurvivor {
         // Magnet orb pool for attraction performance
         this.magnetOrbPool = [];
         this.magnetOrbPoolSize = 20;
-        
+
         for (let i = 0; i < this.magnetOrbPoolSize; i++) {
             this.magnetOrbPool.push({
                 x: 0, y: 0, attractionRange: 1000,
                 life: 3600, glow: 0,
                 active: false
+            });
+        }
+
+        // Chest orb pool for upgrade chests
+        this.chestOrbPool = [];
+        this.chestOrbPoolSize = 5;
+
+        for (let i = 0; i < this.chestOrbPoolSize; i++) {
+            this.chestOrbPool.push({
+                x: 0, y: 0,
+                life: 0, lifetime: 9000, // 2.5 minutes
+                glow: 0,
+                active: false,
+                __hintInitialized: false,
+                hintVisible: false,
+                hintFramesRemaining: 0
             });
         }
     }
@@ -7412,7 +7708,7 @@ class VibeSurvivor {
                 return orb;
             }
         }
-        
+
         // If no available orb in pool, expand pool dynamically
         const newOrb = {
             x: 0, y: 0, attractionRange: 1000,
@@ -7420,6 +7716,34 @@ class VibeSurvivor {
             active: true
         };
         this.magnetOrbPool.push(newOrb);
+        return newOrb;
+    }
+
+    getPooledChestOrb() {
+        for (let i = 0; i < this.chestOrbPool.length; i++) {
+            if (!this.chestOrbPool[i].active) {
+                const orb = this.chestOrbPool[i];
+                orb.active = true;
+                orb.life = 0; // Reset lifetime counter
+                orb.glow = 0; // Reset glow
+                orb.__hintInitialized = false;
+                orb.hintVisible = false;
+                orb.hintFramesRemaining = 0;
+                return orb;
+            }
+        }
+
+        // If no available orb in pool, expand pool dynamically
+        const newOrb = {
+            x: 0, y: 0,
+            life: 0, lifetime: 9000,
+            glow: 0,
+            active: true,
+            __hintInitialized: false,
+            hintVisible: false,
+            hintFramesRemaining: 0
+        };
+        this.chestOrbPool.push(newOrb);
         return newOrb;
     }
 
@@ -8591,6 +8915,7 @@ class VibeSurvivor {
         this.drawXPOrbs();
         this.drawHPOrbs();
         this.drawMagnetOrbs();
+        this.drawChestOrbs();
         this.drawExplosionsWithBatching();
         this.drawParticlesWithBatching();
         this.drawNotifications();
@@ -9433,6 +9758,33 @@ class VibeSurvivor {
             if (this.itemIcons.magnet.complete) {
                 this.ctx.drawImage(
                     this.itemIcons.magnet,
+                    orb.x - iconSize / 2,
+                    orb.y - iconSize / 2,
+                    iconSize,
+                    iconSize
+                );
+            }
+
+            this.ctx.restore();
+        });
+    }
+
+    drawChestOrbs() {
+        this.chestOrbs.forEach(orb => {
+            // Always show gold arrow hint when active
+            this.drawPickupHint(orb, '#FFD700');
+
+            // Enhanced frustum culling: Skip chest orbs that shouldn't be rendered
+            if (!this.shouldRender(orb, 'chest')) {
+                return; // Skip entirely if far outside range
+            }
+            this.ctx.save();
+
+            // Upgrade box icon (static, no glow or rotation) - 64px (twice as large)
+            const iconSize = 64;
+            if (this.itemIcons.upgradeBox && this.itemIcons.upgradeBox.complete) {
+                this.ctx.drawImage(
+                    this.itemIcons.upgradeBox,
                     orb.x - iconSize / 2,
                     orb.y - iconSize / 2,
                     iconSize,
