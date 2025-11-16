@@ -6334,12 +6334,11 @@ class VibeSurvivor {
             burning: null,
             spawnedMinions: false
         };
-        
-        // Only add rotation properties for tank enemies (boss handled separately)
-        if (config.behavior === 'tank') {
-            enemy.angle = 0;
-            enemy.rotSpeed = 0.05;
-        }
+
+        // Give every enemy a small spin for visual motion
+        const rotSpeed = config.rotSpeed ?? 0.02;
+        enemy.angle = Math.random() * Math.PI * 2;
+        enemy.rotSpeed = rotSpeed * (Math.random() < 0.5 ? -1 : 1);
         
         this.enemies.push(enemy);
         
@@ -6532,7 +6531,8 @@ class VibeSurvivor {
                 speed: 0.75,
                 contactDamage: 10,
                 color: '#ff00ff', // Neon pink
-                behavior: 'chase'
+                behavior: 'chase',
+                rotSpeed: 0.018
             },
             fast: {
                 radius: 7,
@@ -6540,7 +6540,8 @@ class VibeSurvivor {
                 speed: 1.85,
                 contactDamage: 6,
                 color: '#ffff00', // Neon yellow
-                behavior: 'dodge'
+                behavior: 'dodge',
+                rotSpeed: 0.028
             },
             tank: {
                 radius: 15,
@@ -6548,7 +6549,8 @@ class VibeSurvivor {
                 speed: 0.5,
                 contactDamage: 20,
                 color: '#ff0040', // Neon red
-                behavior: 'tank'
+                behavior: 'tank',
+                rotSpeed: 0.05
             },
             flyer: {
                 radius: 12,
@@ -6556,7 +6558,8 @@ class VibeSurvivor {
                 speed: 1.25,
                 contactDamage: 12,
                 color: '#0080ff', // Neon blue
-                behavior: 'fly'
+                behavior: 'fly',
+                rotSpeed: 0.024
             },
             phantom: {
                 radius: 9,
@@ -6564,7 +6567,8 @@ class VibeSurvivor {
                 speed: 0.75,
                 contactDamage: 2,
                 color: '#74EE15', // Neon green
-                behavior: 'teleport'
+                behavior: 'teleport',
+                rotSpeed: 0.032
             },
             boss: {
                 radius: 40,
@@ -6572,7 +6576,8 @@ class VibeSurvivor {
                 speed: 0.75,
                 contactDamage: 50,
                 color: '#F000FF', // Neon purple
-                behavior: 'boss'
+                behavior: 'boss',
+                rotSpeed: 0.02
             }
         };
         
@@ -7049,8 +7054,9 @@ class VibeSurvivor {
                 behavior: 'chase',
                 specialCooldown: 0,
                 burning: null,
-                spawnedMinions: false
-                // No angle/rotSpeed - minions don't rotate for performance
+                spawnedMinions: false,
+                angle: Math.random() * Math.PI * 2,
+                rotSpeed: (Math.random() < 0.5 ? -1 : 1) * 0.04
             });
         }
     }
@@ -10226,34 +10232,37 @@ class VibeSurvivor {
                 // Remove shadow for better performance and visibility on black background
                 
                 // Simple wireframe circle - ALWAYS render
+                const r = enemy.radius || 15;
                 this.ctx.strokeStyle = enemy.color || '#00ffff';
                 this.ctx.lineWidth = 2;
                 this.ctx.beginPath();
-                this.ctx.arc(0, 0, enemy.radius || 15, 0, Math.PI * 2);
+                this.ctx.arc(0, 0, r, 0, Math.PI * 2);
                 this.ctx.stroke();
                 
                 // Always show inner cross pattern for visibility
+                this.ctx.save();
+                this.ctx.rotate(enemy.angle || 0);
                 this.ctx.strokeStyle = (enemy.color || '#00ffff') + '80';
                 this.ctx.lineWidth = 1;
                 this.ctx.beginPath();
-                const r = enemy.radius || 15;
                 this.ctx.moveTo(-r * 0.7, 0);
                 this.ctx.lineTo(r * 0.7, 0);
                 this.ctx.moveTo(0, -r * 0.7);
                 this.ctx.lineTo(0, r * 0.7);
                 this.ctx.stroke();
+                this.ctx.restore();
                 
                 // Health bar (always show when damaged)
                 if (enemy.health < enemy.maxHealth) {
-                    const barWidth = (enemy.radius || 15) * 1.5;
+                    const barWidth = r * 1.5;
                     const barHeight = 2;
                     const healthPercent = enemy.health / enemy.maxHealth;
                     
                     this.ctx.fillStyle = '#333';
-                    this.ctx.fillRect(-barWidth / 2, -(enemy.radius || 15) - 6, barWidth, barHeight);
+                    this.ctx.fillRect(-barWidth / 2, -r - 6, barWidth, barHeight);
                     
                     this.ctx.fillStyle = healthPercent > 0.5 ? '#0f0' : healthPercent > 0.25 ? '#ff0' : '#f00';
-                    this.ctx.fillRect(-barWidth / 2, -(enemy.radius || 15) - 6, barWidth * healthPercent, barHeight);
+                    this.ctx.fillRect(-barWidth / 2, -r - 6, barWidth * healthPercent, barHeight);
                 }
                 
                 this.ctx.restore();

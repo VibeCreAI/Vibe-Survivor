@@ -149,11 +149,10 @@ export class EnemySystem {
             spawnedMinions: false
         };
 
-        // Only add rotation properties for tank enemies (boss handled separately)
-        if (config.behavior === 'tank') {
-            enemy.angle = 0;
-            enemy.rotSpeed = 0.05;
-        }
+        // Spin every enemy for added motion
+        const rotSpeed = config.rotSpeed ?? 0.02;
+        enemy.angle = Math.random() * Math.PI * 2;
+        enemy.rotSpeed = rotSpeed * (Math.random() < 0.5 ? -1 : 1);
 
         enemies.push(enemy);
 
@@ -349,7 +348,8 @@ export class EnemySystem {
                 speed: 0.75,
                 contactDamage: 10,
                 color: '#ff00ff', // Neon pink
-                behavior: 'chase'
+                behavior: 'chase',
+                rotSpeed: 0.018
             },
             fast: {
                 radius: 7,
@@ -357,7 +357,8 @@ export class EnemySystem {
                 speed: 1.85,
                 contactDamage: 6,
                 color: '#ffff00', // Neon yellow
-                behavior: 'dodge'
+                behavior: 'dodge',
+                rotSpeed: 0.028
             },
             tank: {
                 radius: 15,
@@ -365,7 +366,8 @@ export class EnemySystem {
                 speed: 0.5,
                 contactDamage: 20,
                 color: '#ff0040', // Neon red
-                behavior: 'tank'
+                behavior: 'tank',
+                rotSpeed: 0.05
             },
             flyer: {
                 radius: 12,
@@ -373,7 +375,8 @@ export class EnemySystem {
                 speed: 1.25,
                 contactDamage: 12,
                 color: '#0080ff', // Neon blue
-                behavior: 'fly'
+                behavior: 'fly',
+                rotSpeed: 0.024
             },
             phantom: {
                 radius: 9,
@@ -381,7 +384,8 @@ export class EnemySystem {
                 speed: 0.75,
                 contactDamage: 2,
                 color: '#74EE15', // Neon green
-                behavior: 'teleport'
+                behavior: 'teleport',
+                rotSpeed: 0.032
             },
             boss: {
                 radius: 40,
@@ -389,7 +393,8 @@ export class EnemySystem {
                 speed: 0.75,
                 contactDamage: 50,
                 color: '#F000FF', // Neon purple
-                behavior: 'boss'
+                behavior: 'boss',
+                rotSpeed: 0.02
             }
         };
 
@@ -778,9 +783,9 @@ export class EnemySystem {
                 enemy.specialCooldown--;
             }
 
-            // Only rotate tank and boss enemies for performance
-            if (enemy.behavior === 'tank' || enemy.behavior === 'boss') {
-                enemy.angle += enemy.rotSpeed;
+            // Rotate any enemy that has a rotation speed set
+            if (typeof enemy.rotSpeed === 'number') {
+                enemy.angle = (enemy.angle || 0) + enemy.rotSpeed;
             }
 
             // Remove dead enemies
@@ -955,7 +960,9 @@ export class EnemySystem {
                 behavior: 'chase',
                 specialCooldown: 0,
                 burning: null,
-                spawnedMinions: false
+                spawnedMinions: false,
+                angle: Math.random() * Math.PI * 2,
+                rotSpeed: (Math.random() < 0.5 ? -1 : 1) * 0.04
             });
         }
     }
