@@ -853,8 +853,10 @@ class VibeSurvivor {
                         <!-- Separate Start Screen Overlay -->
                         <div id="survivor-start-overlay" class="survivor-start-overlay active">
                             <div class="survivor-title" style="display: none;">
+                                <img src="images/ChromaAwards.png" alt="Chroma Awards" id="chroma-awards-logo" class="chroma-awards-logo" role="button" tabindex="0" aria-label="Play the Chroma Awards theme">
                                 <img src="images/Title.png" alt="VIBE SURVIVOR" class="title-logo">
                                 <p>Survive the endless waves!</p>
+                                <p class="chroma-award-text">Chroma Award Game - <a href="https://www.ChromaAwards.com" target="_blank" rel="noopener noreferrer">www.ChromaAwards.com</a></p>
                                 <p class="controls-info">PC: WASD/Arrow Keys to move, SPACEBAR to dash</p>
                                 <p class="controls-info mobile-only">Mobile: Touch screen to move, tap DASH button</p>
                                 <button id="start-survivor" class="survivor-btn primary">START</button>
@@ -2007,6 +2009,26 @@ class VibeSurvivor {
                         drop-shadow(-2px -2px 3px rgba(0, 0, 0, 0.4));
             }
 
+            .chroma-awards-logo {
+                max-width: min(65%, 520px);
+                width: 100%;
+                height: auto;
+                margin: 0 auto 24px;
+                border-radius: 12px;
+                cursor: pointer;
+                box-shadow: 0 15px 45px rgba(0, 0, 0, 0.45);
+                transition: transform 0.3s ease, box-shadow 0.3s ease;
+                image-rendering: auto;
+                display: block;
+            }
+
+            .chroma-awards-logo:hover,
+            .chroma-awards-logo:focus-visible {
+                transform: scale(1.02);
+                box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+                outline: none;
+            }
+
             .survivor-title h1 {
                 color: #00ffff;
                 font-size: 32px;
@@ -2025,7 +2047,31 @@ class VibeSurvivor {
                      2px -2px 0 #000,
                     -2px  2px 0 #000,
                      2px  2px 0 #000,
-                     0 0 10px rgba(0, 0, 0, 0.8);
+                    0 0 10px rgba(0, 0, 0, 0.8);
+            }
+
+            .chroma-award-text {
+                font-size: 18px;
+                color: #ffe7b8;
+                margin-bottom: 18px;
+                font-family: 'NeoDunggeunmoPro', 'Courier New', monospace;
+                text-shadow:
+                    -2px -2px 0 #000,
+                     2px -2px 0 #000,
+                    -2px  2px 0 #000,
+                     2px  2px 0 #000,
+                     0 0 12px rgba(0, 0, 0, 0.8);
+            }
+
+            .chroma-award-text a {
+                color: #ffd166;
+                text-decoration: underline;
+            }
+
+            .chroma-award-text a:hover,
+            .chroma-award-text a:focus-visible {
+                color: #ffffff;
+                outline: none;
             }
 
             .controls-info {
@@ -4281,6 +4327,8 @@ class VibeSurvivor {
                     this.initializeMenuNavigation('start', startButtons);
                 }
 
+                this.setupChromaAwardsLogoInteraction();
+
                 // Title content is hidden in HTML initially (display: none on .survivor-title)
                 // Show everything after background loads and mark game as ready
                 const allButtons = [startBtn, optionsBtn, aboutBtn, restartBtn, exitBtn];
@@ -4325,6 +4373,54 @@ class VibeSurvivor {
         } else {
             console.error('showStartScreen: Start screen element not found');
         }
+    }
+
+    setupChromaAwardsLogoInteraction() {
+        const chromaLogo = document.getElementById('chroma-awards-logo');
+        if (!chromaLogo || chromaLogo.dataset.bound === 'true') {
+            return;
+        }
+
+        const playChromaSound = () => {
+            this.playStartMenuThemes();
+        };
+
+        chromaLogo.addEventListener('click', playChromaSound);
+        chromaLogo.addEventListener('touchstart', (event) => {
+            event.preventDefault();
+            playChromaSound();
+        }, { passive: false });
+        chromaLogo.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                playChromaSound();
+            }
+        });
+
+        chromaLogo.dataset.bound = 'true';
+
+        const chromaLink = document.querySelector('.chroma-award-text a');
+        if (chromaLink && chromaLink.dataset.bound !== 'true') {
+            const openAwardsSite = () => {
+                window.open(chromaLink.href, '_blank', 'noopener');
+            };
+
+            chromaLink.addEventListener('touchstart', (event) => {
+                event.preventDefault();
+                openAwardsSite();
+            }, { passive: false });
+
+            chromaLink.dataset.bound = 'true';
+        }
+    }
+
+    playStartMenuThemes() {
+        if (!this.audioManager) {
+            return;
+        }
+
+        this.audioManager.playSound('startMenu');
+        this.audioManager.playSound('chromaAwardsTheme');
     }
     
     startGame() {
@@ -11708,8 +11804,8 @@ class VibeSurvivor {
             startScreen.classList.add('active');
             startScreen.style.display = 'flex';
 
-            // Play start menu sound when returning to start screen
-            this.audioManager.playSound('startMenu');
+            // Play Chroma Awards presentation audio when returning to start screen
+            this.playStartMenuThemes();
 
             requestAnimationFrame(() => this.updateStartOverlayLayout());
 
@@ -11766,22 +11862,25 @@ class VibeSurvivor {
             return; // Don't attempt if audio system not ready or SFX muted
         }
 
-        const sound = this.audioManager.sounds.get('startMenu');
+        const startMenuSounds = ['startMenu', 'chromaAwardsTheme'];
+        startMenuSounds.forEach(soundName => {
+            this.attemptStartMenuAutoplay(soundName);
+        });
+    }
+
+    attemptStartMenuAutoplay(soundName) {
+        const sound = this.audioManager.sounds.get(soundName);
         if (!sound) {
-            return; // Sound not loaded
+            return;
         }
 
-        // Clone the audio to avoid affecting the cached version
         const autoplayAttempt = sound.cloneNode();
         autoplayAttempt.volume = this.audioManager.sfxVolume;
 
-        // Attempt to play - will succeed for returning users with MEI
         autoplayAttempt.play().then(() => {
             // Success - user has sufficient Media Engagement Index
-            // Sound is now playing
         }).catch(() => {
             // Expected failure for new users or low MEI
-            // Silently ignore - user will hear sound on first interaction (quit to menu)
         });
     }
 
