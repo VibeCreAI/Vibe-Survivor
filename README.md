@@ -24,6 +24,15 @@ This folder now contains an operational build of the Vibe Survivor game, detache
 - `fonts/` – Pixel fonts (e.g. NeoDunggeunmoPro) used across landing and in-game UI.
 - `images/` – Title art, background, weapon/passive icons, AI bot sprite, and other UI assets.
 
+## Upgrade Chest System
+
+- Chest orbs spawn during gameplay and trigger a dedicated **Upgrade Chest** modal that pauses the game and offers three passive-only rewards.
+- The modal uses the same Option-B architecture as the level-up screen (magenta theme, keyboard/touch navigation) with tabs for **Upgrades**, **Guide**, and **Status**.
+- Unique passives render with gold badges and have reduced spawn weight. Current uniques:
+  - Regeneration, Turbo-Flux Cycler, Aegis Impact Core, Splitstream Matrix, Macro-Charge Amplifier, Mod-Bay Expander.
+- Guide tab lists every unique passive with icon + localized description; Status tab reuses the dynamic weapons/passives/player stats sections from the level-up modal.
+- Game logic applies each passive immediately (e.g., global fire-rate/damage buffs, projectile-cap increases, weapon-slot expansion to five, explosion radius boosts).
+
 ## Running Locally
 
 Any static HTTP server will work. From this folder:

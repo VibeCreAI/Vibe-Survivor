@@ -63,6 +63,7 @@ The game now uses a **modular architecture** with `VibeSurvivor` acting as the h
      - `pause-menu.js`: Pause overlay (keyboard navigation, mute, dash position, resume/restart/exit)
      - `game-over.js`: Game Over modal (scrollable stats, weapon/passive summaries)
      - `level-up.js`: Level Up modal (tabs: upgrades/guide/status)
+     - `chest-modal.js`: Upgrade chest modal (passive-only rewards, guide/status tabs, unique item guide)
      - `options-menu.js`: Language/audio/dash-position menu
      - `help-menu.js`: In-game help with recipes and status tab
      - `victory.js`, `loading-screen.js`, `start-screen.js`, `start-screen-modal.js`, `about-modal.js`, etc.
@@ -87,6 +88,21 @@ The game uses a controlled initialization pattern:
 3. `main.js` wires up event handlers using `data-launch-game` attributes
 4. Game instance created on-demand when start button is pressed
 5. Game launches in modal overlay, preserving landing page underneath
+
+### Upgrade Chest System
+
+- Chest orbs spawn through `PickupSystem` and call `showChestModal()` when collected. The modal pauses the game, locks overlays, and resumes once an upgrade is chosen.
+- The chest modal mirrors the level-up modal structure: **Upgrades**, **Guide**, and **Status** tabs with full keyboard/touch navigation and localization support.
+- Upgrades are **passive-only** and use weighted selection (unique passives have reduced spawn weight). Unique cards render with gold styling and badges.
+- The guide tab lists all unique passives (icon, name, description). Status reuses the existing weapons/passives/player stats render callbacks shared with the level-up modal.
+- Unique passives currently available:
+  - Regeneration (legacy healing passive).
+  - Turbo-Flux Cycler (+25% global fire rate).
+  - Aegis Impact Core (+50% global weapon damage).
+  - Splitstream Matrix (+1 projectile per weapon and raises per-weapon projectile cap).
+  - Macro-Charge Amplifier (+50% explosion radius for explosive weapons).
+  - Mod-Bay Expander (raises the weapon slot cap to five; HUD displays the extra slot).
+- `UpgradeSystem` and `addPassiveAbility()` ensure the corresponding bonuses are applied immediately (e.g., applying retroactive weapon stat adjustments, slot cap changes, etc.).
 
 ## Development Commands
 
