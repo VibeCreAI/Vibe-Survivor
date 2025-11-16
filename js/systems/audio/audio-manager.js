@@ -127,7 +127,8 @@ export class AudioManager {
         if (sound) {
             // Clone audio for overlapping sounds
             const clone = sound.cloneNode();
-            clone.volume = this.sfxVolume * volumeMultiplier;
+            // Clamp volume to valid range [0, 1] to prevent audio errors
+            clone.volume = Math.max(0, Math.min(1, this.sfxVolume * volumeMultiplier));
             clone.play().catch(e => {
                 console.warn(`Sound ${name} playback failed:`, e);
             });
@@ -155,7 +156,8 @@ export class AudioManager {
             remaining -= 1;
 
             const clone = sound.cloneNode();
-            clone.volume = this.sfxVolume * volumeMultiplier;
+            // Clamp volume to valid range [0, 1] to prevent audio errors
+            clone.volume = Math.max(0, Math.min(1, this.sfxVolume * volumeMultiplier));
 
             clone.addEventListener('ended', () => {
                 if (remaining > 0) {
@@ -278,7 +280,8 @@ export class AudioManager {
         if (sound) {
             const loopingAudio = sound.cloneNode();
             loopingAudio.loop = true;
-            loopingAudio.volume = this.sfxVolume * volumeMultiplier;
+            // Clamp volume to valid range [0, 1] to prevent audio errors
+            loopingAudio.volume = Math.max(0, Math.min(1, this.sfxVolume * volumeMultiplier));
             loopingAudio.play().catch(e => {
                 console.warn(`Looping sound ${name} playback failed:`, e);
             });

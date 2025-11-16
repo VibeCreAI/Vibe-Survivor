@@ -6562,7 +6562,7 @@ class VibeSurvivor {
         };
 
         const iconName = weaponIconMap[type] || 'basicMissile';
-        return `<img src="images/weapons/${iconName}.png" alt="${type}" style="width: 48px; height: 48px; vertical-align: middle;">`;
+        return `<img src="images/weapons/${iconName}.png" alt="${type}" style="width: 48px; height: 48px; image-rendering: pixelated; vertical-align: middle; margin-right: 8px;">`;
     }
 
     ensureWeaponStats(type) {
@@ -7035,7 +7035,7 @@ class VibeSurvivor {
             'dash_boost': 'images/passives/dashBoost.png'
         };
         const iconPath = iconMap[passiveKey] || 'images/passives/passive.png';
-        return `<img src="${iconPath}" alt="${passiveKey}" style="width: 64px; height: 64px; image-rendering: pixelated; vertical-align: middle; margin-right: 8px;">`;
+        return `<img src="${iconPath}" alt="${passiveKey}" style="width: 48px; height: 48px; image-rendering: pixelated; vertical-align: middle; margin-right: 8px;">`;
     }
 
     upgradeExistingWeapon(weaponIndex) {
@@ -7331,7 +7331,7 @@ class VibeSurvivor {
 
     showChestSpawnNotification() {
         // Show notification that upgrade chest has appeared
-        const chestIcon = '<img src="images/passives/upgradeBox.png" alt="Chest" style="width: 64px; height: 64px; image-rendering: pixelated; vertical-align: middle; margin-right: 8px;">';
+        const chestIcon = '<img src="images/passives/upgradeBox.png" alt="Chest" style="width: 48px; height: 48px; image-rendering: pixelated; vertical-align: middle; margin-right: 8px;">';
         this.showToastNotification("UPGRADE CHEST HAS APPEARED!", 'upgrade', chestIcon);
     }
 
@@ -10339,7 +10339,12 @@ class VibeSurvivor {
 
     generatePlayerStatsSection() {
         const maxHealthBonus = this.player.maxHealth - 100; // Starting health is 100
-        const speedMultiplier = this.player.speed / 2.3; // Calculate multiplier based on current speed vs base speed
+        // Calculate speed multiplier from speed_boost passive (matches PlayerSystem calculation)
+        let speedMultiplier = 1.0;
+        if (this.player.passives.speed_boost) {
+            const speedStacks = typeof this.player.passives.speed_boost === 'number' ? this.player.passives.speed_boost : 1;
+            speedMultiplier = 1 + (0.1 * speedStacks); // 10% per stack
+        }
         const totalUpgrades = this.player.level - 1; // Level 1 = 0 upgrades
 
         const t = this.translations[this.currentLanguage].ui;

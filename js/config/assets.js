@@ -148,6 +148,42 @@ export async function preloadAssets(progressCallback) {
 
     // Create image preload promises
     const imagePromises = [
+        // Player directional sprites (CRITICAL for first play)
+        new Promise(resolve => {
+            const img = new Image();
+            img.onload = resolve;
+            img.onerror = resolve;
+            setTimeout(resolve, 2000);
+            img.src = ASSET_PATHS.sprites.playerIdle;
+        }),
+        new Promise(resolve => {
+            const img = new Image();
+            img.onload = resolve;
+            img.onerror = resolve;
+            setTimeout(resolve, 2000);
+            img.src = ASSET_PATHS.sprites.playerUp;
+        }),
+        new Promise(resolve => {
+            const img = new Image();
+            img.onload = resolve;
+            img.onerror = resolve;
+            setTimeout(resolve, 2000);
+            img.src = ASSET_PATHS.sprites.playerDown;
+        }),
+        new Promise(resolve => {
+            const img = new Image();
+            img.onload = resolve;
+            img.onerror = resolve;
+            setTimeout(resolve, 2000);
+            img.src = ASSET_PATHS.sprites.playerLeft;
+        }),
+        new Promise(resolve => {
+            const img = new Image();
+            img.onload = resolve;
+            img.onerror = resolve;
+            setTimeout(resolve, 2000);
+            img.src = ASSET_PATHS.sprites.playerRight;
+        }),
         // Weapon icons
         ...weaponIcons.map(iconName => {
             const img = new Image();
