@@ -10,7 +10,7 @@ import {
     PLAYER, ENEMIES, WEAPONS, WEAPON_UPGRADES, PASSIVES, XP_SYSTEM,
     SPAWN_CONFIG, PICKUP_SPAWNS, DIFFICULTY_SCALING, GAME_TIMING,
     SCREEN_EFFECTS, PARTICLES, COLLISION, ENEMY_BEHAVIORS, MOBILE_CONFIG,
-    PERFORMANCE, COLORS
+    PERFORMANCE, COLORS, BOSS_VARIANTS
 } from './config/constants.js';
 import { ASSET_PATHS, SPRITE_CONFIGS, LOADING_PHASES, preloadAssets, getWeaponIconPath, getPassiveIconPath } from './config/assets.js';
 
@@ -5772,58 +5772,294 @@ class VibeSurvivor {
     // Removed duplicate returnProjectileToPool method - using the correct one below
 
     createBossMissile(boss, healthPercent = 1.0) {
+        const variant = this.getBossVariantById(boss.variantId) || this.getBossVariantForLevel(boss.bossLevel || 1);
+        const attackPattern = variant?.attackPattern || 'pulse';
+
+        switch (attackPattern) {
+            case 'shock':
+                this.fireShockSentinelPattern(boss);
+                return;
+            case 'rift':
+                this.fireRiftReaverPattern(boss);
+                return;
+            case 'carrier':
+                this.fireNightfallCarrierPattern(boss);
+                return;
+            case 'titan':
+                this.fireSingularityTitanPattern(boss);
+                return;
+            default:
+                this.firePulseHunterPattern(boss, healthPercent);
+        }
+    }
+
+    firePulseHunterPattern(boss, healthPercent) {
         const angleToPlayer = Math.atan2(this.player.y - boss.y, this.player.x - boss.x);
-        let spreadAngles, damage, speed, homingStrength, color;
-        
-        // Scale missile stats based on boss level
         const bossLevel = boss.bossLevel || 1;
         const speedMultiplier = this.fastPow(1.05, bossLevel - 1);
         const damageMultiplier = this.fastPow(1.15, bossLevel - 1);
-        
-        // Phase 1: Basic 3-missile spread (above 70% health)
+
+        let spreadAngles;
+        let damage;
+        let speed;
+        let homingStrength;
+        let color;
+
         if (healthPercent > 0.7) {
-            spreadAngles = [-0.3, 0, 0.3]; // 3 missiles with spread
+            spreadAngles = [-0.3, 0, 0.3];
             damage = Math.floor(25 * damageMultiplier);
             speed = 2.5 * speedMultiplier;
             homingStrength = 0.05;
-            color = '#FF0066'; // Pink
-        }
-        // Phase 2: 5-missile spread with faster speed (30-70% health)
-        else if (healthPercent > 0.3) {
-            spreadAngles = [-0.6, -0.3, 0, 0.3, 0.6]; // 5 missiles with wider spread
+            color = '#FF0066';
+        } else if (healthPercent > 0.3) {
+            spreadAngles = [-0.6, -0.3, 0, 0.3, 0.6];
             damage = Math.floor(30 * damageMultiplier);
             speed = 2.75 * speedMultiplier;
             homingStrength = 0.07;
-            color = '#FF3366'; // Brighter pink
-        }
-        // Phase 3: 7-missile burst with high speed and homing (below 30% health)
-        else {
-            spreadAngles = [-0.9, -0.6, -0.3, 0, 0.3, 0.6, 0.9]; // 7 missiles, wide spread
+            color = '#FF3366';
+        } else {
+            spreadAngles = [-0.9, -0.6, -0.3, 0, 0.3, 0.6, 0.9];
             damage = Math.floor(35 * damageMultiplier);
             speed = 3 * speedMultiplier;
-            homingStrength = 0.10;
-            color = '#FF0033'; // Deep red
+            homingStrength = 0.1;
+            color = '#FF0033';
         }
-        
+
         spreadAngles.forEach(angleOffset => {
-            const missile = {
+            this.projectiles.push({
                 x: boss.x,
                 y: boss.y,
                 vx: this.fastCos(angleToPlayer + angleOffset) * speed,
                 vy: this.fastSin(angleToPlayer + angleOffset) * speed,
-                damage: damage,
-                life: 300, // Long-lived missiles
+                damage,
+                life: 300,
                 type: 'boss-missile',
-                color: color,
+                color,
                 size: 4,
                 homing: true,
-                homingStrength: homingStrength,
+                homingStrength,
                 explosionRadius: 40,
-                speed: speed,
-                owner: 'enemy' // Important: mark as enemy projectile
-            };
-            this.projectiles.push(missile);
+                speed,
+                owner: 'enemy'
+            });
         });
+    }
+
+    fireShockSentinelPattern(boss) {
+        boss.variantState = boss.variantState || {};
+        const state = boss.variantState;
+        state.attackToggle = !state.attackToggle;
+        const angleToPlayer = Math.atan2(this.player.y - boss.y, this.player.x - boss.x);
+
+        if (state.attackToggle) {
+            for (let i = -2; i <= 2; i++) {
+                const offset = angleToPlayer + i * 0.08;
+                const speed = 5;
+                this.projectiles.push({
+                    x: boss.x,
+                    y: boss.y,
+                    vx: Math.cos(offset) * speed,
+                    vy: Math.sin(offset) * speed,
+                    damage: 32,
+                    life: 90,
+                    type: 'boss-missile',
+                    color: '#00E5FF',
+                    size: 5,
+                    homing: false,
+                    explosionRadius: 30,
+                    speed,
+                    owner: 'enemy'
+                });
+            }
+        } else {
+            const ringCount = 8;
+            const offset = (state.ringOffset = ((state.ringOffset || 0) + 0.4) % (Math.PI * 2));
+            for (let i = 0; i < ringCount; i++) {
+                const angle = offset + (Math.PI * 2 * i) / ringCount;
+                const speed = 1.2;
+                this.projectiles.push({
+                    x: boss.x,
+                    y: boss.y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    damage: 26,
+                    life: 240,
+                    type: 'boss-missile',
+                    color: '#00B4D8',
+                    size: 6,
+                    homing: false,
+                    explosionRadius: 55,
+                    speed,
+                    owner: 'enemy'
+                });
+            }
+        }
+    }
+
+    fireRiftReaverPattern(boss) {
+        boss.variantState = boss.variantState || {};
+        const state = boss.variantState;
+        state.orbAngle = (state.orbAngle || 0) + 0.35;
+        const angleToPlayer = Math.atan2(this.player.y - boss.y, this.player.x - boss.x);
+
+        const shardOffsets = [-0.4, -0.2, 0, 0.2, 0.4];
+        shardOffsets.forEach(offset => {
+            const speed = 4.5;
+            this.projectiles.push({
+                x: boss.x,
+                y: boss.y,
+                vx: Math.cos(angleToPlayer + offset) * speed,
+                vy: Math.sin(angleToPlayer + offset) * speed,
+                damage: 36,
+                life: 220,
+                type: 'boss-missile',
+                color: '#FF8A00',
+                size: 5,
+                homing: true,
+                homingStrength: 0.12,
+                explosionRadius: 45,
+                speed,
+                owner: 'enemy'
+            });
+        });
+
+        const orbs = 6;
+        for (let i = 0; i < orbs; i++) {
+            const angle = state.orbAngle + (Math.PI * 2 * i) / orbs;
+            const speed = 2.2;
+            this.projectiles.push({
+                x: boss.x,
+                y: boss.y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                damage: 18,
+                life: 260,
+                type: 'boss-missile',
+                color: '#FFC078',
+                size: 4,
+                homing: false,
+                explosionRadius: 25,
+                speed,
+                owner: 'enemy'
+            });
+        }
+
+        // Dash challenge shots: very fast but deal graceful damage so players can dash through
+        const dashShots = 2;
+        for (let i = 0; i < dashShots; i++) {
+            const offset = i === 0 ? -0.08 : 0.08;
+            const speed = 6.5;
+            this.projectiles.push({
+                x: boss.x,
+                y: boss.y,
+                vx: Math.cos(angleToPlayer + offset) * speed,
+                vy: Math.sin(angleToPlayer + offset) * speed,
+                damage: 18,
+                life: 140,
+                type: 'boss-missile',
+                color: '#FFDF91',
+                size: 4,
+                homing: false,
+                explosionRadius: 20,
+                speed,
+                owner: 'enemy'
+            });
+        }
+    }
+
+    fireNightfallCarrierPattern(boss) {
+        const angleToPlayer = Math.atan2(this.player.y - boss.y, this.player.x - boss.x);
+        const volleyCount = 4;
+        for (let i = 0; i < volleyCount; i++) {
+            const offset = angleToPlayer + (i - (volleyCount - 1) / 2) * 0.15;
+            const speed = 3;
+            this.projectiles.push({
+                x: boss.x,
+                y: boss.y,
+                vx: Math.cos(offset) * speed,
+                vy: Math.sin(offset) * speed,
+                damage: 28,
+                life: 200,
+                type: 'boss-missile',
+                color: '#8F7CFF',
+                size: 5,
+                homing: false,
+                explosionRadius: 60,
+                speed,
+                owner: 'enemy'
+            });
+        }
+
+        const slowBombs = 3;
+        for (let i = 0; i < slowBombs; i++) {
+            const angle = (Math.PI * 2 * i) / slowBombs;
+            const speed = 1.2;
+            this.projectiles.push({
+                x: boss.x,
+                y: boss.y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                damage: 32,
+                life: 260,
+                type: 'boss-missile',
+                color: '#B19CFF',
+                size: 6,
+                homing: false,
+                explosionRadius: 70,
+                speed,
+                owner: 'enemy'
+            });
+        }
+    }
+
+    fireSingularityTitanPattern(boss) {
+        boss.variantState = boss.variantState || {};
+        const state = boss.variantState;
+        state.radialPhase = (state.radialPhase || 0) + 0.2;
+
+        const bolts = 12;
+        for (let i = 0; i < bolts; i++) {
+            const angle = state.radialPhase + (Math.PI * 2 * i) / bolts;
+            const speed = 3.2;
+            this.projectiles.push({
+                x: boss.x,
+                y: boss.y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                damage: 38,
+                life: 220,
+                type: 'boss-missile',
+                color: '#FFE34D',
+                size: 6,
+                homing: false,
+                explosionRadius: 50,
+                speed,
+                owner: 'enemy'
+            });
+        }
+
+        const gravityWells = 2;
+        for (let i = 0; i < gravityWells; i++) {
+            const baseAngle = Math.atan2(this.player.y - boss.y, this.player.x - boss.x);
+            const offset = i === 0 ? -0.2 : 0.2;
+            const speed = 1.5;
+            this.projectiles.push({
+                x: boss.x,
+                y: boss.y,
+                vx: Math.cos(baseAngle + offset) * speed,
+                vy: Math.sin(baseAngle + offset) * speed,
+                damage: 42,
+                life: 260,
+                type: 'boss-missile',
+                color: '#FFC107',
+                size: 7,
+                homing: true,
+                homingStrength: 0.04,
+                explosionRadius: 80,
+                speed,
+                owner: 'enemy'
+            });
+        }
     }
     
     spawnEnemies() {
@@ -5918,6 +6154,19 @@ class VibeSurvivor {
         }
     }
     
+    getBossVariantForLevel(level) {
+        if (!Array.isArray(BOSS_VARIANTS) || BOSS_VARIANTS.length === 0) {
+            return null;
+        }
+        const index = Math.min(BOSS_VARIANTS.length - 1, Math.max(0, (level || 1) - 1));
+        return BOSS_VARIANTS[index];
+    }
+
+    getBossVariantById(variantId) {
+        if (!variantId || !Array.isArray(BOSS_VARIANTS)) return null;
+        return BOSS_VARIANTS.find(variant => variant.id === variantId) || null;
+    }
+    
     spawnBoss() {
         // Spawn boss at a specific distance from player (reduced for mobile visibility)
         const spawnDistance = 250;
@@ -5927,17 +6176,20 @@ class VibeSurvivor {
         
         const config = this.getEnemyConfig('boss');
         const scaledSpeed = config.speed;
+        const variantConfig = this.getBossVariantForLevel(this.bossLevel);
+        const sizeMultiplier = variantConfig?.sizeMultiplier || 1;
+        const bossColor = variantConfig?.color || config.color;
         
         this.enemies.push({
             x: x,
             y: y,
-            radius: config.radius,
+            radius: config.radius * sizeMultiplier,
             speed: scaledSpeed,
             baseSpeed: config.speed,
             maxHealth: config.health * (1 + Math.floor(this.gameTime / 30) * 0.3),
             health: config.health * (1 + Math.floor(this.gameTime / 30) * 0.3),
             contactDamage: config.contactDamage,
-            color: config.color,
+            color: bossColor,
             behavior: config.behavior,
             angle: 0,
             rotSpeed: 0.05,
@@ -5953,11 +6205,16 @@ class VibeSurvivor {
                 duration: 0,
                 maxDuration: 30, // 0.5 seconds at 60fps
                 originalSpeed: 0
-            }
+            },
+            variantId: variantConfig?.id || 'pulse_hunter',
+            variantName: variantConfig?.name || 'Pulse Hunter',
+            variantState: {},
+            missileInterval: variantConfig?.missileInterval || 200,
+            bossLevel: this.bossLevel
         });
         
         // Show boss notification
-        this.showBossNotification();
+        this.showBossNotification(variantConfig?.name);
     }
     
     spawnScaledBoss() {
@@ -5968,12 +6225,14 @@ class VibeSurvivor {
         const y = this.player.y + this.fastSin(angle) * spawnDistance;
         
         const baseConfig = this.getEnemyConfig('boss');
+        const variantConfig = this.getBossVariantForLevel(this.bossLevel);
         
         // Calculate scaled stats based on bosses killed
         const healthMultiplier = this.fastPow(1.4, this.bossesKilled);
         const speedMultiplier = this.fastPow(1.05, this.bossesKilled);
         const damageMultiplier = this.fastPow(1.15, this.bossesKilled);
         const sizeMultiplier = this.fastPow(1.05, this.bossesKilled);
+        const variantSize = variantConfig?.sizeMultiplier || 1;
         
         // Use effective first boss HP (4000) as base instead of config HP (1000)
         // First boss HP = 1000 * (1 + Math.floor(300 / 30) * 0.3) = 1000 * (1 + 10 * 0.3) = 4000
@@ -5981,7 +6240,7 @@ class VibeSurvivor {
         const scaledHealth = Math.floor(effectiveBaseHP * healthMultiplier);
         const scaledSpeed = baseConfig.speed * speedMultiplier;
         const scaledDamage = Math.floor(baseConfig.contactDamage * damageMultiplier);
-        const scaledRadius = Math.floor(baseConfig.radius * sizeMultiplier);
+        const scaledRadius = Math.floor(baseConfig.radius * sizeMultiplier * variantSize);
         
         this.enemies.push({
             x: x,
@@ -5992,7 +6251,7 @@ class VibeSurvivor {
             health: scaledHealth,
             maxHealth: scaledHealth,
             contactDamage: scaledDamage,
-            color: baseConfig.color,
+            color: variantConfig?.color || baseConfig.color,
             behavior: baseConfig.behavior,
             specialCooldown: 0,
             burning: null,
@@ -6010,14 +6269,18 @@ class VibeSurvivor {
                 duration: 0,
                 maxDuration: 30, // 0.5 seconds at 60fps
                 originalSpeed: 0
-            }
+            },
+            variantId: variantConfig?.id || 'pulse_hunter',
+            variantName: variantConfig?.name || 'Pulse Hunter',
+            variantState: {},
+            missileInterval: variantConfig?.missileInterval || 200
         });
         
         
         this.bossSpawned = true;
         
         // Show boss notification for scaled boss
-        this.showBossNotification();
+        this.showBossNotification(variantConfig?.name);
     }
     
     getAvailableEnemyTypes() {
@@ -6278,100 +6541,219 @@ class VibeSurvivor {
         const playerY = this.player.y;
         
         for (const enemy of bossEnemies) {
-            // Skip if boss is already dead/dying
             if (enemy.health <= 0) {
                 continue;
             }
-            
-            // Enhanced boss AI with phases based on health
+
+            const variantConfig = this.getBossVariantById(enemy.variantId) || this.getBossVariantForLevel(enemy.bossLevel || 1) || {};
             const bossHealthPercent = enemy.health / enemy.maxHealth;
             const [dirX, dirY] = Vector2.direction(enemy.x, enemy.y, playerX, playerY);
             const distanceSquared = Vector2.distanceSquared(enemy.x, enemy.y, playerX, playerY);
             const distance = this.cachedSqrt(distanceSquared);
 
-            // Boss teleportation - prevent player from escaping boss fight
-            const maxBossDistance = 800; // Teleport if boss gets this far (outside viewport)
-            if (distance > maxBossDistance) {
-                // Create burst particles at current position before teleporting
-                for (let i = 0; i < 8; i++) {
-                    this.createHitParticles(enemy.x, enemy.y, '#FF0066'); // Red/pink for boss
-                }
+            this.handleBossTeleport(enemy, distance, playerX, playerY);
 
-                // Teleport boss in the direction the player ran FROM (behind the player)
-                // This is the direction from player to boss's current position
-                const [teleportDirX, teleportDirY] = Vector2.direction(playerX, playerY, enemy.x, enemy.y);
-                const teleportDistance = 400 + Math.random() * 100; // 400-500 units from player
-                enemy.x = playerX + teleportDirX * teleportDistance;
-                enemy.y = playerY + teleportDirY * teleportDistance;
-
-                // Create burst particles at new position after teleporting
-                for (let i = 0; i < 8; i++) {
-                    this.createHitParticles(enemy.x, enemy.y, '#FF0066');
-                }
-
-                // Add screen shake for dramatic effect
-                this.cameraShake = 15;
-            }
-
-            // Boss missile firing logic
-            const missileInterval = 200; // Fire every 1.5 seconds at 60fps
-            if (this.frameCount - enemy.lastMissileFrame >= missileInterval) {
+            const missileInterval = enemy.missileInterval || variantConfig.missileInterval || 200;
+            if (this.frameCount - (enemy.lastMissileFrame || 0) >= missileInterval) {
                 this.createBossMissile(enemy, bossHealthPercent);
                 enemy.lastMissileFrame = this.frameCount;
             }
-            
-            // Phase 1: Direct chase (above 70% health)
-            if (bossHealthPercent > 0.7) {
-                // Base movement - enemy.speed already includes boss level scaling!
-                const phaseMultiplier = 1.5; // Phase 1 multiplier
-                enemy.x += dirX * enemy.speed * phaseMultiplier;
-                enemy.y += dirY * enemy.speed * phaseMultiplier;
+
+            switch (variantConfig.behavior) {
+                case 'shock':
+                    this.updateShockSentinelMovement(enemy, dirX, dirY, distance, playerX, playerY);
+                    break;
+                case 'rift':
+                    this.updateRiftReaverMovement(enemy, dirX, dirY, playerX, playerY);
+                    break;
+                case 'carrier':
+                    this.updateNightfallCarrierMovement(enemy, dirX, dirY, distance, playerX, playerY);
+                    break;
+                case 'titan':
+                    this.updateSingularityTitanMovement(enemy, dirX, dirY, distance, playerX, playerY);
+                    break;
+                default:
+                    this.updatePulseHunterMovement(enemy, dirX, dirY, distance, bossHealthPercent, playerX, playerY);
+                    break;
             }
-            // Phase 2: Increased aggression - faster movement (30-70% health)
-            else if (bossHealthPercent > 0.3) {
-                // Phase 2: Even faster for escalating difficulty
-                enemy.x += dirX * enemy.speed * 1.8;
-                enemy.y += dirY * enemy.speed * 1.8;
-            }
-            // Phase 3: Dash movement towards player (below 30% health)
-            else {
-                // Dash state management for aggressive Phase 3 behavior
-                if (!enemy.dashState.active) {
-                    // Start new dash towards player
-                    if (enemy.specialCooldown <= 0) {
-                        enemy.dashState.active = true;
-                        enemy.dashState.targetX = playerX;
-                        enemy.dashState.targetY = playerY;
-                        enemy.dashState.duration = 0;
-                        enemy.dashState.originalSpeed = enemy.speed;
-                        // Decrease dash cooldown by 3 per boss stage, minimum 30 frames
-                        const baseCooldown = 90;
-                        const cooldownReduction = (this.bossesKilled || 0) * 3;
-                        const minCooldown = 36;
-                        enemy.specialCooldown = Math.max(minCooldown, baseCooldown - cooldownReduction);
-                    } else {
-                        // Faster normal movement while dash is on cooldown
-                        enemy.x += dirX * enemy.speed * 2.0;
-                        enemy.y += dirY * enemy.speed * 2.0;
-                    }
+        }
+    }
+
+    handleBossTeleport(enemy, distance, playerX, playerY) {
+        const maxBossDistance = 800;
+        if (distance <= maxBossDistance) return;
+
+        for (let i = 0; i < 8; i++) {
+            this.createHitParticles(enemy.x, enemy.y, '#FF0066');
+        }
+
+        const [teleportDirX, teleportDirY] = Vector2.direction(playerX, playerY, enemy.x, enemy.y);
+        const teleportDistance = 400 + Math.random() * 100;
+        enemy.x = playerX + teleportDirX * teleportDistance;
+        enemy.y = playerY + teleportDirY * teleportDistance;
+
+        for (let i = 0; i < 8; i++) {
+            this.createHitParticles(enemy.x, enemy.y, '#FF0066');
+        }
+
+        this.cameraShake = Math.max(this.cameraShake || 0, 15);
+    }
+
+    updatePulseHunterMovement(enemy, dirX, dirY, distance, bossHealthPercent, playerX, playerY) {
+        if (bossHealthPercent > 0.7) {
+            enemy.x += dirX * enemy.speed * 1.5;
+            enemy.y += dirY * enemy.speed * 1.5;
+        } else if (bossHealthPercent > 0.3) {
+            enemy.x += dirX * enemy.speed * 1.8;
+            enemy.y += dirY * enemy.speed * 1.8;
+        } else {
+            if (!enemy.dashState.active) {
+                if (enemy.specialCooldown <= 0) {
+                    enemy.dashState.active = true;
+                    enemy.dashState.targetX = playerX;
+                    enemy.dashState.targetY = playerY;
+                    enemy.dashState.duration = 0;
+                    enemy.dashState.originalSpeed = enemy.speed;
+                    const baseCooldown = 90;
+                    const cooldownReduction = (this.bossesKilled || 0) * 3;
+                    const minCooldown = 36;
+                    enemy.specialCooldown = Math.max(minCooldown, baseCooldown - cooldownReduction);
                 } else {
-                    // Execute dash movement with much higher speed
-                    const [dashDirX, dashDirY] = Vector2.direction(enemy.x, enemy.y, enemy.dashState.targetX, enemy.dashState.targetY);
-                    const dashSpeed = enemy.speed * 6; // 8x speed during dash (much faster!)
-                    
-                    enemy.x += dashDirX * dashSpeed;
-                    enemy.y += dashDirY * dashSpeed;
-                    
-                    enemy.dashState.duration++;
-                    
-                    // Longer dash distance with faster speed
-                    const distToTarget = Vector2.distanceSquared(enemy.x, enemy.y, enemy.dashState.targetX, enemy.dashState.targetY);
-                    if (enemy.dashState.duration >= enemy.dashState.maxDuration || distToTarget < 100) {
-                        enemy.dashState.active = false;
-                        enemy.dashState.duration = 0;
-                    }
+                    enemy.x += dirX * enemy.speed * 2.0;
+                    enemy.y += dirY * enemy.speed * 2.0;
+                }
+            } else {
+                const [dashDirX, dashDirY] = Vector2.direction(enemy.x, enemy.y, enemy.dashState.targetX, enemy.dashState.targetY);
+                const dashSpeed = enemy.speed * 6;
+                enemy.x += dashDirX * dashSpeed;
+                enemy.y += dashDirY * dashSpeed;
+                enemy.dashState.duration++;
+                const distToTarget = Vector2.distanceSquared(enemy.x, enemy.y, enemy.dashState.targetX, enemy.dashState.targetY);
+                if (enemy.dashState.duration >= enemy.dashState.maxDuration || distToTarget < 100) {
+                    enemy.dashState.active = false;
+                    enemy.dashState.duration = 0;
                 }
             }
+        }
+    }
+
+    updateShockSentinelMovement(enemy, dirX, dirY, distance, playerX, playerY) {
+        enemy.variantState = enemy.variantState || {};
+        const state = enemy.variantState;
+        const desiredDistance = 280;
+        const distanceDelta = distance - desiredDistance;
+
+        if (Math.abs(distanceDelta) > 35) {
+            const towardsPlayer = distanceDelta > 0 ? 1 : -1;
+            enemy.x += dirX * enemy.speed * 1.2 * towardsPlayer;
+            enemy.y += dirY * enemy.speed * 1.2 * towardsPlayer;
+        }
+
+        if (!state.orbitDir) state.orbitDir = 1;
+        state.switchTimer = (state.switchTimer || 240) - 1;
+        if (state.switchTimer <= 0) {
+            state.orbitDir *= -1;
+            state.switchTimer = 240;
+        }
+
+        const perpendicularX = -dirY;
+        const perpendicularY = dirX;
+        enemy.x += perpendicularX * enemy.speed * 1.5 * state.orbitDir;
+        enemy.y += perpendicularY * enemy.speed * 1.5 * state.orbitDir;
+
+    }
+
+    updateRiftReaverMovement(enemy, dirX, dirY, playerX, playerY) {
+        enemy.variantState = enemy.variantState || {};
+        const dashState = enemy.dashState || (enemy.dashState = {
+            active: false,
+            targetX: 0,
+            targetY: 0,
+            duration: 0,
+            maxDuration: 24,
+            originalSpeed: enemy.speed
+        });
+
+        const cooldown = Math.max(24, 70 - (this.bossesKilled || 0) * 5);
+
+        if (!dashState.active) {
+            if (enemy.specialCooldown <= 0) {
+                dashState.active = true;
+                dashState.targetX = playerX + (Math.random() - 0.5) * 140;
+                dashState.targetY = playerY + (Math.random() - 0.5) * 140;
+                dashState.duration = 0;
+                enemy.specialCooldown = cooldown;
+            } else {
+                enemy.x += dirX * enemy.speed * 1.3;
+                enemy.y += dirY * enemy.speed * 1.3;
+            }
+        } else {
+            const [dashDirX, dashDirY] = Vector2.direction(enemy.x, enemy.y, dashState.targetX, dashState.targetY);
+            const dashSpeed = enemy.speed * 7.2;
+            enemy.x += dashDirX * dashSpeed;
+            enemy.y += dashDirY * dashSpeed;
+            dashState.duration++;
+            const distToTarget = Vector2.distanceSquared(enemy.x, enemy.y, dashState.targetX, dashState.targetY);
+            if (dashState.duration >= dashState.maxDuration || distToTarget < 80) {
+                dashState.active = false;
+                dashState.duration = 0;
+            }
+        }
+    }
+
+    updateNightfallCarrierMovement(enemy, dirX, dirY, distance, playerX, playerY) {
+        enemy.variantState = enemy.variantState || {};
+        const state = enemy.variantState;
+        const desiredDistance = 340;
+        const delta = distance - desiredDistance;
+
+        if (Math.abs(delta) > 25) {
+            const approach = delta > 0 ? 1 : -1;
+            enemy.x += dirX * enemy.speed * 0.9 * approach;
+            enemy.y += dirY * enemy.speed * 0.9 * approach;
+        }
+
+        state.driftPhase = (state.driftPhase || 0) + 0.03;
+        const drift = Math.sin(state.driftPhase);
+        enemy.x += (-dirY) * enemy.speed * 0.4 * drift;
+        enemy.y += dirX * enemy.speed * 0.4 * drift;
+
+        state.minionCooldown = (state.minionCooldown || 240) - 1;
+        if (state.minionCooldown <= 0) {
+            this.spawnMinions(enemy.x, enemy.y, 3 + Math.min(3, this.bossesKilled || 0));
+            state.minionCooldown = 300;
+        }
+    }
+
+    updateSingularityTitanMovement(enemy, dirX, dirY, distance, playerX, playerY) {
+        enemy.variantState = enemy.variantState || {};
+        const state = enemy.variantState;
+
+        state.anchorTimer = (state.anchorTimer || 360) - 1;
+        if (state.anchorTimer <= 0) {
+            state.anchorTimer = 360;
+            state.charging = true;
+            state.chargeDuration = 60;
+            this.createHitParticles(enemy.x, enemy.y, '#FFE34D');
+        }
+
+        if (state.charging) {
+            state.chargeDuration--;
+            if (state.chargeDuration <= 0) {
+                state.charging = false;
+            }
+            return;
+        }
+
+        enemy.x += dirX * enemy.speed;
+        enemy.y += dirY * enemy.speed;
+
+        state.warpCooldown = (state.warpCooldown || 420) - 1;
+        if (state.warpCooldown <= 0) {
+            enemy.x = playerX + (Math.random() - 0.5) * 220;
+            enemy.y = playerY + (Math.random() - 0.5) * 220;
+            state.warpCooldown = 420;
+            this.createHitParticles(enemy.x, enemy.y, '#FFE34D');
         }
     }
 
@@ -7603,8 +7985,11 @@ class VibeSurvivor {
         this.showToastNotification(message, 'upgrade', iconHtml);
     }
     
-    showBossNotification() {
-        this.showToastNotification("BOSS APPEARED!", 'boss');
+    showBossNotification(bossName = null) {
+        const message = bossName
+            ? `${bossName.toUpperCase()} EMERGES!`
+            : "BOSS APPEARED!";
+        this.showToastNotification(message, 'boss');
         if (!this.audioManager) return;
 
         // bossAlert is ~2.0 seconds long; play 3 times at 2.0s intervals

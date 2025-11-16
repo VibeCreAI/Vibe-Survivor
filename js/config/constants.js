@@ -89,6 +89,62 @@ export const ENEMIES = {
 };
 
 /**
+ * Boss variant definitions for staged encounters
+ */
+export const BOSS_VARIANTS = [
+    {
+        id: 'pulse_hunter',
+        name: 'Pulse Hunter',
+        color: '#F000FF',
+        behavior: 'pulse',
+        attackPattern: 'pulse',
+        missileInterval: 200,
+        sizeMultiplier: 1.0,
+        description: 'Classic homing missile barrages with dash finishers.'
+    },
+    {
+        id: 'shock_sentinel',
+        name: 'Shock Sentinel',
+        color: '#00E5FF',
+        behavior: 'shock',
+        attackPattern: 'shock',
+        missileInterval: 170,
+        sizeMultiplier: 1.05,
+        description: 'Orbits the player while unleashing beam sweeps and shock mines.'
+    },
+    {
+        id: 'rift_reaver',
+        name: 'Rift Reaver',
+        color: '#FF8A00',
+        behavior: 'rift',
+        attackPattern: 'rift',
+        missileInterval: 150,
+        sizeMultiplier: 1.1,
+        description: 'Relentless dash assassin that rains void shards.'
+    },
+    {
+        id: 'nightfall_carrier',
+        name: 'Nightfall Carrier',
+        color: '#7D5BFF',
+        behavior: 'carrier',
+        attackPattern: 'carrier',
+        missileInterval: 140,
+        sizeMultiplier: 1.2,
+        description: 'Launches drone waves and heavy ordinance.'
+    },
+    {
+        id: 'singularity_titan',
+        name: 'Singularity Titan',
+        color: '#FFE34D',
+        behavior: 'titan',
+        attackPattern: 'titan',
+        missileInterval: 130,
+        sizeMultiplier: 1.3,
+        description: 'Final form wielding gravity wells and radiant bursts.'
+    }
+];
+
+/**
  * Weapon configurations
  */
 export const WEAPONS = {
