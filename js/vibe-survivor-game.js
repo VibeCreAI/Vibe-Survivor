@@ -7031,7 +7031,7 @@ class VibeSurvivor {
             'regeneration': 'images/passives/regeneration.png',
             'magnet': 'images/passives/magnet.png',
             'armor': 'images/passives/armor.png',
-            'critical_strike': 'images/passives/criticalStrike.png',
+            'critical': 'images/passives/criticalStrike.png',
             'dash_boost': 'images/passives/dashBoost.png'
         };
         const iconPath = iconMap[passiveKey] || 'images/passives/passive.png';
@@ -10271,17 +10271,14 @@ class VibeSurvivor {
         if (activePassives.length === 0) return '';
 
         const passivesHtml = activePassives.map(passive => {
-            let displayName = passiveNames[passive];
-            const description = passiveDescriptions[passive];
-            if (description) {
-                displayName += ` - ${description}`;
-            }
+            const displayName = passiveNames[passive];
 
-            // Add count for stackable passives
+            // Get stack count for stackable passives
+            let stackCount = '';
             if (['health_boost', 'speed_boost', 'armor', 'critical', 'dash_boost'].includes(passive)) {
                 const count = this.player.passives[passive];
-                if (typeof count === 'number' && count > 1) {
-                    displayName += ` (x${count})`;
+                if (typeof count === 'number') {
+                    stackCount = `x${count}`;
                 }
             }
 
@@ -10299,15 +10296,17 @@ class VibeSurvivor {
             return `
                 <div style="
                     display: flex;
-                    justify-content: center;
+                    justify-content: space-between;
                     align-items: center;
-                    margin: 4px 0;
+                    margin: 6px 0;
                     font-size: 14px;
                     color: #ff00ff;
-                    gap: 8px;
                 ">
-                    <img src="images/passives/${iconName}.png" alt="${passive}" style="width: 32px; height: 32px;">
-                    ${displayName}
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <img src="images/passives/${iconName}.png" alt="${passive}" style="width: 32px; height: 32px; image-rendering: pixelated;">
+                        <span>${displayName}</span>
+                    </div>
+                    ${stackCount ? `<span style="font-weight: bold; color: #ff88ff;">${stackCount}</span>` : ''}
                 </div>
             `;
         }).join('');

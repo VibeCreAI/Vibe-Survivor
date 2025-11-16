@@ -162,7 +162,7 @@ export class ChestModal extends Modal {
             'regeneration': 'images/passives/regeneration.png',
             'magnet': 'images/passives/magnet.png',
             'armor': 'images/passives/armor.png',
-            'critical_strike': 'images/passives/criticalStrike.png',
+            'critical': 'images/passives/criticalStrike.png',
             'dash_boost': 'images/passives/dashBoost.png'
         };
         return iconMap[choice.passiveKey] || 'images/passives/passive.png';
