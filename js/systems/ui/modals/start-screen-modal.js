@@ -74,10 +74,8 @@ export class StartScreenModal {
         const title = document.querySelector('.survivor-title h1');
         if (title) title.textContent = t('gameTitle');
 
-        const taglines = document.querySelectorAll('.survivor-title p');
-        if (taglines.length > 0) {
-            taglines[0].textContent = t('gameTagline');
-        }
+        const tagline = document.querySelector('.survivor-title .game-tagline');
+        if (tagline) tagline.textContent = t('gameTagline');
 
         const controlsPC = document.querySelector('.controls-info:not(.mobile-only)');
         if (controlsPC) controlsPC.textContent = t('controlsPC');

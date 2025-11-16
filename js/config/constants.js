@@ -554,7 +554,8 @@ export const ENEMY_BEHAVIORS = {
 export const MOBILE_CONFIG = {
     JOYSTICK_FLOATING: true,
     DASH_BUTTON_POSITION: 'right',
-    BREAKPOINT_WIDTH: 768
+    BREAKPOINT_WIDTH: 768,
+    CAMERA_ZOOM: 0.8 // 20% zoom-out on mobile for better visibility
 };
 
 /**

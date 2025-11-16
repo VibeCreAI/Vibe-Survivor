@@ -25,6 +25,7 @@ class StartScreenBot {
         this.container = null;
         this.hasFadedIn = false;
         this.initialFadeTimeout = null;
+        this.anchorElement = null;
 
         this.init();
     }
@@ -188,6 +189,7 @@ class StartScreenBot {
 
             // Store reference to title container for position updates
             this.titleContainer = startOverlay.querySelector('.survivor-title');
+            this.anchorElement = startOverlay.querySelector('.chroma-awards-block') || this.titleContainer;
 
             // Calculate initial size based on modal width
             this.updateSize();
@@ -254,13 +256,16 @@ class StartScreenBot {
     }
 
     updatePosition() {
-        if (!this.titleContainer || !this.container) return;
+        if (!this.container) return;
 
         // Update size first
         this.updateSize();
 
-        // Get the title container's position
-        const rect = this.titleContainer.getBoundingClientRect();
+        // Use Chroma block as anchor if present, otherwise fall back to title
+        const anchor = this.anchorElement || this.titleContainer;
+        if (!anchor) return;
+
+        const rect = anchor.getBoundingClientRect();
 
         // Safety check - ensure title has valid dimensions
         if (rect.height === 0 || rect.top === 0) {
@@ -268,9 +273,9 @@ class StartScreenBot {
             return;
         }
 
-        // Position bot above the title (rect.top - bot height - margin)
-        const margin = 10; // 10px margin between bot and title for safety
-        const botTop = rect.top - this.displaySize - margin;
+        // Position bot just below the anchor
+        const margin = 12; // spacing between Chroma block and bot
+        const botTop = rect.bottom + margin;
 
         // Only update if position is reasonable (not negative or too far up)
         if (botTop > 0) {

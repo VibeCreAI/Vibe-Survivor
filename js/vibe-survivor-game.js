@@ -109,6 +109,7 @@ class VibeSurvivor {
         this.animationController = new AnimationController();
         this.particleSystem = new ParticleSystem();
         this.effectsManager = new EffectsManager();
+        this.applyCameraZoom();
 
         // Initialize gameplay systems
         this.playerSystem = new PlayerSystem();
@@ -852,11 +853,15 @@ class VibeSurvivor {
                         
                         <!-- Separate Start Screen Overlay -->
                         <div id="survivor-start-overlay" class="survivor-start-overlay active">
+                            <div class="chroma-awards-header">
+                                <div class="chroma-awards-block">
+                                    <img src="images/ChromaAwards.png" alt="Chroma Awards" id="chroma-awards-logo" class="chroma-awards-logo" role="button" tabindex="0" aria-label="Play the Chroma Awards theme">
+                                    <p class="chroma-award-text"><a href="https://www.ChromaAwards.com" target="_blank" rel="noopener noreferrer">www.ChromaAwards.com</a></p>
+                                </div>
+                            </div>
                             <div class="survivor-title" style="display: none;">
-                                <img src="images/ChromaAwards.png" alt="Chroma Awards" id="chroma-awards-logo" class="chroma-awards-logo" role="button" tabindex="0" aria-label="Play the Chroma Awards theme">
                                 <img src="images/Title.png" alt="VIBE SURVIVOR" class="title-logo">
-                                <p>Survive the endless waves!</p>
-                                <p class="chroma-award-text">Chroma Award Game - <a href="https://www.ChromaAwards.com" target="_blank" rel="noopener noreferrer">www.ChromaAwards.com</a></p>
+                                <p class="game-tagline">Survive the endless waves!</p>
                                 <p class="controls-info">PC: WASD/Arrow Keys to move, SPACEBAR to dash</p>
                                 <p class="controls-info mobile-only">Mobile: Touch screen to move, tap DASH button</p>
                                 <button id="start-survivor" class="survivor-btn primary">START</button>
@@ -1970,6 +1975,19 @@ class VibeSurvivor {
                 opacity: 1 !important;
             }
 
+            .chroma-awards-header {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                padding: 8px 12px;
+                z-index: 200;
+                pointer-events: none;
+            }
+
             .vibe-survivor-screen {
                 position: relative;
                 flex: 1;
@@ -1993,6 +2011,8 @@ class VibeSurvivor {
             }
 
             .survivor-title {
+                position: relative;
+                padding-top: 0;
                 text-align: center;
                 margin-bottom: 20px;
                 color: white;
@@ -2010,22 +2030,28 @@ class VibeSurvivor {
             }
 
             .chroma-awards-logo {
-                max-width: min(65%, 520px);
-                width: 100%;
-                height: auto;
-                margin: 0 auto 24px;
+                max-width: 420px;
+                max-height: 120px;
+                height: 120px;
+                width: auto;
+                object-fit: contain;
+                margin: 0;
                 border-radius: 12px;
                 cursor: pointer;
-                box-shadow: 0 15px 45px rgba(0, 0, 0, 0.45);
-                transition: transform 0.3s ease, box-shadow 0.3s ease;
+                box-shadow: none;
+                transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
                 image-rendering: auto;
                 display: block;
             }
 
             .chroma-awards-logo:hover,
-            .chroma-awards-logo:focus-visible {
+            .chroma-awards-logo:focus-visible,
+            .chroma-awards-logo.chroma-active {
                 transform: scale(1.02);
-                box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+                box-shadow: none;
+                filter:
+                    drop-shadow(0 0 14px rgba(255, 213, 102, 0.55))
+                    drop-shadow(0 0 28px rgba(255, 213, 102, 0.45));
                 outline: none;
             }
 
@@ -2035,6 +2061,18 @@ class VibeSurvivor {
                 margin-bottom: 20px;
                 font-family: 'NeoDunggeunmoPro', 'Arial Black', sans-serif;
                 animation: neonPulse 2s ease-in-out infinite;
+            }
+
+            .chroma-awards-block {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                gap: 0px;
+                margin-right: 20px;
+                line-height: 1.1;
+                text-align: center;
+                z-index: 2;
+                pointer-events: auto;
             }
 
             .survivor-title p {
@@ -2051,9 +2089,12 @@ class VibeSurvivor {
             }
 
             .chroma-award-text {
-                font-size: 18px;
+                font-size: 16px;
                 color: #ffe7b8;
-                margin-bottom: 18px;
+                margin: 0;
+                display: block;
+                line-height: 1.2;
+                max-width: 520px;
                 font-family: 'NeoDunggeunmoPro', 'Courier New', monospace;
                 text-shadow:
                     -2px -2px 0 #000,
@@ -2083,7 +2124,7 @@ class VibeSurvivor {
                      2px -2px 0 #000,
                     -2px  2px 0 #000,
                      2px  2px 0 #000,
-                     0 0 10px rgba(0, 0, 0, 0.8);
+                    0 0 10px rgba(0, 0, 0, 0.8);
                 margin-right: 20px;
                 padding: 10px;
                 font-size: 16px !important;
@@ -4100,8 +4141,14 @@ class VibeSurvivor {
         
         this.showStartScreen();
     }
+
+    applyCameraZoom() {
+        const shouldZoomOut = this.isMobile || window.innerWidth <= MOBILE_CONFIG.BREAKPOINT_WIDTH;
+        this.camera.zoom = shouldZoomOut ? MOBILE_CONFIG.CAMERA_ZOOM : 1;
+    }
     
     resizeCanvas() {
+        this.applyCameraZoom();
         if (this.canvas) {
             // First try to get dimensions from getBoundingClientRect
             const rect = this.canvas.getBoundingClientRect();
@@ -4381,6 +4428,9 @@ class VibeSurvivor {
             return;
         }
 
+        const addActiveState = () => chromaLogo.classList.add('chroma-active');
+        const removeActiveState = () => chromaLogo.classList.remove('chroma-active');
+
         const playChromaSound = () => {
             this.playStartMenuThemes();
         };
@@ -4388,14 +4438,22 @@ class VibeSurvivor {
         chromaLogo.addEventListener('click', playChromaSound);
         chromaLogo.addEventListener('touchstart', (event) => {
             event.preventDefault();
+            addActiveState();
             playChromaSound();
         }, { passive: false });
+        chromaLogo.addEventListener('touchend', removeActiveState);
+        chromaLogo.addEventListener('touchcancel', removeActiveState);
+        chromaLogo.addEventListener('mousedown', addActiveState);
+        chromaLogo.addEventListener('mouseup', removeActiveState);
+        chromaLogo.addEventListener('mouseleave', removeActiveState);
         chromaLogo.addEventListener('keydown', (event) => {
             if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault();
+                addActiveState();
                 playChromaSound();
             }
         });
+        chromaLogo.addEventListener('keyup', removeActiveState);
 
         chromaLogo.dataset.bound = 'true';
 
@@ -9905,6 +9963,7 @@ class VibeSurvivor {
                     shakeX = this.screenShake.x;
                     shakeY = this.screenShake.y;
                 }
+                ctx.scale(this.camera.zoom, this.camera.zoom);
                 ctx.translate(-this.camera.x + shakeX, -this.camera.y + shakeY);
                 this.drawGridToContext(ctx);
                 ctx.restore();
@@ -9921,6 +9980,7 @@ class VibeSurvivor {
                 shakeX = this.screenShake.x;
                 shakeY = this.screenShake.y;
             }
+            ctx.scale(this.camera.zoom, this.camera.zoom);
             ctx.translate(-this.camera.x + shakeX, -this.camera.y + shakeY);
             
             // Switch context temporarily for drawing functions
@@ -9949,6 +10009,7 @@ class VibeSurvivor {
                 shakeX = this.screenShake.x;
                 shakeY = this.screenShake.y;
             }
+            ctx.scale(this.camera.zoom, this.camera.zoom);
             ctx.translate(-this.camera.x + shakeX, -this.camera.y + shakeY);
             
             // Switch context temporarily for drawing functions
@@ -10060,8 +10121,8 @@ class VibeSurvivor {
         const gridSize = 60;
         
         // Calculate visible world area based on camera position - FIXED BOUNDS
-        const canvasWidth = this.canvas.width;
-        const canvasHeight = this.canvas.height;
+        const canvasWidth = this.canvas.width / this.camera.zoom;
+        const canvasHeight = this.canvas.height / this.camera.zoom;
         
         // Calculate grid bounds to FULLY COVER the visible canvas area
         const margin = gridSize * 3; // Extra margin to ensure full coverage
@@ -10095,8 +10156,8 @@ class VibeSurvivor {
         const gridSize = 60;
         
         // Calculate visible world area based on camera position - FIXED BOUNDS
-        const canvasWidth = this.canvas.width;
-        const canvasHeight = this.canvas.height;
+        const canvasWidth = this.canvas.width / this.camera.zoom;
+        const canvasHeight = this.canvas.height / this.camera.zoom;
         
         // Calculate grid bounds to FULLY COVER the visible canvas area
         const margin = gridSize * 3; // Extra margin to ensure full coverage

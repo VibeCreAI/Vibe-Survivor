@@ -55,7 +55,7 @@ export const ASSET_PATHS = {
     audio: {
         bgMusic: 'sound/Vibe_Survivor.mp3?v=2',
         startMenu: 'sound/startMenu.mp3?v=2',
-        chromaAwardsTheme: 'sound/ChromaAwards.mp3?v=1',
+        chromaAwardsTheme: 'sound/ChromaAwards.mp3?v=2',
         bossAlert: 'sound/bossAlert.mp3?v=2',
         bossDefeat: 'sound/bossDefeat.mp3?v=2',
         gameOver: 'sound/gameOver.mp3?v=2',

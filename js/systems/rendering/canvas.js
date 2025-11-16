@@ -60,6 +60,7 @@ export class Camera {
         this.y = 0;
         this.shakeX = 0;
         this.shakeY = 0;
+        this.zoom = 1;
     }
 
     /**
@@ -70,9 +71,12 @@ export class Camera {
      * @param {number} lerpFactor - Smooth follow factor (0.1 normal, 0.2 dash)
      */
     follow(target, canvasWidth, canvasHeight, lerpFactor = 0.1) {
+        const effectiveWidth = canvasWidth / this.zoom;
+        const effectiveHeight = canvasHeight / this.zoom;
+
         // Calculate target camera position (center player on screen)
-        const targetX = target.x - canvasWidth / 2;
-        const targetY = target.y - canvasHeight / 2;
+        const targetX = target.x - effectiveWidth / 2;
+        const targetY = target.y - effectiveHeight / 2;
 
         // Smooth camera movement with lerp
         this.x += (targetX - this.x) * lerpFactor;
@@ -89,10 +93,12 @@ export class Camera {
      * @returns {boolean} True if in viewport
      */
     isInViewport(entityX, entityY, canvasWidth, canvasHeight, buffer = 100) {
+        const effectiveWidth = canvasWidth / this.zoom;
+        const effectiveHeight = canvasHeight / this.zoom;
         const left = this.x - buffer;
-        const right = this.x + canvasWidth + buffer;
+        const right = this.x + effectiveWidth + buffer;
         const top = this.y - buffer;
-        const bottom = this.y + canvasHeight + buffer;
+        const bottom = this.y + effectiveHeight + buffer;
 
         return entityX >= left && entityX <= right &&
                entityY >= top && entityY <= bottom;
@@ -137,6 +143,7 @@ export class Camera {
      * @param {CanvasRenderingContext2D} ctx - Canvas context
      */
     applyTransform(ctx) {
+        ctx.scale(this.zoom, this.zoom);
         ctx.translate(
             -this.x + this.shakeX,
             -this.y + this.shakeY
@@ -153,8 +160,8 @@ export class Camera {
      */
     worldToScreen(worldX, worldY, canvasWidth, canvasHeight) {
         return {
-            x: worldX - this.x + this.shakeX + canvasWidth / 2,
-            y: worldY - this.y + this.shakeY + canvasHeight / 2
+            x: (worldX - this.x + this.shakeX) * this.zoom,
+            y: (worldY - this.y + this.shakeY) * this.zoom
         };
     }
 
@@ -168,8 +175,8 @@ export class Camera {
      */
     screenToWorld(screenX, screenY, canvasWidth, canvasHeight) {
         return {
-            x: screenX + this.x - this.shakeX - canvasWidth / 2,
-            y: screenY + this.y - this.shakeY - canvasHeight / 2
+            x: screenX / this.zoom + this.x - this.shakeX,
+            y: screenY / this.zoom + this.y - this.shakeY
         };
     }
 }
