@@ -27,6 +27,8 @@ export class WeaponSystem {
             return null;
         }
 
+        const isGatling = type === 'gatling_gun';
+
         return {
             type: type,
             name: config.name,
@@ -45,7 +47,11 @@ export class WeaponSystem {
             isMergeWeapon: config.isMergeWeapon || false,
             lastFire: 0,
             projectileCount: 1,
-            maxProjectileCount: WEAPON_UPGRADES.MAX_PROJECTILES
+            maxProjectileCount: WEAPON_UPGRADES.MAX_PROJECTILES,
+            burstState: isGatling ? 'firing' : null,
+            burstTimer: isGatling ? 60 : null,
+            gatlingFireDuration: isGatling ? 60 : null,
+            gatlingBreakDuration: isGatling ? 30 : null
         };
     }
 

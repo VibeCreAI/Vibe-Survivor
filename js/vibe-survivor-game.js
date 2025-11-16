@@ -4989,8 +4989,28 @@ class VibeSurvivor {
     
     updateWeapons() {
         this.weapons.forEach(weapon => {
+            let canFire = true;
+
+            if (weapon.type === 'gatling_gun') {
+                if (!weapon.burstState) {
+                    weapon.burstState = 'firing';
+                    weapon.burstTimer = weapon.gatlingFireDuration || 60;
+                }
+
+                weapon.burstTimer = (weapon.burstTimer ?? 0) - 1;
+                if (weapon.burstTimer <= 0) {
+                    const nextState = weapon.burstState === 'firing' ? 'break' : 'firing';
+                    weapon.burstState = nextState;
+                    weapon.burstTimer = nextState === 'firing'
+                        ? (weapon.gatlingFireDuration || 60)
+                        : (weapon.gatlingBreakDuration || 30);
+                }
+
+                canFire = weapon.burstState === 'firing';
+            }
+
             weapon.lastFire++;
-            if (weapon.lastFire >= weapon.fireRate) {
+            if (canFire && weapon.lastFire >= weapon.fireRate) {
                 this.fireWeapon(weapon);
                 weapon.lastFire = 0;
             }
