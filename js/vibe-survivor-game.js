@@ -59,6 +59,7 @@ import { LevelUpModal } from './systems/ui/modals/level-up.js';
 import { GameOverModal } from './systems/ui/modals/game-over.js';
 import { SettingsModal } from './systems/ui/modals/settings.js';
 import { HelpModal } from './systems/ui/modals/help.js';
+import { GuideModal } from './systems/ui/modals/guide-modal.js';
 import { WeaponInfoModal } from './systems/ui/modals/weapon-info.js';
 import { StatsModal } from './systems/ui/modals/stats.js';
 import { VictoryModal } from './systems/ui/modals/victory.js';
@@ -136,6 +137,7 @@ class VibeSurvivor {
             gameOver: new GameOverModal(),
             settings: new SettingsModal(),
             help: new HelpModal(),
+            guide: new GuideModal(this),
             weaponInfo: new WeaponInfoModal(),
             stats: new StatsModal(),
             victory: new VictoryModal(),
@@ -147,6 +149,7 @@ class VibeSurvivor {
             aboutModal: new AboutModal(),
             chest: new ChestModal()
         };
+        this._guideModalInitialized = false;
 
         // Initialize Phase 11 systems - Engine & Audio
         this.audioManager = new AudioManager();
@@ -218,7 +221,7 @@ class VibeSurvivor {
         // Pause functionality
         this.isPaused = false;
         this.isHelpOpen = false;
-        this.activeHelpTab = 'guide';
+        this.activeHelpTab = 'howto';
         this.overlayLocks = 0;
         
         // Background music
@@ -652,6 +655,18 @@ class VibeSurvivor {
             this._helpMenuInitialized = true;
         }
 
+        // Initialize start menu guide modal
+        if (!this._guideModalInitialized) {
+            this.modals.guide.init();
+            this.modals.guide.onClose(() => {
+                if (!this.gameRunning) {
+                    this.showStartScreen();
+                }
+            });
+            this.modalManager.register('guide', this.modals.guide);
+            this._guideModalInitialized = true;
+        }
+
         // Phase 12c.8 - Initialize start screen modal (after modal HTML is created)
         if (!this._startScreenModalInitialized) {
             this.modals.startScreenModal.init();
@@ -719,6 +734,25 @@ class VibeSurvivor {
             this.modals.startScreenModal.setTranslationFunction(this.t.bind(this));
 
             this._startScreenModalInitialized = true;
+        }
+
+        // Wire up GUIDE button on start screen
+        const startGuideBtn = document.getElementById('start-btn-guide');
+        if (startGuideBtn && !startGuideBtn.dataset.bound) {
+            startGuideBtn.dataset.bound = 'true';
+            const guideHandler = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                if (!this.gameFullyInitialized) {
+                    console.warn('Please wait for loading to complete.');
+                    return;
+                }
+
+                this.openGuideModalFromStart();
+            };
+            startGuideBtn.addEventListener('click', guideHandler);
+            startGuideBtn.addEventListener('touchstart', guideHandler, { passive: false });
         }
 
         // Phase 12c.9 - Initialize loading screen modal (after modal HTML is created)
@@ -866,6 +900,7 @@ class VibeSurvivor {
                                 <p class="controls-info mobile-only">Mobile: Touch screen to move, tap DASH button</p>
                                 <div class="start-actions">
                                     <button id="start-survivor" class="survivor-btn primary">START</button>
+                                    <button id="start-btn-guide" class="survivor-btn">GUIDE</button>
                                     <button id="options-btn" class="survivor-btn">OPTIONS</button>
                                     <button id="about-btn" class="survivor-btn">ABOUT</button>
                                 </div>
@@ -1043,44 +1078,66 @@ class VibeSurvivor {
                             <div id="help-menu" class="help-menu" style="display: none;">
                                 <div class="help-content" tabindex="0">
                                     <div class="help-tabs">
-                                        <button id="help-tab-guide" class="help-tab active" data-tab="guide">GUIDE</button>
+                                        <button id="help-tab-howto" class="help-tab active" data-tab="howto">HOW TO</button>
+                                        <button id="help-tab-passives" class="help-tab" data-tab="passives">PASSIVES</button>
+                                        <button id="help-tab-weapons" class="help-tab" data-tab="weapons">WEAPONS</button>
                                         <button id="help-tab-status" class="help-tab" data-tab="status">STATUS</button>
                                     </div>
 
-                                    <div id="help-guide" class="help-pane guide-pane" style="display: block;">
-                                        <h2 id="help-guide-title">WEAPON MERGERS</h2>
-                                        <div class="help-recipes">
-                                            <div class="merge-recipe">
-                                                <h3 id="homing-laser-title"><img src="images/weapons/homingLaser.png" alt="Homing Laser"> Homing Laser</h3>
-                                                <p id="homing-laser-recipe">Laser lvl 3 + Homing Missiles lvl 3</p>
-                                                <span id="homing-laser-desc" class="recipe-desc">Heat-seeking laser beams</span>
-                                            </div>
-                                            <div class="merge-recipe">
-                                                <h3 id="shockburst-title"><img src="images/weapons/shockburst.png" alt="Shockburst"> Shockburst</h3>
-                                                <p id="shockburst-recipe">Lightning lvl 3 + Plasma lvl 3</p>
-                                                <span id="shockburst-desc" class="recipe-desc">Explosive energy bursts</span>
-                                            </div>
-                                            <div class="merge-recipe">
-                                                <h3 id="gatling-gun-title"><img src="images/weapons/gatlingGun.png" alt="Gatling Gun"> Gatling Gun</h3>
-                                                <p id="gatling-gun-recipe">Rapid Fire lvl 5 + Spread Shot lvl 3</p>
-                                                <span id="gatling-gun-desc" class="recipe-desc">Multi-barrel rapid fire</span>
-                                            </div>
+                                    <div id="help-pane-howto" class="help-pane" style="display: block;">
+                                        <div class="howto-list">
+                                            <div class="howto-item"><span class="howto-label">Controls:</span> WASD/Arrow Keys move, Mouse aims, Space dashes, P pauses.</div>
+                                            <div class="howto-item"><span class="howto-label">Mobile:</span> Virtual joystick and dash button for quick moves.</div>
+                                            <div class="howto-item"><span class="howto-label">Objective:</span> Survive enemy waves, level up, and pick weapons/passives.</div>
+                                            <div class="howto-item"><span class="howto-label">Leveling:</span> Collect XP orbs to level up and unlock upgrades.</div>
+                                            <div class="howto-item"><span class="howto-label">Evolution:</span> Basic Missile evolves into Rapid Fire at level 5.</div>
+                                            <div class="howto-item"><span class="howto-label">Mergers:</span> Combine specific weapons at required levels.</div>
                                         </div>
+                                    </div>
 
-                                        <h2 id="weapon-evolution-title"><img src="images/passives/evolution.png" alt="Weapon Evolution" class="section-icon"> WEAPON EVOLUTION</h2>
-                                        <div class="help-section">
-                                            <p id="rapid-fire-evolution">Basic Missile evolves into Rapid Fire at level 5 - this creates a powerful automatic weapon with increased fire rate.</p>
-                                        </div>
+                                    <div id="help-pane-passives" class="help-pane" style="display: none;">
+                                        <div id="help-passives-list" class="passive-grid"></div>
+                                    </div>
 
-                                        <h2 id="help-unique-title"><img src="images/passives/upgrade.png" alt="Unique Items" class="section-icon"> UNIQUE ITEMS</h2>
-                                        <p id="help-unique-description" class="help-unique-description">Unlock these rare passives via upgrade chests.</p>
-                                        <div id="help-unique-list" class="help-unique-list">
-                                            <!-- Unique items will be populated dynamically -->
-                                        </div>
+                                    <div id="help-pane-weapons" class="help-pane" style="display: none;">
+                                        <div id="help-weapons-list" class="weapon-list"></div>
                                     </div>
 
                                     <div id="help-status" class="help-pane" style="display: none;"></div>
                                     <button id="close-help-btn" class="survivor-btn">CLOSE</button>
+                                    <p class="help-hint">Press ESC to close</p>
+                                </div>
+                            </div>
+
+                            <!-- Guide Modal -->
+                            <div id="survivor-guide-overlay" class="guide-modal" style="display: none;">
+                                <div class="guide-content" tabindex="0">
+                                    <div class="help-tabs guide-tabs">
+                                        <button class="guide-tab active" data-tab="howto">HOW TO</button>
+                                        <button class="guide-tab" data-tab="passives">PASSIVES</button>
+                                        <button class="guide-tab" data-tab="weapons">WEAPONS</button>
+                                    </div>
+
+                                    <div id="guide-pane-howto" class="guide-pane" style="display: block;">
+                                        <div class="howto-list">
+                                            <div class="howto-item"><span class="howto-label">Controls:</span> WASD/Arrow Keys move, Mouse aims, Space dashes, P pauses.</div>
+                                            <div class="howto-item"><span class="howto-label">Mobile:</span> Virtual joystick and dash button for quick moves.</div>
+                                            <div class="howto-item"><span class="howto-label">Objective:</span> Survive enemy waves, level up, and pick weapons/passives.</div>
+                                            <div class="howto-item"><span class="howto-label">Leveling:</span> Collect XP orbs to level up and unlock upgrades.</div>
+                                            <div class="howto-item"><span class="howto-label">Evolution:</span> Basic Missile evolves into Rapid Fire at level 5.</div>
+                                            <div class="howto-item"><span class="howto-label">Mergers:</span> Combine specific weapons at required levels.</div>
+                                        </div>
+                                    </div>
+
+                                    <div id="guide-pane-passives" class="guide-pane" style="display: none;">
+                                        <div id="guide-passives-list" class="passive-grid"></div>
+                                    </div>
+
+                                    <div id="guide-pane-weapons" class="guide-pane" style="display: none;">
+                                        <div id="guide-weapons-list" class="weapon-list"></div>
+                                    </div>
+
+                                    <button id="close-guide-btn" class="survivor-btn">CLOSE</button>
                                     <p class="help-hint">Press ESC to close</p>
                                 </div>
                             </div>
@@ -4353,10 +4410,44 @@ class VibeSurvivor {
         overlay.style.marginBottom = `${marginValue}px`;
     }
 
+    openGuideModalFromStart() {
+        // Ensure guide modal is ready
+        if (this.modals.guide && !this._guideModalInitialized) {
+            console.log('[Guide] init from openGuideModalFromStart');
+            this.modals.guide.init();
+            this._guideModalInitialized = true;
+        }
+
+        const guideModal = this.modals.guide;
+        if (!guideModal || !guideModal.element) {
+            console.warn('Guide modal not ready');
+            return;
+        }
+
+        // Keep start overlay active but non-interactive so layout stays intact
+        const startOverlay = document.getElementById('survivor-start-overlay');
+        if (startOverlay) {
+            console.log('[Guide] keeping start overlay while showing guide');
+            startOverlay.classList.add('active');
+            startOverlay.style.setProperty('display', 'flex', 'important');
+            startOverlay.style.setProperty('pointer-events', 'none', 'important');
+            startOverlay.style.setProperty('opacity', '1', 'important');
+        }
+
+        this.resetMenuNavigation();
+        console.log('[Guide] showing modal');
+        guideModal.show();
+        console.log('[Guide] modal display style:', guideModal.element.style.display);
+        console.log('[Guide] modal classes:', guideModal.element.className);
+    }
+
     showStartScreen() {
         // Remove game-active class to show start screen over landing page
         const modal = document.getElementById('vibe-survivor-modal');
         const content = document.querySelector('.vibe-survivor-content');
+        if (this.modals.guide?.isVisible && this.modals.guide.isVisible()) {
+            this.modals.guide.hide();
+        }
         if (modal) {
             modal.classList.remove('game-active');
         }
@@ -4392,24 +4483,25 @@ class VibeSurvivor {
 
             // Initialize keyboard navigation for start screen buttons
             // Use setTimeout to ensure DOM is fully ready
-            setTimeout(() => {
-                const startBtn = document.getElementById('start-survivor');
-                const optionsBtn = document.getElementById('options-btn');
-                const aboutBtn = document.getElementById('about-btn');
-                const restartBtn = document.getElementById('restart-survivor');
-                const exitBtn = document.getElementById('exit-survivor');
-                const startButtons = [startBtn, optionsBtn, aboutBtn, restartBtn, exitBtn].filter(btn => btn);
+                setTimeout(() => {
+                    const startBtn = document.getElementById('start-survivor');
+                    const guideBtn = document.getElementById('start-btn-guide');
+                    const optionsBtn = document.getElementById('options-btn');
+                    const aboutBtn = document.getElementById('about-btn');
+                    const restartBtn = document.getElementById('restart-survivor');
+                    const exitBtn = document.getElementById('exit-survivor');
+                    const startButtons = [startBtn, guideBtn, optionsBtn, aboutBtn, restartBtn, exitBtn].filter(btn => btn);
 
-                if (startButtons.length > 0) {
-                    this.initializeMenuNavigation('start', startButtons);
-                }
+                    if (startButtons.length > 0) {
+                        this.initializeMenuNavigation('start', startButtons);
+                    }
 
             this.setupChromaAwardsLogoInteraction();
             this.setupVibeSurvivorLogoInteraction();
 
                 // Title content is hidden in HTML initially (display: none on .survivor-title)
                 // Show everything after background loads and mark game as ready
-                const allButtons = [startBtn, optionsBtn, aboutBtn, restartBtn, exitBtn];
+                const allButtons = [startBtn, guideBtn, optionsBtn, aboutBtn, restartBtn, exitBtn];
                 const titleContent = document.querySelector('.survivor-title');
                 const startScreenBot = window.startScreenBot;
                 const chromaHeader = document.querySelector('.chroma-awards-header');
@@ -5504,30 +5596,6 @@ class VibeSurvivor {
             content.classList.add('pause-menu-open');
         } else {
             content.classList.remove('pause-menu-open');
-        }
-    }
-
-    switchHelpTab(tab) {
-        const guideBtn = document.getElementById('help-tab-guide');
-        const statusBtn = document.getElementById('help-tab-status');
-        const guidePane = document.getElementById('help-guide');
-        const statusPane = document.getElementById('help-status');
-
-        if (!guideBtn || !statusBtn || !guidePane || !statusPane) return;
-
-        if (tab === 'status') {
-            guidePane.style.display = 'none';
-            statusPane.style.display = 'block';
-            statusBtn.classList.add('active');
-            guideBtn.classList.remove('active');
-            this.renderHelpStatusTab();
-            this.activeHelpTab = 'status';
-        } else {
-            guidePane.style.display = 'block';
-            statusPane.style.display = 'none';
-            statusBtn.classList.remove('active');
-            guideBtn.classList.add('active');
-            this.activeHelpTab = 'guide';
         }
     }
 
@@ -12074,6 +12142,14 @@ class VibeSurvivor {
             canvas.style.setProperty('display', 'none', 'important');
         }
 
+        // Ensure start overlay is visible again
+        const startOverlay = document.getElementById('survivor-start-overlay');
+        if (startOverlay) {
+            startOverlay.classList.add('active');
+            startOverlay.style.setProperty('display', 'flex', 'important');
+            startOverlay.style.setProperty('visibility', 'visible', 'important');
+        }
+
         // Hide mobile controls
         const mobileControls = document.getElementById('mobile-controls');
         if (mobileControls) {
@@ -12108,11 +12184,12 @@ class VibeSurvivor {
             // Use setTimeout to ensure DOM is fully ready
             setTimeout(() => {
                 const startBtn = document.getElementById('start-survivor');
+                const guideBtn = document.getElementById('start-btn-guide');
                 const optionsBtn = document.getElementById('options-btn');
                 const aboutBtn = document.getElementById('about-btn');
                 const restartBtn = document.getElementById('restart-survivor');
                 const exitBtn = document.getElementById('exit-survivor');
-                const startButtons = [startBtn, optionsBtn, aboutBtn, restartBtn, exitBtn].filter(btn => btn);
+                const startButtons = [startBtn, guideBtn, optionsBtn, aboutBtn, restartBtn, exitBtn].filter(btn => btn);
 
                 if (startButtons.length > 0) {
                     this.initializeMenuNavigation('start', startButtons);
@@ -12629,6 +12706,15 @@ class VibeSurvivor {
 
         if (this.modals.helpMenu) {
             this.modals.helpMenu.updateLocalization();
+        }
+
+        if (this.modals.guide) {
+            if (this.modals.guide.element) {
+                this.modals.guide.populatePassivesList();
+                this.modals.guide.populateWeaponsList();
+            } else {
+                console.warn('[Guide] skipped localization update because element not found');
+            }
         }
 
         if (this.modals.levelUp) {

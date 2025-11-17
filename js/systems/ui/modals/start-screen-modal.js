@@ -84,6 +84,8 @@ export class StartScreenModal {
         if (controlsMobile) controlsMobile.textContent = t('controlsMobile');
 
         if (this.startButton) this.startButton.textContent = t('startGame');
+        const guideBtn = document.getElementById('start-btn-guide');
+        if (guideBtn) guideBtn.textContent = t('guide') || 'GUIDE';
         if (this.optionsButton) this.optionsButton.textContent = t('options');
         if (this.aboutButton) this.aboutButton.textContent = t('about');
 

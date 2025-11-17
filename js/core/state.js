@@ -138,7 +138,7 @@ export function createUIState() {
         notifications: [],
         isPaused: false,
         isHelpOpen: false,
-        activeHelpTab: 'controls',
+        activeHelpTab: 'howto',
         activeLevelUpTab: 'levelup',
         overlayLocks: 0
     };

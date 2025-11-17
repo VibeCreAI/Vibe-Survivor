@@ -373,6 +373,233 @@ body::after {
     justify-content: center;
 }
 
+/* Guide / Help modal shared styles */
+.guide-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.82);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 130000;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    pointer-events: auto;
+}
+
+.guide-modal[style*="display: block"],
+.guide-modal[style*="display: flex"] {
+    display: flex !important;
+}
+
+.guide-content {
+    background: linear-gradient(135deg, #0a0a1a, #1a0a2a);
+    border: 2px solid #00ffff;
+    border-radius: 15px;
+    padding: 28px 24px;
+    width: 92%;
+    max-width: 640px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.35);
+}
+
+.guide-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+}
+
+.guide-tab,
+.help-tab {
+    background: transparent;
+    border: 2px solid #00ffff;
+    color: #00ffff;
+    padding: 8px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.guide-tab.active,
+.help-tab.active {
+    background: #00ffff;
+    color: #0a0a1a;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+}
+
+.guide-tab:not(.active):hover,
+.help-tab:not(.active):hover {
+    background: rgba(0, 255, 255, 0.1);
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.howto-list {
+    display: grid;
+    gap: 10px;
+    padding: 4px 2px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #e8edff;
+}
+
+.howto-item {
+    background: rgba(0, 255, 255, 0.06);
+    border: 1px solid rgba(0, 255, 255, 0.18);
+    border-radius: 10px;
+    padding: 10px 12px;
+}
+
+.howto-label {
+    color: #00ffff;
+    font-weight: bold;
+    letter-spacing: 0.04em;
+    margin-right: 6px;
+}
+
+.section-header {
+    margin: 14px 0 8px;
+    color: #ffdf70;
+    letter-spacing: 0.08em;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(255, 223, 112, 0.4);
+    padding-bottom: 6px;
+}
+
+.passive-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.passive-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    text-align: center;
+    background: linear-gradient(135deg, rgba(0, 255, 255, 0.06), rgba(0, 255, 255, 0.02));
+    border: 1px solid rgba(0, 255, 255, 0.25);
+    border-radius: 12px;
+    padding: 12px 14px;
+    box-shadow: 0 0 14px rgba(0, 255, 255, 0.1);
+}
+
+.passive-icon img {
+    width: 48px;
+    height: 48px;
+    image-rendering: pixelated;
+}
+
+.passive-name {
+    color: #e8edff;
+    font-weight: bold;
+    letter-spacing: 0.02em;
+}
+
+.passive-desc {
+    color: rgba(232, 237, 255, 0.9);
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin-top: 2px;
+}
+
+.passive-stack {
+    color: #7cf7ff;
+    font-size: 0.85rem;
+    margin-top: 6px;
+}
+
+.passive-item.unique-passive {
+    background: linear-gradient(135deg, rgba(255, 0, 255, 0.08), rgba(255, 0, 255, 0.02));
+    border: 1px solid rgba(255, 0, 255, 0.35);
+    box-shadow: 0 0 14px rgba(255, 0, 255, 0.2);
+}
+
+.weapon-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.weapon-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    text-align: center;
+    background: linear-gradient(135deg, rgba(0, 255, 255, 0.06), rgba(0, 255, 255, 0.02));
+    border: 1px solid rgba(0, 255, 255, 0.25);
+    border-radius: 12px;
+    padding: 12px 14px;
+    box-shadow: 0 0 14px rgba(0, 255, 255, 0.1);
+}
+
+.weapon-icon img,
+.weapon-icon > img {
+    width: 48px;
+    height: 48px;
+    image-rendering: pixelated;
+}
+
+.weapon-name {
+    color: #ffeec4;
+    font-weight: bold;
+    letter-spacing: 0.02em;
+}
+
+.weapon-recipe {
+    color: #ffdf70;
+    font-size: 0.9rem;
+    margin: 4px 0;
+}
+
+.weapon-desc {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.weapon-item.weapon-merge {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.12), rgba(255, 215, 0, 0.04));
+    border: 1px solid rgba(255, 223, 112, 0.5);
+    box-shadow: 0 0 18px rgba(255, 200, 0, 0.2);
+}
+
+.weapon-item.weapon-standard {
+    background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(0, 255, 255, 0.03));
+    border: 1px solid rgba(0, 255, 255, 0.35);
+}
+
+.guide-content .survivor-btn,
+.help-content .survivor-btn {
+    display: block;
+    margin: 16px auto 6px;
+}
+.guide-content .survivor-btn:focus-visible,
+.guide-content .survivor-btn:focus,
+.guide-content .survivor-btn:active {
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
+    border-color: #00ffff;
+}
+
+.help-hint {
+    text-align: center;
+}
+
+@media (max-width: 720px) {
+    .guide-content {
+        padding: 22px 18px;
+    }
+}
+
 @media (max-width: 600px) {
     .landing {
         padding: 3rem 1.25rem 2.5rem;
@@ -386,4 +613,3 @@ body::after {
         width: 100%;
     }
 }
-
