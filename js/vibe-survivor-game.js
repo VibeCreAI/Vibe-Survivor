@@ -153,6 +153,7 @@ class VibeSurvivor {
 
         // Initialize Phase 11 systems - Engine & Audio
         this.audioManager = new AudioManager();
+        this.lastStartThemePlay = 0;
         this.gameLoopManager = new GameLoop(); // Renamed to avoid conflict with existing gameLoop() method
         this.engineTimer = new EngineTimer();
         this.frameRateCounter = new FrameRateCounter();
@@ -896,8 +897,6 @@ class VibeSurvivor {
                             <div class="survivor-title" style="display: none;">
                                 <img src="images/Title.png" alt="VIBE SURVIVOR" id="vibe-survivor-logo" class="title-logo" role="button" tabindex="0" aria-label="Play the Vibe Survivor theme">
                                 <p class="game-tagline">Survive the endless waves!</p>
-                                <p class="controls-info">PC: WASD/Arrow Keys to move, SPACEBAR to dash</p>
-                                <p class="controls-info mobile-only">Mobile: Touch screen to move, tap DASH button</p>
                                 <div class="start-actions">
                                     <button id="start-survivor" class="survivor-btn primary">START</button>
                                     <button id="start-btn-guide" class="survivor-btn">GUIDE</button>
@@ -1078,22 +1077,13 @@ class VibeSurvivor {
                             <div id="help-menu" class="help-menu" style="display: none;">
                                 <div class="help-content" tabindex="0">
                                     <div class="help-tabs">
-                                        <button id="help-tab-howto" class="help-tab active" data-tab="howto">HOW TO</button>
+                                        <button id="help-tab-status" class="help-tab active" data-tab="status">STATUS</button>
                                         <button id="help-tab-passives" class="help-tab" data-tab="passives">PASSIVES</button>
                                         <button id="help-tab-weapons" class="help-tab" data-tab="weapons">WEAPONS</button>
-                                        <button id="help-tab-status" class="help-tab" data-tab="status">STATUS</button>
+                                        <button id="help-tab-howto" class="help-tab" data-tab="howto">HOW TO</button>
                                     </div>
 
-                                    <div id="help-pane-howto" class="help-pane" style="display: block;">
-                                        <div class="howto-list">
-                                            <div class="howto-item"><span class="howto-label">Controls:</span> WASD/Arrow Keys move, Mouse aims, Space dashes, P pauses.</div>
-                                            <div class="howto-item"><span class="howto-label">Mobile:</span> Virtual joystick and dash button for quick moves.</div>
-                                            <div class="howto-item"><span class="howto-label">Objective:</span> Survive enemy waves, level up, and pick weapons/passives.</div>
-                                            <div class="howto-item"><span class="howto-label">Leveling:</span> Collect XP orbs to level up and unlock upgrades.</div>
-                                            <div class="howto-item"><span class="howto-label">Evolution:</span> Basic Missile evolves into Rapid Fire at level 5.</div>
-                                            <div class="howto-item"><span class="howto-label">Mergers:</span> Combine specific weapons at required levels.</div>
-                                        </div>
-                                    </div>
+                                    <div id="help-pane-status" class="help-pane" style="display: block;"></div>
 
                                     <div id="help-pane-passives" class="help-pane" style="display: none;">
                                         <div id="help-passives-list" class="passive-grid"></div>
@@ -1103,7 +1093,9 @@ class VibeSurvivor {
                                         <div id="help-weapons-list" class="weapon-list"></div>
                                     </div>
 
-                                    <div id="help-status" class="help-pane" style="display: none;"></div>
+                                    <div id="help-pane-howto" class="help-pane" style="display: none;">
+                                        <!-- Content will be populated by updateHowToContent() -->
+                                    </div>
                                     <button id="close-help-btn" class="survivor-btn">CLOSE</button>
                                     <p class="help-hint">Press ESC to close</p>
                                 </div>
@@ -1119,14 +1111,7 @@ class VibeSurvivor {
                                     </div>
 
                                     <div id="guide-pane-howto" class="guide-pane" style="display: block;">
-                                        <div class="howto-list">
-                                            <div class="howto-item"><span class="howto-label">Controls:</span> WASD/Arrow Keys move, Mouse aims, Space dashes, P pauses.</div>
-                                            <div class="howto-item"><span class="howto-label">Mobile:</span> Virtual joystick and dash button for quick moves.</div>
-                                            <div class="howto-item"><span class="howto-label">Objective:</span> Survive enemy waves, level up, and pick weapons/passives.</div>
-                                            <div class="howto-item"><span class="howto-label">Leveling:</span> Collect XP orbs to level up and unlock upgrades.</div>
-                                            <div class="howto-item"><span class="howto-label">Evolution:</span> Basic Missile evolves into Rapid Fire at level 5.</div>
-                                            <div class="howto-item"><span class="howto-label">Mergers:</span> Combine specific weapons at required levels.</div>
-                                        </div>
+                                        <!-- Content will be populated by updateHowToContent() -->
                                     </div>
 
                                     <div id="guide-pane-passives" class="guide-pane" style="display: none;">
@@ -4641,6 +4626,12 @@ class VibeSurvivor {
             return;
         }
 
+        const now = Date.now();
+        if (now - this.lastStartThemePlay < 1200) {
+            return; // Prevent rapid double-plays when reopening the start screen
+        }
+        this.lastStartThemePlay = now;
+
         this.audioManager.playSound('startMenu');
         this.audioManager.playSound('chromaAwardsTheme');
     }
@@ -5600,7 +5591,7 @@ class VibeSurvivor {
     }
 
     renderHelpStatusTab() {
-        const statusPane = document.getElementById('help-status');
+        const statusPane = document.getElementById('help-pane-status');
         if (!statusPane) return;
 
         const statusTitle = this.t('statusTab');
@@ -12300,6 +12291,7 @@ class VibeSurvivor {
                     gameTitle: "VIBE SURVIVOR",
                     gameTagline: "Survive the endless waves!",
                     startGame: "START",
+                    guide: "GUIDE",
                     options: "OPTIONS",
                     about: "ABOUT",
 
@@ -12365,7 +12357,7 @@ class VibeSurvivor {
                     noContinue: "NO, CONTINUE",
 
                     // Controls
-                    controlsPC: "PC: WASD/Arrow Keys to move, SPACEBAR to dash",
+                    controlsPC: "PC: WASD/Arrow Keys move, Mouse aims, Space dash, ESC pauses, F1 opens Help",
                     controlsMobile: "Mobile: Touch screen to move, tap DASH button",
                     pauseHint: "Press ESC to resume",
                     helpHint: "Press ESC to close",
@@ -12458,6 +12450,49 @@ class VibeSurvivor {
                     modBayDesc: "Increase max weapon slots to 5"
                 },
                 help: {
+                    // Tabs
+                    howToTab: "HOW TO",
+                    passivesTab: "PASSIVES",
+                    weaponsTab: "WEAPONS",
+                    statusTab: "STATUS",
+
+                    // Section headers
+                    uniquePassivesHeader: "UNIQUE PASSIVES (Chest Rewards)",
+                    stackablePassivesHeader: "STACKABLE PASSIVES",
+                    mergerWeaponsHeader: "MERGER WEAPONS",
+                    evolutionWeaponsHeader: "EVOLUTION WEAPONS",
+                    baseWeaponsHeader: "BASE WEAPONS",
+
+                    // How To content
+                    controlsLabel: "Controls:",
+                    mobileLabel: "Mobile:",
+                    objectiveLabel: "Objective:",
+                    levelingLabel: "Leveling:",
+                    evolutionLabel: "Evolution:",
+                    mergersLabel: "Mergers:",
+
+                    controlsText: "WASD/Arrow Keys move, Mouse aims, Space dashes, ESC pauses, F1 opens Help.",
+                    mobileText: "Virtual joystick and dash button for quick moves.",
+                    objectiveText: "Survive enemy waves, defeat bosses, level up, and pick weapons/passives.",
+                    levelingText: "Collect XP orbs to level up and unlock upgrades.",
+                    evolutionText: "Basic Missile evolves into Rapid Fire at level 5.",
+                    mergersText: "Combine specific weapons at required levels.",
+
+                    // Passive stack info
+                    healthBoostStack: "+25 Max Health (infinite stacks)",
+                    speedBoostStack: "+10% Movement Speed (max 3 stacks)",
+                    magnetStack: "Attract XP orbs (max 3 stacks)",
+                    armorStack: "15% damage reduction (infinite stacks, 90% cap)",
+                    criticalStack: "15% crit chance, 2x damage (max 3 stacks)",
+                    dashBoostStack: "+50% dash distance (max 3 stacks)",
+                    turboFluxStack: "+25% fire rate to all weapons",
+                    aegisCoreStack: "+50% weapon damage",
+                    splitstreamMatrixStack: "+1 projectile to all weapons",
+                    macroChargeStack: "+50% explosion radius",
+                    modBayStack: "Increase max weapon slots to 5",
+                    regenerationStack: "Auto-heal over time",
+
+                    // Weapon mergers
                     weaponMergers: "<img src='images/passives/upgrade.png' alt='upgrade' class='section-icon'> WEAPON MERGERS",
                     homingLaserRecipe: "Laser lvl 3 + Homing Missiles lvl 3",
                     homingLaserDesc: "Heat-seeking laser beams",
@@ -12468,7 +12503,12 @@ class VibeSurvivor {
 
                     // Additional help content
                     weaponEvolution: "WEAPON EVOLUTION",
-                    rapidFireEvolution: "Basic Missile evolves into Rapid Fire at level 5 - this creates a powerful automatic weapon with increased fire rate."
+                    rapidFireEvolution: "Basic Missile evolves into Rapid Fire at level 5 - this creates a powerful automatic weapon with increased fire rate.",
+                    rapidFireEvolutionDesc: "Basic Missile evolves at level 5 into Rapid Fire with blazing speed.",
+
+                    // Modal UI
+                    closeButton: "CLOSE",
+                    helpHint: "Press ESC to close"
                 }
             },
             ko: {
@@ -12477,6 +12517,7 @@ class VibeSurvivor {
                     gameTitle: "바이브 서바이벌",
                     gameTagline: "끝없는 도형들의 공격에서 살아남아라!",
                     startGame: "시작",
+                    guide: "가이드",
                     options: "설정",
                     about: "정보",
 
@@ -12542,7 +12583,7 @@ class VibeSurvivor {
                     noContinue: "아니오, 계속하기",
 
                     // Controls
-                    controlsPC: "PC: WASD/방향키로 이동, 스페이스바로 대시",
+                    controlsPC: "PC: WASD/방향키 이동, 마우스 조준, 스페이스 대시, ESC 일시정지, F1 도움말",
                     controlsMobile: "모바일: 화면을 터치해 이동, 대시 버튼을 눌러 대시",
                     pauseHint: "ESC를 눌러 계속하기",
                     helpHint: "ESC를 눌러 닫기",
@@ -12635,6 +12676,49 @@ class VibeSurvivor {
                     modBayDesc: "무기 슬롯 최대치를 5개로 확장합니다."
                 },
                 help: {
+                    // Tabs
+                    howToTab: "플레이 방법",
+                    passivesTab: "패시브",
+                    weaponsTab: "무기",
+                    statusTab: "상태",
+
+                    // Section headers
+                    uniquePassivesHeader: "고유 패시브 (상자 보상)",
+                    stackablePassivesHeader: "중첩 가능 패시브",
+                    mergerWeaponsHeader: "합성 무기",
+                    evolutionWeaponsHeader: "진화 무기",
+                    baseWeaponsHeader: "기본 무기",
+
+                    // How To content
+                    controlsLabel: "조작법:",
+                    mobileLabel: "모바일:",
+                    objectiveLabel: "목표:",
+                    levelingLabel: "레벨업:",
+                    evolutionLabel: "진화:",
+                    mergersLabel: "합성:",
+
+                    controlsText: "WASD/방향키 이동, 마우스 조준, 스페이스 대시, ESC 일시정지, F1 도움말.",
+                    mobileText: "가상 조이스틱과 대시 버튼으로 빠른 이동.",
+                    objectiveText: "적의 공격에서 살아남고 보스를 처치하여 레벨업하고 무기/패시브를 선택하세요.",
+                    levelingText: "경험치 구슬을 모아 레벨업하고 업그레이드를 해제하세요.",
+                    evolutionText: "기본 미사일이 레벨 5에서 연사로 진화합니다.",
+                    mergersText: "특정 레벨의 무기를 조합하세요.",
+
+                    // Passive stack info
+                    healthBoostStack: "+25 최대 체력 (무한 중첩)",
+                    speedBoostStack: "+10% 이동 속도 (최대 3 중첩)",
+                    magnetStack: "경험치 구슬 흡수 (최대 3 중첩)",
+                    armorStack: "15% 피해 감소 (무한 중첩, 90% 상한)",
+                    criticalStack: "15% 치명타 확률, 2배 피해 (최대 3 중첩)",
+                    dashBoostStack: "+50% 대시 거리 (최대 3 중첩)",
+                    turboFluxStack: "모든 무기 연사 속도 +25%",
+                    aegisCoreStack: "무기 피해량 +50%",
+                    splitstreamMatrixStack: "모든 무기 투사체 +1",
+                    macroChargeStack: "폭발 범위 +50%",
+                    modBayStack: "최대 무기 슬롯 5개로 증가",
+                    regenerationStack: "시간 경과에 따라 자동 회복",
+
+                    // Weapon mergers
                     weaponMergers: "<img src='images/passives/upgrade.png' alt='upgrade' class='section-icon'> 무기 합성",
                     homingLaserRecipe: "레이저 레벨 3 + 유도 미사일 레벨 3",
                     homingLaserDesc: "열추적 레이저 빔",
@@ -12645,7 +12729,12 @@ class VibeSurvivor {
 
                     // Additional help content
                     weaponEvolution: "무기 진화",
-                    rapidFireEvolution: "기본 미사일이 레벨 5에서 속사로 진화합니다 - 발사 속도가 크게 향상된 강력한 자동 무기가 됩니다."
+                    rapidFireEvolution: "기본 미사일이 레벨 5에서 속사로 진화합니다 - 발사 속도가 크게 향상된 강력한 자동 무기가 됩니다.",
+                    rapidFireEvolutionDesc: "기본 미사일이 레벨 5에서 엄청난 속도의 연사로 진화합니다.",
+
+                    // Modal UI
+                    closeButton: "닫기",
+                    helpHint: "ESC를 눌러 닫기"
                 }
             }
         };
@@ -12709,11 +12798,8 @@ class VibeSurvivor {
         }
 
         if (this.modals.guide) {
-            if (this.modals.guide.element) {
-                this.modals.guide.populatePassivesList();
-                this.modals.guide.populateWeaponsList();
-            } else {
-                console.warn('[Guide] skipped localization update because element not found');
+            if (this.modals.guide.updateLocalization) {
+                this.modals.guide.updateLocalization();
             }
         }
 

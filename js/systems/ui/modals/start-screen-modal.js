@@ -77,12 +77,6 @@ export class StartScreenModal {
         const tagline = document.querySelector('.survivor-title .game-tagline');
         if (tagline) tagline.textContent = t('gameTagline');
 
-        const controlsPC = document.querySelector('.controls-info:not(.mobile-only)');
-        if (controlsPC) controlsPC.textContent = t('controlsPC');
-
-        const controlsMobile = document.querySelector('.controls-info.mobile-only');
-        if (controlsMobile) controlsMobile.textContent = t('controlsMobile');
-
         if (this.startButton) this.startButton.textContent = t('startGame');
         const guideBtn = document.getElementById('start-btn-guide');
         if (guideBtn) guideBtn.textContent = t('guide') || 'GUIDE';

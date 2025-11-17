@@ -54,7 +54,7 @@ export class HelpMenu {
         this.weaponsList = null;
 
         // State
-        this.activeTab = 'howto';
+        this.activeTab = 'status';
         this.isOpen = false;
 
         // Keyboard navigation state
@@ -99,21 +99,21 @@ export class HelpMenu {
         this.contentElement = this.element.querySelector('.help-content');
 
         // Get tab references
-        this.howToTab = document.getElementById('help-tab-howto');
+        this.statusTab = document.getElementById('help-tab-status');
         this.passivesTab = document.getElementById('help-tab-passives');
         this.weaponsTab = document.getElementById('help-tab-weapons');
-        this.statusTab = document.getElementById('help-tab-status');
+        this.howToTab = document.getElementById('help-tab-howto');
         this.panes = {
-            howto: document.getElementById('help-pane-howto'),
+            status: document.getElementById('help-pane-status'),
             passives: document.getElementById('help-pane-passives'),
             weapons: document.getElementById('help-pane-weapons'),
-            status: document.getElementById('help-status')
+            howto: document.getElementById('help-pane-howto')
         };
         this.tabs = {
-            howto: this.howToTab,
+            status: this.statusTab,
             passives: this.passivesTab,
             weapons: this.weaponsTab,
-            status: this.statusTab
+            howto: this.howToTab
         };
         this.passivesList = document.getElementById('help-passives-list');
         this.weaponsList = document.getElementById('help-weapons-list');
@@ -147,35 +147,50 @@ export class HelpMenu {
      * Updates localized text for help menu
      */
     updateLocalization() {
-        if (!this.getTranslation) {
-            this.populatePassivesList();
-            this.populateWeaponsList();
-            return;
-        }
+        if (!this.getTranslation) return;
+        const t = (key) => this.getTranslation(key, 'help');
 
-        const t = this.getTranslation;
-        const labelWithFallback = (btn, key, defaultText, category = 'help') => {
-            if (!btn) return;
-            const translated = t(key, category) || t(key);
-            btn.textContent = translated && translated.toLowerCase() !== key.toLowerCase() ? translated : defaultText;
-        };
+        // Update tab buttons
+        if (this.tabs.howto) this.tabs.howto.textContent = t('howToTab');
+        if (this.tabs.passives) this.tabs.passives.textContent = t('passivesTab');
+        if (this.tabs.weapons) this.tabs.weapons.textContent = t('weaponsTab');
+        if (this.tabs.status) this.tabs.status.textContent = t('statusTab');
 
-        labelWithFallback(this.howToTab, 'howToTab', 'HOW TO');
-        labelWithFallback(this.passivesTab, 'passivesTab', 'PASSIVES');
-        labelWithFallback(this.weaponsTab, 'weaponsTab', 'WEAPONS');
-        labelWithFallback(this.statusTab, 'statusTab', 'STATUS', 'ui');
+        // Update close button
+        if (this.closeButton) this.closeButton.textContent = t('closeButton');
 
-        if (this.closeButton) this.closeButton.textContent = t('close');
-
+        // Update help hint
         const helpHint = this.element?.querySelector('.help-hint');
         if (helpHint) helpHint.textContent = t('helpHint');
 
+        // Update How To content
+        this.updateHowToContent();
+
+        // Re-populate lists
         this.populatePassivesList();
         this.populateWeaponsList();
 
         if (this.renderStatusTab) {
             this.renderStatusTab();
         }
+    }
+
+    updateHowToContent() {
+        if (!this.getTranslation) return;
+        const t = (key) => this.getTranslation(key, 'help');
+        const howToPane = this.panes.howto;
+        if (!howToPane) return;
+
+        howToPane.innerHTML = `
+            <div class="howto-list">
+                <div class="howto-item"><span class="howto-label">${t('controlsLabel')}</span> ${t('controlsText')}</div>
+                <div class="howto-item"><span class="howto-label">${t('mobileLabel')}</span> ${t('mobileText')}</div>
+                <div class="howto-item"><span class="howto-label">${t('objectiveLabel')}</span> ${t('objectiveText')}</div>
+                <div class="howto-item"><span class="howto-label">${t('levelingLabel')}</span> ${t('levelingText')}</div>
+                <div class="howto-item"><span class="howto-label">${t('evolutionLabel')}</span> ${t('evolutionText')}</div>
+                <div class="howto-item"><span class="howto-label">${t('mergersLabel')}</span> ${t('mergersText')}</div>
+            </div>
+        `;
     }
 
     /**
@@ -259,7 +274,7 @@ export class HelpMenu {
         }
 
         // Switch to active tab (or default to how-to)
-        this.switchTab(this.activeTab || 'howto');
+        this.switchTab(this.activeTab || 'status');
 
         // Call lifecycle hook
         this.onShow();
@@ -336,12 +351,12 @@ export class HelpMenu {
         if (!this.passivesList) return;
         this.passivesList.innerHTML = '';
 
-        this.addSectionHeader(this.passivesList, 'UNIQUE PASSIVES (Chest Rewards)');
+        this.addSectionHeader(this.passivesList, 'uniquePassivesHeader');
         this.getOrderedUniquePassives().forEach((passiveId) => {
             this.passivesList.appendChild(this.createPassiveItem(passiveId));
         });
 
-        this.addSectionHeader(this.passivesList, 'STACKABLE PASSIVES');
+        this.addSectionHeader(this.passivesList, 'stackablePassivesHeader');
         this.getOrderedStackablePassives().forEach((passiveId) => {
             this.passivesList.appendChild(this.createPassiveItem(passiveId));
         });
@@ -351,17 +366,19 @@ export class HelpMenu {
         if (!this.weaponsList) return;
         this.weaponsList.innerHTML = '';
 
-        this.addSectionHeader(this.weaponsList, 'MERGER WEAPONS');
+        this.addSectionHeader(this.weaponsList, 'mergerWeaponsHeader');
         this.getOrderedMergeWeapons().forEach(({ type, recipe, description }) => {
             this.weaponsList.appendChild(this.createWeaponItem(type, { recipe, description }));
         });
 
-        this.addSectionHeader(this.weaponsList, 'EVOLUTION WEAPONS');
+        this.addSectionHeader(this.weaponsList, 'evolutionWeaponsHeader');
         this.weaponsList.appendChild(
-            this.createWeaponItem('rapid', { description: 'Basic Missile evolves at level 5 into Rapid Fire with blazing speed.' })
+            this.createWeaponItem('rapid', {
+                description: this.getTranslation?.('rapidFireEvolutionDesc', 'help') || 'Basic Missile evolves at level 5 into Rapid Fire with blazing speed.'
+            })
         );
 
-        this.addSectionHeader(this.weaponsList, 'BASE WEAPONS');
+        this.addSectionHeader(this.weaponsList, 'baseWeaponsHeader');
         this.getOrderedBaseWeapons().forEach((type) => {
             this.weaponsList.appendChild(this.createWeaponItem(type));
         });
@@ -411,10 +428,14 @@ export class HelpMenu {
         return item;
     }
 
-    addSectionHeader(container, text) {
+    addSectionHeader(container, translationKey) {
         const header = document.createElement('div');
         header.className = 'section-header';
-        header.textContent = text;
+        if (this.getTranslation) {
+            header.textContent = this.getTranslation(translationKey, 'help');
+        } else {
+            header.textContent = translationKey;
+        }
         container.appendChild(header);
     }
 
@@ -441,10 +462,19 @@ export class HelpMenu {
     }
 
     getOrderedMergeWeapons() {
+        if (!this.getTranslation) {
+            return [
+                { type: 'homing_laser', recipe: 'Laser lvl 3 + Homing Missiles lvl 3', description: 'Heat-seeking laser beams.' },
+                { type: 'shockburst', recipe: 'Lightning lvl 3 + Plasma lvl 3', description: 'Explosive energy bursts.' },
+                { type: 'gatling_gun', recipe: 'Rapid Fire lvl 5 + Spread Shot lvl 3', description: 'Multi-barrel rapid fire.' }
+            ];
+        }
+
+        const t = (key) => this.getTranslation(key, 'help');
         return [
-            { type: 'homing_laser', recipe: 'Laser lvl 3 + Homing Missiles lvl 3', description: 'Heat-seeking laser beams.' },
-            { type: 'shockburst', recipe: 'Lightning lvl 3 + Plasma lvl 3', description: 'Explosive energy bursts.' },
-            { type: 'gatling_gun', recipe: 'Rapid Fire lvl 5 + Spread Shot lvl 3', description: 'Multi-barrel rapid fire.' }
+            { type: 'homing_laser', recipe: t('homingLaserRecipe'), description: t('homingLaserDesc') },
+            { type: 'shockburst', recipe: t('shockburstRecipe'), description: t('shockburstDesc') },
+            { type: 'gatling_gun', recipe: t('gatlingGunRecipe'), description: t('gatlingGunDesc') }
         ];
     }
 
@@ -463,38 +493,23 @@ export class HelpMenu {
     }
 
     getPassiveStackInfo(passiveId) {
-        const passiveConfig = PASSIVES[passiveId.toUpperCase()];
+        if (!this.getTranslation) return '';
+        const t = (key) => this.getTranslation(key, 'help');
+
         switch (passiveId) {
-            case 'health_boost':
-                return '+25 Max Health (infinite stacks)';
-            case 'speed_boost':
-                return '+10% Movement Speed (max 3 stacks)';
-            case 'magnet':
-                return 'Attract XP orbs (max 3 stacks)';
-            case 'armor':
-                return '15% damage reduction (infinite stacks, 90% cap)';
-            case 'critical':
-                return '15% crit chance, 2x damage (max 3 stacks)';
-            case 'dash_boost':
-                return '+50% dash distance (max 3 stacks)';
-            case 'turbo_flux_cycler':
-                return '+25% fire rate to all weapons';
-            case 'aegis_impact_core':
-                return '+50% weapon damage';
-            case 'splitstream_matrix':
-                return '+1 projectile to all weapons';
-            case 'macro_charge_amplifier':
-                return '+50% explosion radius';
-            case 'mod_bay_expander':
-                return 'Increase max weapon slots to 5';
-            case 'regeneration':
-                return 'Auto-heal over time';
-            default:
-                if (passiveConfig?.stackable) {
-                    const maxStacks = Number.isFinite(passiveConfig.maxStacks) ? `max ${passiveConfig.maxStacks} stacks` : 'stacks infinitely';
-                    return maxStacks;
-                }
-                return '';
+            case 'health_boost': return t('healthBoostStack');
+            case 'speed_boost': return t('speedBoostStack');
+            case 'magnet': return t('magnetStack');
+            case 'armor': return t('armorStack');
+            case 'critical': return t('criticalStack');
+            case 'dash_boost': return t('dashBoostStack');
+            case 'turbo_flux_cycler': return t('turboFluxStack');
+            case 'aegis_impact_core': return t('aegisCoreStack');
+            case 'splitstream_matrix': return t('splitstreamMatrixStack');
+            case 'macro_charge_amplifier': return t('macroChargeStack');
+            case 'mod_bay_expander': return t('modBayStack');
+            case 'regeneration': return t('regenerationStack');
+            default: return '';
         }
     }
 
@@ -810,7 +825,7 @@ export class HelpMenu {
     }
 
     cycleTabs(delta) {
-        const tabs = ['howto', 'passives', 'weapons', 'status'];
+        const tabs = ['status', 'passives', 'weapons', 'howto'];
         const currentIndex = tabs.indexOf(this.activeTab);
         const nextIndex = (currentIndex + delta + tabs.length) % tabs.length;
         this.switchTab(tabs[nextIndex]);

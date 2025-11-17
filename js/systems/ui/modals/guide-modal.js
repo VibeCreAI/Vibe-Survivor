@@ -74,12 +74,51 @@ export class GuideModal extends Modal {
             this.closeButton.addEventListener('click', () => this.hide());
         }
 
-        // Populate static lists
-        this.populatePassivesList();
-        this.populateWeaponsList();
+        this.updateLocalization();
         this.switchTab(this.activeTab);
 
         return true;
+    }
+
+    updateLocalization() {
+        if (!this.game?.t) return;
+
+        // Update tab buttons
+        if (this.tabs.howto) this.tabs.howto.textContent = this.game.t('howToTab', 'help');
+        if (this.tabs.passives) this.tabs.passives.textContent = this.game.t('passivesTab', 'help');
+        if (this.tabs.weapons) this.tabs.weapons.textContent = this.game.t('weaponsTab', 'help');
+
+        // Update close button
+        if (this.closeButton) this.closeButton.textContent = this.game.t('closeButton', 'help');
+
+        // Update help hint
+        const helpHint = this.element?.querySelector('.help-hint');
+        if (helpHint) helpHint.textContent = this.game.t('helpHint', 'help');
+
+        // Update How To content
+        this.updateHowToContent();
+
+        // Re-populate lists with translated content
+        this.populatePassivesList();
+        this.populateWeaponsList();
+    }
+
+    updateHowToContent() {
+        const howToPane = this.panes.howto;
+        if (!howToPane || !this.game?.t) return;
+
+        const t = (key) => this.game.t(key, 'help');
+
+        howToPane.innerHTML = `
+            <div class="howto-list">
+                <div class="howto-item"><span class="howto-label">${t('controlsLabel')}</span> ${t('controlsText')}</div>
+                <div class="howto-item"><span class="howto-label">${t('mobileLabel')}</span> ${t('mobileText')}</div>
+                <div class="howto-item"><span class="howto-label">${t('objectiveLabel')}</span> ${t('objectiveText')}</div>
+                <div class="howto-item"><span class="howto-label">${t('levelingLabel')}</span> ${t('levelingText')}</div>
+                <div class="howto-item"><span class="howto-label">${t('evolutionLabel')}</span> ${t('evolutionText')}</div>
+                <div class="howto-item"><span class="howto-label">${t('mergersLabel')}</span> ${t('mergersText')}</div>
+            </div>
+        `;
     }
 
     onClose(callback) {
@@ -208,13 +247,13 @@ export class GuideModal extends Modal {
         if (!container) return;
         container.innerHTML = '';
 
-        this.addSectionHeader(container, 'UNIQUE PASSIVES (Chest Rewards)');
+        this.addSectionHeader(container, 'uniquePassivesHeader');
         this.getOrderedUniquePassives().forEach((passiveId) => {
             const config = PASSIVES[passiveId.toUpperCase()] || {};
             container.appendChild(this.createPassiveItem(passiveId, config));
         });
 
-        this.addSectionHeader(container, 'STACKABLE PASSIVES');
+        this.addSectionHeader(container, 'stackablePassivesHeader');
         this.getOrderedStackablePassives().forEach((passiveId) => {
             const config = PASSIVES[passiveId.toUpperCase()] || {};
             container.appendChild(this.createPassiveItem(passiveId, config));
@@ -226,19 +265,19 @@ export class GuideModal extends Modal {
         if (!container) return;
         container.innerHTML = '';
 
-        this.addSectionHeader(container, 'MERGER WEAPONS');
+        this.addSectionHeader(container, 'mergerWeaponsHeader');
         this.getOrderedMergeWeapons().forEach(({ type, recipe, description }) => {
             container.appendChild(this.createWeaponItem(type, { recipe, description }));
         });
 
-        this.addSectionHeader(container, 'EVOLUTION WEAPONS');
+        this.addSectionHeader(container, 'evolutionWeaponsHeader');
         container.appendChild(
             this.createWeaponItem('rapid', {
-                description: 'Basic Missile evolves at level 5 into Rapid Fire with blazing speed.'
+                description: this.game?.t?.('rapidFireEvolutionDesc', 'help') || 'Basic Missile evolves at level 5 into Rapid Fire with blazing speed.'
             })
         );
 
-        this.addSectionHeader(container, 'BASE WEAPONS');
+        this.addSectionHeader(container, 'baseWeaponsHeader');
         this.getOrderedBaseWeapons().forEach((type) => {
             container.appendChild(this.createWeaponItem(type));
         });
@@ -292,10 +331,10 @@ export class GuideModal extends Modal {
         return item;
     }
 
-    addSectionHeader(container, text) {
+    addSectionHeader(container, translationKey) {
         const header = document.createElement('div');
         header.className = 'section-header';
-        header.textContent = text;
+        header.textContent = this.game?.t?.(translationKey, 'help') || translationKey;
         container.appendChild(header);
     }
 
@@ -322,10 +361,20 @@ export class GuideModal extends Modal {
     }
 
     getOrderedMergeWeapons() {
+        if (!this.game?.t) {
+            // Fallback to English
+            return [
+                { type: 'homing_laser', recipe: 'Laser lvl 3 + Homing Missiles lvl 3', description: 'Heat-seeking laser beams.' },
+                { type: 'shockburst', recipe: 'Lightning lvl 3 + Plasma lvl 3', description: 'Explosive energy bursts.' },
+                { type: 'gatling_gun', recipe: 'Rapid Fire lvl 5 + Spread Shot lvl 3', description: 'Multi-barrel rapid fire.' }
+            ];
+        }
+
+        const t = (key) => this.game.t(key, 'help');
         return [
-            { type: 'homing_laser', recipe: 'Laser lvl 3 + Homing Missiles lvl 3', description: 'Heat-seeking laser beams.' },
-            { type: 'shockburst', recipe: 'Lightning lvl 3 + Plasma lvl 3', description: 'Explosive energy bursts.' },
-            { type: 'gatling_gun', recipe: 'Rapid Fire lvl 5 + Spread Shot lvl 3', description: 'Multi-barrel rapid fire.' }
+            { type: 'homing_laser', recipe: t('homingLaserRecipe'), description: t('homingLaserDesc') },
+            { type: 'shockburst', recipe: t('shockburstRecipe'), description: t('shockburstDesc') },
+            { type: 'gatling_gun', recipe: t('gatlingGunRecipe'), description: t('gatlingGunDesc') }
         ];
     }
 
@@ -362,37 +411,23 @@ export class GuideModal extends Modal {
     }
 
     getPassiveStackInfo(passiveId, config = {}) {
+        if (!this.game?.t) return '';
+        const t = (key) => this.game.t(key, 'help');
+
         switch (passiveId) {
-            case 'health_boost':
-                return '+25 Max Health (infinite stacks)';
-            case 'speed_boost':
-                return '+10% Movement Speed (max 3 stacks)';
-            case 'magnet':
-                return 'Attract XP orbs (max 3 stacks)';
-            case 'armor':
-                return '15% damage reduction (infinite stacks, 90% cap)';
-            case 'critical':
-                return '15% crit chance, 2x damage (max 3 stacks)';
-            case 'dash_boost':
-                return '+50% dash distance (max 3 stacks)';
-            case 'turbo_flux_cycler':
-                return '+25% fire rate to all weapons';
-            case 'aegis_impact_core':
-                return '+50% weapon damage';
-            case 'splitstream_matrix':
-                return '+1 projectile to all weapons';
-            case 'macro_charge_amplifier':
-                return '+50% explosion radius';
-            case 'mod_bay_expander':
-                return 'Increase max weapon slots to 5';
-            case 'regeneration':
-                return 'Auto-heal over time';
-            default:
-                if (config.stackable) {
-                    const maxStacks = Number.isFinite(config.maxStacks) ? `max ${config.maxStacks} stacks` : 'stacks infinitely';
-                    return maxStacks;
-                }
-                return '';
+            case 'health_boost': return t('healthBoostStack');
+            case 'speed_boost': return t('speedBoostStack');
+            case 'magnet': return t('magnetStack');
+            case 'armor': return t('armorStack');
+            case 'critical': return t('criticalStack');
+            case 'dash_boost': return t('dashBoostStack');
+            case 'turbo_flux_cycler': return t('turboFluxStack');
+            case 'aegis_impact_core': return t('aegisCoreStack');
+            case 'splitstream_matrix': return t('splitstreamMatrixStack');
+            case 'macro_charge_amplifier': return t('macroChargeStack');
+            case 'mod_bay_expander': return t('modBayStack');
+            case 'regeneration': return t('regenerationStack');
+            default: return '';
         }
     }
 
