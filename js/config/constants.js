@@ -2,6 +2,16 @@
 // Extracted from vibe-survivor-game.js during Phase 3 refactoring
 
 /**
+ * Game version and metadata
+ */
+export const GAME_INFO = {
+    VERSION: '1.0.0',
+    MAJOR_VERSION: '1.0',
+    BUILD_DATE: '2025-11-16',
+    SCOREBOARD_SCHEMA_VERSION: 1
+};
+
+/**
  * Player configuration
  */
 export const PLAYER = {

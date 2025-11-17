@@ -14,6 +14,7 @@ export class StartScreenModal {
         this.aboutButton = null;
         this.restartButton = null;
         this.exitButton = null;
+        this.scoreboardButton = null;
 
         // Callbacks
         this.onStartCallback = null;
@@ -21,6 +22,7 @@ export class StartScreenModal {
         this.onAboutCallback = null;
         this.onRestartCallback = null;
         this.onExitCallback = null;
+        this.onScoreboardCallback = null;
 
         // Initialization flag
         this.initialized = false;
@@ -41,6 +43,7 @@ export class StartScreenModal {
         this.aboutButton = document.getElementById('about-btn');
         this.restartButton = document.getElementById('restart-survivor');
         this.exitButton = document.getElementById('exit-survivor');
+        this.scoreboardButton = document.getElementById('scoreboard-btn');
 
         // Set up button click handlers
         this.setupButtonHandlers();
@@ -82,6 +85,8 @@ export class StartScreenModal {
         if (guideBtn) guideBtn.textContent = t('guide') || 'GUIDE';
         if (this.optionsButton) this.optionsButton.textContent = t('options');
         if (this.aboutButton) this.aboutButton.textContent = t('about');
+        const scoreboardBtn = document.getElementById('scoreboard-btn');
+        if (scoreboardBtn) scoreboardBtn.textContent = t('scoreboardButton') || 'SCOREBOARD';
 
         const playAgainBtn = document.getElementById('restart-survivor');
         if (playAgainBtn) playAgainBtn.textContent = t('playAgain');
@@ -130,6 +135,16 @@ export class StartScreenModal {
             });
         }
 
+        if (this.scoreboardButton) {
+            this.scoreboardButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (this.onScoreboardCallback) {
+                    this.onScoreboardCallback();
+                }
+            });
+        }
+
         if (this.restartButton) {
             this.restartButton.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -164,6 +179,10 @@ export class StartScreenModal {
 
     onAbout(callback) {
         this.onAboutCallback = callback;
+    }
+
+    onScoreboard(callback) {
+        this.onScoreboardCallback = callback;
     }
 
     onRestart(callback) {

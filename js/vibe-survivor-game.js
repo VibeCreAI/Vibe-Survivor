@@ -4,13 +4,14 @@
 import { Vector2 } from './utils/vector2.js';
 import { clamp, lerp, distance, distanceSquared, randomRange, randomInt, degToRad, radToDeg } from './utils/math.js';
 import { PerformanceMonitor } from './utils/performance.js';
+import { scoreboardStorage } from './utils/scoreboard-storage.js';
 
 // Import configuration
 import {
     PLAYER, ENEMIES, WEAPONS, WEAPON_UPGRADES, PASSIVES, XP_SYSTEM,
     SPAWN_CONFIG, PICKUP_SPAWNS, DIFFICULTY_SCALING, GAME_TIMING,
     SCREEN_EFFECTS, PARTICLES, COLLISION, ENEMY_BEHAVIORS, MOBILE_CONFIG,
-    PERFORMANCE, COLORS, BOSS_VARIANTS
+    PERFORMANCE, COLORS, BOSS_VARIANTS, GAME_INFO
 } from './config/constants.js';
 import { ASSET_PATHS, SPRITE_CONFIGS, LOADING_PHASES, preloadAssets, getWeaponIconPath, getPassiveIconPath } from './config/assets.js';
 
@@ -70,6 +71,8 @@ import { HelpMenu } from './systems/ui/modals/help-menu.js';
 import { StartScreenModal } from './systems/ui/modals/start-screen-modal.js';
 import { AboutModal } from './systems/ui/modals/about-modal.js';
 import { ChestModal } from './systems/ui/modals/chest-modal.js';
+import { ScoreboardModal } from './systems/ui/modals/scoreboard-modal.js';
+import { ScoreDetailModal } from './systems/ui/modals/score-detail-modal.js';
 
 // Import Phase 11 systems - Engine & Audio
 import { AudioManager } from './systems/audio/audio-manager.js';
@@ -147,7 +150,9 @@ class VibeSurvivor {
             helpMenu: new HelpMenu(),
             startScreenModal: new StartScreenModal(),
             aboutModal: new AboutModal(),
-            chest: new ChestModal()
+            chest: new ChestModal(),
+            scoreboard: new ScoreboardModal(),
+            scoreDetail: new ScoreDetailModal()
         };
         this._guideModalInitialized = false;
 
@@ -716,6 +721,14 @@ class VibeSurvivor {
                 this.showAboutMenu();
             });
 
+            this.modals.startScreenModal.onScoreboard(() => {
+                if (!this.gameFullyInitialized) {
+                    console.warn('Please wait for loading to complete.');
+                    return;
+                }
+                this.showScoreboardModal();
+            });
+
             this.modals.startScreenModal.onRestart(() => {
                 // Guard: Check if game is ready
                 if (!this.gameFullyInitialized) {
@@ -735,6 +748,33 @@ class VibeSurvivor {
             this.modals.startScreenModal.setTranslationFunction(this.t.bind(this));
 
             this._startScreenModalInitialized = true;
+        }
+
+        if (!this._scoreboardModalInitialized) {
+            this.modals.scoreboard.init();
+            this.modals.scoreboard.setTranslationFunction(this.t.bind(this));
+            this.modals.scoreboard.onScoreSelected((scoreId) => this.showScoreDetailModal(scoreId));
+            this.modals.scoreboard.onClose(() => {
+                if (!this.gameRunning) {
+                    this.showStartScreen();
+                }
+            });
+            this._scoreboardModalInitialized = true;
+        }
+
+        if (!this._scoreDetailModalInitialized) {
+            this.modals.scoreDetail.init();
+            this.modals.scoreDetail.setTranslationFunction(this.t.bind(this));
+            this.modals.scoreDetail.setHelpers({
+                getWeaponName: this.getWeaponName.bind(this)
+            });
+            this.modals.scoreDetail.onBack(() => this.showScoreboardModal());
+            this.modals.scoreDetail.onDelete((scoreId) => {
+                scoreboardStorage.deleteScore(scoreId);
+                this.modals.scoreDetail.hide();
+                this.showScoreboardModal();
+            });
+            this._scoreDetailModalInitialized = true;
         }
 
         // Wire up GUIDE button on start screen
@@ -900,6 +940,7 @@ class VibeSurvivor {
                                 <div class="start-actions">
                                     <button id="start-survivor" class="survivor-btn primary">START</button>
                                     <button id="start-btn-guide" class="survivor-btn">GUIDE</button>
+                                    <button id="scoreboard-btn" class="survivor-btn">SCOREBOARD</button>
                                     <button id="options-btn" class="survivor-btn">OPTIONS</button>
                                     <button id="about-btn" class="survivor-btn">ABOUT</button>
                                 </div>
@@ -1250,6 +1291,67 @@ class VibeSurvivor {
                             </div>
                         </div>
                     </div>
+
+                        <!-- Scoreboard Modal -->
+                        <div id="scoreboard-modal" class="scoreboard-modal" style="display: none;">
+                            <div class="scoreboard-content">
+                                <div class="scoreboard-header">
+                                    <div class="scoreboard-title">SCOREBOARD</div>
+                                    <div class="scoreboard-filter">
+                                        <label for="scoreboard-version-filter">Version</label>
+                                        <select id="scoreboard-version-filter">
+                                            <option value="all">All Versions</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="scoreboard-list-container" tabindex="0" style="overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y;">
+                                    <div id="scoreboard-list" class="scoreboard-list"></div>
+                                    <div class="scoreboard-empty-state" style="display: none;">No scores yet. Play a run to add your first record!</div>
+                                </div>
+                                <div class="scoreboard-actions">
+                                    <button id="scoreboard-clear-btn" class="survivor-btn small destructive">CLEAR ALL</button>
+                                    <button id="scoreboard-close-btn" class="survivor-btn small">CLOSE</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Score Detail Modal -->
+                        <div id="score-detail-modal" class="score-detail-modal" style="display: none;">
+                            <div class="score-detail-content">
+                                <div class="score-detail-header">
+                                    <div class="score-detail-title">RUN DETAILS</div>
+                                    <div class="score-detail-meta">
+                                        <span class="score-detail-version">v1.0.0</span>
+                                        <span class="score-detail-date">--</span>
+                                    </div>
+                                </div>
+                                <div class="score-detail-summary">
+                                    <div class="summary-chip score-detail-level"></div>
+                                    <div class="summary-chip score-detail-time"></div>
+                                    <div class="summary-chip score-detail-enemies"></div>
+                                    <div class="summary-chip score-detail-bosses"></div>
+                                    <div class="summary-chip score-detail-chests"></div>
+                                </div>
+                                <div class="score-detail-scroll" tabindex="0" style="overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y;">
+                                    <div class="score-detail-section">
+                                        <h3 data-heading="weapons">Weapons</h3>
+                                        <div class="score-detail-weapons"></div>
+                                    </div>
+                                    <div class="score-detail-section">
+                                        <h3 data-heading="passives">Passives</h3>
+                                        <div class="score-detail-passives"></div>
+                                    </div>
+                                    <div class="score-detail-section">
+                                        <h3 data-heading="player">Player Stats</h3>
+                                        <div class="score-detail-player"></div>
+                                    </div>
+                                </div>
+                                <div class="score-detail-actions">
+                                    <button id="score-detail-back-btn" class="survivor-btn">BACK TO LIST</button>
+                                    <button id="score-detail-delete-btn" class="survivor-btn destructive">DELETE RECORD</button>
+                                </div>
+                            </div>
+                        </div>
 
                     <!-- Toast Notification Container (at modal level) -->
                     <div id="toast-container" class="toast-container"></div>
@@ -4426,6 +4528,48 @@ class VibeSurvivor {
         console.log('[Guide] modal classes:', guideModal.element.className);
     }
 
+    showScoreboardModal() {
+        if (!this.modals.scoreboard) return;
+
+        if (this.modals.scoreDetail?.isVisible && this.modals.scoreDetail.isVisible()) {
+            this.modals.scoreDetail.hide();
+        }
+
+        if (!this._scoreboardModalInitialized) {
+            this.modals.scoreboard.init();
+            this._scoreboardModalInitialized = true;
+        }
+
+        this.modals.scoreboard.setTranslationFunction(this.t.bind(this));
+        this.modals.scoreboard.populateVersions();
+        this.modals.scoreboard.renderScores();
+        this.modals.scoreboard.show();
+    }
+
+    showScoreDetailModal(scoreId) {
+        if (!this.modals.scoreDetail) return;
+        const score = scoreboardStorage.getScoreById(scoreId);
+        if (!score) {
+            console.warn('Score not found for detail view:', scoreId);
+            return;
+        }
+
+        if (this.modals.scoreboard?.isVisible && this.modals.scoreboard.isVisible()) {
+            this.modals.scoreboard.hide();
+        }
+
+        if (!this._scoreDetailModalInitialized) {
+            this.modals.scoreDetail.init();
+            this._scoreDetailModalInitialized = true;
+        }
+
+        this.modals.scoreDetail.setTranslationFunction(this.t.bind(this));
+        this.modals.scoreDetail.setHelpers({
+            getWeaponName: this.getWeaponName.bind(this)
+        });
+        this.modals.scoreDetail.showScore(score);
+    }
+
     showStartScreen() {
         // Remove game-active class to show start screen over landing page
         const modal = document.getElementById('vibe-survivor-modal');
@@ -4471,11 +4615,12 @@ class VibeSurvivor {
                 setTimeout(() => {
                     const startBtn = document.getElementById('start-survivor');
                     const guideBtn = document.getElementById('start-btn-guide');
+                    const scoreboardBtn = document.getElementById('scoreboard-btn');
                     const optionsBtn = document.getElementById('options-btn');
                     const aboutBtn = document.getElementById('about-btn');
                     const restartBtn = document.getElementById('restart-survivor');
                     const exitBtn = document.getElementById('exit-survivor');
-                    const startButtons = [startBtn, guideBtn, optionsBtn, aboutBtn, restartBtn, exitBtn].filter(btn => btn);
+                    const startButtons = [startBtn, guideBtn, scoreboardBtn, optionsBtn, aboutBtn, restartBtn, exitBtn].filter(btn => btn);
 
                     if (startButtons.length > 0) {
                         this.initializeMenuNavigation('start', startButtons);
@@ -5987,8 +6132,10 @@ class VibeSurvivor {
             const isLevelUpContent = target.closest('.levelup-scroll');
             const isVictoryContent = target.closest('.victory-scroll-content');
             const isGameOverContent = target.closest('.game-over-scroll-content');
+            const isScoreboardList = target.closest('.scoreboard-list-container');
+            const isScoreDetail = target.closest('.score-detail-scroll');
 
-            if (!isGameControl && !isHelpContent && !isLevelUpContent && !isVictoryContent && !isGameOverContent) {
+            if (!isGameControl && !isHelpContent && !isLevelUpContent && !isVictoryContent && !isGameOverContent && !isScoreboardList && !isScoreDetail) {
                 e.preventDefault();
                 e.stopPropagation();
             }
@@ -6009,8 +6156,10 @@ class VibeSurvivor {
             const isOptionsContent = target.closest('.options-content');
             const isVictoryContent = target.closest('.victory-scroll-content');
             const isGameOverContent = target.closest('.game-over-scroll-content');
+            const isScoreboardList = target.closest('.scoreboard-list-container');
+            const isScoreDetail = target.closest('.score-detail-scroll');
 
-            if (!isHelpContent && !isLevelUpContent && !isPauseContent && !isAboutContent && !isOptionsContent && !isVictoryContent && !isGameOverContent) {
+            if (!isHelpContent && !isLevelUpContent && !isPauseContent && !isAboutContent && !isOptionsContent && !isVictoryContent && !isGameOverContent && !isScoreboardList && !isScoreDetail) {
                 e.preventDefault();
                 e.stopPropagation();
             }
@@ -11807,6 +11956,63 @@ class VibeSurvivor {
         `;
     }
 
+    /**
+     * Collect all game stats for scoreboard storage
+     * Returns a normalized object used by both game over display and scoreboard saving
+     */
+    collectGameStats() {
+        // Calculate time
+        const minutes = Math.floor(this.gameTime / 60);
+        const seconds = Math.floor(this.gameTime % 60);
+        const timeText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+        // Collect weapon data with damage stats
+        const weapons = this.weapons.map(weapon => {
+            const damageStats = this.getWeaponDamageStats(weapon.type);
+            return {
+                type: weapon.type,
+                level: weapon.level,
+                damage: weapon.damage,
+                isMergeWeapon: weapon.isMergeWeapon || false,
+                totalDamage: Math.round(damageStats.total),
+                bossDamage: Math.round(damageStats.bosses),
+                enemyDamage: Math.round(damageStats.enemies)
+            };
+        });
+
+        // Collect passives data with stack counts
+        const passives = {};
+        Object.keys(this.player.passives).forEach(key => {
+            const value = this.player.passives[key];
+            if (value) {
+                passives[key] = {
+                    active: true,
+                    stacks: typeof value === 'number' ? value : 1
+                };
+            }
+        });
+
+        // Collect player stats
+        const playerStats = {
+            health: this.player.health,
+            maxHealth: this.player.maxHealth,
+            speed: this.player.speed,
+            chestsCollected: this.player.chestsCollected || 0
+        };
+
+        return {
+            level: this.player.level,
+            time: this.gameTime,
+            timeText: timeText,
+            enemiesKilled: Math.max(1, Math.floor(this.gameTime * 1.8)),
+            bossesKilled: this.bossesKilled,
+            chestsCollected: this.player.chestsCollected || 0,
+            weapons: weapons,
+            passives: passives,
+            playerStats: playerStats
+        };
+    }
+
     showGameOverModal() {
         // Phase 12c integration - Use GameOverModal class (Option B: Proper Encapsulation)
 
@@ -11830,6 +12036,20 @@ class VibeSurvivor {
             passivesHTML: passivesHTML,
             playerStatsHTML: playerStatsHTML
         });
+
+        // Save score to local storage for scoreboard
+        try {
+            const scoreData = this.collectGameStats();
+            scoreboardStorage.saveScore(scoreData);
+            console.log('Game score saved to scoreboard');
+
+            if (this.modals.scoreboard?.isVisible && this.modals.scoreboard.isVisible()) {
+                this.modals.scoreboard.populateVersions();
+                this.modals.scoreboard.renderScores();
+            }
+        } catch (error) {
+            console.error('Failed to save score to scoreboard:', error);
+        }
 
         // Set up event handlers (if not already set)
         if (!this._gameOverHandlersSet) {
@@ -12176,11 +12396,12 @@ class VibeSurvivor {
             setTimeout(() => {
                 const startBtn = document.getElementById('start-survivor');
                 const guideBtn = document.getElementById('start-btn-guide');
+                const scoreboardBtn = document.getElementById('scoreboard-btn');
                 const optionsBtn = document.getElementById('options-btn');
                 const aboutBtn = document.getElementById('about-btn');
                 const restartBtn = document.getElementById('restart-survivor');
                 const exitBtn = document.getElementById('exit-survivor');
-                const startButtons = [startBtn, guideBtn, optionsBtn, aboutBtn, restartBtn, exitBtn].filter(btn => btn);
+                const startButtons = [startBtn, guideBtn, scoreboardBtn, optionsBtn, aboutBtn, restartBtn, exitBtn].filter(btn => btn);
 
                 if (startButtons.length > 0) {
                     this.initializeMenuNavigation('start', startButtons);
@@ -12310,6 +12531,26 @@ class VibeSurvivor {
                     connectWithUs: "Connect With Us",
                     aboutHint: "Press ESC to close",
 
+                    // Scoreboard
+                    scoreboardButton: "SCOREBOARD",
+                    scoreboardTitle: "SCOREBOARD",
+                    scoreboardDetailTitle: "RUN DETAILS",
+                    scoreboardVersionLabel: "Version",
+                    scoreboardAllVersions: "All Versions",
+                    scoreboardClear: "CLEAR ALL",
+                    scoreboardClearConfirm: "Clear all saved scores?",
+                    scoreboardEmpty: "No scores yet. Play a run to add your first record!",
+                    scoreboardNoWeapons: "No weapons recorded",
+                    scoreboardNoPassives: "No passives recorded",
+                    scoreboardBackToList: "BACK TO LIST",
+                    scoreboardDelete: "DELETE RECORD",
+                    scoreboardDeleteConfirm: "Delete this record?",
+                    scoreboardWeaponsHeading: "Weapons",
+                    scoreboardPassivesHeading: "Passives",
+                    scoreboardPlayerHeading: "Player Stats",
+                    scoreboardStatsHeading: "Damage",
+                    scoreDetailTitle: "RUN DETAILS",
+
                     // Options menu
                     optionsTitle: "OPTIONS",
                     language: "Language",
@@ -12377,6 +12618,7 @@ class VibeSurvivor {
                     level: "Level:",
                     time: "Time:",
                     enemies: "Enemies:",
+                    bosses: "Bosses",
                     bossesDefeated: "Bosses Defeated:",
                     retry: "RETRY",
                     weaponsResult: "Weapons Result",
@@ -12536,6 +12778,26 @@ class VibeSurvivor {
                     connectWithUs: "소셜 미디어",
                     aboutHint: "ESC 키로 닫기",
 
+                    // Scoreboard
+                    scoreboardButton: "기록판",
+                    scoreboardTitle: "기록판",
+                    scoreboardDetailTitle: "기록 상세",
+                    scoreboardVersionLabel: "버전",
+                    scoreboardAllVersions: "모든 버전",
+                    scoreboardClear: "전체 삭제",
+                    scoreboardClearConfirm: "저장된 모든 기록을 삭제할까요?",
+                    scoreboardEmpty: "아직 저장된 점수가 없습니다. 게임을 플레이해 기록을 추가하세요!",
+                    scoreboardNoWeapons: "기록된 무기가 없습니다",
+                    scoreboardNoPassives: "기록된 패시브가 없습니다",
+                    scoreboardBackToList: "목록으로",
+                    scoreboardDelete: "기록 삭제",
+                    scoreboardDeleteConfirm: "이 기록을 삭제할까요?",
+                    scoreboardWeaponsHeading: "무기",
+                    scoreboardPassivesHeading: "패시브",
+                    scoreboardPlayerHeading: "플레이어 스탯",
+                    scoreboardStatsHeading: "피해",
+                    scoreDetailTitle: "기록 상세",
+
                     // Options menu
                     optionsTitle: "설정",
                     language: "언어",
@@ -12603,6 +12865,7 @@ class VibeSurvivor {
                     level: "레벨:",
                     time: "시간:",
                     enemies: "처치한 적:",
+                    bosses: "보스",
                     bossesDefeated: "처치한 보스:",
                     retry: "다시하기",
                     weaponsResult: "무기 결과",
@@ -12822,6 +13085,15 @@ class VibeSurvivor {
         if (this.modals.aboutModal) {
             this.modals.aboutModal.setTranslationFunction(t);
             this.modals.aboutModal.updateLocalization();
+        }
+
+        if (this.modals.scoreboard) {
+            this.modals.scoreboard.setTranslationFunction(t);
+            this.modals.scoreboard.updateLocalization();
+        }
+
+        if (this.modals.scoreDetail) {
+            this.modals.scoreDetail.setTranslationFunction(t);
         }
 
         if (this.modals.gameOver) {

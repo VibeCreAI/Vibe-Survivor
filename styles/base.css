@@ -613,3 +613,378 @@ body::after {
         width: 100%;
     }
 }
+
+/* Scoreboard */
+.scoreboard-modal,
+.score-detail-modal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(3, 5, 20, 0.9);
+    z-index: 12000;
+}
+
+.scoreboard-content,
+.score-detail-content {
+    width: 92%;
+    max-width: 640px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(135deg, #0a0a1a, #1a0a2a);
+    border: 2px solid #00ffff;
+    border-radius: 15px;
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.35);
+    padding: 28px 24px;
+    color: #eef7ff;
+    overflow: hidden;
+}
+
+.scoreboard-header {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 12px;
+    flex-shrink: 0;
+}
+
+.scoreboard-title,
+.score-detail-title {
+    font-size: 22px;
+    letter-spacing: 0.12em;
+    color: #00ffff;
+    text-shadow: 0 0 16px rgba(0, 255, 255, 0.5);
+}
+
+.scoreboard-filter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.scoreboard-filter label {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.scoreboard-filter select {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(0, 255, 255, 0.35);
+    color: #fff;
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-family: 'NeoDunggeunmoPro', sans-serif;
+    letter-spacing: 0.05em;
+}
+
+.scoreboard-filter select:focus,
+.scoreboard-filter select:focus-visible {
+    outline: none;
+    border-color: #00ffff;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
+}
+
+.scoreboard-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(0, 255, 255, 0.2);
+    flex-shrink: 0;
+}
+
+.scoreboard-list-container,
+.score-detail-scroll {
+    margin-top: 12px;
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+    padding: 12px;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+}
+
+.scoreboard-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.scoreboard-empty-state,
+.scoreboard-empty-line {
+    padding: 18px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.score-card {
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 255, 255, 0.35);
+    background: radial-gradient(circle at 20% 20%, rgba(0, 255, 255, 0.08), transparent 32%), rgba(10, 14, 36, 0.8);
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+    outline: none;
+}
+
+.score-card:hover,
+.score-card:focus-visible,
+.score-card.menu-selected {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 22px rgba(2, 8, 24, 0.65), 0 0 16px rgba(0, 255, 255, 0.5);
+    border-color: rgba(0, 255, 255, 0.8);
+}
+
+.score-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 6px;
+}
+
+.score-rank {
+    font-size: 16px;
+    color: #ffdd66;
+    letter-spacing: 0.1em;
+}
+
+.score-meta {
+    display: flex;
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 12px;
+}
+
+.score-version {
+    color: #00ffff;
+    font-weight: bold;
+}
+
+.score-card__body {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    font-size: 14px;
+}
+
+.score-stat span {
+    color: #fff;
+    font-weight: bold;
+    margin-left: 4px;
+}
+
+.score-detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(0, 255, 255, 0.25);
+    flex-shrink: 0;
+}
+
+.score-detail-meta {
+    display: flex;
+    gap: 10px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 13px;
+    align-items: baseline;
+}
+
+.score-detail-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin: 12px 0;
+    flex-shrink: 0;
+}
+
+.summary-chip {
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(0, 255, 255, 0.25);
+    display: flex;
+    justify-content: space-between;
+    color: #dff6ff;
+}
+
+.summary-chip .label {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.summary-chip .value {
+    color: #fff;
+    font-weight: bold;
+}
+
+.score-detail-section h3 {
+    margin: 10px 0 8px;
+    font-size: 15px;
+    letter-spacing: 0.08em;
+    color: #00ffff;
+}
+
+.score-detail-weapon,
+.score-detail-passive,
+.player-stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 10px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.score-detail-weapon.weapon-merge {
+    border-color: rgba(255, 215, 0, 0.45);
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.2);
+}
+
+.weapon-left,
+.passive-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.weapon-info,
+.passive-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.weapon-name {
+    font-weight: bold;
+}
+
+.weapon-meta {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.weapon-damage {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    text-align: right;
+}
+
+.weapon-damage-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.weapon-damage-item:nth-child(1) .weapon-damage-value { color: #ffde59; }
+.weapon-damage-item:nth-child(2) .weapon-damage-value { color: #ff8bff; }
+.weapon-damage-item:nth-child(3) .weapon-damage-value { color: #71ff9f; }
+
+.weapon-damage-label {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 12px;
+    text-align: left;
+}
+
+.weapon-damage-value {
+    font-weight: bold;
+}
+
+.passive-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(255, 215, 0, 0.15);
+    border: 1px solid rgba(255, 215, 0, 0.35);
+    color: #ffd700;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    width: fit-content;
+}
+
+.passive-unique {
+    border-color: rgba(255, 215, 0, 0.5);
+}
+
+.passive-stack {
+    font-weight: bold;
+    color: #ff8bff;
+}
+
+.player-stat-row .stat-value {
+    color: #00ffff;
+    font-weight: bold;
+}
+
+.score-detail-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(0, 255, 255, 0.2);
+    flex-shrink: 0;
+}
+
+.score-detail-actions .survivor-btn {
+    width: 100%;
+    max-width: 280px;
+}
+
+.survivor-btn.destructive {
+    background: linear-gradient(135deg, #a42828, #811919);
+    border-color: #ff7b7b;
+    color: #fff;
+}
+
+.scoreboard-content .survivor-btn:focus-visible,
+.scoreboard-content .survivor-btn:focus,
+.score-detail-content .survivor-btn:focus-visible,
+.score-detail-content .survivor-btn:focus {
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
+    border-color: #00ffff;
+    outline: none;
+}
+
+/* Force all images in scoreboard modals to be 48x48px */
+.scoreboard-modal img,
+.score-detail-modal img {
+    width: 48px !important;
+    height: 48px !important;
+    max-width: 48px !important;
+    max-height: 48px !important;
+    min-width: 48px !important;
+    min-height: 48px !important;
+    image-rendering: pixelated;
+    object-fit: contain;
+}
+
+@media (max-width: 768px) {
+    .scoreboard-content,
+    .score-detail-content {
+        padding: 20px 16px;
+        max-height: 95vh;
+    }
+
+    .scoreboard-list {
+        grid-template-columns: 1fr;
+    }
+
+    .score-detail-meta {
+        flex-wrap: wrap;
+    }
+}
