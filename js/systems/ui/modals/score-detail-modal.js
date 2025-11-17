@@ -210,15 +210,15 @@ export class ScoreDetailModal extends Modal {
                         <div class="weapon-damage">
                             <div class="weapon-damage-item" title="${totalLabel}">
                                 <span class="weapon-damage-label">${totalLabel}</span>
-                                <span class="weapon-damage-value">${Math.round(weapon.totalDamage ?? 0)}</span>
+                                <span class="weapon-damage-value">${this.formatDamageValue(weapon.totalDamage)}</span>
                             </div>
                             <div class="weapon-damage-item" title="${bossLabel}">
                                 <span class="weapon-damage-label">${bossLabel}</span>
-                                <span class="weapon-damage-value">${Math.round(weapon.bossDamage ?? 0)}</span>
+                                <span class="weapon-damage-value">${this.formatDamageValue(weapon.bossDamage)}</span>
                             </div>
                             <div class="weapon-damage-item" title="${enemyLabel}">
                                 <span class="weapon-damage-label">${enemyLabel}</span>
-                                <span class="weapon-damage-value">${Math.round(weapon.enemyDamage ?? 0)}</span>
+                                <span class="weapon-damage-value">${this.formatDamageValue(weapon.enemyDamage)}</span>
                             </div>
                         </div>
                     </div>
@@ -345,6 +345,17 @@ export class ScoreDetailModal extends Modal {
         const minutes = Math.floor(totalSeconds / 60);
         const seconds = Math.floor(totalSeconds % 60);
         return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    formatDamageValue(value = 0) {
+        const amount = Math.max(0, Math.round(value ?? 0));
+        if (amount >= 1_000_000) {
+            return `${(amount / 1_000_000).toFixed(1)}m`;
+        }
+        if (amount >= 100_000) {
+            return `${Math.floor(amount / 1000)}k`;
+        }
+        return `${amount}`;
     }
 
     getLabel(key, fallback) {
