@@ -718,7 +718,7 @@ body::after {
 }
 
 .scoreboard-filter select {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(16, 12, 40, 0.96);
     border: 1px solid rgba(0, 255, 255, 0.35);
     color: #fff;
     padding: 8px 10px;
@@ -1001,6 +1001,38 @@ body::after {
     border-color: #7cfeff;
 }
 
+.scoreboard-confirm-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+}
+
+.scoreboard-confirm {
+    background: rgba(12, 18, 45, 0.98);
+    border: 1px solid rgba(0, 255, 255, 0.35);
+    border-radius: 10px;
+    padding: 16px;
+    max-width: 360px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+}
+
+.scoreboard-confirm p {
+    margin: 0 0 12px;
+    color: #eef7ff;
+}
+
+.scoreboard-confirm-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
 .scoreboard-actions .survivor-btn.menu-selected {
     box-shadow: 0 0 15px rgba(124, 254, 255, 0.8);
     border-color: #7cfeff;
@@ -1032,7 +1064,7 @@ body::after {
     .scoreboard-content,
     .score-detail-content {
         padding: 20px 16px;
-        max-height: 95vh;
+        max-height: 90vh;
     }
 
     .scoreboard-list {

@@ -6146,8 +6146,9 @@ class VibeSurvivor {
             const isGameOverContent = target.closest('.game-over-scroll-content');
             const isScoreboardList = target.closest('.scoreboard-list-container');
             const isScoreDetail = target.closest('.score-detail-scroll');
+            const isScoreboardFilter = target.closest('.scoreboard-filter');
 
-            if (!isGameControl && !isHelpContent && !isLevelUpContent && !isVictoryContent && !isGameOverContent && !isScoreboardList && !isScoreDetail) {
+            if (!isGameControl && !isHelpContent && !isLevelUpContent && !isVictoryContent && !isGameOverContent && !isScoreboardList && !isScoreDetail && !isScoreboardFilter) {
                 e.preventDefault();
                 e.stopPropagation();
             }
@@ -6170,8 +6171,9 @@ class VibeSurvivor {
             const isGameOverContent = target.closest('.game-over-scroll-content');
             const isScoreboardList = target.closest('.scoreboard-list-container');
             const isScoreDetail = target.closest('.score-detail-scroll');
+            const isScoreboardFilter = target.closest('.scoreboard-filter');
 
-            if (!isHelpContent && !isLevelUpContent && !isPauseContent && !isAboutContent && !isOptionsContent && !isVictoryContent && !isGameOverContent && !isScoreboardList && !isScoreDetail) {
+            if (!isHelpContent && !isLevelUpContent && !isPauseContent && !isAboutContent && !isOptionsContent && !isVictoryContent && !isGameOverContent && !isScoreboardList && !isScoreDetail && !isScoreboardFilter) {
                 e.preventDefault();
                 e.stopPropagation();
             }

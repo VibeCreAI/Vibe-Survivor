@@ -24,6 +24,8 @@ export class ScoreDetailModal extends Modal {
         this.actionButtons = [];
         this.buttonNavigationMode = false;
         this.buttonIndex = 0;
+        this.confirmOverlay = null;
+        this.confirmKeyHandler = null;
     }
 
     init() {
@@ -331,13 +333,12 @@ export class ScoreDetailModal extends Modal {
         if (!this.currentScore) return;
         const t = this.getTranslation;
         const confirmText = t ? t('scoreboardDeleteConfirm') : 'Delete this record?';
-        if (!confirm(confirmText)) {
-            return;
-        }
 
-        if (this.onDeleteCallback) {
-            this.onDeleteCallback(this.currentScore.id);
-        }
+        this.showConfirm(confirmText, () => {
+            if (this.onDeleteCallback) {
+                this.onDeleteCallback(this.currentScore.id);
+            }
+        });
     }
 
     formatTime(totalSeconds = 0) {
@@ -356,6 +357,7 @@ export class ScoreDetailModal extends Modal {
         this.cleanupKeyboardHandlers();
         this.keyboardHandler = (e) => {
             if (!this.visible) return;
+            if (this.confirmOverlay) return;
 
             const key = e.key.toLowerCase();
 
@@ -449,6 +451,10 @@ export class ScoreDetailModal extends Modal {
         this.buttonNavigationMode = false;
         this.buttonIndex = 0;
         this.actionButtons.forEach(btn => btn?.classList.remove('menu-selected'));
+        if (this.confirmKeyHandler) {
+            document.removeEventListener('keydown', this.confirmKeyHandler, { capture: true });
+            this.confirmKeyHandler = null;
+        }
     }
 
     enterButtonNavigation() {
@@ -477,5 +483,94 @@ export class ScoreDetailModal extends Modal {
                 btn.classList.remove('menu-selected');
             }
         });
+    }
+
+    showConfirm(message, onConfirm) {
+        if (!this.element) return;
+        if (this.confirmOverlay) {
+            this.confirmOverlay.remove();
+        }
+
+        const overlay = document.createElement('div');
+        overlay.className = 'scoreboard-confirm-overlay';
+        overlay.innerHTML = `
+            <div class="scoreboard-confirm">
+                <p>${message}</p>
+                <div class="scoreboard-confirm-actions">
+                    <button class="survivor-btn destructive confirm-yes">YES</button>
+                    <button class="survivor-btn confirm-no">NO</button>
+                </div>
+            </div>
+        `;
+
+        const yesBtn = overlay.querySelector('.confirm-yes');
+        const noBtn = overlay.querySelector('.confirm-no');
+        const cleanup = () => {
+            overlay.remove();
+            this.confirmOverlay = null;
+            if (this.confirmKeyHandler) {
+                document.removeEventListener('keydown', this.confirmKeyHandler, { capture: true });
+                this.confirmKeyHandler = null;
+            }
+        };
+
+        yesBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            cleanup();
+            if (onConfirm) onConfirm();
+        });
+
+        noBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            cleanup();
+        });
+
+        this.element.appendChild(overlay);
+        this.confirmOverlay = overlay;
+
+        const buttons = [yesBtn, noBtn];
+        let idx = 0;
+        const setSelection = (i) => {
+            idx = Math.max(0, Math.min(i, buttons.length - 1));
+            buttons.forEach((btn, bi) => {
+                if (bi === idx) {
+                    btn.classList.add('menu-selected');
+                    btn.focus({ preventScroll: true });
+                } else {
+                    btn.classList.remove('menu-selected');
+                }
+            });
+        };
+        setSelection(0);
+
+        this.confirmKeyHandler = (e) => {
+            if (!this.confirmOverlay) return;
+            const key = e.key.toLowerCase();
+            const nav = ['arrowup', 'arrowdown', 'w', 's', 'enter', ' ', 'escape'];
+            if (nav.includes(key)) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            if (key === 'escape') {
+                cleanup();
+                return;
+            }
+            if (key === 'arrowdown' || key === 's') {
+                setSelection(idx + 1);
+                return;
+            }
+            if (key === 'arrowup' || key === 'w') {
+                setSelection(idx - 1);
+                return;
+            }
+            if (key === 'enter' || key === ' ') {
+                buttons[idx]?.click();
+            }
+        };
+
+        document.addEventListener('keydown', this.confirmKeyHandler, { capture: true });
     }
 }
