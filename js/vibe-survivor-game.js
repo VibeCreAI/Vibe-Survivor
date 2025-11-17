@@ -923,11 +923,9 @@ class VibeSurvivor {
                                 
                                 <div class="header-loadouts">
                                     <div class="header-loadout">
-                                        <span class="header-loadout-label">Weapons</span>
                                         <div class="header-loadout-row header-weapons" id="header-weapon-display"></div>
                                     </div>
                                     <div class="header-loadout">
-                                        <span class="header-loadout-label header-passive-label">Passives</span>
                                         <div class="header-loadout-row header-passives" id="header-passive-display"></div>
                                     </div>
                                 </div>
@@ -1653,7 +1651,7 @@ class VibeSurvivor {
                 visibility: hidden !important;
                 opacity: 0 !important;
                 background: rgba(0, 20, 40, 0.8);
-                height: 100px;
+                height: 120px;
                 flex-wrap: nowrap;
             }
 
@@ -1746,9 +1744,9 @@ class VibeSurvivor {
             
             .header-loadouts {
                 display: flex;
-                gap: 10px;
-                align-items: flex-start;
-                flex-wrap: wrap;
+                flex-direction: column;
+                gap: 8px;
+                align-items: center;
                 justify-content: center;
             }
 
@@ -1757,18 +1755,7 @@ class VibeSurvivor {
                 align-items: center;
                 gap: 6px;
                 flex-wrap: wrap;
-            }
-
-            .header-loadout-label {
-                color: #a0f6ff;
-                font-size: 10px;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-                white-space: nowrap;
-            }
-
-            .header-passive-label {
-                color: #ffb3ff;
+                justify-content: center;
             }
 
             .header-loadout-row,
@@ -1929,10 +1916,6 @@ class VibeSurvivor {
                     gap: 6px;
                 }
 
-                .header-loadout-label {
-                    font-size: 8px;
-                }
-
                 .header-loadout-row,
                 .header-weapons,
                 .header-passives {
@@ -2000,10 +1983,6 @@ class VibeSurvivor {
                     width: 100%;
                     justify-content: center;
                     gap: 7px;
-                }
-
-                .header-loadout-label {
-                    font-size: 9px;
                 }
 
                 .header-loadout-row,
@@ -2154,7 +2133,7 @@ class VibeSurvivor {
                 font-weight: bold;
                 transition: all 0.3s ease;
                 position: absolute !important;
-                top: 28px !important;
+                top: 38px !important;
                 right: 12px !important;
                 z-index: 999999 !important;
                 pointer-events: auto !important;
@@ -2199,7 +2178,7 @@ class VibeSurvivor {
             /* Position pause button on left */
             #pause-btn {
                 position: absolute !important;
-                top: 28px !important;
+                top: 38px !important;
                 left: 12px !important;
                 z-index: 999999 !important;
                 pointer-events: auto !important;
@@ -4004,7 +3983,7 @@ class VibeSurvivor {
                 
                 .header-help-btn {
                     position: absolute !important;
-                    top: 28px !important;
+                    top: 38px !important;
                     right: 12px !important;
                     width: 32px;
                     height: 32px;
