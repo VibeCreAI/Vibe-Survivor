@@ -1653,7 +1653,7 @@ class VibeSurvivor {
                 visibility: hidden !important;
                 opacity: 0 !important;
                 background: rgba(0, 20, 40, 0.8);
-                height: 90px;
+                height: 100px;
                 flex-wrap: nowrap;
             }
 
@@ -2154,8 +2154,8 @@ class VibeSurvivor {
                 font-weight: bold;
                 transition: all 0.3s ease;
                 position: absolute !important;
-                top: 23px !important;
-                right: 15px !important;
+                top: 28px !important;
+                right: 12px !important;
                 z-index: 999999 !important;
                 pointer-events: auto !important;
                 display: flex;
@@ -2199,8 +2199,8 @@ class VibeSurvivor {
             /* Position pause button on left */
             #pause-btn {
                 position: absolute !important;
-                top: 23px !important;
-                left: 15px !important;
+                top: 28px !important;
+                left: 12px !important;
                 z-index: 999999 !important;
                 pointer-events: auto !important;
                 min-width: 40px; /* Ensure button maintains size */
@@ -4004,8 +4004,8 @@ class VibeSurvivor {
                 
                 .header-help-btn {
                     position: absolute !important;
-                    top: 23px !important;
-                    right: 15px !important;
+                    top: 28px !important;
+                    right: 12px !important;
                     width: 32px;
                     height: 32px;
                     font-size: 16px;
