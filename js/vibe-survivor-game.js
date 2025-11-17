@@ -330,6 +330,9 @@ class VibeSurvivor {
         this.bossDefeating = false; // Animation state for boss defeat
         this.nextBossSpawnTime = null;     // Game-time schedule for upcoming boss spawns
         this.bossRespawnDelay = 30;        // Seconds between scaled boss encounters
+        this.pendingBossSpawn = null;      // Delayed boss spawn entry created after alert
+        this.bossSpawnDelaySeconds = 3;    // Lead time between alert and spawn
+        this.bossSpawnDistance = 450;      // Spawn bosses further away from player
 
         // Level up and timing state management
         this.pendingLevelUps = 0;           // Count of deferred level ups
@@ -5226,6 +5229,7 @@ class VibeSurvivor {
         this.bossDefeating = false;
         this.bossSpawned = false;
         this.nextBossSpawnTime = null;
+        this.pendingBossSpawn = null;
         this.bossVictoryInProgress = false;
         this.pendingLevelUps = 0;
 
@@ -5422,6 +5426,7 @@ class VibeSurvivor {
         this.updateChestOrbs();
 
         this.checkScheduledBossSpawn();
+        this.processPendingBossSpawn();
 
         this.checkCollisions();
         this.checkLevelUp();
@@ -6738,21 +6743,59 @@ class VibeSurvivor {
         return BOSS_VARIANTS.find(variant => variant.id === variantId) || null;
     }
     
-    spawnBoss() {
-        // Spawn boss at a specific distance from player (reduced for mobile visibility)
-        const spawnDistance = 250;
+    spawnBoss(delaySeconds = this.bossSpawnDelaySeconds, distance = this.bossSpawnDistance) {
+        this.queueBossSpawn('first', { delaySeconds, distance });
+    }
+    
+    spawnScaledBoss(delaySeconds = this.bossSpawnDelaySeconds, distance = this.bossSpawnDistance) {
+        this.queueBossSpawn('scaled', { delaySeconds, distance, bossLevel: this.bossLevel });
+    }
+
+    queueBossSpawn(type, options = {}) {
+        if (this.pendingBossSpawn) {
+            return;
+        }
+
+        const delaySeconds = Math.max(0, Number(options.delaySeconds ?? this.bossSpawnDelaySeconds) || 0);
+        const spawnDistance = Math.max(options.distance || this.bossSpawnDistance, 250);
+        const bossLevel = options.bossLevel || this.bossLevel;
+        const baseVariant = options.variantId ? this.getBossVariantById(options.variantId) : this.getBossVariantForLevel(bossLevel);
+        const variantId = options.variantId || baseVariant?.id || null;
+        const variantConfig = variantId ? this.getBossVariantById(variantId) : baseVariant;
+
+        if (delaySeconds === 0) {
+            if (type === 'scaled') {
+                this.spawnScaledBossImmediate(spawnDistance, variantConfig, bossLevel, false);
+            } else {
+                this.spawnBossImmediate(spawnDistance, variantConfig, false, bossLevel);
+            }
+            return;
+        }
+
+        this.pendingBossSpawn = {
+            type,
+            spawnTime: this.gameTime + delaySeconds,
+            distance: spawnDistance,
+            variantId,
+            bossLevel
+        };
+
+        // Alert the player immediately; the boss will arrive after the delay
+        this.showBossNotification(variantConfig?.name);
+    }
+
+    spawnBossImmediate(spawnDistance, variantConfig, suppressNotification = true, bossLevel = this.bossLevel) {
         const angle = Math.random() * Math.PI * 2;
         const x = this.player.x + this.fastCos(angle) * spawnDistance;
         const y = this.player.y + this.fastSin(angle) * spawnDistance;
-        
+
         const config = this.getEnemyConfig('boss');
         const scaledSpeed = config.speed;
-        const variantConfig = this.getBossVariantForLevel(this.bossLevel);
         const sizeMultiplier = variantConfig?.sizeMultiplier || 1;
         const bossColor = variantConfig?.color || config.color;
         const baseHealth = config.health * (1 + Math.floor(this.gameTime / 30) * 0.3);
         const scaledHealth = Math.floor(baseHealth * BOSS_HEALTH_MULTIPLIER);
-        
+
         this.enemies.push({
             x: x,
             y: y,
@@ -6786,37 +6829,37 @@ class VibeSurvivor {
             variantShape: variantConfig?.shape || 'octagon',
             variantState: {},
             missileInterval: variantConfig?.missileInterval || 200,
-            bossLevel: this.bossLevel
+            bossLevel: bossLevel
         });
-        
-        // Show boss notification
-        this.showBossNotification(variantConfig?.name);
+
+        this.bossSpawned = true;
+
+        if (!suppressNotification) {
+            this.showBossNotification(variantConfig?.name);
+        }
     }
-    
-    spawnScaledBoss() {
-        // Spawn progressively stronger boss after first boss defeat
-        const spawnDistance = 250;
+
+    spawnScaledBossImmediate(spawnDistance, variantConfig, bossLevel = this.bossLevel, suppressNotification = true) {
         const angle = Math.random() * Math.PI * 2;
         const x = this.player.x + this.fastCos(angle) * spawnDistance;
         const y = this.player.y + this.fastSin(angle) * spawnDistance;
-        
+
         const baseConfig = this.getEnemyConfig('boss');
-        const variantConfig = this.getBossVariantForLevel(this.bossLevel);
-        
+
         // Calculate scaled stats based on bosses killed
         const healthMultiplier = this.fastPow(1.4, this.bossesKilled);
         const speedMultiplier = this.fastPow(1.05, this.bossesKilled);
         const damageMultiplier = this.fastPow(1.15, this.bossesKilled);
         const sizeMultiplier = this.fastPow(1.05, this.bossesKilled);
         const variantSize = variantConfig?.sizeMultiplier || 1;
-        
+
         // Use effective first boss HP baseline and boost it
         const effectiveBaseHP = 4000 * BOSS_HEALTH_MULTIPLIER;
         const scaledHealth = Math.floor(effectiveBaseHP * healthMultiplier);
         const scaledSpeed = baseConfig.speed * speedMultiplier;
         const scaledDamage = Math.floor(baseConfig.contactDamage * damageMultiplier);
         const scaledRadius = Math.floor(baseConfig.radius * sizeMultiplier * variantSize);
-        
+
         this.enemies.push({
             x: x,
             y: y,
@@ -6837,7 +6880,7 @@ class VibeSurvivor {
             lastMissileFrame: 0,
             spawnedMinions: false,
             // Store boss level for rendering effects
-            bossLevel: this.bossLevel,
+            bossLevel: bossLevel,
             // Dash state for Phase 3 movement
             dashState: {
                 active: false,
@@ -6853,12 +6896,12 @@ class VibeSurvivor {
             variantState: {},
             missileInterval: variantConfig?.missileInterval || 200
         });
-        
-        
+
         this.bossSpawned = true;
-        
-        // Show boss notification for scaled boss
-        this.showBossNotification(variantConfig?.name);
+
+        if (!suppressNotification) {
+            this.showBossNotification(variantConfig?.name);
+        }
     }
     
     getAvailableEnemyTypes() {
@@ -11807,7 +11850,7 @@ class VibeSurvivor {
 
             // Get stack count for stackable passives
             let stackCount = '';
-            if (['health_boost', 'speed_boost', 'armor', 'critical', 'dash_boost'].includes(passive)) {
+            if (['health_boost', 'speed_boost', 'armor', 'critical', 'dash_boost', 'magnet'].includes(passive)) {
                 const count = this.player.passives[passive];
                 if (typeof count === 'number') {
                     stackCount = `x${count}`;
@@ -12227,14 +12270,47 @@ class VibeSurvivor {
             return;
         }
 
+        if (this.pendingBossSpawn) {
+            return;
+        }
+
         if (this.enemies.some(enemy => enemy.behavior === 'boss')) {
             return;
         }
 
         if (this.gameTime >= this.nextBossSpawnTime) {
-            this.spawnScaledBoss();
+            this.spawnScaledBoss(this.bossSpawnDelaySeconds, this.bossSpawnDistance);
             this.nextBossSpawnTime = null;
         }
+    }
+
+    processPendingBossSpawn() {
+        if (!this.pendingBossSpawn) {
+            return;
+        }
+
+        if (this.timePaused || this.playerDead || this.bossDefeating || this.bossVictoryInProgress) {
+            return;
+        }
+
+        if (this.enemies.some(enemy => enemy.behavior === 'boss')) {
+            return;
+        }
+
+        if (this.gameTime < this.pendingBossSpawn.spawnTime) {
+            return;
+        }
+
+        const { type, distance, variantId, bossLevel } = this.pendingBossSpawn;
+        const variantConfig = variantId ? this.getBossVariantById(variantId) : this.getBossVariantForLevel(bossLevel || this.bossLevel);
+
+        if (type === 'scaled') {
+            this.spawnScaledBossImmediate(distance, variantConfig, bossLevel || this.bossLevel, true);
+        } else {
+            this.spawnBossImmediate(distance, variantConfig, true, bossLevel || this.bossLevel);
+        }
+
+        this.pendingBossSpawn = null;
     }
 
     restartGame() {
