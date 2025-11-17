@@ -6,6 +6,8 @@
  * Note: Keyboard navigation, scrolling, and menu state remain in main game file
  */
 
+import { GAME_INFO } from '../../../config/constants.js';
+
 export class AboutModal {
     constructor() {
         // Button reference

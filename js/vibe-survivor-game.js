@@ -352,6 +352,7 @@ class VibeSurvivor {
         // Translation system
         this.currentLanguage = 'en';
         this.translations = this.initTranslations();
+        this.updateFooterVersion();
 
         this.initGame();
     }
@@ -987,13 +988,24 @@ class VibeSurvivor {
 
                         <!-- About Menu (at top level for start screen access) -->
                         <div id="about-menu" class="about-menu" style="display: none;">
-                            <div class="about-content">
-                                <h2>ABOUT</h2>
-                                <div class="about-description">
-                                    <p class="vibe-coding-title">100% Made via Vibe Coding</p>
-                                    <p class="vibe-coding-subtitle">A complete game development journey using AI tools</p>
-                                </div>
-                                <div class="about-credits">
+                                <div class="about-content">
+                                    <h2>ABOUT</h2>
+                                    <div class="about-description">
+                                        <p class="vibe-coding-title">100% Made via Vibe Coding</p>
+                                        <div class="about-longform">
+                                            <p>Hi!</p>
+                                            <p>Thanks for jumping into Vibe Survivor!</p>
+                                            <p>This whole adventure started in June 2025, when I decided to learn how to build apps and games using nothing but AI tools. My entire workflow runs on pure AI synergy with Claude Code and Codex CLI powering through Warp Terminal, and VS Code as my command center for reviewing code, refining structure, and keeping the project tight and clean.</p>
+                                            <p>Vibe Survivor is written entirely in plain vanilla JavaScript. I came into this with zero background in software development, so every mechanic, upgrade, weapon, and wave of chaos you are playing through was built by collaborating exclusively with AI tools. That is the heart of vibe-coding: I bring the vision, the energy, the direction, and AI brings the technical execution to build something wild together.</p>
+                                            <p>All the sounds and music were crafted using ElevenLabs, and every single visual and asset came from PixelLab AI. Bringing all these tools together to bring Vibe Survivor to life has been one of the most exciting and creative journeys I have ever been on. And now I am incredibly hyped to submit this game to the Chroma Awards.</p>
+                                            <p>Have fun, survive the chaos, and enjoy the vibe!</p>
+                                            <p>Samson<br>VibeCreAI</p>
+                                            <div class="about-avatar-wrap">
+                                                <img src="images/Samson.png" alt="Samson pixel avatar" class="about-avatar">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="about-credits">
                                     <div class="credit-item">
                                         <span class="credit-label">Coding:</span>
                                         <span class="credit-value">Claude Code & Codex</span>
@@ -12529,6 +12541,7 @@ class VibeSurvivor {
                     artworkLabel: "Artwork:",
                     artworkValue: "PixelLab",
                     connectWithUs: "Connect With Us",
+                    versionLabel: "Version",
                     aboutHint: "Press ESC to close",
 
                     // Scoreboard
@@ -12776,6 +12789,7 @@ class VibeSurvivor {
                     artworkLabel: "아트워크:",
                     artworkValue: "PixelLab",
                     connectWithUs: "소셜 미디어",
+                    versionLabel: "버전",
                     aboutHint: "ESC 키로 닫기",
 
                     // Scoreboard
@@ -13104,6 +13118,16 @@ class VibeSurvivor {
         if (this.touchControlsUI) {
             this.touchControlsUI.setTranslationFunction(t);
             this.touchControlsUI.updateLocalization();
+        }
+
+        this.updateFooterVersion();
+    }
+
+    updateFooterVersion() {
+        const footerVersion = document.getElementById('footer-version');
+        if (footerVersion) {
+            const label = this.t ? this.t('versionLabel') : 'Version';
+            footerVersion.textContent = `${label} v${GAME_INFO.VERSION}`;
         }
     }
 

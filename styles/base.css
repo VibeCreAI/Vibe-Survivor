@@ -76,6 +76,17 @@ body::after {
     width: 100%;
 }
 
+.footer-bar {
+    flex-direction: column;
+    gap: 4px;
+}
+
+.footer-version {
+    color: var(--color-text-muted);
+    letter-spacing: 0.08em;
+    font-size: 0.9rem;
+}
+
 .header-bar__link {
     color: var(--color-text-muted);
     text-decoration: none;
@@ -614,6 +625,40 @@ body::after {
     }
 }
 
+/* About modal tweaks */
+.about-version {
+    margin: 6px 0 0;
+    color: rgba(255, 255, 255, 0.82);
+    letter-spacing: 0.08em;
+    font-size: 0.95rem;
+}
+
+.about-longform {
+    color: rgba(255, 255, 255, 0.85);
+    line-height: 1.5;
+    font-size: 1rem;
+    text-align: left;
+    max-width: 720px;
+    margin: 0 auto 16px;
+}
+
+.about-longform p {
+    margin: 8px 0;
+}
+
+.about-avatar-wrap {
+    display: flex;
+    justify-content: flex-start;
+    margin: 12px 0 4px;
+}
+
+.about-avatar {
+    width: 64px;
+    height: 64px;
+    image-rendering: pixelated;
+    border-radius: 8px;
+}
+
 /* Scoreboard */
 .scoreboard-modal,
 .score-detail-modal {
@@ -949,6 +994,16 @@ body::after {
     background: linear-gradient(135deg, #a42828, #811919);
     border-color: #ff7b7b;
     color: #fff;
+}
+
+.score-detail-actions .survivor-btn.menu-selected {
+    box-shadow: 0 0 15px rgba(124, 254, 255, 0.8);
+    border-color: #7cfeff;
+}
+
+.scoreboard-actions .survivor-btn.menu-selected {
+    box-shadow: 0 0 15px rgba(124, 254, 255, 0.8);
+    border-color: #7cfeff;
 }
 
 .scoreboard-content .survivor-btn:focus-visible,

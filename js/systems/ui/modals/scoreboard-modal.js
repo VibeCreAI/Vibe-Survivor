@@ -10,11 +10,14 @@ export class ScoreboardModal extends Modal {
         this.emptyState = null;
         this.clearButton = null;
         this.closeButton = null;
+        this.actionButtons = [];
         this.onScoreSelectedCallback = null;
         this.onCloseCallback = null;
         this.getTranslation = null;
         this.keyboardHandler = null;
         this.selectedCardIndex = 0;
+        this.buttonNavigationMode = false;
+        this.buttonIndex = 0;
     }
 
     init() {
@@ -27,6 +30,7 @@ export class ScoreboardModal extends Modal {
         this.emptyState = this.element.querySelector('.scoreboard-empty-state');
         this.clearButton = this.element.querySelector('#scoreboard-clear-btn');
         this.closeButton = this.element.querySelector('#scoreboard-close-btn');
+        this.actionButtons = [this.clearButton, this.closeButton].filter(Boolean);
 
         this.attachEventHandlers();
         this.populateVersions();
@@ -76,6 +80,8 @@ export class ScoreboardModal extends Modal {
 
         // Reset selection state
         this.selectedCardIndex = 0;
+        this.buttonNavigationMode = false;
+        this.buttonIndex = 0;
 
         // Focus scroll container for keyboard navigation
         if (this.listContainer) {
@@ -161,7 +167,7 @@ export class ScoreboardModal extends Modal {
             return;
         }
 
-        this.scoreList.style.display = 'flex';
+        this.scoreList.style.display = 'grid';
         if (this.emptyState) this.emptyState.style.display = 'none';
 
         scores.forEach((score, index) => {
@@ -250,11 +256,16 @@ export class ScoreboardModal extends Modal {
             const scoreCards = this.scoreList?.querySelectorAll('.score-card') || [];
 
             // Block navigation keys to prevent start screen navigation
-            const navigationKeys = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd', 'enter', ' ', 'escape'];
+            const navigationKeys = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd', 'enter', ' ', 'escape', 'tab'];
 
             if (navigationKeys.includes(key)) {
                 e.preventDefault();
                 e.stopPropagation();
+            }
+
+            // Block tab so we manage focus manually
+            if (key === 'tab') {
+                return;
             }
 
             // Handle escape to close modal
@@ -263,11 +274,47 @@ export class ScoreboardModal extends Modal {
                 return;
             }
 
+            // Button navigation mode
+            if (this.buttonNavigationMode) {
+                if (key === 'arrowdown' || key === 's') {
+                    if (this.buttonIndex < this.actionButtons.length - 1) {
+                        this.buttonIndex += 1;
+                        this.updateButtonSelection();
+                    }
+                    return;
+                }
+                if (key === 'arrowup' || key === 'w') {
+                    if (this.buttonIndex > 0) {
+                        this.buttonIndex -= 1;
+                        this.updateButtonSelection();
+                        return;
+                    }
+                    this.exitButtonNavigation();
+                    return;
+                }
+                if (key === 'enter' || key === ' ') {
+                    const btn = this.actionButtons[this.buttonIndex];
+                    if (btn) {
+                        btn.click();
+                    }
+                    return;
+                }
+            }
+
             // Handle arrow up/down/w/s for score card navigation
             if (key === 'arrowdown' || key === 's') {
                 if (scoreCards.length > 0) {
-                    this.selectedCardIndex = Math.min(this.selectedCardIndex + 1, scoreCards.length - 1);
-                    this.updateCardSelection();
+                    if (this.selectedCardIndex >= scoreCards.length - 1) {
+                        if (this.actionButtons.length) {
+                            this.enterButtonNavigation();
+                            return;
+                        }
+                    } else {
+                        this.selectedCardIndex = Math.min(this.selectedCardIndex + 1, scoreCards.length - 1);
+                        this.updateCardSelection();
+                    }
+                } else if (this.actionButtons.length) {
+                    this.enterButtonNavigation();
                 }
                 return;
             }
@@ -282,13 +329,11 @@ export class ScoreboardModal extends Modal {
 
             // Block left/right arrows and A/D to prevent start screen navigation
             if (key === 'arrowleft' || key === 'arrowright' || key === 'a' || key === 'd') {
-                // Do nothing, just block the event
                 return;
             }
 
             // Handle enter/space to select score card
             if (key === 'enter' || key === ' ') {
-                // Open selected score card
                 if (scoreCards.length > 0 && scoreCards[this.selectedCardIndex]) {
                     const card = scoreCards[this.selectedCardIndex];
                     const scoreId = card.dataset.scoreId;
@@ -309,9 +354,13 @@ export class ScoreboardModal extends Modal {
             document.removeEventListener('keydown', this.keyboardHandler, { capture: true });
             this.keyboardHandler = null;
         }
+        this.buttonNavigationMode = false;
+        this.buttonIndex = 0;
+        this.actionButtons.forEach(btn => btn?.classList.remove('menu-selected'));
     }
 
     updateCardSelection() {
+        if (this.buttonNavigationMode) return;
         const scoreCards = this.scoreList?.querySelectorAll('.score-card') || [];
 
         // Remove previous selection
@@ -330,5 +379,37 @@ export class ScoreboardModal extends Modal {
             // Scroll into view if needed
             selectedCard.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         }
+    }
+
+    enterButtonNavigation() {
+        if (!this.actionButtons.length) return;
+        const scoreCards = this.scoreList?.querySelectorAll('.score-card') || [];
+        scoreCards.forEach(card => card.classList.remove('menu-selected'));
+        scoreCards.forEach(card => { card.style.boxShadow = ''; });
+        this.buttonNavigationMode = true;
+        this.buttonIndex = Math.min(this.buttonIndex, this.actionButtons.length - 1);
+        this.updateButtonSelection();
+    }
+
+    exitButtonNavigation() {
+        this.buttonNavigationMode = false;
+        this.buttonIndex = 0;
+        this.actionButtons.forEach(btn => btn?.classList.remove('menu-selected'));
+        this.updateCardSelection();
+        if (this.listContainer) {
+            this.listContainer.focus({ preventScroll: true });
+        }
+    }
+
+    updateButtonSelection() {
+        this.actionButtons.forEach((btn, i) => {
+            if (!btn) return;
+            if (i === this.buttonIndex) {
+                btn.classList.add('menu-selected');
+                btn.focus({ preventScroll: true });
+            } else {
+                btn.classList.remove('menu-selected');
+            }
+        });
     }
 }

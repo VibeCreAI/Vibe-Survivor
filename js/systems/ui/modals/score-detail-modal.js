@@ -21,6 +21,9 @@ export class ScoreDetailModal extends Modal {
         this.onBackCallback = null;
         this.onDeleteCallback = null;
         this.keyboardHandler = null;
+        this.actionButtons = [];
+        this.buttonNavigationMode = false;
+        this.buttonIndex = 0;
     }
 
     init() {
@@ -42,6 +45,7 @@ export class ScoreDetailModal extends Modal {
         this.weaponsSection = this.element.querySelector('.score-detail-weapons');
         this.passivesSection = this.element.querySelector('.score-detail-passives');
         this.playerSection = this.element.querySelector('.score-detail-player');
+        this.actionButtons = [this.backButton, this.deleteButton].filter(Boolean);
 
         if (this.backButton) {
             this.backButton.addEventListener('click', () => this.handleBack());
@@ -88,6 +92,8 @@ export class ScoreDetailModal extends Modal {
             this.scrollContainer.scrollTop = 0;
             setTimeout(() => this.scrollContainer.focus({ preventScroll: true }), 50);
         }
+        this.buttonNavigationMode = false;
+        this.buttonIndex = 0;
     }
 
     updateLocalization() {
@@ -354,7 +360,7 @@ export class ScoreDetailModal extends Modal {
             const key = e.key.toLowerCase();
 
             // Block ALL navigation keys to prevent start screen navigation
-            const navigationKeys = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd', 'enter', ' ', 'escape'];
+            const navigationKeys = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd', 'enter', ' ', 'escape', 'tab'];
 
             if (navigationKeys.includes(key)) {
                 e.preventDefault();
@@ -367,16 +373,54 @@ export class ScoreDetailModal extends Modal {
                 return;
             }
 
-            // Handle arrow up/down/w/s for scrolling
+            // Button navigation mode
+            if (this.buttonNavigationMode) {
+                if (key === 'arrowdown' || key === 's') {
+                    if (this.buttonIndex < this.actionButtons.length - 1) {
+                        this.buttonIndex += 1;
+                        this.updateButtonSelection();
+                    }
+                    return;
+                }
+                if (key === 'arrowup' || key === 'w') {
+                    if (this.buttonIndex > 0) {
+                        this.buttonIndex -= 1;
+                        this.updateButtonSelection();
+                        return;
+                    }
+                    this.exitButtonNavigation();
+                    return;
+                }
+                if (key === 'enter' || key === ' ') {
+                    const btn = this.actionButtons[this.buttonIndex];
+                    if (btn) {
+                        btn.click();
+                    }
+                    return;
+                }
+            }
+
+            // Handle arrow up/down/w/s for scrolling and transition to buttons
             if (key === 'arrowdown' || key === 's') {
                 if (this.scrollContainer) {
-                    this.scrollContainer.scrollBy({ top: 60, behavior: 'smooth' });
+                    const atBottom = this.scrollContainer.scrollTop + this.scrollContainer.clientHeight >= this.scrollContainer.scrollHeight - 5;
+                    if (atBottom && this.actionButtons.length) {
+                        this.enterButtonNavigation();
+                    } else {
+                        this.scrollContainer.scrollBy({ top: 60, behavior: 'smooth' });
+                    }
+                } else if (this.actionButtons.length) {
+                    this.enterButtonNavigation();
                 }
                 return;
             }
 
             if (key === 'arrowup' || key === 'w') {
                 if (this.scrollContainer) {
+                    const atTop = this.scrollContainer.scrollTop <= 5;
+                    if (atTop) {
+                        return;
+                    }
                     this.scrollContainer.scrollBy({ top: -60, behavior: 'smooth' });
                 }
                 return;
@@ -384,12 +428,11 @@ export class ScoreDetailModal extends Modal {
 
             // Block left/right arrows and A/D to prevent start screen navigation
             if (key === 'arrowleft' || key === 'arrowright' || key === 'a' || key === 'd') {
-                // Do nothing, just block the event
                 return;
             }
 
-            // Block enter/space but don't do anything (users must click buttons)
-            if (key === 'enter' || key === ' ') {
+            // Block tab
+            if (key === 'tab') {
                 return;
             }
         };
@@ -403,5 +446,36 @@ export class ScoreDetailModal extends Modal {
             document.removeEventListener('keydown', this.keyboardHandler, { capture: true });
             this.keyboardHandler = null;
         }
+        this.buttonNavigationMode = false;
+        this.buttonIndex = 0;
+        this.actionButtons.forEach(btn => btn?.classList.remove('menu-selected'));
+    }
+
+    enterButtonNavigation() {
+        if (!this.actionButtons.length) return;
+        this.buttonNavigationMode = true;
+        this.buttonIndex = Math.min(this.buttonIndex, this.actionButtons.length - 1);
+        this.updateButtonSelection();
+    }
+
+    exitButtonNavigation() {
+        this.buttonNavigationMode = false;
+        this.buttonIndex = 0;
+        this.actionButtons.forEach(btn => btn?.classList.remove('menu-selected'));
+        if (this.scrollContainer) {
+            this.scrollContainer.focus({ preventScroll: true });
+        }
+    }
+
+    updateButtonSelection() {
+        this.actionButtons.forEach((btn, i) => {
+            if (!btn) return;
+            if (i === this.buttonIndex) {
+                btn.classList.add('menu-selected');
+                btn.focus({ preventScroll: true });
+            } else {
+                btn.classList.remove('menu-selected');
+            }
+        });
     }
 }
