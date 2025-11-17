@@ -921,7 +921,16 @@ class VibeSurvivor {
                                     </div>
                                 </div>
                                 
-                                <div class="header-weapons" id="header-weapon-display"></div>
+                                <div class="header-loadouts">
+                                    <div class="header-loadout">
+                                        <span class="header-loadout-label">Weapons</span>
+                                        <div class="header-loadout-row header-weapons" id="header-weapon-display"></div>
+                                    </div>
+                                    <div class="header-loadout">
+                                        <span class="header-loadout-label header-passive-label">Passives</span>
+                                        <div class="header-loadout-row header-passives" id="header-passive-display"></div>
+                                    </div>
+                                </div>
                             </div>
                             
                             <!-- Game Title (shown when not in game) -->
@@ -1735,24 +1744,64 @@ class VibeSurvivor {
                 text-shadow: 0 0 8px rgba(255, 255, 0, 0.6);
             }
             
-            .header-weapons {
+            .header-loadouts {
                 display: flex;
-                gap: 8px;
-                align-items: center;
-                flex-wrap: wrap; /* Allow weapons to wrap to second row when needed */
-                justify-content: center; /* Center weapons when wrapping */
+                gap: 10px;
+                align-items: flex-start;
+                flex-wrap: wrap;
+                justify-content: center;
             }
-            
-            .header-weapon-item {
-                background: rgba(0, 255, 255, 0.2);
-                border: 1px solid rgba(0, 255, 255, 0.4);
+
+            .header-loadout {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                flex-wrap: wrap;
+            }
+
+            .header-loadout-label {
+                color: #a0f6ff;
+                font-size: 10px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                white-space: nowrap;
+            }
+
+            .header-passive-label {
+                color: #ffb3ff;
+            }
+
+            .header-loadout-row,
+            .header-weapons,
+            .header-passives {
+                display: flex;
+                gap: 6px;
+                align-items: center;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .header-weapon-item,
+            .header-passive-item,
+            .header-slot {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                background: rgba(0, 255, 255, 0.12);
+                border: 1px solid rgba(0, 255, 255, 0.35);
                 border-radius: 4px;
                 padding: 3px 6px;
                 font-size: 11px;
                 color: #00ffff;
                 text-shadow: 0 0 3px rgba(0, 255, 255, 0.8);
             }
-            
+
+            .header-passive-item {
+                background: rgba(255, 0, 255, 0.12);
+                border-color: rgba(255, 0, 255, 0.35);
+                color: #ffb3ff;
+            }
+
             .header-weapon-merge {
                 background: rgba(255, 215, 0, 0.3) !important;
                 border: 1px solid rgba(255, 215, 0, 0.6) !important;
@@ -1761,10 +1810,10 @@ class VibeSurvivor {
                 font-weight: bold !important;
             }
 
-            .header-weapon-content {
-                display: flex;
-                align-items: center;
-                gap: 4px;
+            .header-slot-icon {
+                width: 16px;
+                height: 16px;
+                object-fit: contain;
             }
 
             .header-weapon-icon {
@@ -1773,7 +1822,8 @@ class VibeSurvivor {
                 object-fit: contain;
             }
 
-            .header-weapon-text {
+            .header-weapon-text,
+            .header-slot-count {
                 font-size: 11px;
                 white-space: nowrap;
             }
@@ -1786,6 +1836,22 @@ class VibeSurvivor {
                 font-size: 11px;
                 color: rgba(0, 255, 255, 0.3);
                 text-shadow: none;
+            }
+
+            .header-passive-empty {
+                background: rgba(255, 0, 255, 0.05);
+                border: 1px dashed rgba(255, 0, 255, 0.2);
+                border-radius: 4px;
+                padding: 3px 6px;
+                font-size: 11px;
+                color: rgba(255, 0, 255, 0.3);
+                text-shadow: none;
+            }
+
+            .header-passive-icon {
+                width: 16px;
+                height: 16px;
+                object-fit: contain;
             }
             
             /* Ultra-narrow mobile screens */
@@ -1848,24 +1914,40 @@ class VibeSurvivor {
                     font-size: 11px;
                 }
                 
-                .header-weapons {
-                    display: flex; /* Show weapons below on ultra-narrow screens */
+                .header-loadouts {
                     width: 100%;
                     justify-content: center;
+                    gap: 6px;
+                }
+
+                .header-loadout-label {
+                    font-size: 8px;
+                }
+
+                .header-loadout-row,
+                .header-weapons,
+                .header-passives {
+                    display: flex; /* Show loadouts below on ultra-narrow screens */
+                    width: 100%;
+                    justify-content: center;
+                    gap: 4px;
                     margin-top: 3px;
                 }
 
-                .header-weapon-item {
+                .header-weapon-item,
+                .header-passive-item,
+                .header-slot {
                     padding: 1px 2px;
                     font-size: 7px;
                 }
 
-                .header-weapon-icon {
+                .header-slot-icon {
                     width: 10px;
                     height: 10px;
                 }
 
-                .header-weapon-text {
+                .header-weapon-text,
+                .header-slot-count {
                     font-size: 7px;
                 }
             }
@@ -1905,13 +1987,26 @@ class VibeSurvivor {
                     align-items: center;
                 }
                 
-                .header-weapons {
-                    display: flex; /* Show weapons below on narrow screens */
+                .header-loadouts {
                     width: 100%;
                     justify-content: center;
+                    gap: 7px;
+                }
+
+                .header-loadout-label {
+                    font-size: 9px;
+                }
+
+                .header-loadout-row,
+                .header-weapons,
+                .header-passives {
+                    display: flex; /* Show loadouts below on narrow screens */
+                    width: 100%;
+                    justify-content: center;
+                    gap: 5px;
                     margin-top: 5px;
                 }
-                
+
                 .header-health-bar, .header-xp-bar {
                     width: 60px;
                     height: 5px;
@@ -1926,17 +2021,20 @@ class VibeSurvivor {
                     font-size: 12px;
                 }
                 
-                .header-weapon-item {
+                .header-weapon-item,
+                .header-passive-item,
+                .header-slot {
                     padding: 1px 3px;
                     font-size: 8px;
                 }
 
-                .header-weapon-icon {
+                .header-slot-icon {
                     width: 12px;
                     height: 12px;
                 }
 
-                .header-weapon-text {
+                .header-weapon-text,
+                .header-slot-count {
                     font-size: 8px;
                 }
             }
@@ -1955,12 +2053,11 @@ class VibeSurvivor {
                     flex-wrap: wrap; /* Allow content to wrap */
                 }
 
-                .header-weapons {
-                    width: 100%; /* Take full width to encourage wrapping */
+                .header-loadouts {
+                    width: 100%;
                     justify-content: center;
-                    margin-top: 3px; /* Add some space above when wrapped */
                 }
-                
+
                 .header-primary-stats {
                     gap: 15px;
                 }
@@ -1988,17 +2085,20 @@ class VibeSurvivor {
                     font-size: 14px;
                 }
                 
-                .header-weapon-item {
+                .header-weapon-item,
+                .header-passive-item,
+                .header-slot {
                     padding: 2px 4px;
                     font-size: 10px;
                 }
 
-                .header-weapon-icon {
+                .header-slot-icon {
                     width: 14px;
                     height: 14px;
                 }
 
-                .header-weapon-text {
+                .header-weapon-text,
+                .header-slot-count {
                     font-size: 10px;
                 }
             }
@@ -2014,8 +2114,11 @@ class VibeSurvivor {
                     flex-wrap: wrap; /* Allow content to wrap */
                 }
 
-                .header-weapons {
-                    flex-wrap: wrap; /* Ensure weapons can wrap */
+                .header-loadouts,
+                .header-loadout-row,
+                .header-weapons,
+                .header-passives {
+                    flex-wrap: wrap; /* Ensure loadouts can wrap */
                     max-width: 100%; /* Don't exceed container width */
                 }
             }
@@ -7962,6 +8065,26 @@ class VibeSurvivor {
         return `images/weapons/${iconName}.png`;
     }
 
+    getPassiveIconForHeader(passiveId) {
+        const passiveIconMap = {
+            'health_boost': 'healthBoost',
+            'speed_boost': 'speedBoost',
+            'regeneration': 'regeneration',
+            'magnet': 'magnet',
+            'armor': 'armor',
+            'critical': 'criticalStrike',
+            'dash_boost': 'dashBoost',
+            'turbo_flux_cycler': 'weaponFirerate',
+            'aegis_impact_core': 'weaponPower',
+            'splitstream_matrix': 'weaponProjectile',
+            'macro_charge_amplifier': 'weaponSize',
+            'mod_bay_expander': 'weaponSlot'
+        };
+
+        const iconName = passiveIconMap[passiveId] || 'upgrade';
+        return `images/passives/${iconName}.png`;
+    }
+
     getPassiveIcon(passiveId) {
         const passiveIconMap = {
             'health_boost': 'healthBoost',
@@ -11674,7 +11797,8 @@ class VibeSurvivor {
                 }
             },
             this.getWeaponIconForHeader.bind(this),
-            this.getWeaponName.bind(this)
+            this.getWeaponName.bind(this),
+            this.getPassiveIconForHeader.bind(this)
         );
 
         // Phase 12c.12 - Update touch controls visual position
