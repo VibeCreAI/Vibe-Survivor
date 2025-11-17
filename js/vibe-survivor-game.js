@@ -1802,6 +1802,15 @@ class VibeSurvivor {
                 color: #ffb3ff;
             }
 
+            .header-passive-unique {
+                background: rgba(255, 215, 0, 0.25) !important;
+                border: 1px solid rgba(255, 215, 0, 0.6) !important;
+                color: #ffe27a !important;
+                text-shadow: 0 0 5px rgba(255, 215, 0, 0.8) !important;
+                box-shadow: 0 0 6px rgba(255, 215, 0, 0.4);
+                font-weight: bold;
+            }
+
             .header-weapon-merge {
                 background: rgba(255, 215, 0, 0.3) !important;
                 border: 1px solid rgba(255, 215, 0, 0.6) !important;
@@ -11965,8 +11974,6 @@ class VibeSurvivor {
             this.player.passives[key] && passiveNames[key]
         );
 
-        if (activePassives.length === 0) return '';
-
         const passivesHtml = activePassives.map(passive => {
             const displayName = passiveNames[passive];
             const passiveConfig = PASSIVES[passive.toUpperCase()];
@@ -12044,6 +12051,8 @@ class VibeSurvivor {
         }).join('');
 
         const t = uiTranslations;
+        const emptyPassivesText = t.noPassives || 'No passives acquired';
+        const passivesContent = passivesHtml || `<div style="text-align: center; color: #ff88ff; font-size: 13px; padding: 8px 0;">${emptyPassivesText}</div>`;
         return `
             <div style="
                 margin: 15px 0;
@@ -12063,7 +12072,7 @@ class VibeSurvivor {
                     justify-content: center;
                     gap: 10px;
                 "><img src="images/passives/passive.png" alt="Passive Result" style="width: 48px; height: 48px; image-rendering: pixelated;"> ${t.passiveResult}</div>
-                ${passivesHtml}
+                ${passivesContent}
             </div>
         `;
     }

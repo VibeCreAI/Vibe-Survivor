@@ -20,6 +20,15 @@ export class HUDSystem {
             weaponDisplay: null,
             bossDisplay: null
         };
+
+        this.uniquePassiveKeys = new Set([
+            'regeneration',
+            'turbo_flux_cycler',
+            'aegis_impact_core',
+            'splitstream_matrix',
+            'macro_charge_amplifier',
+            'mod_bay_expander'
+        ]);
     }
 
     /**
@@ -176,8 +185,10 @@ export class HUDSystem {
         const passiveChips = entries.map(entry => {
             const icon = getPassiveIconCallback ? getPassiveIconCallback(entry.key) : '';
             const displayName = this.formatPassiveName(entry.key);
+            const isUnique = this.uniquePassiveKeys.has(entry.key);
+            const itemClass = `header-passive-item header-slot${isUnique ? ' header-passive-unique' : ''}`;
             return `
-                <div class="header-passive-item header-slot" title="${displayName} x${entry.stacks}">
+                <div class="${itemClass}" title="${displayName} x${entry.stacks}">
                     ${icon ? `<img src="${icon}" alt="${displayName}" class="header-slot-icon header-passive-icon">` : ''}
                     <span class="header-slot-count">x${entry.stacks}</span>
                 </div>
