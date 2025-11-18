@@ -3904,7 +3904,7 @@ class VibeSurvivor {
 
             .mobile-dash-btn {
                 position: absolute;
-                bottom: 20px;
+                bottom: 40px;
                 width: 100px;
                 height: 100px;
                 background: rgba(0, 255, 255, 0.3);

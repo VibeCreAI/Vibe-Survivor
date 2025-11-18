@@ -254,7 +254,7 @@ export class TouchControlsUI {
         if (!this.elements.dashButton) return;
 
         const dashBtn = this.elements.dashButton;
-        dashBtn.style.bottom = '20px';
+        dashBtn.style.bottom = '40px';
         dashBtn.classList.remove('mobile-dash-left', 'mobile-dash-right');
 
         const positionClass = position === 'left' ? 'mobile-dash-left' : 'mobile-dash-right';
