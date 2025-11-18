@@ -843,10 +843,11 @@ export class EnemySystem {
                         enemy.dashState.targetY = playerY;
                         enemy.dashState.duration = 0;
                         enemy.dashState.originalSpeed = enemy.speed;
-                        // Decrease dash cooldown by 3 per boss stage, minimum 36 frames
+                        // Decrease dash cooldown by 3 per boss stage, capped at boss 6, minimum 72 frames
                         const baseCooldown = 90;
-                        const cooldownReduction = (bossesKilled || 0) * 3;
-                        const minCooldown = 36;
+                        const maxBossScaling = 5; // Cap reduction at boss 6 (after 5 bosses defeated)
+                        const cooldownReduction = Math.min(bossesKilled || 0, maxBossScaling) * 3;
+                        const minCooldown = 72; // 1.2 seconds minimum (was 36 = 0.6s)
                         enemy.specialCooldown = Math.max(minCooldown, baseCooldown - cooldownReduction);
                     } else {
                         // Faster normal movement while dash is on cooldown
