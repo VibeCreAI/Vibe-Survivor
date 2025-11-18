@@ -6912,7 +6912,7 @@ class VibeSurvivor {
                 targetX: 0,
                 targetY: 0,
                 duration: 0,
-                maxDuration: 30, // 0.5 seconds at 60fps
+                maxDuration: 20, // 0.33 seconds at 60fps (reduced from 30 for easier dodging)
                 originalSpeed: 0
             },
             variantId: variantConfig?.id || 'pulse_hunter',
@@ -6978,7 +6978,7 @@ class VibeSurvivor {
                 targetX: 0,
                 targetY: 0,
                 duration: 0,
-                maxDuration: 30, // 0.5 seconds at 60fps
+                maxDuration: 20, // 0.33 seconds at 60fps (reduced from 30 for easier dodging)
                 originalSpeed: 0
             },
             variantId: variantConfig?.id || 'pulse_hunter',
@@ -7395,11 +7395,11 @@ class VibeSurvivor {
                     enemy.dashState.targetY = playerY;
                     enemy.dashState.duration = 0;
                     enemy.dashState.originalSpeed = enemy.speed;
-                    // Decrease dash cooldown by 3 per boss stage, capped at boss 6, minimum 72 frames
-                    const baseCooldown = 90;
+                    // Decrease dash cooldown by 3 per boss stage, capped at boss 6, minimum 90 frames
+                    const baseCooldown = 108; // Increased from 90 for more breathing room
                     const maxBossScaling = 5; // Cap reduction at boss 6 (after 5 bosses defeated)
                     const cooldownReduction = Math.min(this.bossesKilled || 0, maxBossScaling) * 3;
-                    const minCooldown = 72; // 1.2 seconds minimum (was 36 = 0.6s)
+                    const minCooldown = 90; // 1.5 seconds minimum (was 72 = 1.2s)
                     enemy.specialCooldown = Math.max(minCooldown, baseCooldown - cooldownReduction);
                 } else {
                     enemy.x += dirX * enemy.speed * 2.0;
@@ -7407,7 +7407,7 @@ class VibeSurvivor {
                 }
             } else {
                 const [dashDirX, dashDirY] = Vector2.direction(enemy.x, enemy.y, enemy.dashState.targetX, enemy.dashState.targetY);
-                const dashSpeed = enemy.speed * 6;
+                const dashSpeed = enemy.speed * 4; // Reduced from 6x for easier dodging
                 enemy.x += dashDirX * dashSpeed;
                 enemy.y += dashDirY * dashSpeed;
                 enemy.dashState.duration++;
@@ -7453,13 +7453,13 @@ class VibeSurvivor {
             targetX: 0,
             targetY: 0,
             duration: 0,
-            maxDuration: 24,
+            maxDuration: 18, // Reduced from 24 for shorter dash distance
             originalSpeed: enemy.speed
         });
 
-        // Cap scaling at boss 6, minimum 50 frames (0.83s) for dodge-able patterns
+        // Cap scaling at boss 6, minimum 60 frames (1.0s) for dodge-able patterns
         const maxBossScaling = 5; // Cap reduction at boss 6
-        const cooldown = Math.max(50, 70 - Math.min(this.bossesKilled || 0, maxBossScaling) * 5);
+        const cooldown = Math.max(60, 85 - Math.min(this.bossesKilled || 0, maxBossScaling) * 5);
 
         if (!dashState.active) {
             if (enemy.specialCooldown <= 0) {
@@ -7474,7 +7474,7 @@ class VibeSurvivor {
             }
         } else {
             const [dashDirX, dashDirY] = Vector2.direction(enemy.x, enemy.y, dashState.targetX, dashState.targetY);
-            const dashSpeed = enemy.speed * 7.2;
+            const dashSpeed = enemy.speed * 5; // Reduced from 7.2x for easier dodging
             enemy.x += dashDirX * dashSpeed;
             enemy.y += dashDirY * dashSpeed;
             dashState.duration++;
