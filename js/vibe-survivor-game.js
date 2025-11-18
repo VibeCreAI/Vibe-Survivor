@@ -7395,9 +7395,11 @@ class VibeSurvivor {
                     enemy.dashState.targetY = playerY;
                     enemy.dashState.duration = 0;
                     enemy.dashState.originalSpeed = enemy.speed;
+                    // Decrease dash cooldown by 3 per boss stage, capped at boss 6, minimum 72 frames
                     const baseCooldown = 90;
-                    const cooldownReduction = (this.bossesKilled || 0) * 3;
-                    const minCooldown = 36;
+                    const maxBossScaling = 5; // Cap reduction at boss 6 (after 5 bosses defeated)
+                    const cooldownReduction = Math.min(this.bossesKilled || 0, maxBossScaling) * 3;
+                    const minCooldown = 72; // 1.2 seconds minimum (was 36 = 0.6s)
                     enemy.specialCooldown = Math.max(minCooldown, baseCooldown - cooldownReduction);
                 } else {
                     enemy.x += dirX * enemy.speed * 2.0;
@@ -7455,7 +7457,9 @@ class VibeSurvivor {
             originalSpeed: enemy.speed
         });
 
-        const cooldown = Math.max(24, 70 - (this.bossesKilled || 0) * 5);
+        // Cap scaling at boss 6, minimum 50 frames (0.83s) for dodge-able patterns
+        const maxBossScaling = 5; // Cap reduction at boss 6
+        const cooldown = Math.max(50, 70 - Math.min(this.bossesKilled || 0, maxBossScaling) * 5);
 
         if (!dashState.active) {
             if (enemy.specialCooldown <= 0) {
