@@ -324,9 +324,10 @@ See the [LICENSE](LICENSE) file for full details.
 Built by a vibe-coder exploring the intersection of AI and creativity.
 
 **Questions? Feedback? Want to talk vibe-coding?**
-- 📧 Email: your-email@example.com
-- 🐦 Twitter: @yourhandle
-- 💼 LinkedIn: your-profile
+- 📧 Email: samson@vibecreai.com
+- 🐦 Twitter: @VibeCreAI
+- 💼 LinkedIn: [your-profile](https://www.linkedin.com/in/samsonkang/)
+- 🌐 Website: https://www.vibecreai.com/
 
 ---
 
