@@ -6340,6 +6340,15 @@ class VibeSurvivor {
             case 'prism':
                 this.firePrismSeraphPattern(boss);
                 return;
+            case 'vortex':
+                this.fireVortexSpectrePattern(boss);
+                return;
+            case 'reaper':
+                this.fireCrimsonReaperPattern(boss);
+                return;
+            case 'colossus':
+                this.fireFrostColossusPattern(boss);
+                return;
             default:
                 this.firePulseHunterPattern(boss, healthPercent);
         }
@@ -6704,7 +6713,199 @@ class VibeSurvivor {
             });
         }
     }
-    
+
+    fireVortexSpectrePattern(boss) {
+        boss.variantState = boss.variantState || {};
+        const state = boss.variantState;
+        state.spiralPhase = (state.spiralPhase || 0) + 0.25;
+
+        // Counter-rotating spiral waves (8 projectiles each direction)
+        const spiralCount = 8;
+        for (let i = 0; i < spiralCount; i++) {
+            const angle = (Math.PI * 2 * i) / spiralCount;
+
+            // Clockwise spiral
+            const angleClockwise = angle + state.spiralPhase;
+            const speedCW = 2.8;
+            this.projectiles.push({
+                x: boss.x,
+                y: boss.y,
+                vx: Math.cos(angleClockwise) * speedCW,
+                vy: Math.sin(angleClockwise) * speedCW,
+                damage: 28,
+                life: 240,
+                type: 'boss-missile',
+                color: '#9D00FF',
+                size: 4,
+                homing: false,
+                explosionRadius: 35,
+                speed: speedCW,
+                owner: 'enemy'
+            });
+
+            // Counter-clockwise spiral
+            const angleCounterCW = angle - state.spiralPhase;
+            const speedCCW = 2.8;
+            this.projectiles.push({
+                x: boss.x,
+                y: boss.y,
+                vx: Math.cos(angleCounterCW) * speedCCW,
+                vy: Math.sin(angleCounterCW) * speedCCW,
+                damage: 28,
+                life: 240,
+                type: 'boss-missile',
+                color: '#C77DFF',
+                size: 4,
+                homing: false,
+                explosionRadius: 35,
+                speed: speedCCW,
+                owner: 'enemy'
+            });
+        }
+
+        // Stationary mines in cardinal directions
+        const mineDirections = [0, Math.PI / 2, Math.PI, Math.PI * 1.5];
+        mineDirections.forEach(angle => {
+            const distance = 120;
+            this.projectiles.push({
+                x: boss.x + Math.cos(angle) * distance,
+                y: boss.y + Math.sin(angle) * distance,
+                vx: 0,
+                vy: 0,
+                damage: 35,
+                life: 180,
+                type: 'boss-missile',
+                color: '#7B2CBF',
+                size: 6,
+                homing: false,
+                explosionRadius: 55,
+                speed: 0,
+                owner: 'enemy'
+            });
+        });
+    }
+
+    fireCrimsonReaperPattern(boss) {
+        boss.variantState = boss.variantState || {};
+        const state = boss.variantState;
+        state.attackToggle = !state.attackToggle;
+        const angleToPlayer = Math.atan2(this.player.y - boss.y, this.player.x - boss.x);
+
+        if (state.attackToggle) {
+            // Cardinal directions (+ pattern)
+            const cardinalAngles = [0, Math.PI / 2, Math.PI, Math.PI * 1.5];
+            cardinalAngles.forEach(angle => {
+                const speed = 5.5;
+                this.projectiles.push({
+                    x: boss.x,
+                    y: boss.y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    damage: 32,
+                    life: 160,
+                    type: 'boss-missile',
+                    color: '#FF1744',
+                    size: 5,
+                    homing: false,
+                    explosionRadius: 30,
+                    speed,
+                    owner: 'enemy'
+                });
+            });
+        } else {
+            // Diagonal directions (X pattern)
+            const diagonalAngles = [Math.PI / 4, Math.PI * 3 / 4, Math.PI * 5 / 4, Math.PI * 7 / 4];
+            diagonalAngles.forEach(angle => {
+                const speed = 5.5;
+                this.projectiles.push({
+                    x: boss.x,
+                    y: boss.y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    damage: 32,
+                    life: 160,
+                    type: 'boss-missile',
+                    color: '#FF4569',
+                    size: 5,
+                    homing: false,
+                    explosionRadius: 30,
+                    speed,
+                    owner: 'enemy'
+                });
+            });
+        }
+
+        // Homing missiles toward player (always fire)
+        const homingCount = 3;
+        for (let i = 0; i < homingCount; i++) {
+            const offset = (i - 1) * 0.15;
+            const speed = 3.5;
+            this.projectiles.push({
+                x: boss.x,
+                y: boss.y,
+                vx: Math.cos(angleToPlayer + offset) * speed,
+                vy: Math.sin(angleToPlayer + offset) * speed,
+                damage: 26,
+                life: 200,
+                type: 'boss-missile',
+                color: '#FF6B88',
+                size: 4,
+                homing: true,
+                homingStrength: 0.09,
+                explosionRadius: 35,
+                speed,
+                owner: 'enemy'
+            });
+        }
+    }
+
+    fireFrostColossusPattern(boss) {
+        // Massive 16-projectile ice nova covering all directions
+        const novaCount = 16;
+        for (let i = 0; i < novaCount; i++) {
+            const angle = (Math.PI * 2 * i) / novaCount;
+            const speed = 2.2;
+            this.projectiles.push({
+                x: boss.x,
+                y: boss.y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                damage: 30,
+                life: 260,
+                type: 'boss-missile',
+                color: '#00D4FF',
+                size: 8,
+                homing: false,
+                explosionRadius: 55,
+                speed,
+                owner: 'enemy'
+            });
+        }
+
+        // Fast ice spears directly at player
+        const angleToPlayer = Math.atan2(this.player.y - boss.y, this.player.x - boss.x);
+        const spearCount = 3;
+        for (let i = 0; i < spearCount; i++) {
+            const offset = (i - 1) * 0.12;
+            const speed = 6;
+            this.projectiles.push({
+                x: boss.x,
+                y: boss.y,
+                vx: Math.cos(angleToPlayer + offset) * speed,
+                vy: Math.sin(angleToPlayer + offset) * speed,
+                damage: 38,
+                life: 180,
+                type: 'boss-missile',
+                color: '#5CE1FF',
+                size: 6,
+                homing: false,
+                explosionRadius: 45,
+                speed,
+                owner: 'enemy'
+            });
+        }
+    }
+
     spawnEnemies() {
         // Delegate to EnemySystem
         this.enemySystem.spawnEnemies({
@@ -6872,7 +7073,7 @@ class VibeSurvivor {
         };
 
         // Alert the player immediately; the boss will arrive after the delay
-        this.showBossNotification(variantConfig?.name);
+        this.showBossNotification(variantConfig);
     }
 
     spawnBossImmediate(spawnDistance, variantConfig, suppressNotification = true, bossLevel = this.bossLevel) {
@@ -6926,7 +7127,7 @@ class VibeSurvivor {
         this.bossSpawned = true;
 
         if (!suppressNotification) {
-            this.showBossNotification(variantConfig?.name);
+            this.showBossNotification(variantConfig);
         }
     }
 
@@ -6991,7 +7192,7 @@ class VibeSurvivor {
         this.bossSpawned = true;
 
         if (!suppressNotification) {
-            this.showBossNotification(variantConfig?.name);
+            this.showBossNotification(variantConfig);
         }
     }
     
@@ -7353,6 +7554,15 @@ class VibeSurvivor {
                 case 'prism':
                     this.updatePrismSeraphMovement(enemy, dirX, dirY, playerX, playerY);
                     break;
+                case 'vortex':
+                    this.updateVortexSpectreMovement(enemy, dirX, dirY, distance, playerX, playerY);
+                    break;
+                case 'reaper':
+                    this.updateCrimsonReaperMovement(enemy, dirX, dirY, distance, playerX, playerY);
+                    break;
+                case 'colossus':
+                    this.updateFrostColossusMovement(enemy, dirX, dirY, distance);
+                    break;
                 default:
                     this.updatePulseHunterMovement(enemy, dirX, dirY, distance, bossHealthPercent, playerX, playerY);
                     break;
@@ -7407,7 +7617,7 @@ class VibeSurvivor {
                 }
             } else {
                 const [dashDirX, dashDirY] = Vector2.direction(enemy.x, enemy.y, enemy.dashState.targetX, enemy.dashState.targetY);
-                const dashSpeed = enemy.speed * 4; // Reduced from 6x for easier dodging
+                const dashSpeed = enemy.speed * 6; // Balanced for challenge (was 6x originally, then 4x)
                 enemy.x += dashDirX * dashSpeed;
                 enemy.y += dashDirY * dashSpeed;
                 enemy.dashState.duration++;
@@ -7453,7 +7663,7 @@ class VibeSurvivor {
             targetX: 0,
             targetY: 0,
             duration: 0,
-            maxDuration: 18, // Reduced from 24 for shorter dash distance
+            maxDuration: 22, // 0.37 seconds at 60fps (balanced for challenge)
             originalSpeed: enemy.speed
         });
 
@@ -7474,7 +7684,7 @@ class VibeSurvivor {
             }
         } else {
             const [dashDirX, dashDirY] = Vector2.direction(enemy.x, enemy.y, dashState.targetX, dashState.targetY);
-            const dashSpeed = enemy.speed * 5; // Reduced from 7.2x for easier dodging
+            const dashSpeed = enemy.speed * 6.5; // Balanced for challenge (was 7.2x originally, then 5x)
             enemy.x += dashDirX * dashSpeed;
             enemy.y += dashDirY * dashSpeed;
             dashState.duration++;
@@ -7585,6 +7795,73 @@ class VibeSurvivor {
         }
 
         enemy.angle = (enemy.angle || 0) + 0.12;
+    }
+
+    updateVortexSpectreMovement(enemy, dirX, dirY, distance, playerX, playerY) {
+        enemy.variantState = enemy.variantState || {};
+        const state = enemy.variantState;
+
+        // Orbital movement with pulsing distance - no teleporting
+        state.orbitPhase = (state.orbitPhase || 0) + 0.025;
+
+        // Initialize orbit direction if not set
+        if (state.orbitDir === undefined) {
+            state.orbitDir = Math.random() < 0.5 ? 1 : -1;
+        }
+
+        // Target distance oscillates between 250-350 units
+        const baseDistance = 300;
+        const pulseDistance = Math.sin(state.orbitPhase * 2) * 50;
+        const desiredDistance = baseDistance + pulseDistance;
+
+        const distanceDelta = distance - desiredDistance;
+
+        // Move toward or away to maintain desired distance
+        if (Math.abs(distanceDelta) > 40) {
+            const towardsPlayer = distanceDelta > 0 ? 1 : -1;
+            enemy.x += dirX * enemy.speed * 1.2 * towardsPlayer;
+            enemy.y += dirY * enemy.speed * 1.2 * towardsPlayer;
+        }
+
+        // Add perpendicular movement for orbiting
+        const perpendicularX = -dirY * state.orbitDir;
+        const perpendicularY = dirX * state.orbitDir;
+        enemy.x += perpendicularX * enemy.speed * 1.4;
+        enemy.y += perpendicularY * enemy.speed * 1.4;
+
+        enemy.angle = (enemy.angle || 0) + 0.08;
+    }
+
+    updateCrimsonReaperMovement(enemy, dirX, dirY, distance, playerX, playerY) {
+        enemy.variantState = enemy.variantState || {};
+        const state = enemy.variantState;
+
+        // Figure-8 movement pattern around player
+        state.figureEightPhase = (state.figureEightPhase || 0) + 0.03;
+
+        const desiredDistance = 300;
+        const figureEightX = Math.sin(state.figureEightPhase) * desiredDistance;
+        const figureEightY = Math.sin(state.figureEightPhase * 2) * desiredDistance * 0.5;
+
+        const targetX = playerX + figureEightX;
+        const targetY = playerY + figureEightY;
+
+        const [moveX, moveY] = Vector2.direction(enemy.x, enemy.y, targetX, targetY);
+        enemy.x += moveX * enemy.speed * 1.6;
+        enemy.y += moveY * enemy.speed * 1.6;
+
+        // Rotate to face movement direction
+        enemy.angle = Math.atan2(moveY, moveX) + Math.PI / 2;
+    }
+
+    updateFrostColossusMovement(enemy, dirX, dirY, distance) {
+        // Very slow, relentless chase - the "tank" of bosses
+        const moveSpeed = enemy.speed * 0.8;
+        enemy.x += dirX * moveSpeed;
+        enemy.y += dirY * moveSpeed;
+
+        // Slow rotation for intimidating presence
+        enemy.angle = (enemy.angle || 0) + 0.015;
     }
 
     updateEnemies() {
@@ -8842,7 +9119,21 @@ class VibeSurvivor {
         this.showToastNotification(message, 'upgrade', iconHtml);
     }
     
-    showBossNotification(bossName = null) {
+    showBossNotification(bossNameOrVariant = null) {
+        let bossName = null;
+
+        // If passed a variant config object, extract the appropriate name
+        if (bossNameOrVariant && typeof bossNameOrVariant === 'object') {
+            const variant = bossNameOrVariant;
+            // Use Korean name if language is Korean, otherwise use English name
+            bossName = (this.currentLanguage === 'ko' && variant.nameKo)
+                ? variant.nameKo
+                : variant.name;
+        } else if (typeof bossNameOrVariant === 'string') {
+            // If passed a string, use it directly (backward compatibility)
+            bossName = bossNameOrVariant;
+        }
+
         const message = bossName
             ? `${bossName.toUpperCase()} EMERGES!`
             : "BOSS APPEARED!";

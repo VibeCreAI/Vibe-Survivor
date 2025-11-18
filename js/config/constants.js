@@ -105,6 +105,7 @@ export const BOSS_VARIANTS = [
     {
         id: 'pulse_hunter',
         name: 'Pulse Hunter',
+        nameKo: '펄스 헌터',
         color: '#F000FF',
         behavior: 'pulse',
         attackPattern: 'pulse',
@@ -116,6 +117,7 @@ export const BOSS_VARIANTS = [
     {
         id: 'shock_sentinel',
         name: 'Shock Sentinel',
+        nameKo: '쇼크 센티넬',
         color: '#00E5FF',
         behavior: 'shock',
         attackPattern: 'shock',
@@ -127,6 +129,7 @@ export const BOSS_VARIANTS = [
     {
         id: 'rift_reaver',
         name: 'Rift Reaver',
+        nameKo: '균열의 약탈자',
         color: '#FF8A00',
         behavior: 'rift',
         attackPattern: 'rift',
@@ -138,6 +141,7 @@ export const BOSS_VARIANTS = [
     {
         id: 'nightfall_carrier',
         name: 'Nightfall Carrier',
+        nameKo: '밤의 운반자',
         color: '#7D5BFF',
         behavior: 'carrier',
         attackPattern: 'carrier',
@@ -149,6 +153,7 @@ export const BOSS_VARIANTS = [
     {
         id: 'singularity_titan',
         name: 'Singularity Titan',
+        nameKo: '특이점 타이탄',
         color: '#FFE34D',
         behavior: 'titan',
         attackPattern: 'titan',
@@ -160,6 +165,7 @@ export const BOSS_VARIANTS = [
     {
         id: 'solar_warden',
         name: 'Solar Warden',
+        nameKo: '태양의 수호자',
         color: '#FFB347',
         behavior: 'solar',
         attackPattern: 'solar',
@@ -171,6 +177,7 @@ export const BOSS_VARIANTS = [
     {
         id: 'prism_seraph',
         name: 'Prism Seraph',
+        nameKo: '프리즘 세라핌',
         color: '#7CFFE8',
         behavior: 'prism',
         attackPattern: 'prism',
@@ -182,6 +189,7 @@ export const BOSS_VARIANTS = [
     {
         id: 'void_architect',
         name: 'Void Architect',
+        nameKo: '공허의 설계자',
         color: '#AA66FF',
         behavior: 'rift',
         attackPattern: 'rift',
@@ -189,6 +197,42 @@ export const BOSS_VARIANTS = [
         sizeMultiplier: 1.15,
         shape: 'star',
         description: 'A crystalline vortex that warps space with mirror shards.'
+    },
+    {
+        id: 'vortex_spectre',
+        name: 'Vortex Spectre',
+        nameKo: '소용돌이 유령',
+        color: '#9D00FF',
+        behavior: 'vortex',
+        attackPattern: 'vortex',
+        missileInterval: 160,
+        sizeMultiplier: 1.1,
+        shape: 'spiral',
+        description: 'Orbiting phantom that conjures spiral vortexes and stationary mines.'
+    },
+    {
+        id: 'crimson_reaper',
+        name: 'Crimson Reaper',
+        nameKo: '진홍의 사신',
+        color: '#FF1744',
+        behavior: 'reaper',
+        attackPattern: 'reaper',
+        missileInterval: 150,
+        sizeMultiplier: 1.15,
+        shape: 'cross',
+        description: 'Death incarnate wielding cross-slash beams in alternating patterns.'
+    },
+    {
+        id: 'frost_colossus',
+        name: 'Frost Colossus',
+        nameKo: '서리 거신',
+        color: '#00D4FF',
+        behavior: 'colossus',
+        attackPattern: 'colossus',
+        missileInterval: 180,
+        sizeMultiplier: 1.35,
+        shape: 'octagon',
+        description: 'Glacial titan that floods the battlefield with massive ice novas.'
     }
 ];
 
