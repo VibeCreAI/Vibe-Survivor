@@ -7,7 +7,7 @@
 ![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-yellow?style=for-the-badge&logo=javascript)
 ![HTML5](https://img.shields.io/badge/HTML5-Canvas-orange?style=for-the-badge&logo=html5)
 ![AI Powered](https://img.shields.io/badge/AI-Powered-blueviolet?style=for-the-badge)
-![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
+![License](https://img.shields.io/badge/License-All%20Rights%20Reserved-red?style=for-the-badge)
 
 [**🎮 Play Now**](#-quick-start) | [**🎬 Watch Video**](#-watch-the-gameplay) | [**📖 Story**](#-the-vibe-coding-story) | [**🛠️ Tech Stack**](#%EF%B8%8F-built-with-ai)
 
@@ -277,23 +277,29 @@ Originally a single 9,300+ line file, the codebase was refactored into a modular
 
 ## 🤝 Contributing
 
-While this is primarily a showcase of AI-assisted development, contributions are welcome!
+This is primarily a showcase of AI-assisted development and portfolio piece.
 
-**Areas for contribution:**
-- 🐛 Bug fixes
-- 🎮 New weapons or enemy types
-- 🎨 Additional visual effects
-- 📱 Mobile UX improvements
-- 🌍 Translations/localization
-- 📊 Leaderboard system
+**Note:** This project is under proprietary license (All Rights Reserved). If you're interested in contributing or collaborating, please reach out to discuss permissions first.
 
-**Please note:** All contributions should maintain the vanilla JavaScript approach (no frameworks).
+Potential areas of interest:
+- 🐛 Bug reports and feedback
+- 🎮 Feature suggestions
+- 📱 Mobile UX testing
+- 🌍 Gameplay feedback
+
+**Project maintains a vanilla JavaScript approach** (no frameworks).
 
 ---
 
 ## 📝 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+**Copyright © 2025 VibeCreAI. All Rights Reserved.**
+
+This game, including all code, visual assets, audio content, and game design, is the proprietary property of VibeCreAI. No part of this project may be reproduced, distributed, or transmitted in any form or by any means without the prior written permission of the copyright owner.
+
+For licensing inquiries, please contact the owner.
+
+See the [LICENSE](LICENSE) file for full details.
 
 ---
 
