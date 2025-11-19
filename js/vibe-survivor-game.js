@@ -6779,8 +6779,8 @@ class VibeSurvivor {
                 vx: 0,
                 vy: 0,
                 damage: 35,
-                life: this.getBossProjectileLife(180, boss),
-                type: 'boss-mine',
+                life: this.getBossProjectileLife(800, boss),
+                type: 'boss-missile',
                 color: '#7B2CBF',
                 size: 6,
                 homing: false,
@@ -6971,11 +6971,11 @@ class VibeSurvivor {
         } else {
             // After first boss defeated: freeze time scaling, use boss scaling only
             timeScaling = 1 + Math.floor(300 / 30) * 0.3; // Freeze at first boss time (300 seconds = 10 intervals = 4.0x)
-            bossScaling = 1 + this.bossesKilled * 0.2; // 20% per boss defeated
+            bossScaling = 1 + this.bossesKilled * 0.3; // 30% per boss defeated
         }
         
         const totalHealthMultiplier = config.health * timeScaling * bossScaling;
-        const totalDamageMultiplier = config.contactDamage * (1 + (this.bossesKilled || 0) * 0.15); // 15% damage per boss
+        const totalDamageMultiplier = config.contactDamage * (1 + (this.bossesKilled || 0) * 0.3); // 30% damage per boss
         
         const sizeMult = variant?.sizeMult || 1;
         const speedMult = variant?.speedMult || 1;
@@ -11523,7 +11523,7 @@ class VibeSurvivor {
         }
         
         // Render complex projectiles individually (plasma, flame, lightning, missiles)
-        const complexTypes = ['plasma', 'flame', 'lightning', 'missile', 'boss-missile', 'shockburst', 'boss-mine'];
+        const complexTypes = ['plasma', 'flame', 'lightning', 'missile', 'boss-missile', 'shockburst'];
         for (const type of complexTypes) {
             const projectiles = projectilesByType[type];
             if (!projectiles || projectiles.length === 0) continue;
@@ -11699,30 +11699,7 @@ class VibeSurvivor {
                         break;
                         
                     case 'boss-missile':
-                        this.ctx.translate(projectile.x, projectile.y);
-                        this.ctx.rotate(Math.atan2(projectile.vy, projectile.vx));
-                        
-                        // Boss missile body
-                        this.ctx.fillStyle = projectile.color;
-                        this.ctx.fillRect(-8, -3, 16, 6);
-                        
-                        // Boss missile tip
-                        this.ctx.fillStyle = '#FF0000';
-                        this.ctx.beginPath();
-                        this.ctx.moveTo(8, 0);
-                        this.ctx.lineTo(4, -3);
-                        this.ctx.lineTo(4, 3);
-                        this.ctx.closePath();
-                        this.ctx.fill();
-                        
-                        // Simplified exhaust trail
-                        this.ctx.fillStyle = '#FF0066';
-                        this.ctx.globalAlpha = 0.8;
-                        this.ctx.fillRect(-12, -2, 4, 4);
-                        break;
-
-                    case 'boss-mine':
-                        {
+                        if (projectile.isMine) {
                             const pulsePhase = (projectile.pulseOffset || 0) + (this.frameCount * 0.08);
                             const pulseScale = 1.2 + Math.sin(pulsePhase) * 0.2;
                             const baseSize = projectile.size || 6;
@@ -11758,6 +11735,27 @@ class VibeSurvivor {
                             }
 
                             this.ctx.globalAlpha = 1;
+                        } else {
+                            this.ctx.translate(projectile.x, projectile.y);
+                            this.ctx.rotate(Math.atan2(projectile.vy, projectile.vx));
+                            
+                            // Boss missile body
+                            this.ctx.fillStyle = projectile.color;
+                            this.ctx.fillRect(-8, -3, 16, 6);
+                            
+                            // Boss missile tip
+                            this.ctx.fillStyle = '#FF0000';
+                            this.ctx.beginPath();
+                            this.ctx.moveTo(8, 0);
+                            this.ctx.lineTo(4, -3);
+                            this.ctx.lineTo(4, 3);
+                            this.ctx.closePath();
+                            this.ctx.fill();
+                            
+                            // Simplified exhaust trail
+                            this.ctx.fillStyle = '#FF0066';
+                            this.ctx.globalAlpha = 0.8;
+                            this.ctx.fillRect(-12, -2, 4, 4);
                         }
                         break;
                 }

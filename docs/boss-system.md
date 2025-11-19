@@ -29,7 +29,7 @@ Two bosses rely on dash states (Pulse Hunter and Rift Reaver). They call `getBos
 - **Cycle math**: `getBossCycle()` and `getBossCycleDashMultiplier()` live near the boss spawn helpers in `js/vibe-survivor-game.js`.
 - **Missile bonuses**: `applyBossCycleMissileBonus()` contains the radial-ring math and homing dart counts. Adjust ring counts, speed, or colors there.
 - **Dash speed/cooldown**: `updatePulseHunterMovement()` and `updateRiftReaverMovement()` multiply their dash speeds by `getBossCycleDashMultiplier()`. Dash cooldown reduction only applies during the first cycle (driven by `this.bossesKilled`) to keep later loops from chaining unavoidable dashes.
-- **Stationary mines**: Vortex Spectre plants `boss-mine` projectiles (see `fireVortexSpectrePattern()`), rendered with a pulsing warning ring and detonating immediately on contact thanks to the stationary projectile logic in `js/core/physics.js`.
+- **Stationary mines**: Vortex Spectre plants special boss missiles flagged as mines (see `fireVortexSpectrePattern()`), rendered with a pulsing warning ring and detonating immediately on contact thanks to the stationary projectile logic in `js/core/physics.js`.
 - **Base scaling**: `spawnScaledBossImmediate()` centralizes the exponential stat growth. Tweak the `fastPow` bases (1.4/1.05/1.15) for broad difficulty changes.
 
 Use this reference as a quick map when rebalancing bosses between cycles. Any new behavior that should scale per loop can plug into the cycle helpers rather than duplicating the modulo logic.
