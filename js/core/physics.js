@@ -332,7 +332,24 @@ export class PhysicsManager {
             const dy = projectile.y - player.y;
             const distance = this.cachedSqrt(dx * dx + dy * dy);
 
-            if (distance < player.radius + (projectile.size || 3)) {
+            // Give stationary hazards (boss mines) a larger collision footprint
+            const baseRadius = projectile.size || 3;
+            let projectileRadius = baseRadius;
+            const stationaryProjectile =
+                Math.abs(projectile.vx || 0) < 0.05 &&
+                Math.abs(projectile.vy || 0) < 0.05 &&
+                (!projectile.speed || projectile.speed <= 0.05);
+
+            if (stationaryProjectile && projectile.explosionRadius) {
+                projectileRadius = Math.max(baseRadius, projectile.explosionRadius * 0.6);
+            }
+
+            if (distance < player.radius + projectileRadius) {
+                let explosionTriggered = false;
+                if (stationaryProjectile && projectile.explosionRadius && game.createExplosion) {
+                    game.createExplosion(projectile.x, projectile.y, projectile.explosionRadius, projectile.damage);
+                    explosionTriggered = true;
+                }
                 // Player hit by enemy projectile
                 player.health -= projectile.damage;
 
@@ -347,7 +364,7 @@ export class PhysicsManager {
                 }
 
                 // Create explosion if projectile has explosion radius
-                if (projectile.explosionRadius && game.createExplosion) {
+                if (!explosionTriggered && projectile.explosionRadius && game.createExplosion) {
                     game.createExplosion(projectile.x, projectile.y, projectile.explosionRadius, projectile.damage * 0.5);
                 }
 

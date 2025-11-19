@@ -46,7 +46,9 @@ export class ProjectileSystem {
             owner: 'player',
             active: true, // Compatibility flag for old code
             trail: [], // Visual trail for missiles/lasers
-            rotation: 0 // Rotation angle for rendering
+            rotation: 0, // Rotation angle for rendering
+            isMine: false,
+            pulseOffset: 0
         };
     }
 
@@ -80,6 +82,8 @@ export class ProjectileSystem {
         projectile.owner = 'player'; // CRITICAL: Reset to player to prevent boss missiles from attacking player when reused
         projectile.type = '';
         projectile.homing = false;
+        projectile.isMine = false;
+        projectile.pulseOffset = 0;
 
         // Return to pool if not at capacity
         if (this.pool.length < this.poolSize) {

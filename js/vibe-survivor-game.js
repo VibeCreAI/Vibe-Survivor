@@ -6399,7 +6399,7 @@ class VibeSurvivor {
                 vx: this.fastCos(angleToPlayer + angleOffset) * speed,
                 vy: this.fastSin(angleToPlayer + angleOffset) * speed,
                 damage,
-                life: 300,
+                life: this.getBossProjectileLife(300, boss),
                 type: 'boss-missile',
                 color,
                 size: 4,
@@ -6428,7 +6428,7 @@ class VibeSurvivor {
                     vx: Math.cos(offset) * speed,
                     vy: Math.sin(offset) * speed,
                     damage: 32,
-                    life: 90,
+                life: this.getBossProjectileLife(90, boss),
                     type: 'boss-missile',
                     color: '#00E5FF',
                     size: 5,
@@ -6450,7 +6450,7 @@ class VibeSurvivor {
                     vx: Math.cos(angle) * speed,
                     vy: Math.sin(angle) * speed,
                     damage: 26,
-                    life: 240,
+                    life: this.getBossProjectileLife(240, boss),
                     type: 'boss-missile',
                     color: '#00B4D8',
                     size: 6,
@@ -6478,7 +6478,7 @@ class VibeSurvivor {
                 vx: Math.cos(angleToPlayer + offset) * speed,
                 vy: Math.sin(angleToPlayer + offset) * speed,
                 damage: 36,
-                life: 220,
+                life: this.getBossProjectileLife(220, boss),
                 type: 'boss-missile',
                 color: '#FF8A00',
                 size: 5,
@@ -6500,7 +6500,7 @@ class VibeSurvivor {
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed,
                 damage: 18,
-                life: 260,
+                life: this.getBossProjectileLife(260, boss),
                 type: 'boss-missile',
                 color: '#FFC078',
                 size: 4,
@@ -6522,7 +6522,7 @@ class VibeSurvivor {
                 vx: Math.cos(angleToPlayer + offset) * speed,
                 vy: Math.sin(angleToPlayer + offset) * speed,
                 damage: 18,
-                life: 140,
+                life: this.getBossProjectileLife(140, boss),
                 type: 'boss-missile',
                 color: '#FFDF91',
                 size: 4,
@@ -6546,7 +6546,7 @@ class VibeSurvivor {
                 vx: Math.cos(offset) * speed,
                 vy: Math.sin(offset) * speed,
                 damage: 28,
-                life: 200,
+                life: this.getBossProjectileLife(200, boss),
                 type: 'boss-missile',
                 color: '#8F7CFF',
                 size: 5,
@@ -6567,7 +6567,7 @@ class VibeSurvivor {
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed,
                 damage: 32,
-                life: 260,
+                life: this.getBossProjectileLife(260, boss),
                 type: 'boss-missile',
                 color: '#B19CFF',
                 size: 6,
@@ -6594,7 +6594,7 @@ class VibeSurvivor {
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed,
                 damage: 38,
-                life: 220,
+                life: this.getBossProjectileLife(220, boss),
                 type: 'boss-missile',
                 color: '#FFE34D',
                 size: 6,
@@ -6616,7 +6616,7 @@ class VibeSurvivor {
                 vx: Math.cos(baseAngle + offset) * speed,
                 vy: Math.sin(baseAngle + offset) * speed,
                 damage: 42,
-                life: 260,
+                life: this.getBossProjectileLife(260, boss),
                 type: 'boss-missile',
                 color: '#FFC107',
                 size: 7,
@@ -6640,7 +6640,7 @@ class VibeSurvivor {
                 vx: this.fastCos(angle) * baseSpeed,
                 vy: this.fastSin(angle) * baseSpeed,
                 damage: 30,
-                life: 220,
+                life: this.getBossProjectileLife(220, boss),
                 type: 'boss-missile',
                 color: '#FFB347',
                 size: 5,
@@ -6662,7 +6662,7 @@ class VibeSurvivor {
                 vx: Math.cos(beamAngle) * speed,
                 vy: Math.sin(beamAngle) * speed,
                 damage: 16,
-                life: 160,
+                life: this.getBossProjectileLife(160, boss),
                 type: 'boss-missile',
                 color: '#FFD27F',
                 size: 4,
@@ -6686,7 +6686,7 @@ class VibeSurvivor {
                 vx: Math.cos(angleToPlayer + offset) * speed,
                 vy: Math.sin(angleToPlayer + offset) * speed,
                 damage: 24,
-                life: 200,
+                life: this.getBossProjectileLife(200, boss),
                 type: 'boss-missile',
                 color: '#7CFFE8',
                 size: 4,
@@ -6708,7 +6708,7 @@ class VibeSurvivor {
                 vx: Math.cos(beamAngle) * speed,
                 vy: Math.sin(beamAngle) * speed,
                 damage: 20,
-                life: 140,
+                life: this.getBossProjectileLife(140, boss),
                 type: 'boss-missile',
                 color: '#C5FFF5',
                 size: 3,
@@ -6739,7 +6739,7 @@ class VibeSurvivor {
                 vx: Math.cos(angleClockwise) * speedCW,
                 vy: Math.sin(angleClockwise) * speedCW,
                 damage: 28,
-                life: 240,
+                life: this.getBossProjectileLife(240, boss),
                 type: 'boss-missile',
                 color: '#9D00FF',
                 size: 4,
@@ -6758,7 +6758,7 @@ class VibeSurvivor {
                 vx: Math.cos(angleCounterCW) * speedCCW,
                 vy: Math.sin(angleCounterCW) * speedCCW,
                 damage: 28,
-                life: 240,
+                life: this.getBossProjectileLife(240, boss),
                 type: 'boss-missile',
                 color: '#C77DFF',
                 size: 4,
@@ -6779,14 +6779,16 @@ class VibeSurvivor {
                 vx: 0,
                 vy: 0,
                 damage: 35,
-                life: 180,
-                type: 'boss-missile',
+                life: this.getBossProjectileLife(180, boss),
+                type: 'boss-mine',
                 color: '#7B2CBF',
                 size: 6,
                 homing: false,
                 explosionRadius: 55,
                 speed: 0,
-                owner: 'enemy'
+                owner: 'enemy',
+                isMine: true,
+                pulseOffset: Math.random() * Math.PI * 2
             });
         });
     }
@@ -6808,7 +6810,7 @@ class VibeSurvivor {
                     vx: Math.cos(angle) * speed,
                     vy: Math.sin(angle) * speed,
                     damage: 32,
-                    life: 160,
+                    life: this.getBossProjectileLife(160, boss),
                     type: 'boss-missile',
                     color: '#FF1744',
                     size: 5,
@@ -6829,7 +6831,7 @@ class VibeSurvivor {
                     vx: Math.cos(angle) * speed,
                     vy: Math.sin(angle) * speed,
                     damage: 32,
-                    life: 160,
+                    life: this.getBossProjectileLife(160, boss),
                     type: 'boss-missile',
                     color: '#FF4569',
                     size: 5,
@@ -6852,7 +6854,7 @@ class VibeSurvivor {
                 vx: Math.cos(angleToPlayer + offset) * speed,
                 vy: Math.sin(angleToPlayer + offset) * speed,
                 damage: 26,
-                life: 200,
+                life: this.getBossProjectileLife(200, boss),
                 type: 'boss-missile',
                 color: '#FF6B88',
                 size: 4,
@@ -6877,7 +6879,7 @@ class VibeSurvivor {
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed,
                 damage: 30,
-                life: 260,
+                life: this.getBossProjectileLife(260, boss),
                 type: 'boss-missile',
                 color: '#00D4FF',
                 size: 8,
@@ -6900,7 +6902,7 @@ class VibeSurvivor {
                 vx: Math.cos(angleToPlayer + offset) * speed,
                 vy: Math.sin(angleToPlayer + offset) * speed,
                 damage: 38,
-                life: 180,
+                life: this.getBossProjectileLife(180, boss),
                 type: 'boss-missile',
                 color: '#5CE1FF',
                 size: 6,
@@ -6969,11 +6971,11 @@ class VibeSurvivor {
         } else {
             // After first boss defeated: freeze time scaling, use boss scaling only
             timeScaling = 1 + Math.floor(300 / 30) * 0.3; // Freeze at first boss time (300 seconds = 10 intervals = 4.0x)
-            bossScaling = 1 + this.bossesKilled * 0.15; // 15% per boss defeated
+            bossScaling = 1 + this.bossesKilled * 0.2; // 20% per boss defeated
         }
         
         const totalHealthMultiplier = config.health * timeScaling * bossScaling;
-        const totalDamageMultiplier = config.contactDamage * (1 + (this.bossesKilled || 0) * 0.1); // 10% damage per boss
+        const totalDamageMultiplier = config.contactDamage * (1 + (this.bossesKilled || 0) * 0.15); // 15% damage per boss
         
         const sizeMult = variant?.sizeMult || 1;
         const speedMult = variant?.speedMult || 1;
@@ -7056,6 +7058,16 @@ class VibeSurvivor {
         return 1 + (cycle * 0.25);
     }
 
+    getBossProjectileLife(baseLife, boss = null) {
+        const level = boss?.bossLevel || this.bossLevel || 1;
+        const cycle = this.getBossCycle(level);
+        if (cycle <= 0) {
+            return baseLife;
+        }
+        const multiplier = 1 + cycle * 0.25;
+        return Math.floor(baseLife * multiplier);
+    }
+
     applyBossCycleMissileBonus(boss, attackPattern, cycleLevel) {
         if (cycleLevel <= 0) {
             return;
@@ -7078,7 +7090,7 @@ class VibeSurvivor {
                     vx: this.fastCos(angle) * ringSpeed,
                     vy: this.fastSin(angle) * ringSpeed,
                     damage: ringDamage,
-                    life: 240 + cycleLevel * 30,
+                    life: this.getBossProjectileLife(240 + cycleLevel * 30, boss),
                     type: 'boss-missile',
                     color: ringColor,
                     size: 3,
@@ -7106,7 +7118,7 @@ class VibeSurvivor {
                 vx: this.fastCos(dartAngle) * dartSpeed,
                 vy: this.fastSin(dartAngle) * dartSpeed,
                 damage: Math.floor(22 * (1 + cycleLevel * 0.3)),
-                life: 360,
+                life: this.getBossProjectileLife(360, boss),
                 type: 'boss-missile',
                 color: '#FF9CFF',
                 size: 3,
@@ -11511,7 +11523,7 @@ class VibeSurvivor {
         }
         
         // Render complex projectiles individually (plasma, flame, lightning, missiles)
-        const complexTypes = ['plasma', 'flame', 'lightning', 'missile', 'boss-missile', 'shockburst'];
+        const complexTypes = ['plasma', 'flame', 'lightning', 'missile', 'boss-missile', 'shockburst', 'boss-mine'];
         for (const type of complexTypes) {
             const projectiles = projectilesByType[type];
             if (!projectiles || projectiles.length === 0) continue;
@@ -11707,6 +11719,46 @@ class VibeSurvivor {
                         this.ctx.fillStyle = '#FF0066';
                         this.ctx.globalAlpha = 0.8;
                         this.ctx.fillRect(-12, -2, 4, 4);
+                        break;
+
+                    case 'boss-mine':
+                        {
+                            const pulsePhase = (projectile.pulseOffset || 0) + (this.frameCount * 0.08);
+                            const pulseScale = 1.2 + Math.sin(pulsePhase) * 0.2;
+                            const baseSize = projectile.size || 6;
+                            const radius = baseSize * pulseScale;
+
+                            // Outer glow
+                            this.ctx.globalAlpha = 0.6;
+                            this.ctx.fillStyle = projectile.color || '#7B2CBF';
+                            this.ctx.shadowColor = projectile.color || '#7B2CBF';
+                            this.ctx.shadowBlur = 15;
+                            this.ctx.beginPath();
+                            this.ctx.arc(projectile.x, projectile.y, radius, 0, Math.PI * 2);
+                            this.ctx.fill();
+
+                            // Inner core
+                            this.ctx.shadowBlur = 0;
+                            this.ctx.globalAlpha = 0.9;
+                            this.ctx.fillStyle = '#FFFFFF';
+                            this.ctx.beginPath();
+                            this.ctx.arc(projectile.x, projectile.y, baseSize * 0.5, 0, Math.PI * 2);
+                            this.ctx.fill();
+
+                            // Warning ring showing detonation radius
+                            if (projectile.explosionRadius) {
+                                this.ctx.globalAlpha = 0.35;
+                                this.ctx.strokeStyle = projectile.color || '#7B2CBF';
+                                this.ctx.lineWidth = 2;
+                                this.ctx.setLineDash([4, 6]);
+                                this.ctx.beginPath();
+                                this.ctx.arc(projectile.x, projectile.y, projectile.explosionRadius * 0.6, 0, Math.PI * 2);
+                                this.ctx.stroke();
+                                this.ctx.setLineDash([]);
+                            }
+
+                            this.ctx.globalAlpha = 1;
+                        }
                         break;
                 }
                 
