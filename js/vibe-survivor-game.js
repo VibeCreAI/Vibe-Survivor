@@ -118,7 +118,9 @@ class VibeSurvivor {
         // Initialize gameplay systems
         this.playerSystem = new PlayerSystem();
         this.pickupSystem = new PickupSystem();
-        this.enemySystem = new EnemySystem();
+        this.enemySystem = new EnemySystem({
+            bossVariantCount: Array.isArray(BOSS_VARIANTS) ? BOSS_VARIANTS.length : 11
+        });
 
         // Initialize Phase 9 systems - Weapons & Progression
         this.weaponSystem = new WeaponSystem();
@@ -6318,40 +6320,44 @@ class VibeSurvivor {
     // Removed duplicate returnProjectileToPool method - using the correct one below
 
     createBossMissile(boss, healthPercent = 1.0) {
-        const variant = this.getBossVariantById(boss.variantId) || this.getBossVariantForLevel(boss.bossLevel || 1);
+        const bossLevel = boss.bossLevel || 1;
+        const variant = this.getBossVariantById(boss.variantId) || this.getBossVariantForLevel(bossLevel);
         const attackPattern = variant?.attackPattern || 'pulse';
+        const cycleLevel = this.getBossCycle(bossLevel);
 
         switch (attackPattern) {
             case 'shock':
                 this.fireShockSentinelPattern(boss);
-                return;
+                break;
             case 'rift':
                 this.fireRiftReaverPattern(boss);
-                return;
+                break;
             case 'carrier':
                 this.fireNightfallCarrierPattern(boss);
-                return;
+                break;
             case 'titan':
                 this.fireSingularityTitanPattern(boss);
-                return;
+                break;
             case 'solar':
                 this.fireSolarWardenPattern(boss);
-                return;
+                break;
             case 'prism':
                 this.firePrismSeraphPattern(boss);
-                return;
+                break;
             case 'vortex':
                 this.fireVortexSpectrePattern(boss);
-                return;
+                break;
             case 'reaper':
                 this.fireCrimsonReaperPattern(boss);
-                return;
+                break;
             case 'colossus':
                 this.fireFrostColossusPattern(boss);
-                return;
+                break;
             default:
                 this.firePulseHunterPattern(boss, healthPercent);
         }
+
+        this.applyBossCycleMissileBonus(boss, attackPattern, cycleLevel);
     }
 
     firePulseHunterPattern(boss, healthPercent) {
@@ -7034,6 +7040,84 @@ class VibeSurvivor {
         if (!variantId || !Array.isArray(BOSS_VARIANTS)) return null;
         return BOSS_VARIANTS.find(variant => variant.id === variantId) || null;
     }
+
+    getBossCycle(level) {
+        const variantCount = Array.isArray(BOSS_VARIANTS) ? BOSS_VARIANTS.length : 0;
+        if (variantCount === 0) {
+            return 0;
+        }
+        const normalizedLevel = Math.max(1, level || 1);
+        return Math.floor((normalizedLevel - 1) / variantCount);
+    }
+
+    getBossCycleDashMultiplier(level) {
+        const cycle = this.getBossCycle(level);
+        // +25% dash speed per cycle beyond the first to keep later bosses threatening
+        return 1 + (cycle * 0.25);
+    }
+
+    applyBossCycleMissileBonus(boss, attackPattern, cycleLevel) {
+        if (cycleLevel <= 0) {
+            return;
+        }
+
+        const ringColor = attackPattern === 'shock' ? '#00C0FF' : '#FF66FF';
+        const baseAngle = (this.gameTime || 0) * 0.12;
+        const rings = Math.min(2 + cycleLevel, 4);
+
+        for (let ring = 0; ring < rings; ring++) {
+            const missileCount = 6 + cycleLevel * 2 + ring * 2;
+            const ringSpeed = 2.1 + 0.3 * (ring + cycleLevel);
+            const ringDamage = Math.floor(14 * (1 + cycleLevel * 0.25) * (1 + ring * 0.05));
+
+            for (let i = 0; i < missileCount; i++) {
+                const angle = baseAngle + (Math.PI * 2 * i) / missileCount + ring * 0.25;
+                this.projectiles.push({
+                    x: boss.x,
+                    y: boss.y,
+                    vx: this.fastCos(angle) * ringSpeed,
+                    vy: this.fastSin(angle) * ringSpeed,
+                    damage: ringDamage,
+                    life: 240 + cycleLevel * 30,
+                    type: 'boss-missile',
+                    color: ringColor,
+                    size: 3,
+                    homing: false,
+                    homingStrength: 0,
+                    explosionRadius: 20 + ring * 3,
+                    speed: ringSpeed,
+                    owner: 'enemy'
+                });
+            }
+        }
+
+        // Add extra homing lances aimed around the player for additional pressure
+        const bonusHoming = Math.min(4 + cycleLevel, 7);
+        const baseTargetAngle = Math.atan2(this.player.y - boss.y, this.player.x - boss.x);
+        const spread = 0.18 + cycleLevel * 0.03;
+
+        for (let i = 0; i < bonusHoming; i++) {
+            const offset = (i - (bonusHoming - 1) / 2) * spread;
+            const dartAngle = baseTargetAngle + offset;
+            const dartSpeed = 3.0 + cycleLevel * 0.45;
+            this.projectiles.push({
+                x: boss.x,
+                y: boss.y,
+                vx: this.fastCos(dartAngle) * dartSpeed,
+                vy: this.fastSin(dartAngle) * dartSpeed,
+                damage: Math.floor(22 * (1 + cycleLevel * 0.3)),
+                life: 360,
+                type: 'boss-missile',
+                color: '#FF9CFF',
+                size: 3,
+                homing: true,
+                homingStrength: 0.12 + cycleLevel * 0.02,
+                explosionRadius: 30,
+                speed: dartSpeed,
+                owner: 'enemy'
+            });
+        }
+    }
     
     spawnBoss(delaySeconds = this.bossSpawnDelaySeconds, distance = this.bossSpawnDistance) {
         this.queueBossSpawn('first', { delaySeconds, distance });
@@ -7591,6 +7675,7 @@ class VibeSurvivor {
     }
 
     updatePulseHunterMovement(enemy, dirX, dirY, distance, bossHealthPercent, playerX, playerY) {
+        const dashMultiplier = this.getBossCycleDashMultiplier(enemy.bossLevel || this.bossLevel || 1);
         if (bossHealthPercent > 0.7) {
             enemy.x += dirX * enemy.speed * 1.5;
             enemy.y += dirY * enemy.speed * 1.5;
@@ -7605,10 +7690,12 @@ class VibeSurvivor {
                     enemy.dashState.targetY = playerY;
                     enemy.dashState.duration = 0;
                     enemy.dashState.originalSpeed = enemy.speed;
-                    // Decrease dash cooldown by 3 per boss stage, capped at boss 6, minimum 90 frames
+                    // Decrease dash cooldown by 3 per boss stage (first cycle only), capped at boss 6, minimum 90 frames
                     const baseCooldown = 108; // Increased from 90 for more breathing room
                     const maxBossScaling = 5; // Cap reduction at boss 6 (after 5 bosses defeated)
-                    const cooldownReduction = Math.min(this.bossesKilled || 0, maxBossScaling) * 3;
+                    const cycle = this.getBossCycle(enemy.bossLevel || this.bossLevel || 1);
+                    const effectiveBossScaling = cycle === 0 ? Math.min(this.bossesKilled || 0, maxBossScaling) : 0;
+                    const cooldownReduction = effectiveBossScaling * 3;
                     const minCooldown = 90; // 1.5 seconds minimum (was 72 = 1.2s)
                     enemy.specialCooldown = Math.max(minCooldown, baseCooldown - cooldownReduction);
                 } else {
@@ -7617,7 +7704,7 @@ class VibeSurvivor {
                 }
             } else {
                 const [dashDirX, dashDirY] = Vector2.direction(enemy.x, enemy.y, enemy.dashState.targetX, enemy.dashState.targetY);
-                const dashSpeed = enemy.speed * 6; // Balanced for challenge (was 6x originally, then 4x)
+                const dashSpeed = enemy.speed * 6 * dashMultiplier; // Later cycles dash harder
                 enemy.x += dashDirX * dashSpeed;
                 enemy.y += dashDirY * dashSpeed;
                 enemy.dashState.duration++;
@@ -7667,9 +7754,12 @@ class VibeSurvivor {
             originalSpeed: enemy.speed
         });
 
-        // Cap scaling at boss 6, minimum 60 frames (1.0s) for dodge-able patterns
+        // Cap scaling at boss 6, minimum 60 frames (1.0s) for dodge-able patterns (first cycle only)
         const maxBossScaling = 5; // Cap reduction at boss 6
-        const cooldown = Math.max(60, 85 - Math.min(this.bossesKilled || 0, maxBossScaling) * 5);
+        const cycle = this.getBossCycle(enemy.bossLevel || this.bossLevel || 1);
+        const effectiveBossScaling = cycle === 0 ? Math.min(this.bossesKilled || 0, maxBossScaling) : 0;
+        const cooldown = Math.max(60, 85 - effectiveBossScaling * 5);
+        const dashMultiplier = this.getBossCycleDashMultiplier(enemy.bossLevel || this.bossLevel || 1);
 
         if (!dashState.active) {
             if (enemy.specialCooldown <= 0) {
@@ -7684,7 +7774,7 @@ class VibeSurvivor {
             }
         } else {
             const [dashDirX, dashDirY] = Vector2.direction(enemy.x, enemy.y, dashState.targetX, dashState.targetY);
-            const dashSpeed = enemy.speed * 6.5; // Balanced for challenge (was 7.2x originally, then 5x)
+            const dashSpeed = enemy.speed * 6.5 * dashMultiplier; // Later cycles slam much faster
             enemy.x += dashDirX * dashSpeed;
             enemy.y += dashDirY * dashSpeed;
             dashState.duration++;

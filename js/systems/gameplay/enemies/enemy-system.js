@@ -4,12 +4,15 @@
  * Handles difficulty scaling, enemy grouping, and AI behaviors
  */
 
+const DEFAULT_BOSS_VARIANT_COUNT = 11;
+
 export class EnemySystem {
-    constructor() {
+    constructor(options = {}) {
         this.frameCount = 0;
         this.lastSpawn = 0;
         this.spawnRate = 120; // Start at 120 frames between spawns
         this.bossSpawned = false;
+        this.bossVariantCount = Math.max(1, options.bossVariantCount || DEFAULT_BOSS_VARIANT_COUNT);
     }
 
     /**
@@ -843,16 +846,18 @@ export class EnemySystem {
                         enemy.dashState.targetY = playerY;
                         enemy.dashState.duration = 0;
                         enemy.dashState.originalSpeed = enemy.speed;
-                        // Decrease dash cooldown by 3 per boss stage, capped at boss 6, minimum 72 frames
+                        // Decrease dash cooldown by 3 per boss stage (first cycle only), capped at boss 6, minimum 72 frames
                         const baseCooldown = 90;
                         const maxBossScaling = 5; // Cap reduction at boss 6 (after 5 bosses defeated)
-                        const cooldownReduction = Math.min(bossesKilled || 0, maxBossScaling) * 3;
+                        const cycle = this.getBossCycle(enemy.bossLevel || 1);
+                        const effectiveScaling = cycle === 0 ? Math.min(bossesKilled || 0, maxBossScaling) : 0;
+                        const cooldownReduction = effectiveScaling * 3;
                         const minCooldown = 72; // 1.2 seconds minimum (was 36 = 0.6s)
                         enemy.specialCooldown = Math.max(minCooldown, baseCooldown - cooldownReduction);
-                    } else {
-                        // Faster normal movement while dash is on cooldown
-                        enemy.x += dirX * enemy.speed * 2.0;
-                        enemy.y += dirY * enemy.speed * 2.0;
+                } else {
+                    // Faster normal movement while dash is on cooldown
+                    enemy.x += dirX * enemy.speed * 2.0;
+                    enemy.y += dirY * enemy.speed * 2.0;
                     }
                 } else {
                     // Execute dash movement with much higher speed
@@ -873,6 +878,12 @@ export class EnemySystem {
                 }
             }
         }
+    }
+
+    getBossCycle(level) {
+        const variantCount = this.bossVariantCount || DEFAULT_BOSS_VARIANT_COUNT;
+        const normalizedLevel = Math.max(1, level || 1);
+        return Math.floor((normalizedLevel - 1) / variantCount);
     }
 
     /**
