@@ -5235,10 +5235,7 @@ class VibeSurvivor {
                 this.modals.exitConfirmation.hide();
 
                 // Reset parent callbacks back to default (pause modal)
-                this.modals.exitConfirmation.setParentKeyboardCallbacks(
-                    this.exitConfirmationDefaultCallbacks.disable,
-                    this.exitConfirmationDefaultCallbacks.enable
-                );
+                this.resetExitConfirmationParentCallbacks();
 
                 // Then close the game
                 this.closeGame();
@@ -5246,10 +5243,9 @@ class VibeSurvivor {
 
             this.modals.exitConfirmation.onCancel(() => {
                 // Reset parent callbacks back to default (pause modal) after cancellation
-                this.modals.exitConfirmation.setParentKeyboardCallbacks(
-                    this.exitConfirmationDefaultCallbacks.disable,
-                    this.exitConfirmationDefaultCallbacks.enable
-                );
+                setTimeout(() => {
+                    this.resetExitConfirmationParentCallbacks();
+                }, 0);
             });
 
             this.modals.exitConfirmation.setTranslationFunction(this.t.bind(this));
@@ -5682,6 +5678,14 @@ class VibeSurvivor {
     hideExitConfirmation() {
         // Phase 12c.4b - Use ExitConfirmationModal (Option B pattern)
         this.modals.exitConfirmation.hide();
+    }
+
+    resetExitConfirmationParentCallbacks() {
+        if (!this.exitConfirmationDefaultCallbacks) return;
+        this.modals.exitConfirmation.setParentKeyboardCallbacks(
+            this.exitConfirmationDefaultCallbacks.disable,
+            this.exitConfirmationDefaultCallbacks.enable
+        );
     }
 
     showRestartConfirmation() {

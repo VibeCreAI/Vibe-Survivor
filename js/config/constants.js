@@ -320,7 +320,7 @@ export const WEAPONS = {
     },
     HOMING_LASER: {
         name: 'Homing Laser',
-        damage: 16,
+        damage: 12,
         fireRate: 200,
         range: 400,
         projectileSpeed: 7,
