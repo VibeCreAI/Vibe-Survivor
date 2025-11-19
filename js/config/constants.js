@@ -356,7 +356,7 @@ export const WEAPON_UPGRADES = {
     DAMAGE_PER_LEVEL: 0.3, // +30% per level
     MAX_LEVEL: Infinity,
     MAX_WEAPONS: 4,
-    MAX_PROJECTILES: 8
+    MAX_PROJECTILES: 6
 };
 
 /**
