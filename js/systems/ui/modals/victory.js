@@ -365,7 +365,6 @@ export class VictoryModal {
                 if (this.onExitCallback) {
                     this.onExitCallback();
                 }
-                this.hide();
             };
 
             this.exitButton.addEventListener('click', exitHandler);

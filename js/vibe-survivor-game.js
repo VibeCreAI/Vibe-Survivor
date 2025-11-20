@@ -231,6 +231,9 @@ class VibeSurvivor {
         this.isHelpOpen = false;
         this.activeHelpTab = 'howto';
         this.overlayLocks = 0;
+        this.lastVictoryPayload = null;
+        this.victoryHiddenForExitConfirmation = false;
+        this.victoryHiddenForExitConfirmation = false;
         
         // Background music
         // NOTE: Audio now managed by AudioManager (Phase 11)
@@ -339,6 +342,8 @@ class VibeSurvivor {
         // Level up and timing state management
         this.pendingLevelUps = 0;           // Count of deferred level ups
         this.bossVictoryInProgress = false; // Victory screen active
+        this.lastVictoryPayload = null;     // Cached data for restoring victory modal
+        this.victoryHiddenForExitConfirmation = false;
         this.timePaused = false;            // Whether game time should pause
 
         // Backup navigation state for help modal overlay scenarios
@@ -4123,16 +4128,6 @@ class VibeSurvivor {
         // Phase 12c.4 - Pause menu event listeners removed (handled by PauseMenu modal - Option B pattern)
         // The modal owns all button behavior now
 
-        // Exit confirmation handlers (these stay - not part of pause modal)
-        document.getElementById('exit-confirm-yes').addEventListener('click', () => {
-            this.hideExitConfirmation();
-            this.closeGame();
-        });
-
-        document.getElementById('exit-confirm-no').addEventListener('click', () => {
-            this.hideExitConfirmation();
-        });
-
         // Restart confirmation handlers
         document.getElementById('restart-confirm-yes').addEventListener('click', () => {
             this.hideRestartConfirmation();
@@ -5230,23 +5225,25 @@ class VibeSurvivor {
             );
 
             // Set up confirmation callbacks
-            this.modals.exitConfirmation.onConfirm(() => {
-                // Hide confirmation modal first to prevent re-enabling parent keyboard handler
-                this.modals.exitConfirmation.hide();
+        this.modals.exitConfirmation.onConfirm(() => {
+            // Hide confirmation modal first to prevent re-enabling parent keyboard handler
+            this.modals.exitConfirmation.hide();
 
-                // Reset parent callbacks back to default (pause modal)
+            // Reset parent callbacks back to default (pause modal)
+            this.resetExitConfirmationParentCallbacks();
+            this.victoryHiddenForExitConfirmation = false;
+
+            // Then close the game
+            this.closeGame();
+        });
+
+        this.modals.exitConfirmation.onCancel(() => {
+            // Reset parent callbacks back to default (pause modal) after cancellation
+            setTimeout(() => {
                 this.resetExitConfirmationParentCallbacks();
-
-                // Then close the game
-                this.closeGame();
-            });
-
-            this.modals.exitConfirmation.onCancel(() => {
-                // Reset parent callbacks back to default (pause modal) after cancellation
-                setTimeout(() => {
-                    this.resetExitConfirmationParentCallbacks();
-                }, 0);
-            });
+                this.ensureVictoryModalVisible();
+            }, 0);
+        });
 
             this.modals.exitConfirmation.setTranslationFunction(this.t.bind(this));
 
@@ -5320,6 +5317,7 @@ class VibeSurvivor {
         this.nextBossSpawnTime = null;
         this.pendingBossSpawn = null;
         this.bossVictoryInProgress = false;
+        this.lastVictoryPayload = null;
         this.pendingLevelUps = 0;
 
         // Reset touch controls to prevent stuck movement
@@ -5675,17 +5673,32 @@ class VibeSurvivor {
         this.modals.exitConfirmation.show();
     }
 
-    hideExitConfirmation() {
-        // Phase 12c.4b - Use ExitConfirmationModal (Option B pattern)
-        this.modals.exitConfirmation.hide();
-    }
-
     resetExitConfirmationParentCallbacks() {
         if (!this.exitConfirmationDefaultCallbacks) return;
         this.modals.exitConfirmation.setParentKeyboardCallbacks(
             this.exitConfirmationDefaultCallbacks.disable,
             this.exitConfirmationDefaultCallbacks.enable
         );
+    }
+
+    ensureVictoryModalVisible() {
+        if (!this.bossVictoryInProgress) return;
+        if (!this.modals?.victory) return;
+        if (this.modals.victory.isOpen) return;
+
+        if (!this.lastVictoryPayload) {
+            console.warn('Victory modal missing while bossVictoryInProgress but no cached payload to restore.');
+            return;
+        }
+
+        if (this.victoryHiddenForExitConfirmation) {
+            console.info('Restoring victory modal after exit confirmation cancellation.');
+        } else {
+            console.warn('Restoring victory modal after unexpected closure.');
+        }
+        const { finalStats, bossesKilled, bossLevel } = this.lastVictoryPayload;
+        this.modals.victory.show(finalStats, bossesKilled, bossLevel);
+        this.victoryHiddenForExitConfirmation = false;
     }
 
     showRestartConfirmation() {
@@ -12715,6 +12728,13 @@ class VibeSurvivor {
             enemiesKilled: Math.max(1, Math.floor(this.gameTime * 1.8))
         };
 
+        this.lastVictoryPayload = {
+            finalStats,
+            bossesKilled: this.bossesKilled,
+            bossLevel: this.bossLevel
+        };
+        this.victoryHiddenForExitConfirmation = false;
+
         // Set up VictoryModal callbacks
         this.modals.victory.setGameStateCallbacks(
             () => this.translations[this.currentLanguage].ui,
@@ -12735,6 +12755,8 @@ class VibeSurvivor {
 
             // Clear victory screen state
             this.bossVictoryInProgress = false;
+            this.lastVictoryPayload = null;
+            this.victoryHiddenForExitConfirmation = false;
 
             // Process any deferred level ups before continuing
             this.processPendingLevelUps();
@@ -12746,6 +12768,11 @@ class VibeSurvivor {
         });
 
         this.modals.victory.onExit(() => {
+            if (this.modals.victory.isOpen) {
+                this.victoryHiddenForExitConfirmation = true;
+                this.modals.victory.hide();
+            }
+
             // Set up exit confirmation to work with victory modal
             this.modals.exitConfirmation.setParentKeyboardCallbacks(
                 this.modals.victory.disableKeyboardHandlers.bind(this.modals.victory),
@@ -12877,6 +12904,7 @@ class VibeSurvivor {
         this.isPaused = false;
         this.disablePauseScrolling();
         this.overlayLocks = 0;
+        this.lastVictoryPayload = null;
         this.updateOverlayLockState();
 
         // Phase 12c.4b - Clean up all modal keyboard handlers
