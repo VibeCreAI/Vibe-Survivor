@@ -422,14 +422,6 @@ export class LevelUpModal extends Modal {
      */
     setupKeyboardHandlers() {
         this.keyboardHandler = (e) => {
-            // Tab key cycles tabs
-            if (e.key === 'Tab') {
-                e.preventDefault();
-                e.stopPropagation(); // Stop event from reaching main game handler
-                this.cycleTab(1);
-                return;
-            }
-
             // Handle navigation based on active tab
             switch (e.key.toLowerCase()) {
                 case 'arrowup':
@@ -461,11 +453,7 @@ export class LevelUpModal extends Modal {
                     e.preventDefault();
                     e.stopPropagation(); // Stop event from reaching main game handler
                     this.keyboardUsed = true;
-                    if (this.activeTab !== 'levelup') {
-                        this.cycleTab(-1);
-                    } else {
-                        this.navigateMenu('left');
-                    }
+                    this.cycleTab(-1);
                     break;
 
                 case 'arrowright':
@@ -473,11 +461,7 @@ export class LevelUpModal extends Modal {
                     e.preventDefault();
                     e.stopPropagation(); // Stop event from reaching main game handler
                     this.keyboardUsed = true;
-                    if (this.activeTab !== 'levelup') {
-                        this.cycleTab(1);
-                    } else {
-                        this.navigateMenu('right');
-                    }
+                    this.cycleTab(1);
                     break;
 
                 case 'enter':
