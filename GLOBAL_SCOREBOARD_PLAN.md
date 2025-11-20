@@ -51,12 +51,16 @@ This approach adds ~30 minutes to initial setup but saves days of migration work
 ### Data Flow
 ```
 1. Player completes game → Local score saved (existing)
-2. Player opens Scoreboard → Views LOCAL tab (existing)
-3. Player clicks on score → Detail modal opens (existing)
-4. Player clicks "Submit to Global" → Name input dialog
-5. Player enters name → Score sent to Supabase
-6. Success → Local score marked as submitted
-7. Player switches to GLOBAL tab → Views global leaderboard
+2. **Option A (Game Over Screen):**
+   - Player clicks "Submit to Global" directly on Game Over screen
+   - Player enters name → Score sent to Supabase
+3. **Option B (Scoreboard):**
+   - Player opens Scoreboard → Views LOCAL tab
+   - Player clicks on score → Detail modal opens
+   - Player clicks "Submit to Global" → Name input dialog
+   - Player enters name → Score sent to Supabase
+4. Success → Local score marked as submitted
+5. Player switches to GLOBAL tab → Views global leaderboard
 ```
 
 ### Components
@@ -1593,6 +1597,24 @@ Add to `styles/base.css`:
 }
 ```
 
+### Step 2.8: Update Game Over Modal
+
+We need to add a "Submit Score" button to the Game Over modal so players can submit their run immediately.
+
+1. **Modify `js/systems/ui/modals/game-over.js`**:
+   - Add "Submit to Global" button next to Restart/Exit
+   - Add handler for submission (reuse `ScoreSubmissionModal` or similar logic)
+   - After successful submission, disable button and show "Submitted" status
+   - **CRITICAL**: Must call `scoreboardStorage.markAsSubmitted()` so the Scoreboard modal knows this score is already submitted.
+
+2. **Update `GameOverModal` class**:
+   - Add `onSubmitScore` callback
+   - In `update(data)`, check if this score has already been submitted (using `scoreboardStorage.getSubmissionStatus()`)
+   - Handle the UI flow: Click Submit -> Show Name Input -> Submit -> Show Success
+
+3. **Integration**:
+   - In `vibe-survivor-game.js` (or wherever `GameOverModal` is controlled), wire up the submission logic.
+
 ---
 
 ## Security & Anti-Cheat: Practical Approach
@@ -2061,6 +2083,7 @@ supabase functions deploy submit-score --debug
 - [ ] `js/utils/scoreboard-storage.js` - Add submission tracking
 - [ ] `js/systems/ui/modals/scoreboard-modal.js` - Add tabs + global view
 - [ ] `js/systems/ui/modals/score-detail-modal.js` - Add submit button
+- [ ] `js/systems/ui/modals/game-over.js` - Add submit button
 - [ ] `js/vibe-survivor-game.js` - Update modal HTML
 - [ ] `styles/base.css` - Add tab styling
 
