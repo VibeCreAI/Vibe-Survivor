@@ -284,8 +284,8 @@ export class GameOverModal extends Modal {
                 e.preventDefault();
                 this.scrollContent('down');
             }
-            // Button navigation (Tab, Arrow Left/Right)
-            else if (e.key === 'Tab' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+            // Button navigation (Arrow Left/Right)
+            else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
                 e.preventDefault();
                 this.keyboardUsed = true;
 

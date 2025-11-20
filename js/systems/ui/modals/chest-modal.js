@@ -321,12 +321,8 @@ export class ChestModal extends Modal {
      */
     setupKeyboardHandlers() {
         this.keyboardHandler = (e) => {
-            if (e.key === 'Tab') {
-                e.preventDefault();
-                e.stopPropagation();
-                this.cycleTab(e.shiftKey ? -1 : 1);
-                return;
-            }
+            // Tab key handler removed
+
 
             switch (e.key.toLowerCase()) {
                 case 'arrowup':
