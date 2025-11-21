@@ -3,6 +3,8 @@
  * Manages player movement, abilities, passives, and level progression
  */
 
+import { PASSIVES } from '../../config/constants.js';
+
 export class PlayerSystem {
     constructor() {
         // No internal state - operates on player object passed to methods
@@ -42,7 +44,8 @@ export class PlayerSystem {
         let speed = player.speed;
         if (player.passives.speed_boost) {
             const speedStacks = typeof player.passives.speed_boost === 'number' ? player.passives.speed_boost : 1;
-            speed *= (1 + 0.1 * speedStacks); // 10% increase per stack (matches PASSIVES.SPEED_BOOST.value)
+            const boostPerStack = PASSIVES.SPEED_BOOST.value;
+            speed *= (1 + boostPerStack * speedStacks);
         }
 
         // Normalize diagonal movement

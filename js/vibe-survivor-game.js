@@ -12514,7 +12514,7 @@ class VibeSurvivor {
         let speedMultiplier = 1.0;
         if (this.player.passives.speed_boost) {
             const speedStacks = typeof this.player.passives.speed_boost === 'number' ? this.player.passives.speed_boost : 1;
-            speedMultiplier = 1 + (0.1 * speedStacks); // 10% per stack
+            speedMultiplier = 1 + (PASSIVES.SPEED_BOOST.value * speedStacks);
         }
         const totalUpgrades = this.player.level - 1; // Level 1 = 0 upgrades
 
