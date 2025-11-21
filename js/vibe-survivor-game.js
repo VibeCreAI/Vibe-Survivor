@@ -13798,9 +13798,9 @@ class VibeSurvivor {
                     const settings = JSON.parse(stored);
 
                     // Restore language
-                    if (settings.language && this.translations[settings.language]) {
-                        this.currentLanguage = settings.language;
-                    }
+                    // if (settings.language && this.translations[settings.language]) {
+                    //     this.currentLanguage = settings.language;
+                    // }
 
                     // Restore audio settings
                     if (settings.musicMuted !== undefined) {
