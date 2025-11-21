@@ -412,7 +412,7 @@ class VibeSurvivor {
             'healthBoost', 'speedBoost', 'regeneration', 'magnet', 'armor',
             'criticalStrike', 'dashBoost', 'weaponFirerate', 'weaponPower',
             'weaponProjectile', 'weaponSize', 'weaponSlot',
-            'upgrade', 'evolution', 'passive', 'stats'
+            'upgrade', 'evolution', 'passive', 'stats', 'nextStage'
         ];
 
         // Create image preload promises
@@ -511,7 +511,7 @@ class VibeSurvivor {
         // Load game sound effects
         this.audioManager.loadGameSounds(ASSET_PATHS.audio);
         // Load and restore user settings (audio preferences, language, etc.)
-        this.loadUserSettings();
+        // this.loadUserSettings(); // TODO: Re-enable when method exists
         if (this.audioManager.music && this.audioManager.music.readyState < 2) {
             await new Promise(resolve => {
                 this.audioManager.music.addEventListener('canplaythrough', resolve, { once: true });
@@ -830,8 +830,10 @@ class VibeSurvivor {
         // Initialize canvas first (during loading screen)
         setTimeout(() => {
             this.initializeCanvas().then(() => {
+                console.log('[DEBUG] Canvas initialized successfully');
                 // Then preload assets
                 this.preloadAssets().then(() => {
+                    console.log('[DEBUG] Assets preloaded successfully');
                     // Wait for background to start appearing before showing start screen
                     // Background has 0.6s ease-in transition when 'loaded' class is added
                     setTimeout(() => {
@@ -844,7 +846,11 @@ class VibeSurvivor {
                         // For returning users with sufficient MEI, this will play automatically.
                         this.tryAutoplayStartMenuSound();
                     }, 300);
+                }).catch(err => {
+                    console.error('[ERROR] preloadAssets failed:', err);
                 });
+            }).catch(err => {
+                console.error('[ERROR] initializeCanvas failed:', err);
             });
         }, 100);
 
@@ -12386,19 +12392,21 @@ class VibeSurvivor {
             'mod_bay_expander': p.modBay
         };
 
+
+
         const passiveDescriptions = {
-            'health_boost': p.healthBoostDesc,
-            'speed_boost': p.speedBoostDesc,
-            'regeneration': p.regenerationDesc,
-            'magnet': p.magnetDesc,
-            'armor': p.armorDesc,
-            'critical': p.criticalStrikeDesc,
-            'dash_boost': p.dashBoostDesc,
-            'turbo_flux_cycler': p.turboFluxDesc,
-            'aegis_impact_core': p.aegisCoreDesc,
-            'splitstream_matrix': p.splitstreamMatrixDesc,
-            'macro_charge_amplifier': p.macroChargeDesc,
-            'mod_bay_expander': p.modBayDesc
+            'health_boost': this.t('healthBoostStack', 'help'),
+            'speed_boost': this.t('speedBoostStack', 'help'),
+            'regeneration': this.t('regenerationStack', 'help'),
+            'magnet': this.t('magnetStack', 'help'),
+            'armor': this.t('armorStack', 'help'),
+            'critical': this.t('criticalStack', 'help'),
+            'dash_boost': this.t('dashBoostStack', 'help'),
+            'turbo_flux_cycler': this.t('turboFluxStack', 'help'),
+            'aegis_impact_core': this.t('aegisCoreStack', 'help'),
+            'splitstream_matrix': this.t('splitstreamMatrixStack', 'help'),
+            'macro_charge_amplifier': this.t('macroChargeStack', 'help'),
+            'mod_bay_expander': this.t('modBayStack', 'help')
         };
 
         const activePassives = Object.keys(this.player.passives).filter(key =>
@@ -13346,21 +13354,7 @@ class VibeSurvivor {
                     aegisCore: "Aegis Impact Core",
                     splitstreamMatrix: "Splitstream Matrix",
                     macroCharge: "Macro-Charge Amplifier",
-                    modBay: "Mod-Bay Expander",
-
-                    // Descriptions
-                    healthBoostDesc: "+25 Max Health (Stackable)",
-                    speedBoostDesc: "+10% Movement Speed (Multiplicative, stackable up to 3 times)",
-                    regenerationDesc: "Slowly heal over time",
-                    magnetDesc: "Attract XP from further away",
-                    armorDesc: "15% Damage Reduction (Infinite stacks, 90% cap)",
-                    criticalStrikeDesc: "15% chance for double damage (Stackable up to 3 times)",
-                    dashBoostDesc: "+50% Dash Distance (Stackable up to 3 times)",
-                    turboFluxDesc: "Increase the fire rate of all weapons by 25%",
-                    aegisCoreDesc: "Increase the damage of all weapons by 50%",
-                    splitstreamMatrixDesc: "All weapons fire +1 projectile",
-                    macroChargeDesc: "Increase explosion radius of weapon projectiles by 50%",
-                    modBayDesc: "Increase max weapon slots to 5"
+                    modBay: "Mod-Bay Expander"
                 },
                 help: {
                     // Tabs
@@ -13595,21 +13589,7 @@ class VibeSurvivor {
                     aegisCore: "에이제스 임팩트 코어",
                     splitstreamMatrix: "스플릿스트림 매트릭스",
                     macroCharge: "매크로 차지 증폭기",
-                    modBay: "모드 베이 확장기",
-
-                    // Descriptions
-                    healthBoostDesc: "+25 최대 체력 (중첩 가능)",
-                    speedBoostDesc: "+10% 이동 속도 (곱셈식, 최대 3번까지 중첩 가능)",
-                    regenerationDesc: "시간에 따라 천천히 회복",
-                    magnetDesc: "더 멀리서 경험치 흡수",
-                    armorDesc: "받는 피해 15% 감소 (무한 중첩, 90% 상한)",
-                    criticalStrikeDesc: "15% 확률로 2배 피해 (최대 3번까지 중첩 가능)",
-                    dashBoostDesc: "+50% 대시 거리 (최대 3번까지 중첩 가능)",
-                    turboFluxDesc: "모든 무기의 발사 속도를 25% 증가시킵니다.",
-                    aegisCoreDesc: "모든 무기의 공격력을 50% 증가시킵니다.",
-                    splitstreamMatrixDesc: "모든 무기가 추가 발사체 1개를 발사합니다.",
-                    macroChargeDesc: "모든 무기 폭발 반경을 50% 증가시킵니다.",
-                    modBayDesc: "무기 슬롯 최대치를 5개로 확장합니다."
+                    modBay: "모드 베이 확장기"
                 },
                 help: {
                     // Tabs

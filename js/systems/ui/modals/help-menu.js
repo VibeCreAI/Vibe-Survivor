@@ -392,15 +392,13 @@ export class HelpMenu {
         }
 
         const name = this.getLocalizedPassiveName(passiveId);
-        const description = this.getLocalizedPassiveDescription(passiveId);
         const stackInfo = this.getPassiveStackInfo(passiveId);
 
         item.innerHTML = `
             <div class="passive-icon"><img src="${this.getPassiveIconPath(passiveId)}" alt="${name}"></div>
             <div class="passive-details">
                 <div class="passive-name">${name}</div>
-                <div class="passive-desc">${description}</div>
-                ${stackInfo ? `<div class="passive-stack">${stackInfo}</div>` : ''}
+                <div class="passive-desc">${stackInfo}</div>
             </div>
         `;
 
@@ -600,14 +598,13 @@ export class HelpMenu {
     }
 
     getLocalizedPassiveDescription(passiveKey) {
-        const translationKey = `${PASSIVE_TRANSLATION_KEY_MAP[passiveKey] || passiveKey}Desc`;
-        if (this.getTranslation) {
-            const translated = this.getTranslation(translationKey, 'passives');
-            if (translated && translated !== translationKey) {
-                return translated;
-            }
+        // Use the Stack translation key from help namespace for detailed descriptions
+        const stackKey = this.getPassiveStackInfo(passiveKey);
+        if (stackKey) {
+            return stackKey;
         }
 
+        // Fallback to config description
         const passiveConfig = PASSIVES[passiveKey.toUpperCase()];
         return passiveConfig?.description || '';
     }

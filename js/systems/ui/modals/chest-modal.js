@@ -661,14 +661,31 @@ export class ChestModal extends Modal {
      * @param {string} passiveKey - Passive key (lowercase)
      */
     getLocalizedPassiveDescription(passiveKey) {
-        const translationKey = `${this.getTranslationKey(passiveKey)}Desc`;
-        if (this.getTranslation) {
-            const translated = this.getTranslation(translationKey, 'passives');
-            if (translated && translated !== translationKey) {
+        // Use Stack translation key from help namespace for detailed descriptions
+        const stackMap = {
+            'health_boost': 'healthBoostStack',
+            'speed_boost': 'speedBoostStack',
+            'magnet': 'magnetStack',
+            'armor': 'armorStack',
+            'critical': 'criticalStack',
+            'dash_boost': 'dashBoostStack',
+            'turbo_flux_cycler': 'turboFluxStack',
+            'aegis_impact_core': 'aegisCoreStack',
+            'splitstream_matrix': 'splitstreamMatrixStack',
+            'macro_charge_amplifier': 'macroChargeStack',
+            'mod_bay_expander': 'modBayStack',
+            'regeneration': 'regenerationStack'
+        };
+
+        const stackKey = stackMap[passiveKey];
+        if (stackKey && this.getTranslation) {
+            const translated = this.getTranslation(stackKey, 'help');
+            if (translated && translated !== stackKey) {
                 return translated;
             }
         }
 
+        // Fallback to config description
         const passiveConfig = PASSIVES[passiveKey.toUpperCase()];
         return passiveConfig?.description || '';
     }

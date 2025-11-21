@@ -289,7 +289,6 @@ export class GuideModal extends Modal {
 
         const iconHtml = this.game?.getPassiveIcon?.(passiveId) || '';
         const name = this.getPassiveName(passiveId, config);
-        const description = this.getPassiveDescription(passiveId, config);
         const stackInfo = this.getPassiveStackInfo(passiveId, config);
         if (config.isUnique || this.getOrderedUniquePassives().includes(passiveId)) {
             item.classList.add('unique-passive');
@@ -299,8 +298,7 @@ export class GuideModal extends Modal {
             <div class="passive-icon">${iconHtml}</div>
             <div class="passive-details">
                 <div class="passive-name">${name}</div>
-                <div class="passive-desc">${description}</div>
-                ${stackInfo ? `<div class="passive-stack">${stackInfo}</div>` : ''}
+                <div class="passive-desc">${stackInfo}</div>
             </div>
         `;
 
