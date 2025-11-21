@@ -194,7 +194,7 @@ class VibeSurvivor {
             get: () => this.animationController.trailMultiplier,
             set: (value) => { this.animationController.trailMultiplier = value; }
         });
-        
+
         // Game properties - using state factories
         const enemiesState = createEnemiesState();
         this.enemies = enemiesState.enemies;
@@ -225,7 +225,7 @@ class VibeSurvivor {
 
         // Track per-weapon cumulative damage
         this.weaponStats = createWeaponStatsState();
-        
+
         // Pause functionality
         this.isPaused = false;
         this.isHelpOpen = false;
@@ -234,7 +234,7 @@ class VibeSurvivor {
         this.lastVictoryPayload = null;
         this.victoryHiddenForExitConfirmation = false;
         this.victoryHiddenForExitConfirmation = false;
-        
+
         // Background music
         // NOTE: Audio now managed by AudioManager (Phase 11)
         // Audio initialization happens in audioManager.init()
@@ -248,8 +248,8 @@ class VibeSurvivor {
 
         // Bind layout helpers that run from event listeners
         this.updateStartOverlayLayout = this.updateStartOverlayLayout.bind(this);
-        
-        
+
+
         // Performance monitoring using extracted module
         this.performanceMonitor = new PerformanceMonitor(60, 30);
 
@@ -274,7 +274,7 @@ class VibeSurvivor {
                 lastCheck: this.performanceMonitor.lastCheck
             })
         });
-        
+
         // Initialize object pools
         this.initializeProjectilePool();
 
@@ -284,20 +284,20 @@ class VibeSurvivor {
 
         // Initialize smart garbage collection system
         this.initializeSmartGarbageCollection();
-        
+
         // Initialize square root cache for performance
         this.sqrtCache = new Map();
         this.maxCacheSize = 1000; // Limit cache size to prevent memory bloat
-        
+
         // Initialize batch rendering system
         this.initializeBatchRenderer();
-        
+
         // Initialize canvas layers (will be called after canvas is ready)
         this.canvasLayersInitialized = false;
-        
+
         // Initialize adaptive quality scaling
         this.initializeAdaptiveQuality();
-        
+
         // Initialize trigonometric lookup tables
         this.initTrigLookupTables();
 
@@ -313,22 +313,22 @@ class VibeSurvivor {
         this.accumulator = 0;
         this.frameInterval = 1000 / 60;
         this.maxAccumulatedTime = this.frameInterval * 5;
-        
+
         this.spawnRate = 120; // frames between spawns
         this.waveMultiplier = 1;
-        
+
         // HP orb spawn system
         this.hpOrbSpawnTimer = 0;
         this.hpOrbSpawnRate = 120; // frames between HP orb spawn chances (2 seconds)
         this.hpOrbSpawnChance = 0.08; // 8% chance per check (much more frequent)
         this.maxHpOrbs = 1; // Maximum HP orbs on map
-        
+
         // Magnet orb spawn system (same rarity as HP orbs)
         this.magnetOrbSpawnTimer = 0;
         this.magnetOrbSpawnRate = 120; // frames between magnet orb spawn chances (2 seconds)
         this.magnetOrbSpawnChance = 0.08; // 8% chance per check
         this.maxMagnetOrbs = 1; // Maximum magnet orbs on map
-        
+
         // Boss progression system (starts after first boss defeat)
         this.bossesKilled = 0;
         this.bossLevel = 1;
@@ -366,7 +366,7 @@ class VibeSurvivor {
 
         this.initGame();
     }
-    
+
     async preloadAssets() {
         // Phase 12c.9 - Use LoadingScreen modal instead of direct DOM manipulation
         if (!this.modals.loading.element) return;
@@ -859,16 +859,16 @@ class VibeSurvivor {
         // Canvas initialization moved to initializeCanvas() method
         // which is called during loading screen before preloadAssets()
     }
-    
+
     createGameModal() {
         // Clean up any existing modals
         const allModals = document.querySelectorAll('[id*="vibe-survivor"], [class*="vibe-survivor"], [class*="modal"]');
-        
+
         // Remove existing vibe-survivor MODAL elements only (preserve buttons)
         const existingModals = document.querySelectorAll('#vibe-survivor-modal, .vibe-survivor-modal');
         // Remove existing modal elements
         existingModals.forEach(modal => modal.remove());
-        
+
         // Also check for any high z-index elements that might be covering content
         const highZElements = Array.from(document.querySelectorAll('*')).filter(el => {
             const zIndex = parseInt(window.getComputedStyle(el).zIndex);
@@ -1409,10 +1409,10 @@ class VibeSurvivor {
 
         // Modal created successfully
     }
-    
+
     addStyles() {
         if (document.getElementById('vibe-survivor-styles')) return;
-        
+
         const styles = document.createElement('style');
         styles.id = 'vibe-survivor-styles';
         styles.textContent = `
@@ -4094,10 +4094,10 @@ class VibeSurvivor {
                 }
             }
         `;
-        
+
         document.head.appendChild(styles);
     }
-    
+
     setupEventHandlers() {
         // Phase 12c.4b - Remove old keyboard handler before creating new one (prevent handler leaks)
         if (this.mainKeyboardHandler) {
@@ -4112,7 +4112,7 @@ class VibeSurvivor {
         document.getElementById('pause-btn').addEventListener('click', () => {
             this.togglePause();
         });
-        
+
         // Phase 12c.6 - Help button event listeners
         const helpBtn = document.getElementById('help-btn');
         helpBtn.addEventListener('click', (e) => {
@@ -4124,7 +4124,7 @@ class VibeSurvivor {
             e.stopPropagation();
             this.toggleHelp();
         }, { passive: false });
-        
+
         // Phase 12c.4 - Pause menu event listeners removed (handled by PauseMenu modal - Option B pattern)
         // The modal owns all button behavior now
 
@@ -4175,7 +4175,7 @@ class VibeSurvivor {
             // Menu navigation takes priority
             if (this.menuNavigationState.active) {
                 // Handle menu navigation keys
-                switch(e.key.toLowerCase()) {
+                switch (e.key.toLowerCase()) {
                     case 'arrowup':
                     case 'w':
                         e.preventDefault();
@@ -4358,10 +4358,10 @@ class VibeSurvivor {
             // Remove existing modal to prevent overlay issues
             existingModal.remove();
         }
-        
+
         // Create completely fresh modal
         this.createGameModal();
-        
+
         // Set up event handlers for the fresh modal
         this.setupEventHandlers();
 
@@ -4382,31 +4382,31 @@ class VibeSurvivor {
         this.showStartScreen();
 
     }
-    
+
     openGame() {
         const modal = document.getElementById('vibe-survivor-modal');
         if (modal) {
             modal.style.display = 'flex';
         }
-        
+
         // Pause background animations for better game performance
         if (window.PerformanceManager) {
             window.PerformanceManager.pauseBackgroundAnimations();
         }
-        
+
         try {
             this.canvas = document.getElementById('survivor-canvas');
             // Get browser-specific optimization profile
             const browserProfile = this.getBrowserOptimizationProfile();
-            
-            this.ctx = this.canvas.getContext('2d', { 
+
+            this.ctx = this.canvas.getContext('2d', {
                 alpha: false, // No transparency needed - better performance
                 desynchronized: true, // Allow browser to optimize rendering
                 willReadFrequently: false, // Force GPU acceleration
                 ...browserProfile.contextOptions // Apply browser-specific settings
             });
             this.resizeCanvas();
-            
+
             // Ensure canvas renders initial background for start screen
             // Use requestAnimationFrame to ensure DOM is ready
             requestAnimationFrame(() => {
@@ -4415,7 +4415,7 @@ class VibeSurvivor {
         } catch (e) {
             console.error('Canvas initialization error:', e);
         }
-        
+
         this.showStartScreen();
     }
 
@@ -4423,7 +4423,7 @@ class VibeSurvivor {
         const shouldZoomOut = this.isMobile || window.innerWidth <= MOBILE_CONFIG.BREAKPOINT_WIDTH;
         this.camera.zoom = shouldZoomOut ? MOBILE_CONFIG.CAMERA_ZOOM : 1;
     }
-    
+
     resizeCanvas() {
         this.applyCameraZoom();
         if (this.canvas) {
@@ -4431,7 +4431,7 @@ class VibeSurvivor {
             const rect = this.canvas.getBoundingClientRect();
             let canvasWidth = Math.round(rect.width);
             let canvasHeight = Math.round(rect.height);
-            
+
             // If canvas has zero or invalid dimensions, calculate from modal
             if (canvasWidth <= 0 || canvasHeight <= 0) {
                 const modal = document.querySelector('.vibe-survivor-modal');
@@ -4442,10 +4442,10 @@ class VibeSurvivor {
                     const headerHeight = 60; // Header height
                     const verticalPadding = 60; // Increased padding to show canvas borders (30px top + 30px bottom)
                     canvasHeight = Math.round(modalRect.height - headerHeight - verticalPadding);
-                    
+
                 }
             }
-            
+
             // For better accuracy, always use modal-based sizing if available
             const modal = document.querySelector('.vibe-survivor-modal');
             if (modal) {
@@ -4455,30 +4455,30 @@ class VibeSurvivor {
                 const headerHeight = 100; // Header height
                 const verticalPadding = 60; // Increased padding to show canvas borders
                 const modalBasedHeight = Math.round(modalRect.height - headerHeight - verticalPadding);
-                
+
                 // Use modal-based sizing if it's different or more accurate
                 if (modalBasedWidth > 0 && modalBasedHeight > 0) {
                     canvasWidth = modalBasedWidth;
                     canvasHeight = modalBasedHeight;
                 }
             }
-            
+
             // Only set dimensions if we have valid non-zero values
             if (canvasWidth > 0 && canvasHeight > 0) {
                 // Set internal canvas resolution to match calculated dimensions
                 this.canvas.width = canvasWidth;
                 this.canvas.height = canvasHeight;
-                
+
             } else {
                 console.warn('Canvas has zero dimensions, skipping resize');
                 return;
             }
-            
+
             // Speed scaling removed - game speed should be consistent across all screen sizes
-            
+
             // Don't override CSS - let responsive breakpoints handle sizing
             // CSS already handles display: block, margins, and positioning
-            
+
             // Initialize canvas layers (only once)
             if (!this.canvasLayersInitialized) {
                 this.initializeCanvasLayers();
@@ -4487,12 +4487,12 @@ class VibeSurvivor {
                 // Resize existing layers
                 this.resizeCanvasLayers();
             }
-            
+
             // Reinitialize offscreen canvases after resize
             if (this.hasOffscreenCanvases) {
                 this.initializeOffscreenCanvases();
             }
-            
+
             // If game isn't running, render start screen background (but avoid infinite loop)
             if (!this.gameRunning && !this._isRenderingBackground) {
                 this._isRenderingBackground = true;
@@ -4501,12 +4501,12 @@ class VibeSurvivor {
                     this._isRenderingBackground = false;
                 }, 0);
             }
-            
+
             // Canvas resized to match CSS responsive dimensions
         }
     }
-    
-    
+
+
     // Modal header management methods
     hideModalHeader() {
         const header = document.querySelector('#vibe-survivor-modal .vibe-survivor-header');
@@ -4514,28 +4514,28 @@ class VibeSurvivor {
             // Hide title and show stats during gameplay
             const title = document.getElementById('game-title');
             const stats = document.getElementById('header-stats');
-            
+
             if (title) {
                 title.style.display = 'none';
             }
             if (stats) {
                 stats.style.display = 'flex';
             }
-            
+
             // Check if help button should be shown
             this.checkHelpButtonVisibility();
-            
+
             // Ensure header maintains proper flexbox layout
             header.style.display = 'flex';
             header.style.justifyContent = 'space-between';
             header.style.alignItems = 'center';
-            
+
             // Header configured for gameplay
         } else {
             // Header not found
         }
     }
-    
+
     showModalHeader() {
         const header = document.querySelector('#vibe-survivor-modal .vibe-survivor-header');
         if (header) {
@@ -4709,28 +4709,28 @@ class VibeSurvivor {
                     this.renderStartScreenBackground();
                 });
             }
-            
+
             // Add menu navigation styles
             this.addMenuNavigationStyles();
 
             // Initialize keyboard navigation for start screen buttons
             // Use setTimeout to ensure DOM is fully ready
-                setTimeout(() => {
-                    const startBtn = document.getElementById('start-survivor');
-                    const guideBtn = document.getElementById('start-btn-guide');
-                    const scoreboardBtn = document.getElementById('scoreboard-btn');
-                    const optionsBtn = document.getElementById('options-btn');
-                    const aboutBtn = document.getElementById('about-btn');
-                    const restartBtn = document.getElementById('restart-survivor');
-                    const exitBtn = document.getElementById('exit-survivor');
-                    const startButtons = [startBtn, guideBtn, scoreboardBtn, optionsBtn, aboutBtn, restartBtn, exitBtn].filter(btn => btn);
+            setTimeout(() => {
+                const startBtn = document.getElementById('start-survivor');
+                const guideBtn = document.getElementById('start-btn-guide');
+                const scoreboardBtn = document.getElementById('scoreboard-btn');
+                const optionsBtn = document.getElementById('options-btn');
+                const aboutBtn = document.getElementById('about-btn');
+                const restartBtn = document.getElementById('restart-survivor');
+                const exitBtn = document.getElementById('exit-survivor');
+                const startButtons = [startBtn, guideBtn, scoreboardBtn, optionsBtn, aboutBtn, restartBtn, exitBtn].filter(btn => btn);
 
-                    if (startButtons.length > 0) {
-                        this.initializeMenuNavigation('start', startButtons);
-                    }
+                if (startButtons.length > 0) {
+                    this.initializeMenuNavigation('start', startButtons);
+                }
 
-            this.setupChromaAwardsLogoInteraction();
-            this.setupVibeSurvivorLogoInteraction();
+                this.setupChromaAwardsLogoInteraction();
+                this.setupVibeSurvivorLogoInteraction();
 
                 // Title content is hidden in HTML initially (display: none on .survivor-title)
                 // Show everything after background loads and mark game as ready
@@ -4776,8 +4776,8 @@ class VibeSurvivor {
                     });
                 }, 700); // 600ms transition + 100ms safety margin
             }, 100);
-            
-            
+
+
         } else {
             console.error('showStartScreen: Start screen element not found');
         }
@@ -4883,7 +4883,7 @@ class VibeSurvivor {
         this.audioManager.playSound('startMenu');
         this.audioManager.playSound('chromaAwardsTheme');
     }
-    
+
     startGame() {
         // Starting game with complete reinitialization
 
@@ -4932,7 +4932,7 @@ class VibeSurvivor {
             startScreen.classList.remove('active');
             // Start screen hidden
         }
-        
+
         // Show pause button during gameplay and reset its text
         const pauseBtn = document.getElementById('pause-btn');
         if (pauseBtn) {
@@ -4975,31 +4975,31 @@ class VibeSurvivor {
         this.inputManager.resetMenuNavigation();
 
         this.resetGame();
-        
+
         // Optimize memory before starting intensive gameplay
         if (window.PerformanceManager) {
             window.PerformanceManager.optimizeMemory();
         }
-        
+
         // Force garbage collection if available for better restart performance
         if (window.gc) {
             window.gc();
         } else if (window.GCController) {
             window.GCController.collect();
         }
-        
+
         // Clear any remaining cached textures or WebGL resources
         if (this.ctx && typeof this.ctx.clearRect === 'function') {
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         }
-        
+
         // Auto-detect performance mode based on browser and device
         this.detectPerformanceMode();
-        
+
         // Make sure game screen exists before trying to activate it
         const screens = document.querySelectorAll('.vibe-survivor-screen');
         screens.forEach(screen => screen.classList.remove('active'));
-        
+
         const gameScreen = document.getElementById('game-screen');
         if (gameScreen) {
             gameScreen.classList.add('active');
@@ -5225,25 +5225,25 @@ class VibeSurvivor {
             );
 
             // Set up confirmation callbacks
-        this.modals.exitConfirmation.onConfirm(() => {
-            // Hide confirmation modal first to prevent re-enabling parent keyboard handler
-            this.modals.exitConfirmation.hide();
+            this.modals.exitConfirmation.onConfirm(() => {
+                // Hide confirmation modal first to prevent re-enabling parent keyboard handler
+                this.modals.exitConfirmation.hide();
 
-            // Reset parent callbacks back to default (pause modal)
-            this.resetExitConfirmationParentCallbacks();
-            this.victoryHiddenForExitConfirmation = false;
-
-            // Then close the game
-            this.closeGame();
-        });
-
-        this.modals.exitConfirmation.onCancel(() => {
-            // Reset parent callbacks back to default (pause modal) after cancellation
-            setTimeout(() => {
+                // Reset parent callbacks back to default (pause modal)
                 this.resetExitConfirmationParentCallbacks();
-                this.ensureVictoryModalVisible();
-            }, 0);
-        });
+                this.victoryHiddenForExitConfirmation = false;
+
+                // Then close the game
+                this.closeGame();
+            });
+
+            this.modals.exitConfirmation.onCancel(() => {
+                // Reset parent callbacks back to default (pause modal) after cancellation
+                setTimeout(() => {
+                    this.resetExitConfirmationParentCallbacks();
+                    this.ensureVictoryModalVisible();
+                }, 0);
+            });
 
             this.modals.exitConfirmation.setTranslationFunction(this.t.bind(this));
 
@@ -5286,7 +5286,7 @@ class VibeSurvivor {
         // Game loop started
         this.startAnimationLoop();
     }
-    
+
     resetGame() {
         // Reset game core state
         this.gameTime = 0;
@@ -5377,7 +5377,7 @@ class VibeSurvivor {
         if (this.magnetOrbPool) {
             this.magnetOrbPool.forEach(orb => orb.active = false);
         }
-        
+
         // Reset frame rate monitoring using PerformanceMonitor
         this.performanceMonitor.reset();
 
@@ -5387,31 +5387,31 @@ class VibeSurvivor {
             this.adaptiveQuality.frameCount = 0;
             this.adaptiveQuality.lastAdjustment = 0;
         }
-        
+
         // Initialize dirty rectangle system
         this.dirtyRectangles = [];
         this.lastEntityPositions = new Map();
         this.staticCanvasCache = null;
         this.backgroundCanvasCache = null;
-        
+
         // Clear grid cache for fresh rendering
         if (this.gridOffscreen) {
             this.gridOffscreen = null;
             this.gridOffscreenCtx = null;
         }
-        
+
         // Clear canvas layers cache for fresh rendering
         if (this.canvasLayers) {
             this.cleanupCanvasLayers();
             this.canvasLayersInitialized = false;
         }
-        
+
         this.performanceMonitor.setPerformanceMode(false);
 
         // Reset camera
         resetCameraState(this.camera);
     }
-    
+
     // Start or resume the main animation loop with normalized timing
     startAnimationLoop() {
         if (!this.gameRunning || !this.canvas || !this.ctx) {
@@ -5494,7 +5494,7 @@ class VibeSurvivor {
         }
 
         this.updatePlayer();
-        
+
         // Keep magnet boost active until field is clear of XP orbs
         if (this.player.magnetBoost > 0 && this.xpOrbs.length === 0) {
             this.player.magnetBoost = 0;
@@ -5522,7 +5522,7 @@ class VibeSurvivor {
         // Update adaptive quality scaling
         this.updateAdaptiveQuality();
     }
-    
+
     updatePlayer() {
         // Delegate to PlayerSystem
         this.playerSystem.updatePlayer(
@@ -5536,12 +5536,12 @@ class VibeSurvivor {
             this.audioManager
         );
     }
-    
+
     updatePassives() {
         // Delegate to PlayerSystem
         this.playerSystem.updatePassives(this.player);
     }
-    
+
     updateWeapons() {
         this.weapons.forEach(weapon => {
             let canFire = true;
@@ -5582,7 +5582,7 @@ class VibeSurvivor {
             }
         });
     }
-    
+
     togglePause() {
         // Phase 12c.4 - Use PauseMenu modal (Option B: Proper Encapsulation)
         this.isPaused = !this.isPaused;
@@ -5624,9 +5624,9 @@ class VibeSurvivor {
         }
     }
 
-    pauseLoopingWeaponSounds() {}
+    pauseLoopingWeaponSounds() { }
 
-    resumeLoopingWeaponSounds() {}
+    resumeLoopingWeaponSounds() { }
 
     toggleMusicMute() {
         this.audioManager.toggleMusicMute();
@@ -5995,7 +5995,7 @@ class VibeSurvivor {
         this.menuNavigationState.keyboardUsed = false;
         this.updateMenuSelection();
     }
-    
+
     updateMenuSelection() {
         if (!this.menuNavigationState.active) return;
 
@@ -6011,7 +6011,7 @@ class VibeSurvivor {
         if (helpBtn) {
             helpBtn.style.borderColor = '#00ffff';
         }
-        
+
         // Only show visual selection if keyboard has been used
         if (this.menuNavigationState.keyboardUsed) {
             // Add current selection styling
@@ -6090,22 +6090,22 @@ class VibeSurvivor {
 
     navigateMenu(direction) {
         if (!this.menuNavigationState.active) return;
-        
+
         const buttonCount = this.menuNavigationState.menuButtons.length;
         if (buttonCount === 0) return;
-        
+
         const oldIndex = this.menuNavigationState.selectedIndex;
-        
+
         if (direction === 'up' || direction === 'left') {
             this.menuNavigationState.selectedIndex = (this.menuNavigationState.selectedIndex - 1 + buttonCount) % buttonCount;
         } else if (direction === 'down' || direction === 'right') {
             this.menuNavigationState.selectedIndex = (this.menuNavigationState.selectedIndex + 1) % buttonCount;
         }
-        
-        
+
+
         this.updateMenuSelection();
     }
-    
+
     selectCurrentMenuItem() {
         if (!this.menuNavigationState.active) return;
 
@@ -6131,16 +6131,16 @@ class VibeSurvivor {
             }
         }
     }
-    
+
     resetMenuNavigation() {
         this.inputManager.resetMenuNavigation();
         // Note: We don't clear previousNavigationState here because it's used to restore state later
     }
-    
+
     exitToMenu() {
         this.isPaused = false;
         this.gameRunning = false;
-        
+
         // Hide pause menu
         const pauseMenu = document.getElementById('pause-menu');
         if (pauseMenu) {
@@ -6152,20 +6152,20 @@ class VibeSurvivor {
         this.showStartScreen();
         this.resetGame();
     }
-    
+
     detectMobile() {
         return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-               ('ontouchstart' in window) ||
-               (navigator.maxTouchPoints > 0);
+            ('ontouchstart' in window) ||
+            (navigator.maxTouchPoints > 0);
     }
 
     // Enhanced browser detection for canvas optimization
     getBrowserOptimizationProfile() {
         const userAgent = navigator.userAgent.toLowerCase();
-        
+
         // Check if Chrome first
         const isChrome = userAgent.includes('chrome') && !userAgent.includes('edg');
-        
+
         if (!isChrome) {
             // Samsung Browser (Chrome-based but optimized)
             if (userAgent.includes('samsungbrowser')) {
@@ -6175,7 +6175,7 @@ class VibeSurvivor {
                     reason: 'Samsung browser has optimized GPU drivers'
                 };
             }
-            
+
             // Other browsers (Firefox, Safari, etc.)
             return {
                 browser: 'other',
@@ -6183,7 +6183,7 @@ class VibeSurvivor {
                 reason: 'Default browser optimization'
             };
         }
-        
+
         // Chrome Mobile (the problematic one)
         if ((userAgent.includes('android') && userAgent.includes('mobile')) ||
             userAgent.includes('iphone') || userAgent.includes('ipod') ||
@@ -6194,18 +6194,18 @@ class VibeSurvivor {
                 reason: 'Chrome mobile - forcing GPU acceleration for better performance'
             };
         }
-        
+
         // Chrome Desktop (should work fine with GPU)
-        if (userAgent.includes('windows nt') || 
-            userAgent.includes('macintosh') || 
+        if (userAgent.includes('windows nt') ||
+            userAgent.includes('macintosh') ||
             userAgent.includes('linux')) {
             return {
-                browser: 'chrome-desktop', 
+                browser: 'chrome-desktop',
                 contextOptions: { willReadFrequently: false },
                 reason: 'Chrome desktop GPU acceleration works well'
             };
         }
-        
+
         // Chrome unknown platform - be safe and disable GPU
         return {
             browser: 'chrome-unknown',
@@ -6217,7 +6217,7 @@ class VibeSurvivor {
     detectPerformanceMode() {
         // DISABLED: Don't auto-enable performance mode
         // Let the adaptive system handle performance based on actual FPS measurements
-        
+
         // Only enable for very old mobile devices
         const userAgent = navigator.userAgent.toLowerCase();
         if (this.isMobile && (
@@ -6231,28 +6231,28 @@ class VibeSurvivor {
             this.performanceMonitor.setPerformanceMode(false);
         }
     }
-    
+
     preventBackgroundScrolling() {
         const modal = document.getElementById('vibe-survivor-modal');
         const content = document.querySelector('.vibe-survivor-content');
-        
+
         if (!modal || !content) return;
-        
+
         // Prevent touch scrolling on modal and content
         const preventTouchDefault = (e) => {
             // Only prevent default if the touch isn't on game controls
             const target = e.target;
             const isGameControl = target.closest('#survivor-canvas') ||
-                                target.closest('.mobile-controls') ||
-                                target.closest('.header-help-btn') ||
-                                target.closest('.pause-btn') ||
-                                target.closest('.survivor-btn') ||
-                                target.closest('.upgrade-choice') ||
-                                target.closest('.levelup-modal') ||
-                                target.closest('.pause-menu') ||
-                                target.closest('#overlay-retry-btn') ||
-                                target.closest('#overlay-exit-btn') ||
-                                target.closest('#survivor-game-over-overlay');
+                target.closest('.mobile-controls') ||
+                target.closest('.header-help-btn') ||
+                target.closest('.pause-btn') ||
+                target.closest('.survivor-btn') ||
+                target.closest('.upgrade-choice') ||
+                target.closest('.levelup-modal') ||
+                target.closest('.pause-menu') ||
+                target.closest('#overlay-retry-btn') ||
+                target.closest('#overlay-exit-btn') ||
+                target.closest('#survivor-game-over-overlay');
 
             // Allow scrolling within help content, level up modal, victory, and game over modals
             const isHelpContent = target.closest('.help-content');
@@ -6268,12 +6268,12 @@ class VibeSurvivor {
                 e.stopPropagation();
             }
         };
-        
+
         // Add event listeners to prevent background scrolling
         modal.addEventListener('touchstart', preventTouchDefault, { passive: false });
         modal.addEventListener('touchmove', preventTouchDefault, { passive: false });
         modal.addEventListener('touchend', preventTouchDefault, { passive: false });
-        
+
         // Also prevent wheel events for desktop, but allow scrolling in help content and level up modal
         modal.addEventListener('wheel', (e) => {
             const target = e.target;
@@ -6293,14 +6293,14 @@ class VibeSurvivor {
                 e.stopPropagation();
             }
         }, { passive: false });
-        
+
         // Prevent body scrolling while modal is open
         document.body.style.overflow = 'hidden';
         document.body.style.position = 'fixed';
         document.body.style.width = '100%';
         document.body.style.height = '100%';
     }
-    
+
     restoreBackgroundScrolling() {
         // Restore normal body scroll behavior
         document.body.style.overflow = '';
@@ -6331,9 +6331,9 @@ class VibeSurvivor {
             audioManager: this.audioManager
         });
     }
-    
+
     // Object pooling methods for performance - removed duplicate method
-    
+
     // Removed duplicate returnProjectileToPool method - using the correct one below
 
     createBossMissile(boss, healthPercent = 1.0) {
@@ -6445,7 +6445,7 @@ class VibeSurvivor {
                     vx: Math.cos(offset) * speed,
                     vy: Math.sin(offset) * speed,
                     damage: 32,
-                life: this.getBossProjectileLife(90, boss),
+                    life: this.getBossProjectileLife(90, boss),
                     type: 'boss-missile',
                     color: '#00E5FF',
                     size: 5,
@@ -6943,12 +6943,12 @@ class VibeSurvivor {
             spawnBoss: () => this.spawnBoss()
         });
     }
-    
+
     spawnEnemy() {
         const side = Math.floor(Math.random() * 4);
         const spawnDistance = 500; // Distance from player to spawn enemies
         let x, y;
-        
+
         // Spawn enemies around the player's position instead of canvas bounds
         switch (side) {
             case 0: // Top
@@ -6968,19 +6968,19 @@ class VibeSurvivor {
                 y = this.player.y + (Math.random() - 0.5) * 500;
                 break;
         }
-        
+
         const enemyTypes = this.getAvailableEnemyTypes();
         const type = this.selectEnemyType(enemyTypes);
         const config = this.getEnemyConfig(type);
         const variant = this.selectEnemyVariant(type);
-        
+
         // Calculate scaled speed - keep enemy speed constant to maintain gameplay feel
         const baseSpeed = config.speed; // Removed time-based speed scaling
         const scaledSpeed = baseSpeed;
-        
+
         // Calculate enemy scaling: time-based until first boss, then boss-only scaling
         let timeScaling, bossScaling;
-        
+
         if (this.bossesKilled === 0) {
             // Before first boss: use time-based scaling only
             timeScaling = 1 + Math.floor(this.gameTime / 30) * 0.3; // 30% per 30 seconds
@@ -6990,10 +6990,10 @@ class VibeSurvivor {
             timeScaling = 1 + Math.floor(300 / 30) * 0.3; // Freeze at first boss time (300 seconds = 10 intervals = 4.0x)
             bossScaling = 1 + this.bossesKilled * 0.3; // 30% per boss defeated
         }
-        
+
         const totalHealthMultiplier = config.health * timeScaling * bossScaling;
         const totalDamageMultiplier = config.contactDamage * (1 + (this.bossesKilled || 0) * 0.3); // 30% damage per boss
-        
+
         const sizeMult = variant?.sizeMult || 1;
         const speedMult = variant?.speedMult || 1;
         const healthMult = variant?.healthMult || 1;
@@ -7001,7 +7001,7 @@ class VibeSurvivor {
         const enemySpeed = scaledSpeed * speedMult;
         const enemyHealth = Math.floor(totalHealthMultiplier * healthMult);
         const enemyDamage = Math.floor(totalDamageMultiplier);
-        
+
         const enemy = {
             x: x,
             y: y,
@@ -7036,15 +7036,15 @@ class VibeSurvivor {
         const rotSpeed = (variant?.rotSpeed ?? config.rotSpeed) ?? 0.02;
         enemy.angle = Math.random() * Math.PI * 2;
         enemy.rotSpeed = rotSpeed * (Math.random() < 0.5 ? -1 : 1);
-        
+
         this.enemies.push(enemy);
-        
+
         // Show boss notification when boss is spawned
         if (config.behavior === 'boss') {
             this.showBossNotification();
         }
     }
-    
+
     getBossVariantForLevel(level) {
         if (!Array.isArray(BOSS_VARIANTS) || BOSS_VARIANTS.length === 0) {
             return null;
@@ -7147,11 +7147,11 @@ class VibeSurvivor {
             });
         }
     }
-    
+
     spawnBoss(delaySeconds = this.bossSpawnDelaySeconds, distance = this.bossSpawnDistance) {
         this.queueBossSpawn('first', { delaySeconds, distance });
     }
-    
+
     spawnScaledBoss(delaySeconds = this.bossSpawnDelaySeconds, distance = this.bossSpawnDistance) {
         this.queueBossSpawn('scaled', { delaySeconds, distance, bossLevel: this.bossLevel });
     }
@@ -7308,20 +7308,20 @@ class VibeSurvivor {
             this.showBossNotification(variantConfig);
         }
     }
-    
+
     getAvailableEnemyTypes() {
         const time = this.gameTime;
         const types = ['basic'];
-        
+
         if (time > 30) types.push('fast');
         if (time > 60) types.push('tank');
         if (time > 120) types.push('flyer');
         if (time > 180) types.push('phantom');
         // Boss spawning is now handled separately in spawnEnemies() method
-        
+
         return types;
     }
-    
+
     selectEnemyType(types) {
         const weights = {
             'basic': 0.35,
@@ -7331,21 +7331,21 @@ class VibeSurvivor {
             'phantom': 0.05,
             'boss': 0.05  // Rare but powerful
         };
-        
+
         // Weighted random selection
         const random = Math.random();
         let cumulative = 0;
-        
+
         for (const type of types) {
             cumulative += weights[type] || 0;
             if (random <= cumulative) {
                 return type;
             }
         }
-        
+
         return types[0];
     }
-    
+
     getEnemyConfig(type) {
         const configs = {
             basic: {
@@ -7403,7 +7403,7 @@ class VibeSurvivor {
                 rotSpeed: 0.02
             }
         };
-        
+
         return configs[type] || configs.basic;
     }
 
@@ -7463,14 +7463,14 @@ class VibeSurvivor {
 
         return unlocked[unlocked.length - 1];
     }
-    
+
     // Update enemy groupings for batch processing
     updateEnemyGroupings() {
         // Clear existing groupings
         for (const behavior in this.enemiesByBehavior) {
             this.enemiesByBehavior[behavior].length = 0;
         }
-        
+
         // Re-group enemies by behavior
         for (const enemy of this.enemies) {
             if (this.enemiesByBehavior[enemy.behavior]) {
@@ -7489,34 +7489,34 @@ class VibeSurvivor {
         this.processBatchTeleport();
         this.processBatchBoss();
     }
-    
+
     processBatchChase() {
         const chaseEnemies = this.enemiesByBehavior.chase;
         if (chaseEnemies.length === 0) return;
-        
+
         // Pre-calculate player position for all chase enemies
         const playerX = this.player.x;
         const playerY = this.player.y;
-        
+
         for (const enemy of chaseEnemies) {
             const [dirX, dirY] = Vector2.direction(enemy.x, enemy.y, playerX, playerY);
             enemy.x += dirX * enemy.speed;
             enemy.y += dirY * enemy.speed;
         }
     }
-    
+
     processBatchDodge() {
         const dodgeEnemies = this.enemiesByBehavior.dodge;
         if (dodgeEnemies.length === 0) return;
-        
+
         const playerX = this.player.x;
         const playerY = this.player.y;
         const dodgeRadius = 50;
         const dodgeRadiusSq = dodgeRadius * dodgeRadius;
-        
+
         for (const enemy of dodgeEnemies) {
             let dodgeX = 0, dodgeY = 0;
-            
+
             // Check nearby projectiles for dodge behavior
             for (const projectile of this.projectiles) {
                 const pDistSq = Vector2.distanceSquared(enemy.x, enemy.y, projectile.x, projectile.y);
@@ -7527,7 +7527,7 @@ class VibeSurvivor {
                     dodgeY += dodgeDirY * influence;
                 }
             }
-            
+
             // Apply movement
             const [dirX, dirY] = Vector2.direction(enemy.x, enemy.y, playerX, playerY);
             if (dodgeX !== 0 || dodgeY !== 0) {
@@ -7545,19 +7545,19 @@ class VibeSurvivor {
             }
         }
     }
-    
+
     processBatchTank() {
         const tankEnemies = this.enemiesByBehavior.tank;
         if (tankEnemies.length === 0) return;
-        
+
         const playerX = this.player.x;
         const playerY = this.player.y;
-        
+
         for (const enemy of tankEnemies) {
             const [dirX, dirY] = Vector2.direction(enemy.x, enemy.y, playerX, playerY);
             enemy.x += dirX * enemy.speed;
             enemy.y += dirY * enemy.speed;
-            
+
             // Check for minion spawning
             if (enemy.health < enemy.maxHealth * 0.25 && !enemy.spawnedMinions) {
                 this.spawnMinions(enemy.x, enemy.y, 3);
@@ -7565,20 +7565,20 @@ class VibeSurvivor {
             }
         }
     }
-    
+
     processBatchFly() {
         const flyEnemies = this.enemiesByBehavior.fly;
         if (flyEnemies.length === 0) return;
-        
+
         const playerX = this.player.x;
         const playerY = this.player.y;
         const orbitRadius = 100;
         const orbitRadiusSq = orbitRadius * orbitRadius;
-        
+
         for (const enemy of flyEnemies) {
             const [dirX, dirY] = Vector2.direction(enemy.x, enemy.y, playerX, playerY);
             const distanceSquared = Vector2.distanceSquared(enemy.x, enemy.y, playerX, playerY);
-            
+
             if (distanceSquared > orbitRadiusSq) {
                 // Move towards player when far
                 enemy.x += dirX * enemy.speed;
@@ -7591,19 +7591,19 @@ class VibeSurvivor {
             }
         }
     }
-    
+
     processBatchTeleport() {
         const teleportEnemies = this.enemiesByBehavior.teleport;
         if (teleportEnemies.length === 0) return;
-        
+
         const playerX = this.player.x;
         const playerY = this.player.y;
         const teleportRange = 50;
         const teleportRangeSq = teleportRange * teleportRange;
-        
+
         for (const enemy of teleportEnemies) {
             const distanceSquared = Vector2.distanceSquared(enemy.x, enemy.y, playerX, playerY);
-            
+
             if (enemy.specialCooldown <= 0 && distanceSquared > teleportRangeSq) {
                 this.createTeleportParticles(enemy.x, enemy.y);
                 const teleportDistance = 80;
@@ -7621,14 +7621,14 @@ class VibeSurvivor {
         }
     }
 
-    
+
     processBatchBoss() {
         const bossEnemies = this.enemiesByBehavior.boss;
         if (bossEnemies.length === 0) return;
-        
+
         const playerX = this.player.x;
         const playerY = this.player.y;
-        
+
         for (const enemy of bossEnemies) {
             if (enemy.health <= 0) {
                 continue;
@@ -8004,7 +8004,7 @@ class VibeSurvivor {
             cachedSqrt: this.cachedSqrt
         });
     }
-    
+
     spawnMinions(x, y, count) {
         for (let i = 0; i < count; i++) {
             const angle = (Math.PI * 2 * i) / count;
@@ -8026,7 +8026,7 @@ class VibeSurvivor {
             });
         }
     }
-    
+
     updateProjectiles() {
         // Phase 12b integration - Delegate to ProjectileSystem
         this.projectileSystem.updateProjectiles(this.projectiles, {
@@ -8037,12 +8037,12 @@ class VibeSurvivor {
             createExplosion: (x, y, radius, damage, sourceType) => this.createExplosion(x, y, radius, damage, sourceType)
         });
     }
-    
+
     updateParticles() {
         // Delegated to ParticleSystem (called from update())
         // This method kept for backward compatibility but does nothing
     }
-    
+
     updateXPOrbs() {
         // Delegate to PickupSystem
         this.pickupSystem.updateXPOrbs(this.xpOrbs, this.player, this.cachedSqrt, this.bossDefeating);
@@ -8071,7 +8071,7 @@ class VibeSurvivor {
             this.audioManager
         );
     }
-    
+
     createXPOrb(x, y) {
         const orb = this.getPooledXPOrb();
         if (orb) {
@@ -8104,7 +8104,7 @@ class VibeSurvivor {
             const minDistance = 300;
             const maxDistance = 800;
             const distance = minDistance + Math.random() * (maxDistance - minDistance);
-            
+
             orb.x = this.player.x + Math.cos(angle) * distance;
             orb.y = this.player.y + Math.sin(angle) * distance;
             orb.healAmount = 30;
@@ -8227,7 +8227,7 @@ class VibeSurvivor {
         // This method is kept for compatibility but notifications array is no longer used
         this.notifications = [];
     }
-    
+
     checkLevelUp() {
         // Delegate to PlayerSystem
         const wasDeferred = this.playerSystem.checkLevelUp(
@@ -8255,7 +8255,7 @@ class VibeSurvivor {
         // Update pending level ups count
         this.pendingLevelUps = result.pendingLevelUps;
     }
-    
+
     showLevelUpChoices() {
         // Phase 12c integration - Use LevelUpModal class (Option B: Proper Encapsulation)
         this.gameRunning = false;
@@ -8273,14 +8273,14 @@ class VibeSurvivor {
         // Show the modal (modal handles all keyboard interaction, tab switching, and scrolling internally)
         this.modals.levelUp.show();
     }
-    
+
     getMaxWeapons() {
         return this.maxWeaponSlots || WEAPON_UPGRADES.MAX_WEAPONS;
     }
-    
+
     generateUpgradeChoices() {
         const choices = [];
-        
+
         // Weapon upgrades for existing weapons
         this.weapons.forEach((weapon, index) => {
             if (weapon.level < 10) {
@@ -8292,7 +8292,7 @@ class VibeSurvivor {
                 } else if (weapon.level >= 2 && weapon.level < 5) {
                     description += `, ${this.t('addProjectile')}`;
                 }
-                
+
                 // Determine what type the weapon will be after upgrade
                 let upgradeType = weapon.type;
                 if (weapon.level + 1 === 5 && weapon.type === 'basic') {
@@ -8312,12 +8312,12 @@ class VibeSurvivor {
                 });
             }
         });
-        
+
         // New weapons (if not at max weapons)
         if (this.weapons.length < this.getMaxWeapons()) {
             const availableWeapons = ['spread', 'laser', 'plasma', 'shotgun', 'lightning', 'flamethrower', 'railgun', 'missiles'];
             const currentTypes = this.weapons.map(w => w.type);
-            
+
             availableWeapons.forEach(weaponType => {
                 if (!currentTypes.includes(weaponType)) {
                     choices.push({
@@ -8330,7 +8330,7 @@ class VibeSurvivor {
                 }
             });
         }
-        
+
         // NOTE: Passive abilities removed - now only available from upgrade chests
         // Chest system provides passive upgrades separately from level-up
 
@@ -8338,7 +8338,7 @@ class VibeSurvivor {
         const shuffled = choices.sort(() => Math.random() - 0.5);
         return shuffled.slice(0, Math.min(3, shuffled.length));
     }
-    
+
     getWeaponName(type) {
         const weaponNameMap = {
             'basic': 'basicMissile',
@@ -8364,17 +8364,17 @@ class VibeSurvivor {
     getWeaponNameAfterUpgrade(weapon) {
         let type = weapon.type;
         let level = weapon.level + 1;
-        
+
         // Check if weapon type will change after upgrade
         if (level === 5 && type === 'basic') {
             type = 'rapid';
         } else if (level === 8 && type === 'spread_shot') {
             type = 'spread';
         }
-        
+
         return this.getWeaponName(type);
     }
-    
+
     getWeaponDescription(type) {
         const descKey = type + 'Desc';
         return this.t(descKey, 'weapons') || 'Unknown weapon type';
@@ -8492,11 +8492,11 @@ class VibeSurvivor {
         const iconName = passiveIconMap[passiveId] || 'upgrade';
         return `<img src="images/passives/${iconName}.png" alt="${passiveId}" style="width: 48px; height: 48px; vertical-align: middle;">`;
     }
-    
+
     addMenuNavigationStyles() {
         // Add CSS styles for keyboard navigation if not already added
         if (document.getElementById('menu-navigation-styles')) return;
-        
+
         const style = document.createElement('style');
         style.id = 'menu-navigation-styles';
         style.textContent = `
@@ -8697,7 +8697,7 @@ class VibeSurvivor {
     addToastStyles() {
         // Add CSS styles for toast notifications if not already added
         if (document.getElementById('toast-notification-styles')) return;
-        
+
         const style = document.createElement('style');
         style.id = 'toast-notification-styles';
         style.textContent = `
@@ -8765,7 +8765,7 @@ class VibeSurvivor {
         document.head.appendChild(style);
     }
 
-    
+
     createToast(message, type = 'upgrade', duration = 2500, customIcon = null) {
         const toastContainer = document.getElementById('toast-container');
         if (!toastContainer) {
@@ -8798,38 +8798,38 @@ class VibeSurvivor {
                 <div style="font-size: 22px; font-weight: bold; color: white; text-shadow: 0 0 20px rgba(0,255,255,1), 0 0 40px rgba(0,255,255,0.8), 0 2px 4px rgba(0,0,0,0.9);">${message}</div>
             </div>
         `;
-        
+
         // Click entire toast to dismiss (optional)
         toast.addEventListener('click', () => {
             this.removeToast(toast);
         });
-        
+
         // Add to container
         toastContainer.appendChild(toast);
-        
+
         // Trigger slide-in animation after a small delay
         setTimeout(() => {
             toast.classList.add('toast-show');
         }, 50);
-        
+
         // Auto-dismiss after duration
         if (duration > 0) {
             setTimeout(() => {
                 this.removeToast(toast);
             }, duration);
         }
-        
+
         return toast;
     }
-    
+
     removeToast(toast) {
         if (!toast || !toast.parentNode) return;
-        
+
         // Remove the show class and trigger fade out - scale down in place to avoid collision
         toast.classList.remove('toast-show');
         toast.style.opacity = '0';
         toast.style.transform = 'translateY(0) scale(0.5)'; // Scale down in place, no sliding
-        
+
         // Remove after animation completes
         setTimeout(() => {
             if (toast.parentNode) {
@@ -8837,7 +8837,7 @@ class VibeSurvivor {
             }
         }, 600);
     }
-    
+
     showToastNotification(message, type = 'upgrade', customIcon = null) {
         // Shorter duration based on type and message importance
         const durations = {
@@ -8851,12 +8851,12 @@ class VibeSurvivor {
         this.createToast(message, type, durations[type], customIcon);
     }
 
-    
+
     testToast() {
-        
+
         this.showToastNotification('TEST NOTIFICATION!', 'upgrade');
     }
-    
+
     selectUpgrade(choice) {
         switch (choice.type) {
             case 'weapon_upgrade':
@@ -8929,7 +8929,7 @@ class VibeSurvivor {
         // Check for weapon merges after upgrade
         this.checkForWeaponMerges();
     }
-    
+
     addNewWeapon(weaponType) {
         // Phase 9 integration - Use WeaponSystem to create weapons
         const newWeapon = this.weaponSystem.createWeapon(weaponType);
@@ -8940,7 +8940,7 @@ class VibeSurvivor {
             console.error(`Failed to create weapon: ${weaponType}`);
         }
     }
-    
+
     checkForWeaponMerges() {
         // Phase 9 integration - Use WeaponSystem for merge detection and execution
         // Check all weapon pairs for possible merges
@@ -9098,7 +9098,7 @@ class VibeSurvivor {
             this.player.passives[passiveId] = true;
         }
     }
-    
+
     checkCollisions() {
         // Delegate to PhysicsManager for all collision detection
         this.physicsManager.checkCollisions(this);
@@ -9176,23 +9176,23 @@ class VibeSurvivor {
             this.fastSin
         );
     }
-    
+
     createHitParticles(x, y, color) {
         // Particles removed for performance
     }
-    
+
     createDashParticles() {
         // Particles removed for performance
     }
-    
+
     createCriticalParticles(x, y) {
         // Particles removed for performance
     }
-    
+
     createTeleportParticles(x, y) {
         // Particles removed for performance
     }
-    
+
     createScreenShake(intensity, duration = 20) {
         // Delegate to EffectsManager (now supports duration parameter - fixes bug)
         this.effectsManager.createScreenShake(intensity, duration);
@@ -9218,11 +9218,11 @@ class VibeSurvivor {
         // Delegated to ParticleSystem (called from update())
         // This method kept for backward compatibility but does nothing
     }
-    
+
     createDeathParticles(x, y, color) {
         // Particles removed for performance
     }
-    
+
     showUpgradeNotification(title, iconHtml = null) {
         const acquiredText = this.t('acquiredSuffix');
         let message;
@@ -9237,7 +9237,7 @@ class VibeSurvivor {
 
         this.showToastNotification(message, 'upgrade', iconHtml);
     }
-    
+
     showBossNotification(bossNameOrVariant = null) {
         let bossName = null;
 
@@ -9265,7 +9265,7 @@ class VibeSurvivor {
         setTimeout(() => this.audioManager.playSound('bossAlert', 2.5), intervalMs);
         setTimeout(() => this.audioManager.playSound('bossAlert', 2.5), intervalMs * 2);
     }
-    
+
     showContinueNotification() {
         this.showToastNotification("BOSS DEFEATED! DIFFICULTY INCREASED!", 'victory');
     }
@@ -9332,18 +9332,18 @@ class VibeSurvivor {
         return 0;
     }
 
-    
+
     addNotificationSafely(notificationData) {
         // This method has been replaced by the toast notification system
         // Kept for compatibility but no longer used
     }
 
-    
+
     repositionOverlappingNotifications() {
         // This method has been replaced by the toast notification system
         // Kept for compatibility but no longer used
     }
-    
+
     updateCamera() {
         // Use different smoothing based on player state
         let lerpFactor = 0.1; // Default smooth following
@@ -9362,7 +9362,7 @@ class VibeSurvivor {
         );
     }
 
-    
+
     // Performance optimization: Check if object is visible on screen
     isInViewport(x, y, radius = 0, cullingLevel = 'normal') {
         if (!this.canvas) return true; // Fallback to render everything if no canvas
@@ -9390,26 +9390,26 @@ class VibeSurvivor {
         return this.camera.isInViewport(x, y, this.canvas.width, this.canvas.height, buffer);
     }
 
-    
+
     // Enhanced frustum culling with distance-based LOD
     shouldRender(entity, entityType) {
         // Always render critical entities
         if (entityType === 'player' || entity.type === 'boss') {
             return true;
         }
-        
+
         // Calculate distance from player for LOD decisions
         const dx = entity.x - this.player.x;
         const dy = entity.y - this.player.y;
         const distanceFromPlayer = Math.sqrt(dx * dx + dy * dy);
-        
+
         // Different culling strategies based on entity type and distance
         switch (entityType) {
             case 'particle':
                 // Very aggressive culling for particles
                 if (distanceFromPlayer > 400) return false;
                 return this.isInViewport(entity.x, entity.y, entity.size || 2, 'aggressive');
-                
+
             case 'projectile':
                 // Special priority for complex weapons to prevent edge case disappearing
                 if (entity.type === 'flame' || entity.type === 'lightning' || entity.type === 'shockburst') {
@@ -9420,42 +9420,42 @@ class VibeSurvivor {
                 // Tight culling for basic projectiles
                 if (distanceFromPlayer > 600) return false;
                 return this.isInViewport(entity.x, entity.y, entity.size || 3, 'tight');
-                
+
             case 'enemy':
                 // Standard culling for enemies, but skip very distant ones
                 if (distanceFromPlayer > 800) return false;
                 return this.isInViewport(entity.x, entity.y, entity.radius || 15, 'normal');
-                
+
             case 'effect':
                 // Aggressive culling for explosions and effects
                 if (distanceFromPlayer > 500) return false;
                 return this.isInViewport(entity.x, entity.y, entity.radius || 20, 'aggressive');
-                
+
             case 'xp':
                 // Standard culling for XP orbs
                 return this.isInViewport(entity.x, entity.y, 15, 'normal');
-                
+
             case 'hp':
                 // Standard culling for HP orbs (same as XP orbs)
                 return this.isInViewport(entity.x, entity.y, 15, 'normal');
-                
+
             case 'magnet':
                 // Standard culling for magnet orbs (same as XP orbs)
                 return this.isInViewport(entity.x, entity.y, 15, 'normal');
-                
+
             default:
                 return this.isInViewport(entity.x, entity.y, entity.radius || 10, 'normal');
         }
     }
 
 
-    
+
     // Object pooling for projectiles
     initializeProjectilePool() {
         // Projectile pool
         this.projectilePool = [];
         this.poolSize = 200; // Increased pool size for better performance
-        
+
         // Pre-create projectiles
         for (let i = 0; i < this.poolSize; i++) {
             this.projectilePool.push({
@@ -9467,11 +9467,11 @@ class VibeSurvivor {
                 homing: false, target: null
             });
         }
-        
+
         // Particle pool for explosions and effects
         this.particlePool = [];
         this.particlePoolSize = 500;
-        
+
         for (let i = 0; i < this.particlePoolSize; i++) {
             this.particlePool.push({
                 x: 0, y: 0, vx: 0, vy: 0,
@@ -9480,11 +9480,11 @@ class VibeSurvivor {
                 type: 'basic'
             });
         }
-        
+
         // Enemy pool for frequently spawned enemies
         this.enemyPool = [];
         this.enemyPoolSize = 50;
-        
+
         for (let i = 0; i < this.enemyPoolSize; i++) {
             this.enemyPool.push({
                 x: 0, y: 0, vx: 0, vy: 0,
@@ -9494,11 +9494,11 @@ class VibeSurvivor {
                 lastHit: 0, flashTime: 0
             });
         }
-        
+
         // Explosion pool for effects
         this.explosionPool = [];
         this.explosionPoolSize = 50;
-        
+
         for (let i = 0; i < this.explosionPoolSize; i++) {
             this.explosionPool.push({
                 x: 0, y: 0, radius: 0, maxRadius: 0,
@@ -9506,11 +9506,11 @@ class VibeSurvivor {
                 active: false
             });
         }
-        
+
         // XP orb pool for performance
         this.xpOrbPool = [];
         this.xpOrbPoolSize = 100;
-        
+
         for (let i = 0; i < this.xpOrbPoolSize; i++) {
             this.xpOrbPool.push({
                 x: 0, y: 0, value: 1,
@@ -9518,11 +9518,11 @@ class VibeSurvivor {
                 active: false
             });
         }
-        
+
         // HP orb pool for healing performance
         this.hpOrbPool = [];
         this.hpOrbPoolSize = 20;
-        
+
         for (let i = 0; i < this.hpOrbPoolSize; i++) {
             this.hpOrbPool.push({
                 x: 0, y: 0, healAmount: 30,
@@ -9530,7 +9530,7 @@ class VibeSurvivor {
                 active: false
             });
         }
-        
+
         // Magnet orb pool for attraction performance
         this.magnetOrbPool = [];
         this.magnetOrbPoolSize = 20;
@@ -9559,7 +9559,7 @@ class VibeSurvivor {
             });
         }
     }
-    
+
     // Get projectile from pool - Phase 9 integration
     getPooledProjectile() {
         // Safety limit: Prevent memory issues with too many complex weapons
@@ -9607,7 +9607,7 @@ class VibeSurvivor {
                 return orb;
             }
         }
-        
+
         // If no available orb in pool, expand pool dynamically
         const newOrb = {
             x: 0, y: 0, value: 1,
@@ -9628,7 +9628,7 @@ class VibeSurvivor {
                 return orb;
             }
         }
-        
+
         // If no available orb in pool, expand pool dynamically
         const newOrb = {
             x: 0, y: 0, healAmount: 30,
@@ -9695,7 +9695,7 @@ class VibeSurvivor {
             cleanupScheduled: false,
             lastCleanup: Date.now(),
             cleanupInterval: 5000, // Cleanup every 5 seconds
-            
+
             // Cleanup tasks to perform during idle periods
             cleanupTasks: [
                 () => this.compactProjectilePool(),
@@ -9704,18 +9704,18 @@ class VibeSurvivor {
                 () => this.cleanupTrails()
             ]
         };
-        
-        
+
+
         this.scheduleIdleCleanup();
     }
-    
+
     scheduleIdleCleanup() {
         if (!this.garbageCollectionSystem.enabled || this.garbageCollectionSystem.cleanupScheduled) {
             return;
         }
-        
+
         this.garbageCollectionSystem.cleanupScheduled = true;
-        
+
         // Use requestIdleCallback if available, otherwise fallback to setTimeout
         if (typeof requestIdleCallback !== 'undefined') {
             requestIdleCallback((deadline) => {
@@ -9727,23 +9727,23 @@ class VibeSurvivor {
             }, 100);
         }
     }
-    
+
     performIdleCleanup(deadline) {
         this.garbageCollectionSystem.cleanupScheduled = false;
-        
+
         const now = Date.now();
         const timeSinceLastCleanup = now - this.garbageCollectionSystem.lastCleanup;
-        
+
         // Only perform cleanup if enough time has passed
         if (timeSinceLastCleanup < this.garbageCollectionSystem.cleanupInterval) {
             this.scheduleIdleCleanup();
             return;
         }
-        
+
         // Perform cleanup tasks while we have idle time
         const tasks = this.garbageCollectionSystem.cleanupTasks;
         let taskIndex = 0;
-        
+
         while (deadline.timeRemaining() > 1 && taskIndex < tasks.length) {
             try {
                 tasks[taskIndex]();
@@ -9753,67 +9753,67 @@ class VibeSurvivor {
                 taskIndex++;
             }
         }
-        
+
         this.garbageCollectionSystem.lastCleanup = now;
-        
+
         // Schedule next cleanup
         this.scheduleIdleCleanup();
     }
-    
+
     // Pool compaction methods - remove excess inactive objects
     compactProjectilePool() {
         if (this.projectilePool.length > this.poolSize * 1.5) {
             const activeCount = this.projectilePool.filter(p => p.active).length;
             const keepCount = Math.max(this.poolSize, activeCount + 20);
-            
+
             if (this.projectilePool.length > keepCount) {
                 // Keep active objects and some inactive ones
                 const newPool = this.projectilePool.filter(p => p.active);
                 const inactivePool = this.projectilePool.filter(p => !p.active);
                 newPool.push(...inactivePool.slice(0, keepCount - newPool.length));
                 this.projectilePool = newPool;
-                
+
             }
         }
     }
-    
+
     compactParticlePool() {
         if (this.particlePool.length > this.particlePoolSize * 1.5) {
             const activeCount = this.particlePool.filter(p => p.active).length;
             const keepCount = Math.max(this.particlePoolSize, activeCount + 50);
-            
+
             if (this.particlePool.length > keepCount) {
                 const newPool = this.particlePool.filter(p => p.active);
                 const inactivePool = this.particlePool.filter(p => !p.active);
                 newPool.push(...inactivePool.slice(0, keepCount - newPool.length));
                 this.particlePool = newPool;
-                
+
             }
         }
     }
-    
+
     compactXPOrbPool() {
         if (this.xpOrbPool && this.xpOrbPool.length > this.xpOrbPoolSize * 1.5) {
             const activeCount = this.xpOrbPool.filter(o => o.active).length;
             const keepCount = Math.max(this.xpOrbPoolSize, activeCount + 20);
-            
+
             if (this.xpOrbPool.length > keepCount) {
                 const newPool = this.xpOrbPool.filter(o => o.active);
                 const inactivePool = this.xpOrbPool.filter(o => !o.active);
                 newPool.push(...inactivePool.slice(0, keepCount - newPool.length));
                 this.xpOrbPool = newPool;
-                
+
             }
         }
     }
-    
+
     cleanupTrails() {
         // Clean up excessive trail points from player and projectiles
         if (this.player && this.player.trail && this.player.trail.length > 20) {
             this.player.trail = this.player.trail.slice(-15);
-            
+
         }
-        
+
         // Clean up projectile trails
         let cleanedProjectiles = 0;
         this.projectiles.forEach(projectile => {
@@ -9822,37 +9822,37 @@ class VibeSurvivor {
                 cleanedProjectiles++;
             }
         });
-        
+
         if (cleanedProjectiles > 0) {
-            
+
         }
     }
-    
+
     // Cached square root for performance
     cachedSqrt(value) {
         if (value < 0) return 0;
         if (value === 0) return 0;
         if (value === 1) return 1;
-        
+
         // Round to 2 decimal places for cache key
         const rounded = Math.round(value * 100) / 100;
-        
+
         // Check cache first
         if (this.sqrtCache.has(rounded)) {
             return this.sqrtCache.get(rounded);
         }
-        
+
         // Calculate and cache result
         const result = Math.sqrt(value);
-        
+
         // Only cache if we haven't exceeded max size
         if (this.sqrtCache.size < this.maxCacheSize) {
             this.sqrtCache.set(rounded, result);
         }
-        
+
         return result;
     }
-    
+
     // Fast power approximation for small integer exponents
     fastPow(base, exponent) {
         // Handle special cases first
@@ -9860,7 +9860,7 @@ class VibeSurvivor {
         if (exponent === 1) return base;
         if (base === 1) return 1;
         if (base === 0) return 0;
-        
+
         // Fast approximations for small integer exponents
         if (Number.isInteger(exponent) && exponent > 0 && exponent <= 10) {
             switch (exponent) {
@@ -9881,7 +9881,7 @@ class VibeSurvivor {
                 }
             }
         }
-        
+
         // Fall back to Math.pow for complex cases (decimals, negatives, large numbers)
         return Math.pow(base, exponent);
     }
@@ -9891,10 +9891,10 @@ class VibeSurvivor {
         // Pre-calculate sin/cos values for angles from 0 to 2π with high precision
         this.TRIG_TABLE_SIZE = 3600; // 0.1 degree precision (360 * 10)
         this.TRIG_ANGLE_SCALE = this.TRIG_TABLE_SIZE / (2 * Math.PI);
-        
+
         this.sinTable = new Float32Array(this.TRIG_TABLE_SIZE + 1);
         this.cosTable = new Float32Array(this.TRIG_TABLE_SIZE + 1);
-        
+
         for (let i = 0; i <= this.TRIG_TABLE_SIZE; i++) {
             const angle = (i / this.TRIG_TABLE_SIZE) * 2 * Math.PI;
             this.sinTable[i] = Math.sin(angle);
@@ -9907,12 +9907,12 @@ class VibeSurvivor {
         // Fast angle normalization using modulo
         angle = angle % (2 * Math.PI);
         if (angle < 0) angle += 2 * Math.PI;
-        
+
         const index = angle * this.TRIG_ANGLE_SCALE;
         const i0 = Math.floor(index);
         const i1 = (i0 + 1) % this.TRIG_TABLE_SIZE;
         const frac = index - i0;
-        
+
         // Linear interpolation for better accuracy
         return this.sinTable[i0] + (this.sinTable[i1] - this.sinTable[i0]) * frac;
     }
@@ -9922,12 +9922,12 @@ class VibeSurvivor {
         // Fast angle normalization using modulo
         angle = angle % (2 * Math.PI);
         if (angle < 0) angle += 2 * Math.PI;
-        
+
         const index = angle * this.TRIG_ANGLE_SCALE;
         const i0 = Math.floor(index);
         const i1 = (i0 + 1) % this.TRIG_TABLE_SIZE;
         const frac = index - i0;
-        
+
         // Linear interpolation for better accuracy
         return this.cosTable[i0] + (this.cosTable[i1] - this.cosTable[i0]) * frac;
     }
@@ -9940,7 +9940,7 @@ class VibeSurvivor {
                 return particle;
             }
         }
-        
+
         // If no available particle in pool, expand pool dynamically
         const newParticle = {
             x: 0, y: 0, vx: 0, vy: 0,
@@ -9951,7 +9951,7 @@ class VibeSurvivor {
         this.particlePool.push(newParticle);
         return newParticle;
     }
-    
+
     returnParticleToPool(particle) {
         particle.active = false;
         particle.life = 1;
@@ -9959,7 +9959,7 @@ class VibeSurvivor {
         particle.vx = 0;
         particle.vy = 0;
     }
-    
+
     getPooledEnemy() {
         for (let i = 0; i < this.enemyPool.length; i++) {
             if (!this.enemyPool[i].active) {
@@ -9970,7 +9970,7 @@ class VibeSurvivor {
                 return enemy;
             }
         }
-        
+
         // If no available enemy in pool, expand pool dynamically
         const newEnemy = {
             x: 0, y: 0, vx: 0, vy: 0,
@@ -9982,7 +9982,7 @@ class VibeSurvivor {
         this.enemyPool.push(newEnemy);
         return newEnemy;
     }
-    
+
     returnEnemyToPool(enemy) {
         enemy.active = false;
         enemy.health = enemy.maxHealth;
@@ -10000,7 +10000,7 @@ class VibeSurvivor {
                 return explosion;
             }
         }
-        
+
         // If no available explosion in pool, expand pool dynamically
         const newExplosion = {
             x: 0, y: 0, radius: 0, maxRadius: 0,
@@ -10010,7 +10010,7 @@ class VibeSurvivor {
         this.explosionPool.push(newExplosion);
         return newExplosion;
     }
-    
+
     returnExplosionToPool(explosion) {
         explosion.active = false;
         explosion.x = 0;
@@ -10024,7 +10024,7 @@ class VibeSurvivor {
     // =====================
     // BATCH RENDERING SYSTEM
     // =====================
-    
+
     initializeBatchRenderer() {
         this.batchRenderer = {
             entityBatches: {
@@ -10036,19 +10036,19 @@ class VibeSurvivor {
             maxBatchSize: 50, // Maximum entities per batch before forcing a draw
             enabled: true
         };
-        
+
     }
 
     // =====================
     // CANVAS LAYERS SYSTEM
     // =====================
-    
+
     initializeCanvasLayers() {
         if (!this.canvas || !this.canvas.parentNode) {
             console.warn('Cannot initialize canvas layers - main canvas not ready');
             return;
         }
-        
+
         this.canvasLayers = {
             background: null,
             grid: null,
@@ -10058,37 +10058,37 @@ class VibeSurvivor {
             enabled: true,
             needsGridRedraw: true
         };
-        
+
         // Create layer canvases
         this.createCanvasLayer('background', 0); // Bottom layer
         this.createCanvasLayer('grid', 1);       // Grid layer
         this.createCanvasLayer('entities', 2);   // Entities (enemies, projectiles, player)
         this.createCanvasLayer('effects', 3);    // Particles, explosions
         this.createCanvasLayer('ui', 4);         // UI elements, notifications
-        
-        
+
+
     }
-    
+
     createCanvasLayer(name, zIndex) {
         const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d', { 
-            willReadFrequently: false 
+        const ctx = canvas.getContext('2d', {
+            willReadFrequently: false
         });
-        
+
         // Copy dimensions from main canvas
         canvas.width = this.canvas.width;
         canvas.height = this.canvas.height;
-        
+
         // Style the canvas
         canvas.style.position = 'absolute';
         canvas.style.left = '0px';
         canvas.style.top = '0px';
         canvas.style.zIndex = zIndex.toString();
         canvas.style.pointerEvents = 'none'; // Allow events to pass through
-        
+
         // Insert into DOM right after main canvas
         this.canvas.parentNode.insertBefore(canvas, this.canvas.nextSibling);
-        
+
         // Store layer info
         this.canvasLayers[name] = {
             canvas: canvas,
@@ -10096,13 +10096,13 @@ class VibeSurvivor {
             zIndex: zIndex,
             needsRedraw: true
         };
-        
-        
+
+
     }
-    
+
     resizeCanvasLayers() {
         if (!this.canvasLayers || !this.canvasLayers.enabled) return;
-        
+
         for (const layerName in this.canvasLayers) {
             const layer = this.canvasLayers[layerName];
             if (layer && layer.canvas && this.canvas) {
@@ -10111,47 +10111,47 @@ class VibeSurvivor {
                 layer.needsRedraw = true;
             }
         }
-        
+
         // Mark grid for redraw since canvas was resized
         if (this.canvasLayers.grid) {
             this.canvasLayers.needsGridRedraw = true;
         }
     }
-    
+
     clearCanvasLayer(layerName) {
         const layer = this.canvasLayers[layerName];
         if (!layer || !layer.canvas) return;
-        
+
         layer.ctx.clearRect(0, 0, layer.canvas.width, layer.canvas.height);
     }
-    
+
     drawToLayer(layerName, drawFunction) {
         if (!this.canvasLayers || !this.canvasLayers.enabled) {
             // Fallback to main canvas
             drawFunction(this.ctx);
             return;
         }
-        
+
         const layer = this.canvasLayers[layerName];
         if (!layer || !layer.canvas) {
             // Fallback to main canvas
             drawFunction(this.ctx);
             return;
         }
-        
+
         // Draw to the layer
         drawFunction(layer.ctx);
     }
-    
+
     invalidateLayer(layerName) {
         if (this.canvasLayers && this.canvasLayers[layerName]) {
             this.canvasLayers[layerName].needsRedraw = true;
         }
     }
-    
+
     cleanupCanvasLayers() {
         if (!this.canvasLayers) return;
-        
+
         // Remove layer canvases from DOM
         for (const layerName in this.canvasLayers) {
             const layer = this.canvasLayers[layerName];
@@ -10159,15 +10159,15 @@ class VibeSurvivor {
                 layer.canvas.parentNode.removeChild(layer.canvas);
             }
         }
-        
+
         this.canvasLayers = null;
-        
+
     }
 
     // =====================
     // ADAPTIVE QUALITY SCALING SYSTEM
     // =====================
-    
+
     initializeAdaptiveQuality() {
         this.adaptiveQuality = {
             enabled: true,
@@ -10232,48 +10232,48 @@ class VibeSurvivor {
         // Initialize default quality level
         this.setQualityLevel(this.adaptiveQuality.currentLevel);
     }
-    
+
     updateAdaptiveQuality() {
         if (!this.adaptiveQuality || !this.adaptiveQuality.enabled) return;
-        
+
         this.adaptiveQuality.frameCount++;
-        
+
         // Only check performance periodically
         if (this.adaptiveQuality.frameCount % this.adaptiveQuality.checkInterval !== 0) return;
-        
+
         // Don't adjust too frequently
         const timeSinceLastAdjustment = Date.now() - this.adaptiveQuality.lastAdjustment;
         if (timeSinceLastAdjustment < this.adaptiveQuality.adjustmentCooldown * 16.67) return; // Convert to ms
-        
+
         const currentFPS = this.averageFPS || this.fps || 60;
         const currentLevel = this.adaptiveQuality.currentLevel;
         let newLevel = currentLevel;
-        
+
         // Decide if we need to adjust quality
         if (currentFPS < this.adaptiveQuality.lowFPSThreshold && currentLevel > 1) {
             // Performance too low, decrease quality
             newLevel = Math.max(1, currentLevel - 1);
-            
+
         } else if (currentFPS > this.adaptiveQuality.highFPSThreshold && currentLevel < 5) {
             // Performance good, try increasing quality
             newLevel = Math.min(5, currentLevel + 1);
-            
+
         }
-        
+
         // Apply quality change if needed
         if (newLevel !== currentLevel) {
             this.setQualityLevel(newLevel);
             this.adaptiveQuality.lastAdjustment = Date.now();
         }
     }
-    
+
     setQualityLevel(level) {
         if (!this.adaptiveQuality || level < 1 || level > 5) return;
-        
+
         const oldLevel = this.adaptiveQuality.currentLevel;
         this.adaptiveQuality.currentLevel = level;
         const config = this.adaptiveQuality.levels[level];
-        
+
         // Apply quality settings
         this.qualitySettings = {
             particleMultiplier: config.particleCount,
@@ -10294,16 +10294,16 @@ class VibeSurvivor {
         if (this.effectsManager) {
             this.effectsManager.setQualitySettings(this.qualitySettings);
         }
-        
+
         // Keep canvas layers enabled but note the quality preference
         // (Canvas layers temporarily disabled for debugging)
         this.canvasLayersPreferred = config.canvasLayers;
-        
+
         // Toggle batch rendering based on quality level
         if (this.batchRenderer) {
             this.batchRenderer.enabled = config.batchRendering;
         }
-        
+
         // Adjust player trail length
         if (this.player && this.player.trail) {
             const maxTrailLength = Math.min(config.trailLength, this.player.trail.length);
@@ -10312,74 +10312,74 @@ class VibeSurvivor {
             }
             this.player.maxTrailLength = maxTrailLength;
         }
-        
-        
+
+
     }
-    
+
     getQualityLevelName(level) {
         const names = ['', 'Ultra Low', 'Low', 'Medium', 'High', 'Ultra High'];
         return names[level] || 'Unknown';
     }
-    
+
     shouldCreateParticle() {
         if (!this.adaptiveQuality || !this.qualitySettings) return true;
         return Math.random() < this.qualitySettings.particleMultiplier;
     }
-    
+
     shouldCreateExplosion() {
         if (!this.adaptiveQuality || !this.qualitySettings) return true;
         return Math.random() < this.qualitySettings.explosionMultiplier;
     }
-    
+
     getQualityShadowBlur() {
         if (!this.adaptiveQuality || !this.qualitySettings) return 10;
         return this.qualitySettings.shadowBlur;
     }
-    
+
     shouldUseGlowEffects() {
         if (!this.adaptiveQuality || !this.qualitySettings) return true;
         return this.qualitySettings.glowEffects;
     }
-    
+
     forceQualityLevel(level) {
         // Allow manual quality override for testing
-        
+
         this.setQualityLevel(level);
         this.adaptiveQuality.lastAdjustment = Date.now();
     }
-    
+
     addToBatch(entityType, renderType, entity) {
         if (!this.batchRenderer || !this.batchRenderer.enabled) {
             return false;
         }
-        
+
         const batch = this.batchRenderer.entityBatches[entityType];
         if (!batch) return false;
-        
+
         if (!batch[renderType]) {
             batch[renderType] = [];
         }
-        
+
         batch[renderType].push(entity);
-        
+
         // Auto-flush if batch gets too large
         if (batch[renderType].length >= this.batchRenderer.maxBatchSize) {
             this.flushBatch(entityType, renderType);
             return true;
         }
-        
+
         return true;
     }
-    
+
     flushBatch(entityType, renderType) {
         if (!this.batchRenderer || !this.batchRenderer.enabled) return;
-        
+
         const batch = this.batchRenderer.entityBatches[entityType];
         if (!batch || !batch[renderType] || batch[renderType].length === 0) return;
-        
+
         // Set up common rendering state for this batch
         this.ctx.save();
-        
+
         switch (renderType) {
             case 'basic':
                 this.renderBasicEnemyBatch(batch[renderType]);
@@ -10394,16 +10394,16 @@ class VibeSurvivor {
                 this.renderExplosionBatch(batch[renderType]);
                 break;
         }
-        
+
         this.ctx.restore();
-        
+
         // Clear the batch
         batch[renderType] = [];
     }
-    
+
     flushAllBatches() {
         if (!this.batchRenderer || !this.batchRenderer.enabled) return;
-        
+
         for (const entityType in this.batchRenderer.entityBatches) {
             const batches = this.batchRenderer.entityBatches[entityType];
             for (const renderType in batches) {
@@ -10411,15 +10411,15 @@ class VibeSurvivor {
             }
         }
     }
-    
+
     renderBasicEnemyBatch(enemies) {
         if (!enemies || enemies.length === 0) return;
-        
+
         // Set common properties for basic enemies
         this.ctx.fillStyle = '#ff4444';
         this.ctx.strokeStyle = '#ff0000';
         this.ctx.lineWidth = 2;
-        
+
         // Draw all enemies in one pass
         this.ctx.beginPath();
         for (const enemy of enemies) {
@@ -10431,28 +10431,28 @@ class VibeSurvivor {
         this.ctx.fill();
         this.ctx.stroke();
     }
-    
+
     renderProjectileBatch(projectiles) {
         if (!projectiles || projectiles.length === 0) return;
-        
+
         // Group projectiles by type for efficient rendering
         const typeGroups = {};
         for (const projectile of projectiles) {
             if (!this.shouldRender(projectile, 'projectile')) continue;
-            
+
             const type = projectile.type || 'basic';
             if (!typeGroups[type]) {
                 typeGroups[type] = [];
             }
             typeGroups[type].push(projectile);
         }
-        
+
         // Render each type group
         for (const type in typeGroups) {
             this.renderProjectileTypeGroup(type, typeGroups[type]);
         }
     }
-    
+
     renderProjectileTypeGroup(type, projectiles) {
         switch (type) {
             case 'basic':
@@ -10464,7 +10464,7 @@ class VibeSurvivor {
                 }
                 this.ctx.fill();
                 break;
-                
+
             case 'plasma':
                 this.ctx.fillStyle = '#ff00ff';
                 this.ctx.beginPath();
@@ -10474,7 +10474,7 @@ class VibeSurvivor {
                 }
                 this.ctx.fill();
                 break;
-                
+
             // Add more projectile types as needed
             default:
                 this.ctx.fillStyle = '#ffffff';
@@ -10486,36 +10486,36 @@ class VibeSurvivor {
                 this.ctx.fill();
         }
     }
-    
+
     renderParticleBatch(particles) {
         if (!particles || particles.length === 0) return;
-        
+
         // Sort particles by alpha for better blending
         particles.sort((a, b) => (b.alpha || 1) - (a.alpha || 1));
-        
+
         this.ctx.globalCompositeOperation = 'lighter';
-        
+
         for (const particle of particles) {
             if (!this.shouldRender(particle, 'particle')) continue;
-            
+
             this.ctx.globalAlpha = particle.alpha || 1;
             this.ctx.fillStyle = particle.color || '#ffffff';
             this.ctx.fillRect(particle.x - 1, particle.y - 1, 2, 2);
         }
-        
+
         this.ctx.globalCompositeOperation = 'source-over';
         this.ctx.globalAlpha = 1;
     }
-    
+
     renderExplosionBatch(explosions) {
         if (!explosions || explosions.length === 0) return;
-        
+
         for (const explosion of explosions) {
             if (!this.shouldRender(explosion, 'explosion')) continue;
-            
+
             const progress = 1 - (explosion.life / explosion.maxLife);
             this.ctx.globalAlpha = 1 - progress;
-            
+
             // Create radial gradient for explosion effect
             const gradient = this.ctx.createRadialGradient(
                 explosion.x, explosion.y, 0,
@@ -10524,17 +10524,17 @@ class VibeSurvivor {
             gradient.addColorStop(0, '#ffffff');
             gradient.addColorStop(0.3, explosion.color || '#ff4400');
             gradient.addColorStop(1, 'transparent');
-            
+
             this.ctx.fillStyle = gradient;
             this.ctx.beginPath();
             this.ctx.arc(explosion.x, explosion.y, explosion.radius, 0, Math.PI * 2);
             this.ctx.fill();
         }
-        
+
         this.ctx.globalAlpha = 1;
     }
 
-    
+
     // updateFrameRate() and adjustQuality() are now handled by PerformanceMonitor
     // These methods have been removed as they are replaced by performanceMonitor.update()
 
@@ -10544,24 +10544,24 @@ class VibeSurvivor {
         const buffer = 10;
         this.dirtyRectangles.push({
             x: x - buffer,
-            y: y - buffer, 
+            y: y - buffer,
             width: width + buffer * 2,
             height: height + buffer * 2
         });
     }
-    
+
     mergeDirtyRectangles() {
         if (this.dirtyRectangles.length === 0) return [];
-        
+
         // Sort rectangles by x position
         this.dirtyRectangles.sort((a, b) => a.x - b.x);
-        
+
         const merged = [];
         let current = this.dirtyRectangles[0];
-        
+
         for (let i = 1; i < this.dirtyRectangles.length; i++) {
             const rect = this.dirtyRectangles[i];
-            
+
             // Check if rectangles overlap or are adjacent
             if (rect.x <= current.x + current.width + 20) { // 20px tolerance for merging
                 // Merge rectangles
@@ -10577,10 +10577,10 @@ class VibeSurvivor {
             }
         }
         merged.push(current);
-        
+
         return merged;
     }
-    
+
     trackEntityMovement(entity, id) {
         // DISABLED: Skip entity tracking for now to improve performance
         // We can re-enable this later once base performance is stable
@@ -10590,32 +10590,32 @@ class VibeSurvivor {
     // OffscreenCanvas and Static Element Caching
     initializeOffscreenCanvases() {
         if (!this.canvas) return;
-        
+
         try {
             // SIMPLIFIED: Only create grid cache for now
             // Skip complex offscreen canvas setup that might cause performance issues
-            
+
             if (typeof OffscreenCanvas !== 'undefined') {
                 this.gridOffscreen = new OffscreenCanvas(this.canvas.width, this.canvas.height);
-                this.gridOffscreenCtx = this.gridOffscreen.getContext('2d', { 
-                    willReadFrequently: false 
+                this.gridOffscreenCtx = this.gridOffscreen.getContext('2d', {
+                    willReadFrequently: false
                 });
             } else {
                 // Fallback for browsers without OffscreenCanvas
                 this.gridOffscreen = document.createElement('canvas');
                 this.gridOffscreen.width = this.canvas.width;
                 this.gridOffscreen.height = this.canvas.height;
-                this.gridOffscreenCtx = this.gridOffscreen.getContext('2d', { 
-                    willReadFrequently: false 
+                this.gridOffscreenCtx = this.gridOffscreen.getContext('2d', {
+                    willReadFrequently: false
                 });
             }
-            
+
             // Pre-render the grid (but don't block if it fails)
             this.prerenderGrid();
-            
+
             this.hasOffscreenCanvases = true;
-            
-            
+
+
         } catch (e) {
             console.warn('OffscreenCanvas setup failed, using normal rendering:', e);
             this.hasOffscreenCanvases = false;
@@ -10623,25 +10623,25 @@ class VibeSurvivor {
             this.gridOffscreenCtx = null;
         }
     }
-    
+
     prerenderGrid() {
         if (!this.gridOffscreenCtx) return;
-        
+
         const ctx = this.gridOffscreenCtx;
         const width = this.gridOffscreen.width;
         const height = this.gridOffscreen.height;
-        
+
         // Clear the grid canvas
         ctx.clearRect(0, 0, width, height);
-        
+
         // Render the grid pattern
         ctx.strokeStyle = 'rgba(0, 255, 255, 0.1)';
         ctx.lineWidth = 1;
-        
+
         const gridSize = 60;
         const cameraOffsetX = this.camera.x % gridSize;
         const cameraOffsetY = this.camera.y % gridSize;
-        
+
         // Vertical lines
         for (let x = -cameraOffsetX; x < width + gridSize; x += gridSize) {
             ctx.beginPath();
@@ -10649,7 +10649,7 @@ class VibeSurvivor {
             ctx.lineTo(x, height);
             ctx.stroke();
         }
-        
+
         // Horizontal lines
         for (let y = -cameraOffsetY; y < height + gridSize; y += gridSize) {
             ctx.beginPath();
@@ -10657,15 +10657,15 @@ class VibeSurvivor {
             ctx.lineTo(width, y);
             ctx.stroke();
         }
-        
+
         this.gridCacheValid = true;
     }
-    
+
     renderCachedBackground() {
         if (!this.hasOffscreenCanvases || !this.gridCacheValid) {
             return false; // Fall back to regular rendering
         }
-        
+
         // Copy the pre-rendered grid to main canvas
         this.ctx.drawImage(this.gridOffscreen, 0, 0);
         return true;
@@ -10674,18 +10674,18 @@ class VibeSurvivor {
     // Performance monitoring display (optional debug feature)
     drawPerformanceStats() {
         if (!this.showPerformanceStats) return;
-        
+
         this.ctx.save();
         this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
         this.ctx.fillRect(10, 10, 200, 120);
-        
+
         this.ctx.fillStyle = '#00ff00';
         this.ctx.font = '12px NeoDunggeunmoPro, monospace';
-        
+
         const fps = Math.round(this.frameRateMonitor.currentFPS);
         const avgFps = Math.round(this.frameRateMonitor.averageFPS);
         const quality = this.frameRateMonitor.adaptiveQuality;
-        
+
         this.ctx.fillText(`FPS: ${fps} (avg: ${avgFps})`, 15, 25);
         this.ctx.fillText(`Performance: ${this.performanceMode ? 'LOW' : 'NORMAL'}`, 15, 40);
         this.ctx.fillText(`Particles: ${Math.round(quality.particleCount * 100)}%`, 15, 55);
@@ -10693,7 +10693,7 @@ class VibeSurvivor {
         this.ctx.fillText(`Trails: ${Math.round(quality.trailLength * 100)}%`, 15, 85);
         this.ctx.fillText(`Enemies: ${this.enemies.length}`, 15, 100);
         this.ctx.fillText(`Projectiles: ${this.projectiles.length}`, 15, 115);
-        
+
         this.ctx.restore();
     }
 
@@ -10773,7 +10773,7 @@ class VibeSurvivor {
         this.ctx.lineTo(0, -radius);
         this.ctx.closePath();
     }
-    
+
     // Return projectile to pool
     returnProjectileToPool(projectile) {
         // Phase 9 integration - Use ProjectileSystem for pool management
@@ -10781,7 +10781,7 @@ class VibeSurvivor {
         this.projectileSystem.returnToPool(projectile);
     }
 
-    
+
     // Performance optimization: Batch canvas state changes
     setCanvasStyle(strokeStyle, lineWidth, shadowBlur = 0, shadowColor = null, fillStyle = null) {
         if (this.ctx.strokeStyle !== strokeStyle) {
@@ -10800,21 +10800,21 @@ class VibeSurvivor {
             this.ctx.fillStyle = fillStyle;
         }
     }
-    
+
     draw() {
         if (!this.canvas || !this.ctx) return;
-        
+
         // Temporarily disable canvas layers to fix rendering issues
         this.drawTraditional();
     }
-    
+
     drawWithLayers() {
         // Clear main canvas (background layer)
         this.drawToLayer('background', (ctx) => {
             ctx.fillStyle = '#0a0a0a';
             ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         });
-        
+
         // Draw grid on grid layer (only when needed)
         if (this.canvasLayers.needsGridRedraw) {
             this.clearCanvasLayer('grid');
@@ -10832,7 +10832,7 @@ class VibeSurvivor {
             });
             this.canvasLayers.needsGridRedraw = false;
         }
-        
+
         // Clear and draw entities layer
         this.clearCanvasLayer('entities');
         this.drawToLayer('entities', (ctx) => {
@@ -10844,24 +10844,24 @@ class VibeSurvivor {
             }
             ctx.scale(this.camera.zoom, this.camera.zoom);
             ctx.translate(-this.camera.x + shakeX, -this.camera.y + shakeY);
-            
+
             // Switch context temporarily for drawing functions
             const originalCtx = this.ctx;
             this.ctx = ctx;
-            
+
             this.drawPlayerWithBatching();
             this.drawEnemiesWithBatching();
             this.drawProjectilesWithBatching();
             this.drawXPOrbs();
-        this.drawHPOrbs();
+            this.drawHPOrbs();
             this.drawHPOrbs();
             this.drawMagnetOrbs();
-            
+
             // Restore original context
             this.ctx = originalCtx;
             ctx.restore();
         });
-        
+
         // Clear and draw effects layer
         this.clearCanvasLayer('effects');
         this.drawToLayer('effects', (ctx) => {
@@ -10873,36 +10873,36 @@ class VibeSurvivor {
             }
             ctx.scale(this.camera.zoom, this.camera.zoom);
             ctx.translate(-this.camera.x + shakeX, -this.camera.y + shakeY);
-            
+
             // Switch context temporarily for drawing functions
             const originalCtx = this.ctx;
             this.ctx = ctx;
-            
+
             this.drawExplosionsWithBatching();
             this.drawParticlesWithBatching();
-            
+
             // Restore original context
             this.ctx = originalCtx;
             ctx.restore();
         });
-        
+
         // Clear and draw UI layer
         this.clearCanvasLayer('ui');
         this.drawToLayer('ui', (ctx) => {
             // Switch context temporarily for drawing functions
             const originalCtx = this.ctx;
             this.ctx = ctx;
-            
+
             this.drawNotifications();
             this.drawRedFlash();
-            
+
             // Restore original context
             this.ctx = originalCtx;
         });
-        
+
         // Flush any remaining batches
         this.flushAllBatches();
-        
+
         // Mark grid for redraw on camera movement
         if (this.camera && this.camera.lastX !== this.camera.x || this.camera.lastY !== this.camera.y) {
             this.canvasLayers.needsGridRedraw = true;
@@ -10910,7 +10910,7 @@ class VibeSurvivor {
             this.camera.lastY = this.camera.y;
         }
     }
-    
+
     drawTraditional() {
         // Fallback to original rendering method
         this.ctx.fillStyle = '#0a0a0a';
@@ -10940,13 +10940,13 @@ class VibeSurvivor {
         this.drawExplosionsWithBatching();
         this.drawParticlesWithBatching();
         this.drawNotifications();
-        
+
         this.flushAllBatches();
-        
+
         this.ctx.restore();
-        
+
         this.drawRedFlash();
-        
+
         this.dirtyRectangles = [];
     }
 
@@ -10954,45 +10954,45 @@ class VibeSurvivor {
         // Delegate to EffectsManager
         this.effectsManager.drawRedFlash(this.ctx, this.canvas.width, this.canvas.height);
     }
-    
+
     renderStartScreenBackground() {
         if (!this.canvas || !this.ctx) return;
-        
+
         // Only render if canvas has valid dimensions (don't call resizeCanvas to avoid infinite loop)
         if (this.canvas.width > 0 && this.canvas.height > 0) {
             // Clear canvas with dark background
             this.ctx.fillStyle = '#0a0a0a';
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-            
+
             // Draw grid without camera transformation (for start screen)
             this.ctx.save();
             this.drawGrid();
             this.ctx.restore();
-            
-            
+
+
         } else {
             console.warn(`Cannot render background - invalid canvas dimensions: ${this.canvas.width}x${this.canvas.height}`);
         }
     }
-    
+
     drawGrid() {
         // Set grid styling with cyan neon color (more visible)
         this.ctx.strokeStyle = 'rgba(0, 255, 255, 0.15)';
         this.ctx.lineWidth = 1;
-        
+
         const gridSize = 60;
-        
+
         // Calculate visible world area based on camera position - FIXED BOUNDS
         const canvasWidth = this.canvas.width / this.camera.zoom;
         const canvasHeight = this.canvas.height / this.camera.zoom;
-        
+
         // Calculate grid bounds to FULLY COVER the visible canvas area
         const margin = gridSize * 3; // Extra margin to ensure full coverage
         const startX = Math.floor((this.camera.x - margin) / gridSize) * gridSize;
         const endX = Math.ceil((this.camera.x + canvasWidth + margin) / gridSize) * gridSize;
         const startY = Math.floor((this.camera.y - margin) / gridSize) * gridSize;
         const endY = Math.ceil((this.camera.y + canvasHeight + margin) / gridSize) * gridSize;
-        
+
         // Draw vertical lines in world coordinates
         for (let x = startX; x <= endX; x += gridSize) {
             this.ctx.beginPath();
@@ -11000,7 +11000,7 @@ class VibeSurvivor {
             this.ctx.lineTo(x, endY);
             this.ctx.stroke();
         }
-        
+
         // Draw horizontal lines in world coordinates
         for (let y = startY; y <= endY; y += gridSize) {
             this.ctx.beginPath();
@@ -11014,20 +11014,20 @@ class VibeSurvivor {
         // Set grid styling with cyan neon color (more visible)
         ctx.strokeStyle = 'rgba(0, 255, 255, 0.15)';
         ctx.lineWidth = 1;
-        
+
         const gridSize = 60;
-        
+
         // Calculate visible world area based on camera position - FIXED BOUNDS
         const canvasWidth = this.canvas.width / this.camera.zoom;
         const canvasHeight = this.canvas.height / this.camera.zoom;
-        
+
         // Calculate grid bounds to FULLY COVER the visible canvas area
         const margin = gridSize * 3; // Extra margin to ensure full coverage
         const startX = Math.floor((this.camera.x - margin) / gridSize) * gridSize;
         const endX = Math.ceil((this.camera.x + canvasWidth + margin) / gridSize) * gridSize;
         const startY = Math.floor((this.camera.y - margin) / gridSize) * gridSize;
         const endY = Math.ceil((this.camera.y + canvasHeight + margin) / gridSize) * gridSize;
-        
+
         // Draw vertical lines in world coordinates
         for (let x = startX; x <= endX; x += gridSize) {
             ctx.beginPath();
@@ -11035,7 +11035,7 @@ class VibeSurvivor {
             ctx.lineTo(x, endY);
             ctx.stroke();
         }
-        
+
         // Draw horizontal lines in world coordinates
         for (let y = startY; y <= endY; y += gridSize) {
             ctx.beginPath();
@@ -11116,7 +11116,7 @@ class VibeSurvivor {
         this.ctx.save();
 
         // Sprite direction and animation timing are now handled in updatePlayer() for consistent behavior
-        
+
         // Draw trail with neon cyan segments (ALWAYS VISIBLE)
         if (this.player.trail.length > 1) {
             this.ctx.strokeStyle = '#00ffff';
@@ -11124,7 +11124,7 @@ class VibeSurvivor {
             this.ctx.globalAlpha = 0.7;
             this.ctx.shadowBlur = 10;
             this.ctx.shadowColor = '#00ffff';
-            
+
             this.ctx.beginPath();
             this.ctx.moveTo(this.player.trail[0].x, this.player.trail[0].y);
             for (let i = 1; i < this.player.trail.length; i++) {
@@ -11134,18 +11134,18 @@ class VibeSurvivor {
             }
             this.ctx.stroke();
         }
-        
+
         // Reset for player drawing
         this.ctx.globalAlpha = this.player.invulnerable > 0 ? 0.5 : 1;
 
         // Draw HP bar above player
         this.ctx.save();
-        
+
         // HP bar positioning and styling
         const hpBarWidth = 30;
         const hpBarHeight = 4;
         const hpBarOffset = 25; // Distance above player
-        
+
         // HP bar background
         this.ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
         this.ctx.fillRect(
@@ -11154,7 +11154,7 @@ class VibeSurvivor {
             hpBarWidth,
             hpBarHeight
         );
-        
+
         // HP bar border
         this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
         this.ctx.lineWidth = 1;
@@ -11164,16 +11164,16 @@ class VibeSurvivor {
             hpBarWidth,
             hpBarHeight
         );
-        
+
         // HP bar fill
         const healthPercent = this.player.health / this.player.maxHealth;
         const fillWidth = hpBarWidth * healthPercent;
-        
+
         // Color based on health level
         let fillColor = '#00ff00'; // Green for high health
         if (healthPercent < 0.6) fillColor = '#ffff00'; // Yellow for medium health
         if (healthPercent < 0.3) fillColor = '#ff0000'; // Red for low health
-        
+
         this.ctx.fillStyle = fillColor;
         this.ctx.shadowBlur = 2;
         this.ctx.shadowColor = fillColor;
@@ -11183,7 +11183,7 @@ class VibeSurvivor {
             fillWidth,
             hpBarHeight
         );
-        
+
         this.ctx.restore();
 
         // Draw sprite player
@@ -11196,7 +11196,7 @@ class VibeSurvivor {
         this.ctx.restore();
         this.ctx.restore();
     }
-    
+
     drawEnemies() {
         if (this.enemies.length === 0) return;
 
@@ -11213,25 +11213,25 @@ class VibeSurvivor {
             if (!this.shouldRender(enemy, 'enemy')) {
                 continue;
             }
-            
+
             if (!enemiesByType[enemy.behavior]) {
                 enemiesByType[enemy.behavior] = [];
             }
             enemiesByType[enemy.behavior].push(enemy);
         }
-        
+
         this.ctx.save();
-        
+
         // Render basic enemies with simplified visuals - FIXED BEHAVIOR NAMES
         const basicTypes = ['chase', 'dodge', 'fly', 'teleport']; // Updated to match actual behavior values
         for (const type of basicTypes) {
             const enemies = enemiesByType[type];
             if (!enemies) continue;
-            
+
             for (const enemy of enemies) {
                 this.ctx.save();
                 this.ctx.translate(enemy.x, enemy.y);
-                
+
                 const r = enemy.radius || 15;
                 const color = enemy.variantColor || enemy.color || '#00ffff';
                 const shape = enemy.variantShape || 'circle';
@@ -11311,39 +11311,39 @@ class VibeSurvivor {
                 this.ctx.lineTo(0, r * 0.7);
                 this.ctx.stroke();
                 this.ctx.restore();
-                
+
                 // Health bar (always show when damaged)
                 if (enemy.health < enemy.maxHealth) {
                     const barWidth = r * 1.5;
                     const barHeight = 2;
                     const healthPercent = enemy.health / enemy.maxHealth;
-                    
+
                     this.ctx.fillStyle = '#333';
                     this.ctx.fillRect(-barWidth / 2, -r - 6, barWidth, barHeight);
-                    
+
                     this.ctx.fillStyle = healthPercent > 0.5 ? '#0f0' : healthPercent > 0.25 ? '#ff0' : '#f00';
                     this.ctx.fillRect(-barWidth / 2, -r - 6, barWidth * healthPercent, barHeight);
                 }
-                
+
                 this.ctx.restore();
             }
         }
-        
+
         // Render special enemies with more detail
         const specialTypes = ['tank', 'boss'];
         for (const type of specialTypes) {
             const enemies = enemiesByType[type];
             if (!enemies) continue;
-            
+
             for (const enemy of enemies) {
                 this.ctx.save();
                 this.ctx.translate(enemy.x, enemy.y);
-                
+
                 // Apply rotation only for tank and boss
                 if (type === 'tank' || type === 'boss') {
                     this.ctx.rotate(enemy.angle || 0);
                 }
-                
+
                 // Add glow effect for boss like player has
                 if (type === 'boss') {
                     // Scale glow based on boss level for higher level bosses
@@ -11351,21 +11351,21 @@ class VibeSurvivor {
                     const glowMultiplier = this.fastPow(1.1, bossLevel - 1); // Scale glow with boss level
                     const baseGlowSize = 60 * glowMultiplier;
                     const glowSize = baseGlowSize + this.fastSin(Date.now() * 0.008) * (20 * glowMultiplier);
-                    
+
                     // Increase glow intensity for higher level bosses
                     const glowIntensity = Math.min(0.6, 0.4 + (bossLevel - 1) * 0.02);
-                    
+
                     const gradient = this.ctx.createRadialGradient(0, 0, 0, 0, 0, glowSize);
                     gradient.addColorStop(0, `rgba(255, 0, 255, ${glowIntensity})`); // Magenta glow
                     gradient.addColorStop(1, 'rgba(255, 0, 255, 0)');
-                    
+
                     this.ctx.fillStyle = gradient;
                     this.ctx.fillRect(-glowSize, -glowSize, glowSize * 2, glowSize * 2);
                 }
-                
+
                 this.ctx.strokeStyle = enemy.color || '#ff00ff';
                 this.ctx.lineWidth = type === 'boss' ? 3 : 2;
-                
+
                 switch (type) {
                     case 'tank':
                         // Variant shapes (default square)
@@ -11387,7 +11387,7 @@ class VibeSurvivor {
                         } else {
                             this.ctx.strokeRect(-r, -r, r * 2, r * 2);
                         }
-                        
+
                         // Grid pattern
                         this.ctx.strokeStyle = (tankColor) + '60';
                         this.ctx.lineWidth = 1;
@@ -11398,11 +11398,11 @@ class VibeSurvivor {
                         this.ctx.lineTo(0, r);
                         this.ctx.stroke();
                         break;
-                        
+
                     case 'boss':
                         const rb = enemy.renderRadius || enemy.radius || 40;
                         this.drawBossShape(enemy);
-                        
+
                         // Inner cross pattern with reduced shadow for inner details
                         const originalShadowBlur = this.ctx.shadowBlur;
                         this.ctx.shadowBlur = 15; // Reduced shadow for inner pattern
@@ -11415,59 +11415,59 @@ class VibeSurvivor {
                         this.ctx.lineTo(rb * 0.7, -rb * 0.7);
                         this.ctx.stroke();
                         this.ctx.shadowBlur = originalShadowBlur;
-                        
+
                         // Reset alpha after boss drawing is complete
                         this.ctx.globalAlpha = 1.0;
                         break;
                 }
-                
+
                 // Health bar for special enemies
                 if (enemy.health < enemy.maxHealth) {
                     const barWidth = (enemy.renderRadius || enemy.radius || 20) * 2;
                     const barHeight = 3;
                     const healthPercent = enemy.health / enemy.maxHealth;
-                    
+
                     this.ctx.fillStyle = '#333';
                     this.ctx.fillRect(-barWidth / 2, -(enemy.renderRadius || enemy.radius || 20) - 8, barWidth, barHeight);
-                    
+
                     this.ctx.fillStyle = healthPercent > 0.5 ? '#0f0' : healthPercent > 0.25 ? '#ff0' : '#f00';
                     this.ctx.fillRect(-barWidth / 2, -(enemy.renderRadius || enemy.radius || 20) - 8, barWidth * healthPercent, barHeight);
                 }
-                
+
                 this.ctx.restore();
             }
         }
-        
+
         this.ctx.restore();
     }
-    
+
     drawProjectiles() {
         if (this.projectiles.length === 0) return;
-        
+
         // Batch projectiles by type to reduce state changes
         const projectilesByType = {};
-        
+
         for (const projectile of this.projectiles) {
             // Enhanced frustum culling: Skip projectiles that shouldn't be rendered
             if (!this.shouldRender(projectile, 'projectile')) {
                 continue;
             }
-            
+
             if (!projectilesByType[projectile.type]) {
                 projectilesByType[projectile.type] = [];
             }
             projectilesByType[projectile.type].push(projectile);
         }
-        
+
         // Render batched projectiles
         this.ctx.save();
-        
+
         // Render basic/spread/shotgun/gatling_gun projectiles together (simple circles)
         const basicTypes = ['basic', 'spread', 'shotgun', 'gatling_gun'];
         for (const type of basicTypes) {
             const projectiles = projectilesByType[type];
             if (!projectiles) continue;
-            
+
             this.ctx.beginPath();
             for (const projectile of projectiles) {
                 this.ctx.fillStyle = projectile.color;
@@ -11476,13 +11476,13 @@ class VibeSurvivor {
                 this.ctx.beginPath();
             }
         }
-        
+
         // Render laser/railgun projectiles (lines)
         const laserTypes = ['laser', 'railgun'];
         for (const type of laserTypes) {
             const projectiles = projectilesByType[type];
             if (!projectiles) continue;
-            
+
             this.ctx.globalAlpha = 0.8;
             this.ctx.beginPath();
             for (const projectile of projectiles) {
@@ -11494,13 +11494,13 @@ class VibeSurvivor {
             }
             this.ctx.globalAlpha = 1;
         }
-        
+
         // Render homing laser projectiles (special curved beams)
         const homingLasers = projectilesByType['homing_laser'];
         if (homingLasers) {
             for (const projectile of homingLasers) {
                 this.ctx.globalAlpha = 0.9;
-                
+
                 // Draw outer glow
                 this.ctx.strokeStyle = projectile.color;
                 this.ctx.lineWidth = projectile.size + 2;
@@ -11510,7 +11510,7 @@ class VibeSurvivor {
                 this.ctx.moveTo(projectile.x - projectile.vx * 4, projectile.y - projectile.vy * 4);
                 this.ctx.lineTo(projectile.x, projectile.y);
                 this.ctx.stroke();
-                
+
                 // Draw inner core
                 this.ctx.shadowBlur = 0;
                 this.ctx.strokeStyle = '#FFFFFF';
@@ -11519,7 +11519,7 @@ class VibeSurvivor {
                 this.ctx.moveTo(projectile.x - projectile.vx * 4, projectile.y - projectile.vy * 4);
                 this.ctx.lineTo(projectile.x, projectile.y);
                 this.ctx.stroke();
-                
+
                 // Draw trail particles for homing effect
                 if (Math.random() < 0.3) {
                     this.ctx.fillStyle = projectile.color;
@@ -11534,24 +11534,24 @@ class VibeSurvivor {
                     );
                     this.ctx.fill();
                 }
-                
+
                 this.ctx.globalAlpha = 1;
             }
         }
-        
+
         // Render complex projectiles individually (plasma, flame, lightning, missiles)
         const complexTypes = ['plasma', 'flame', 'lightning', 'missile', 'boss-missile', 'shockburst'];
         for (const type of complexTypes) {
             const projectiles = projectilesByType[type];
             if (!projectiles || projectiles.length === 0) continue;
-            
+
             // Extra safety: Ensure consistent rendering context for each weapon type
             this.ctx.save();
-            
+
             for (const projectile of projectiles) {
                 // Individual projectile context save/restore for isolation
                 this.ctx.save();
-                
+
                 switch (type) {
                     case 'plasma':
                         // Simplified plasma effect for performance
@@ -11560,13 +11560,13 @@ class VibeSurvivor {
                         this.ctx.beginPath();
                         this.ctx.arc(projectile.x, projectile.y, projectile.size * 1.5, 0, Math.PI * 2);
                         this.ctx.fill();
-                        
+
                         this.ctx.globalAlpha = 1;
                         this.ctx.beginPath();
                         this.ctx.arc(projectile.x, projectile.y, projectile.size, 0, Math.PI * 2);
                         this.ctx.fill();
                         break;
-                        
+
                     case 'flame':
                         this.ctx.fillStyle = projectile.color;
                         this.ctx.globalAlpha = 0.7;
@@ -11577,22 +11577,22 @@ class VibeSurvivor {
                         this.ctx.arc(x, y, projectile.size + Math.random(), 0, Math.PI * 2);
                         this.ctx.fill();
                         break;
-                        
+
                     case 'lightning':
                         this.ctx.strokeStyle = projectile.color;
                         this.ctx.lineWidth = 2;
                         this.ctx.globalAlpha = Math.max(0.1, projectile.life / 30);
-                        
+
                         // Render lightning chains to all targets
                         if (projectile.chainTargets && projectile.chainTargets.length > 0) {
                             let prevX = projectile.x;
                             let prevY = projectile.y;
-                            
+
                             // Draw line to each chained enemy
                             projectile.chainTargets.forEach(target => {
                                 this.ctx.beginPath();
                                 this.ctx.moveTo(prevX, prevY);
-                                
+
                                 // Simplified lightning with fewer steps for performance
                                 const steps = 3;
                                 for (let i = 1; i <= steps; i++) {
@@ -11602,7 +11602,7 @@ class VibeSurvivor {
                                     this.ctx.lineTo(x, y);
                                 }
                                 this.ctx.stroke();
-                                
+
                                 // Update previous position for next chain segment
                                 prevX = target.x;
                                 prevY = target.y;
@@ -11621,24 +11621,24 @@ class VibeSurvivor {
                             this.ctx.stroke();
                         }
                         break;
-                        
+
                     case 'shockburst':
                         // Simple rendering like lightning but cyan color
 
                         this.ctx.strokeStyle = '#00FFFF'; // Cyan color
                         this.ctx.lineWidth = 2;
                         this.ctx.globalAlpha = Math.max(0.1, projectile.life / 30);
-                        
+
                         // Render shockburst chains to all targets (same as lightning)
                         if (projectile.chainTargets && projectile.chainTargets.length > 0) {
                             let prevX = projectile.x;
                             let prevY = projectile.y;
-                            
+
                             // Draw line to each chained enemy
                             projectile.chainTargets.forEach((target, targetIndex) => {
                                 this.ctx.beginPath();
                                 this.ctx.moveTo(prevX, prevY);
-                                
+
                                 // Simplified lightning with fewer steps for performance
                                 const steps = 3;
                                 for (let i = 1; i <= steps; i++) {
@@ -11648,11 +11648,11 @@ class VibeSurvivor {
                                     this.ctx.lineTo(x, y);
                                 }
                                 this.ctx.stroke();
-                                
+
                                 // Add explosion visual effect at each chain target
                                 const explosionRadius = 100; // Explosion radius for visuals
                                 const explosionAlpha = Math.max(0.1, projectile.life / 30) * 0.6; // Slightly transparent
-                                
+
                                 // Draw explosion ring
                                 this.ctx.globalAlpha = explosionAlpha;
                                 this.ctx.strokeStyle = '#00FFFF'; // Cyan explosion
@@ -11660,19 +11660,19 @@ class VibeSurvivor {
                                 this.ctx.beginPath();
                                 this.ctx.arc(target.x, target.y, explosionRadius * (1 - projectile.life / 30), 0, Math.PI * 2);
                                 this.ctx.stroke();
-                                
+
                                 // Draw inner explosion pulse
                                 this.ctx.globalAlpha = explosionAlpha * 1.5;
                                 this.ctx.lineWidth = 0.5;
                                 this.ctx.beginPath();
                                 this.ctx.arc(target.x, target.y, (explosionRadius * 0.6) * (1 - projectile.life / 30), 0, Math.PI * 2);
                                 this.ctx.stroke();
-                                
+
                                 // Reset for next chain
                                 this.ctx.strokeStyle = '#00FFFF';
                                 this.ctx.lineWidth = 2;
                                 this.ctx.globalAlpha = Math.max(0.1, projectile.life / 30);
-                                
+
                                 // Update previous position for next chain segment
                                 prevX = target.x;
                                 prevY = target.y;
@@ -11691,15 +11691,15 @@ class VibeSurvivor {
                             this.ctx.stroke();
                         }
                         break;
-                        
+
                     case 'missile':
                         this.ctx.translate(projectile.x, projectile.y);
                         this.ctx.rotate(Math.atan2(projectile.vy, projectile.vx));
-                        
+
                         // Missile body
                         this.ctx.fillStyle = projectile.color;
                         this.ctx.fillRect(-6, -2, 12, 4);
-                        
+
                         // Missile tip
                         this.ctx.fillStyle = '#FF6B35';
                         this.ctx.beginPath();
@@ -11708,13 +11708,13 @@ class VibeSurvivor {
                         this.ctx.lineTo(3, 2);
                         this.ctx.closePath();
                         this.ctx.fill();
-                        
+
                         // Simplified exhaust trail
                         this.ctx.fillStyle = '#FF4444';
                         this.ctx.globalAlpha = 0.6;
                         this.ctx.fillRect(-9, -1, 3, 2);
                         break;
-                        
+
                     case 'boss-missile':
                         if (projectile.isMine) {
                             const pulsePhase = (projectile.pulseOffset || 0) + (this.frameCount * 0.08);
@@ -11755,11 +11755,11 @@ class VibeSurvivor {
                         } else {
                             this.ctx.translate(projectile.x, projectile.y);
                             this.ctx.rotate(Math.atan2(projectile.vy, projectile.vx));
-                            
+
                             // Boss missile body
                             this.ctx.fillStyle = projectile.color;
                             this.ctx.fillRect(-8, -3, 16, 6);
-                            
+
                             // Boss missile tip
                             this.ctx.fillStyle = '#FF0000';
                             this.ctx.beginPath();
@@ -11768,7 +11768,7 @@ class VibeSurvivor {
                             this.ctx.lineTo(4, 3);
                             this.ctx.closePath();
                             this.ctx.fill();
-                            
+
                             // Simplified exhaust trail
                             this.ctx.fillStyle = '#FF0066';
                             this.ctx.globalAlpha = 0.8;
@@ -11776,18 +11776,18 @@ class VibeSurvivor {
                         }
                         break;
                 }
-                
+
                 // Force context restore for each projectile
                 this.ctx.restore();
             }
-            
+
             // Type-level context restore for safety
             this.ctx.restore();
         }
-        
+
         this.ctx.restore();
     }
-    
+
     drawXPOrbs() {
         this.xpOrbs.forEach(orb => {
             // Enhanced frustum culling: Skip XP orbs that shouldn't be rendered
@@ -11795,26 +11795,26 @@ class VibeSurvivor {
                 return; // Skip rendering this orb
             }
             this.ctx.save();
-            
+
             // Glow effect
             const glowIntensity = 0.5 + this.fastSin(orb.glow) * 0.3;
             const gradient = this.ctx.createRadialGradient(orb.x, orb.y, 0, orb.x, orb.y, 15);
             gradient.addColorStop(0, `rgba(0, 255, 255, ${glowIntensity})`);
             gradient.addColorStop(1, 'rgba(0, 255, 255, 0)');
-            
+
             this.ctx.fillStyle = gradient;
             this.ctx.fillRect(orb.x - 15, orb.y - 15, 30, 30);
-            
+
             // Orb body
             this.ctx.fillStyle = '#00FFFF';
             this.ctx.strokeStyle = '#FFFFFF';
             this.ctx.lineWidth = 1;
-            
+
             this.ctx.beginPath();
             this.ctx.arc(orb.x, orb.y, 5, 0, Math.PI * 2);
             this.ctx.fill();
             this.ctx.stroke();
-            
+
             this.ctx.restore();
         });
     }
@@ -11829,13 +11829,13 @@ class VibeSurvivor {
                 return; // Skip entirely if far outside range
             }
             this.ctx.save();
-            
+
             // Glow effect - red neon
             const glowIntensity = 0.6 + this.fastSin(orb.glow) * 0.4;
             const gradient = this.ctx.createRadialGradient(orb.x, orb.y, 0, orb.x, orb.y, 20);
             gradient.addColorStop(0, `rgba(255, 0, 0, ${glowIntensity})`);
             gradient.addColorStop(1, 'rgba(255, 0, 0, 0)');
-            
+
             this.ctx.fillStyle = gradient;
             this.ctx.fillRect(orb.x - 20, orb.y - 20, 40, 40);
 
@@ -11866,13 +11866,13 @@ class VibeSurvivor {
                 return; // Skip entirely if far outside range
             }
             this.ctx.save();
-            
+
             // Glow effect - subtle blue/purple neon for magnet
             const glowIntensity = 0.4 + this.fastSin(orb.glow) * 0.3;
             const gradient = this.ctx.createRadialGradient(orb.x, orb.y, 0, orb.x, orb.y, 25);
             gradient.addColorStop(0, `rgba(0, 100, 255, ${glowIntensity * 0.3})`); // Much more subtle
             gradient.addColorStop(1, 'rgba(100, 0, 255, 0)');
-            
+
             this.ctx.fillStyle = gradient;
             this.ctx.fillRect(orb.x - 25, orb.y - 25, 50, 50);
 
@@ -11957,29 +11957,29 @@ class VibeSurvivor {
         this.ctx.stroke();
         this.ctx.restore();
     }
-    
+
     drawExplosions() {
         if (!this.explosions) return;
-        
+
         this.explosions.forEach(explosion => {
             // Enhanced frustum culling: Skip explosions that shouldn't be rendered
             if (!this.shouldRender(explosion, 'effect')) return;
             if (!this.isInViewport(explosion.x, explosion.y, explosion.maxRadius)) {
                 return;
             }
-            
+
             this.ctx.save();
-            
+
             // Calculate explosion progress and alpha
             const progress = 1 - (explosion.life / explosion.maxLife);
             const alpha = 1 - progress; // Fade out as explosion progresses
-            
+
             // Create radial gradient for explosion effect
             const gradient = this.ctx.createRadialGradient(
                 explosion.x, explosion.y, 0,
                 explosion.x, explosion.y, explosion.radius
             );
-            
+
             // Color transitions from bright orange to red to transparent
             if (progress < 0.3) {
                 gradient.addColorStop(0, `rgba(255, 255, 100, ${alpha})`); // Bright yellow center
@@ -11994,21 +11994,21 @@ class VibeSurvivor {
                 gradient.addColorStop(0.7, `rgba(128, 0, 0, ${alpha * 0.5})`); // Dark red
                 gradient.addColorStop(1, `rgba(64, 0, 0, ${alpha * 0.2})`); // Very dark red edge
             }
-            
+
             this.ctx.fillStyle = gradient;
             this.ctx.beginPath();
             this.ctx.arc(explosion.x, explosion.y, explosion.radius, 0, Math.PI * 2);
             this.ctx.fill();
-            
+
             this.ctx.restore();
         });
     }
-    
+
     drawParticles() {
         if (this.particles.length === 0) return;
-        
+
         const quality = this.frameRateMonitor.adaptiveQuality;
-        
+
         // Enhanced frustum culling: Pre-filter particles aggressively
         const visibleParticles = [];
         for (const particle of this.particles) {
@@ -12016,28 +12016,28 @@ class VibeSurvivor {
                 visibleParticles.push(particle);
             }
         }
-        
+
         // Early exit if no visible particles
         if (visibleParticles.length === 0) return;
-        
+
         // Use simpler rendering for better performance
         if (quality.effectQuality < 0.6) {
             // Ultra-fast particle rendering - single color, no alpha blending
             this.ctx.save();
             this.ctx.fillStyle = '#00ffff';
-            
+
             for (const particle of visibleParticles) {
                 // Simple rectangle instead of circle for speed
                 const size = particle.size * (particle.life / particle.maxLife);
-                this.ctx.fillRect(particle.x - size/2, particle.y - size/2, size, size);
+                this.ctx.fillRect(particle.x - size / 2, particle.y - size / 2, size, size);
             }
             this.ctx.restore();
             return;
         }
-        
+
         // Batch particles by color to reduce state changes (medium quality)
         const particlesByColor = {};
-        
+
         for (const particle of visibleParticles) {
             // Quantize colors to reduce the number of batches
             let batchColor = particle.color;
@@ -12048,48 +12048,48 @@ class VibeSurvivor {
                 else if (particle.color.includes('ffc') || particle.color.includes('FFC')) batchColor = '#ffcc00';
                 else batchColor = '#00ffff'; // Default cyan
             }
-            
+
             if (!particlesByColor[batchColor]) {
                 particlesByColor[batchColor] = [];
             }
             particlesByColor[batchColor].push(particle);
         }
-        
+
         // Render batched particles with minimal alpha blending
         this.ctx.save();
-        
+
         for (const color in particlesByColor) {
             const particles = particlesByColor[color];
             this.ctx.fillStyle = color;
-            
+
             if (quality.effectQuality > 0.8) {
                 // High quality - individual alpha per particle
                 for (const particle of particles) {
                     const alpha = (particle.life / particle.maxLife) * 0.8;
                     this.ctx.globalAlpha = alpha;
                     const size = particle.size * alpha;
-                    
+
                     // Use rectangles instead of circles for performance
-                    this.ctx.fillRect(particle.x - size/2, particle.y - size/2, size, size);
+                    this.ctx.fillRect(particle.x - size / 2, particle.y - size / 2, size, size);
                 }
             } else {
                 // Medium quality - batched alpha, simpler shapes
                 this.ctx.globalAlpha = 0.7;
-                
+
                 // Draw all particles of this color at once
                 for (const particle of particles) {
                     const lifeFactor = particle.life / particle.maxLife;
                     const size = particle.size * lifeFactor;
-                    
+
                     // Simple filled rectangles for speed
-                    this.ctx.fillRect(particle.x - size/2, particle.y - size/2, size, size);
+                    this.ctx.fillRect(particle.x - size / 2, particle.y - size / 2, size, size);
                 }
             }
         }
-        
+
         this.ctx.restore();
     }
-    
+
     drawNotifications() {
         // Notifications are now handled by DOM-based toast system
         // This method is kept for compatibility but does nothing
@@ -12098,26 +12098,26 @@ class VibeSurvivor {
     // =====================
     // BATCHED DRAWING FUNCTIONS
     // =====================
-    
+
     drawPlayerWithBatching() {
         // Player is unique, so just draw normally
         this.drawPlayer();
     }
-    
+
     drawEnemiesWithBatching() {
         if (!this.enemies || this.enemies.length === 0) return;
-        
+
         // Fallback to traditional enemy drawing for now
         this.drawEnemies();
     }
-    
+
     drawProjectilesWithBatching() {
         if (!this.projectiles || this.projectiles.length === 0) return;
-        
+
         // Fallback to traditional projectile drawing for now
         this.drawProjectiles();
     }
-    
+
     drawExplosionsWithBatching() {
         // Delegate to ParticleSystem
         this.particleSystem.drawExplosions(this.ctx, this.camera, this.canvas.width, this.canvas.height);
@@ -12127,11 +12127,11 @@ class VibeSurvivor {
         // Delegate to ParticleSystem
         this.particleSystem.drawParticles(this.ctx, this.camera, this.canvas.width, this.canvas.height);
     }
-    
+
     // Fallback individual rendering functions
     drawIndividualEnemy(enemy) {
         this.ctx.save();
-        
+
         // Basic enemy rendering (simplified from original drawEnemies)
         if (enemy.type === 'boss') {
             // Boss rendering
@@ -12144,18 +12144,18 @@ class VibeSurvivor {
             this.ctx.strokeStyle = '#ff0000';
             this.ctx.lineWidth = 2;
         }
-        
+
         this.ctx.beginPath();
         this.ctx.arc(enemy.x, enemy.y, enemy.size, 0, Math.PI * 2);
         this.ctx.fill();
         this.ctx.stroke();
-        
+
         this.ctx.restore();
     }
-    
+
     drawIndividualProjectile(projectile) {
         this.ctx.save();
-        
+
         // Basic projectile rendering
         switch (projectile.type) {
             case 'plasma':
@@ -12174,7 +12174,7 @@ class VibeSurvivor {
                 this.ctx.shadowColor = '#00ffff';
                 this.ctx.shadowBlur = 5;
         }
-        
+
         if (projectile.type === 'laser') {
             this.ctx.beginPath();
             this.ctx.moveTo(projectile.x - 10, projectile.y);
@@ -12185,16 +12185,16 @@ class VibeSurvivor {
             this.ctx.arc(projectile.x, projectile.y, projectile.size || 3, 0, Math.PI * 2);
             this.ctx.fill();
         }
-        
+
         this.ctx.restore();
     }
-    
+
     drawIndividualExplosion(explosion) {
         this.ctx.save();
-        
+
         const progress = 1 - (explosion.life / explosion.maxLife);
         this.ctx.globalAlpha = 1 - progress;
-        
+
         const gradient = this.ctx.createRadialGradient(
             explosion.x, explosion.y, 0,
             explosion.x, explosion.y, explosion.radius
@@ -12202,28 +12202,28 @@ class VibeSurvivor {
         gradient.addColorStop(0, '#ffffff');
         gradient.addColorStop(0.3, explosion.color || '#ff4400');
         gradient.addColorStop(1, 'transparent');
-        
+
         this.ctx.fillStyle = gradient;
         this.ctx.beginPath();
         this.ctx.arc(explosion.x, explosion.y, explosion.radius, 0, Math.PI * 2);
         this.ctx.fill();
-        
+
         this.ctx.restore();
     }
-    
+
     drawIndividualParticle(particle) {
         this.ctx.save();
-        
+
         this.ctx.globalAlpha = particle.alpha || 1;
         this.ctx.fillStyle = particle.color || '#ffffff';
         this.ctx.shadowColor = particle.color || '#ffffff';
         this.ctx.shadowBlur = 3;
-        
+
         this.ctx.fillRect(particle.x - 1, particle.y - 1, 2, 2);
-        
+
         this.ctx.restore();
     }
-    
+
     updateUI() {
         // Phase 12c integration - Delegate to HUDSystem
         this.hudSystem.updateAll(
@@ -12251,7 +12251,7 @@ class VibeSurvivor {
             this.touchControlsUI.updateJoystick(null, null);
         }
     }
-    
+
     gameOver() {
         this.gameRunning = false;
 
@@ -12267,7 +12267,7 @@ class VibeSurvivor {
             helpBtn.style.display = 'none';
         }
     }
-    
+
     generateWeaponsSection() {
         if (this.weapons.length === 0) return '';
 
@@ -12444,16 +12444,16 @@ class VibeSurvivor {
                     padding: 8px 10px;
                     border-radius: 8px;
                     ${isUnique
-                        ? `
+                    ? `
                             background: linear-gradient(135deg, rgba(255, 215, 0, 0.18), rgba(255, 165, 0, 0.08));
                             border: 1px solid rgba(255, 215, 0, 0.5);
                             color: #ffd700;
                             box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
                         `
-                        : `
+                    : `
                             color: #ff00ff;
                         `
-                    }
+                }
                 `;
 
             const badge = isUnique ? `<span style="
@@ -12805,21 +12805,21 @@ class VibeSurvivor {
         // Clear any existing enemies and projectiles for fresh start
         this.enemies = [];
         this.projectiles = [];
-        
+
         // Increment boss progression counters
         this.bossesKilled++;
         this.bossLevel++;
-        
+
         // Reset boss tracking and schedule the next encounter using game time
         this.bossSpawned = false;
         // Reset EnemySystem's boss tracking (it won't spawn bosses after the first one)
         this.enemySystem.bossSpawned = false;
         this.scheduleNextBossSpawn(this.bossRespawnDelay);
-        
+
         // Increase general game difficulty
         this.waveNumber = Math.max(1, this.waveNumber + 1);
         this.spawnRate = Math.max(0.3, this.spawnRate * 0.9); // Spawn enemies faster
-        
+
         // Player health is maintained from battle as a challenge
 
         // Add bonus XP for defeating boss - Phase 9 integration
@@ -12894,7 +12894,7 @@ class VibeSurvivor {
     restartGame() {
         this.startGame();
     }
-    
+
 
     closeGame() {
 
@@ -12957,13 +12957,13 @@ class VibeSurvivor {
         } catch (e) {
             console.warn('Could not stop background music:', e);
         }
-        
+
         // Hide game UI immediately for smooth visual transition
         const container = document.getElementById('vibe-survivor-container');
         if (container) {
             container.classList.add('vibe-survivor-hidden');
         }
-        
+
         // Remove game modal class
         document.body.classList.remove('game-modal-open');
 
@@ -12976,7 +12976,7 @@ class VibeSurvivor {
             this.reopenGame();
         }, 200);
     }
-    
+
     reopenGame() {
         const modal = document.getElementById('vibe-survivor-modal');
         if (modal) {
@@ -13082,24 +13082,24 @@ class VibeSurvivor {
             console.error('Start screen element not found');
         }
     }
-    
-    
+
+
     cleanRestart() {
-        
-        
+
+
         // Reset all game state
         this.resetGame();
-        
+
         // Remove any existing modals to prevent conflicts
         const existingModals = document.querySelectorAll('#vibe-survivor-modal, [id*="fresh-game-over"]');
         existingModals.forEach(modal => modal.remove());
-        
+
         // Create fresh modal structure
         this.createGameModal();
-        
+
         // Start the game directly - no intermediate screens
         setTimeout(() => {
-            
+
             this.startGame();
         }, 200);
     }
@@ -13147,13 +13147,13 @@ class VibeSurvivor {
 
         // Restore body scrolling behavior
         this.restoreBackgroundScrolling();
-        
+
         // Reset all game state completely
         this.resetGame();
-        
+
         // Clean up canvas layers
         this.cleanupCanvasLayers();
-        
+
         // Remove all vibe-survivor specific elements only
         const existingModals = document.querySelectorAll('#vibe-survivor-modal, [id*="fresh-game-over"], .vibe-survivor-modal, .vibe-survivor-container, [class*="vibe-survivor-"]');
         existingModals.forEach(modal => {
@@ -13161,14 +13161,14 @@ class VibeSurvivor {
                 modal.remove();
             }
         });
-        
-        
+
+
         // Notify Game Manager that we've exited
         if (window.gameManager && window.gameManager.currentGame === 'vibe-survivor') {
             window.gameManager.currentGame = null;
             // Notified Game Manager
         }
-        
+
         // Game state fully reset
     }
 
@@ -13324,6 +13324,7 @@ class VibeSurvivor {
                     gatlingGun: "Gatling Gun",
 
                     // Weapon descriptions
+                    basicDesc: "Fires a basic missile at the nearest enemy",
                     spreadDesc: "Fires multiple projectiles in a spread pattern",
                     laserDesc: "High-damage piercing beam",
                     plasmaDesc: "Explosive projectiles with area damage",
@@ -13572,6 +13573,7 @@ class VibeSurvivor {
                     gatlingGun: "개틀링 건",
 
                     // Weapon descriptions
+                    basicDesc: "가장 가까운 적에게 기본 미사일을 발사",
                     spreadDesc: "산탄 형태로 다중 발사체를 발사",
                     laserDesc: "고데미지 관통 빔",
                     plasmaDesc: "광역 피해를 주는 폭발 발사체",
