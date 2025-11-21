@@ -8785,7 +8785,7 @@ class VibeSurvivor {
             const icons = {
                 'boss': '⚠️',
                 'upgrade': '<img src="images/passives/upgrade.png" alt="upgrade" style="width: 48px; height: 48px;">',
-                'victory': '🎉',
+                'victory': '<img src="images/passives/nextStage.png" alt="victory" style="width: 48px; height: 48px;">',
                 'heal': '<img src="images/passives/healthBoost.png" alt="heal" style="width: 48px; height: 48px;">',
                 'magnet': '<img src="images/passives/magnet.png" alt="magnet" style="width: 48px; height: 48px;">'
             };
@@ -13353,7 +13353,7 @@ class VibeSurvivor {
                     speedBoostDesc: "+10% Movement Speed (Multiplicative, stackable up to 3 times)",
                     regenerationDesc: "Slowly heal over time",
                     magnetDesc: "Attract XP from further away",
-                    armorDesc: "Reduce damage taken by 15% (Stackable up to 3 times)",
+                    armorDesc: "15% Damage Reduction (Infinite stacks, 90% cap)",
                     criticalStrikeDesc: "15% chance for double damage (Stackable up to 3 times)",
                     dashBoostDesc: "+50% Dash Distance (Stackable up to 3 times)",
                     turboFluxDesc: "Increase the fire rate of all weapons by 25%",
@@ -13602,7 +13602,7 @@ class VibeSurvivor {
                     speedBoostDesc: "+10% 이동 속도 (곱셈식, 최대 3번까지 중첩 가능)",
                     regenerationDesc: "시간에 따라 천천히 회복",
                     magnetDesc: "더 멀리서 경험치 흡수",
-                    armorDesc: "받는 피해 15% 감소 (최대 3번까지 중첩 가능)",
+                    armorDesc: "받는 피해 15% 감소 (무한 중첩, 90% 상한)",
                     criticalStrikeDesc: "15% 확률로 2배 피해 (최대 3번까지 중첩 가능)",
                     dashBoostDesc: "+50% 대시 거리 (최대 3번까지 중첩 가능)",
                     turboFluxDesc: "모든 무기의 발사 속도를 25% 증가시킵니다.",
