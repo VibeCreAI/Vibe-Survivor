@@ -39,6 +39,10 @@ export class LevelUpModal extends Modal {
         // Overlay lock callbacks (for disabling pause/help buttons)
         this.incrementOverlayLockCallback = null;
         this.decrementOverlayLockCallback = null;
+
+        // Input delay state
+        this.canAcceptInput = false;
+        this.inputDelayTimeout = null;
     }
 
     /**
@@ -422,6 +426,8 @@ export class LevelUpModal extends Modal {
      */
     setupKeyboardHandlers() {
         this.keyboardHandler = (e) => {
+            if (!this.canAcceptInput) return;
+
             // Handle navigation based on active tab
             switch (e.key.toLowerCase()) {
                 case 'arrowup':
@@ -657,6 +663,13 @@ export class LevelUpModal extends Modal {
             levelupContent.setAttribute('tabindex', '-1');
             levelupContent.focus({ preventScroll: true });
         }
+
+        // Add input delay
+        this.canAcceptInput = false;
+        if (this.inputDelayTimeout) clearTimeout(this.inputDelayTimeout);
+        this.inputDelayTimeout = setTimeout(() => {
+            this.canAcceptInput = true;
+        }, 500);
     }
 
     /**
@@ -680,5 +693,11 @@ export class LevelUpModal extends Modal {
         // Reset state
         this.upgradeChoices = [];
         this.activeTab = 'levelup';
+
+        if (this.inputDelayTimeout) {
+            clearTimeout(this.inputDelayTimeout);
+            this.inputDelayTimeout = null;
+        }
+        this.canAcceptInput = false;
     }
 }

@@ -54,6 +54,10 @@ export class ChestModal extends Modal {
         // Overlay lock callbacks (for pausing game)
         this.incrementOverlayLockCallback = null;
         this.decrementOverlayLockCallback = null;
+
+        // Input delay state
+        this.canAcceptInput = false;
+        this.inputDelayTimeout = null;
     }
 
     /**
@@ -263,6 +267,13 @@ export class ChestModal extends Modal {
             content.setAttribute('tabindex', '-1');
             content.focus({ preventScroll: true });
         }
+
+        // Add input delay
+        this.canAcceptInput = false;
+        if (this.inputDelayTimeout) clearTimeout(this.inputDelayTimeout);
+        this.inputDelayTimeout = setTimeout(() => {
+            this.canAcceptInput = true;
+        }, 500);
     }
 
     /**
@@ -279,6 +290,12 @@ export class ChestModal extends Modal {
         if (this.decrementOverlayLockCallback) {
             this.decrementOverlayLockCallback();
         }
+
+        if (this.inputDelayTimeout) {
+            clearTimeout(this.inputDelayTimeout);
+            this.inputDelayTimeout = null;
+        }
+        this.canAcceptInput = false;
     }
 
     /**
@@ -321,6 +338,8 @@ export class ChestModal extends Modal {
      */
     setupKeyboardHandlers() {
         this.keyboardHandler = (e) => {
+            if (!this.canAcceptInput) return;
+
             // Tab key handler removed
 
 
