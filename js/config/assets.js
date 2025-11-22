@@ -62,6 +62,7 @@ export const ASSET_PATHS = {
         upgrade: 'sound/upgrade.mp3?v=2',
         dash: 'sound/dash.mp3?v=2',
         upgradeBox: 'sound/upgradeBox.mp3?v=2',
+        mergerWeapon: 'sound/mergerWeapon.mp3?v=2',
         // Weapon sounds
         weaponBasicMissile: 'sound/weapon/basicMissile.mp3?v=2',
         weaponSpreadShot: 'sound/weapon/spreadShot.mp3?v=2',

@@ -8958,6 +8958,10 @@ class VibeSurvivor {
                     if (this.weaponSystem.mergeWeapons(this.weapons, i, j)) {
                         const mergedWeapon = this.weapons[this.weapons.length - 1];
                         this.applyPassiveModifiersToWeapon(mergedWeapon);
+
+                        // Play merger sound
+                        this.audioManager.playSound('mergerWeapon');
+
                         // Show merge notification
                         setTimeout(() => {
                             this.showUpgradeNotification(
@@ -8981,6 +8985,10 @@ class VibeSurvivor {
             if (this.weaponSystem.mergeWeapons(this.weapons, index1, index2)) {
                 const mergedWeapon = this.weapons[this.weapons.length - 1];
                 this.applyPassiveModifiersToWeapon(mergedWeapon);
+
+                // Play merger sound
+                this.audioManager.playSound('mergerWeapon');
+
                 setTimeout(() => {
                     this.showUpgradeNotification(
                         `${this.getWeaponName(mergeWeaponType)} - WEAPONS MERGED!`,
