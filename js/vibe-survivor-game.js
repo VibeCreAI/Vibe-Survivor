@@ -12766,6 +12766,9 @@ class VibeSurvivor {
         );
 
         this.modals.victory.onContinue(() => {
+            // Play next stage sound
+            this.audioManager.playSound('nextStage');
+
             // Reset menu navigation
             this.resetMenuNavigation();
 
