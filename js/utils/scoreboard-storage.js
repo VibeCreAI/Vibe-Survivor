@@ -335,6 +335,72 @@ export class ScoreboardStorage {
             return false;
         }
     }
+
+    /**
+     * Mark a local score as submitted to global leaderboard
+     * @param {number} localId - Local score ID (timestamp)
+     * @param {string} globalId - Global score ID (UUID from Supabase)
+     * @param {string} playerName - Player name used for submission
+     * @returns {boolean} Success status
+     */
+    markAsSubmitted(localId, globalId, playerName) {
+        try {
+            const storage = this._getStorage();
+            const score = storage.scores.find(s => s.id === localId);
+
+            if (!score) {
+                console.warn('Score not found for marking as submitted:', localId);
+                return false;
+            }
+
+            // Add submission metadata
+            score.globalSubmission = {
+                submitted: true,
+                globalId: globalId,
+                playerName: playerName,
+                submissionDate: new Date().toISOString()
+            };
+
+            this._setStorage(storage);
+            console.log('Score marked as submitted:', localId);
+            return true;
+        } catch (error) {
+            console.error('Error marking score as submitted:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Get submission status for a score
+     * @param {number} localId - Local score ID (timestamp)
+     * @returns {Object|null} Submission status object or null if not submitted
+     */
+    getSubmissionStatus(localId) {
+        try {
+            const score = this.getScoreById(localId);
+
+            if (!score) {
+                return null;
+            }
+
+            // Return submission metadata if exists
+            if (score.globalSubmission && score.globalSubmission.submitted) {
+                return {
+                    submitted: true,
+                    globalId: score.globalSubmission.globalId,
+                    playerName: score.globalSubmission.playerName,
+                    submissionDate: score.globalSubmission.submissionDate
+                };
+            }
+
+            return {
+                submitted: false
+            };
+        } catch (error) {
+            console.error('Error getting submission status:', error);
+            return null;
+        }
+    }
 }
 
 // Create singleton instance
