@@ -8995,6 +8995,78 @@ class VibeSurvivor {
     }
 
 
+    /**
+     * Creates an animated icon canvas for sprite sheets
+     * @param {string} imagePath - Path to sprite sheet image
+     * @param {number} cols - Number of columns in sprite sheet
+     * @param {number} rows - Number of rows in sprite sheet
+     * @param {number} frameCount - Total number of frames
+     * @param {number} fps - Animation frame rate
+     * @param {number} size - Display size (width and height)
+     * @returns {HTMLCanvasElement} Animated canvas element
+     */
+    createAnimatedIcon(imagePath, cols, rows, frameCount, fps = 8, size = 48) {
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        canvas.style.width = `${size}px`;
+        canvas.style.height = `${size}px`;
+        canvas.style.imageRendering = 'pixelated';
+
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+
+        const img = new Image();
+        img.src = imagePath;
+
+        let currentFrame = 0;
+        let lastFrameTime = Date.now();
+        const frameDelay = 1000 / fps;
+
+        const animate = () => {
+            const now = Date.now();
+            if (now - lastFrameTime >= frameDelay) {
+                // Clear canvas
+                ctx.clearRect(0, 0, size, size);
+
+                if (img.complete && img.naturalWidth > 0) {
+                    // Calculate frame dimensions
+                    const frameWidth = img.width / cols;
+                    const frameHeight = img.height / rows;
+
+                    // Calculate current frame position in sprite sheet
+                    const col = currentFrame % cols;
+                    const row = Math.floor(currentFrame / cols);
+
+                    // Draw current frame
+                    ctx.drawImage(
+                        img,
+                        col * frameWidth, row * frameHeight, frameWidth, frameHeight,
+                        0, 0, size, size
+                    );
+
+                    // Advance to next frame
+                    currentFrame = (currentFrame + 1) % frameCount;
+                }
+
+                lastFrameTime = now;
+            }
+
+            // Continue animation
+            requestAnimationFrame(animate);
+        };
+
+        // Start animation when image loads
+        img.onload = () => {
+            animate();
+        };
+
+        // Start animation immediately (will show once loaded)
+        animate();
+
+        return canvas;
+    }
+
     createToast(message, type = 'upgrade', duration = 2500, customIcon = null) {
         const toastContainer = document.getElementById('toast-container');
         if (!toastContainer) {
@@ -9007,26 +9079,54 @@ class VibeSurvivor {
         toast.className = `toast toast-${type}`;
 
         // Get icon based on type (or use custom icon if provided)
-        let iconHtml;
+        let iconElement;
         if (customIcon) {
-            iconHtml = customIcon;
+            if (typeof customIcon === 'string') {
+                const div = document.createElement('div');
+                div.innerHTML = customIcon;
+                iconElement = div.firstChild;
+            } else {
+                iconElement = customIcon;
+            }
         } else {
-            const icons = {
-                'boss': '⚠️',
-                'upgrade': '<img src="images/passives/upgrade.png" alt="upgrade" style="width: 48px; height: 48px;">',
-                'victory': '<img src="images/passives/nextStage.png" alt="victory" style="width: 48px; height: 48px;">',
-                'heal': '<img src="images/passives/healthBoost.png" alt="heal" style="width: 48px; height: 48px;">',
-                'magnet': '<img src="images/passives/magnet.png" alt="magnet" style="width: 48px; height: 48px;">'
-            };
-            iconHtml = icons[type] || '📢';
+            // Create icon based on type
+            if (type === 'victory') {
+                // Use animated canvas for victory icon
+                iconElement = this.createAnimatedIcon('images/passives/nextStage.png', 2, 2, 4, 8, 48);
+            } else {
+                // Static images for other types
+                const staticIcons = {
+                    'boss': '⚠️',
+                    'upgrade': '<img src="images/passives/upgrade.png" alt="upgrade" style="width: 48px; height: 48px;">',
+                    'heal': '<img src="images/passives/healthBoost.png" alt="heal" style="width: 48px; height: 48px;">',
+                    'magnet': '<img src="images/passives/magnet.png" alt="magnet" style="width: 48px; height: 48px;">'
+                };
+                const iconHtml = staticIcons[type] || '📢';
+                const div = document.createElement('div');
+                div.innerHTML = iconHtml;
+                iconElement = div.firstChild || document.createTextNode(iconHtml);
+            }
         }
 
-        toast.innerHTML = `
-            <div style="text-align: center;">
-                <div style="font-size: 32px; margin-bottom: 8px;">${iconHtml}</div>
-                <div style="font-size: 22px; font-weight: bold; color: white; text-shadow: 0 0 20px rgba(0,255,255,1), 0 0 40px rgba(0,255,255,0.8), 0 2px 4px rgba(0,0,0,0.9);">${message}</div>
-            </div>
-        `;
+        // Build toast content
+        const contentWrapper = document.createElement('div');
+        contentWrapper.style.textAlign = 'center';
+
+        const iconWrapper = document.createElement('div');
+        iconWrapper.style.fontSize = '32px';
+        iconWrapper.style.marginBottom = '8px';
+        iconWrapper.appendChild(iconElement);
+
+        const messageDiv = document.createElement('div');
+        messageDiv.style.fontSize = '22px';
+        messageDiv.style.fontWeight = 'bold';
+        messageDiv.style.color = 'white';
+        messageDiv.style.textShadow = '0 0 20px rgba(0,255,255,1), 0 0 40px rgba(0,255,255,0.8), 0 2px 4px rgba(0,0,0,0.9)';
+        messageDiv.textContent = message;
+
+        contentWrapper.appendChild(iconWrapper);
+        contentWrapper.appendChild(messageDiv);
+        toast.appendChild(contentWrapper);
 
         // Click entire toast to dismiss (optional)
         toast.addEventListener('click', () => {
