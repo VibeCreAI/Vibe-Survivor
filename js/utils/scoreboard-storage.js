@@ -65,22 +65,25 @@ export class ScoreboardStorage {
     }
 
     /**
-     * Sort scores by rank (level DESC, time DESC, bosses DESC)
+     * Sort scores by rank:
+     * 1) Bosses defeated (desc)
+     * 2) Enemies killed (desc)
+     * 3) Time survived (desc)
      * @param {Array} scores - Array of score objects
      * @returns {Array} Sorted scores
      */
     _sortScores(scores) {
         return scores.sort((a, b) => {
-            // Primary: Level (higher is better)
-            if (b.level !== a.level) {
-                return b.level - a.level;
+            // Primary: bosses defeated
+            if ((b.bossesKilled ?? 0) !== (a.bossesKilled ?? 0)) {
+                return (b.bossesKilled ?? 0) - (a.bossesKilled ?? 0);
             }
-            // Secondary: Time (longer is better)
-            if (b.time !== a.time) {
-                return b.time - a.time;
+            // Secondary: enemies killed
+            if ((b.enemiesKilled ?? 0) !== (a.enemiesKilled ?? 0)) {
+                return (b.enemiesKilled ?? 0) - (a.enemiesKilled ?? 0);
             }
-            // Tertiary: Bosses killed (more is better)
-            return b.bossesKilled - a.bossesKilled;
+            // Tertiary: time survived
+            return (b.time ?? 0) - (a.time ?? 0);
         });
     }
 

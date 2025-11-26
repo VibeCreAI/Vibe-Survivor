@@ -234,7 +234,9 @@ class SupabaseClient {
             let query = this.client
                 .from('global_scores')
                 .select('*')
-                .order('score_data->level', { ascending: false })
+                // Order: bosses desc, enemies desc, time desc, submission_date asc
+                .order('score_data->bossesKilled', { ascending: false })
+                .order('score_data->enemiesKilled', { ascending: false })
                 .order('score_data->time', { ascending: false })
                 .order('submission_date', { ascending: true })
                 .range(offset, offset + limit - 1);
