@@ -7177,7 +7177,7 @@ class VibeSurvivor {
         } else {
             // After first boss defeated: freeze time scaling, use boss scaling only
             timeScaling = 1 + Math.floor(300 / 30) * 0.3; // Freeze at first boss time (300 seconds = 10 intervals = 4.0x)
-            bossScaling = 1 + this.bossesKilled * 0.3; // 30% per boss defeated
+            bossScaling = 1 + this.bossesKilled * 0.8; // 80% health scaling per boss defeated
         }
 
         const totalHealthMultiplier = config.health * timeScaling * bossScaling;
@@ -7267,11 +7267,12 @@ class VibeSurvivor {
     getBossProjectileLife(baseLife, boss = null) {
         const level = boss?.bossLevel || this.bossLevel || 1;
         const cycle = this.getBossCycle(level);
+        const extendedBase = Math.floor(baseLife * 3); // Make missiles persist much longer before expiring
         if (cycle <= 0) {
-            return baseLife;
+            return extendedBase;
         }
         const multiplier = 1 + cycle * 0.25;
-        return Math.floor(baseLife * multiplier);
+        return Math.floor(extendedBase * multiplier);
     }
 
     applyBossCycleMissileBonus(boss, attackPattern, cycleLevel) {
