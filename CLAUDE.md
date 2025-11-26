@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Vibe Survivor is a standalone JavaScript arcade-style survival game built with HTML5 Canvas. The game features pixel art styling, multiple weapon systems, enemy waves, and progression mechanics. It's designed as a self-contained web application that can be deployed independently.
 
-**Major Refactor Completed**: The game has been refactored from a monolithic ~9300+ line single-file architecture to a modern modular system with separated concerns, improved maintainability, and clearer code organization. See REFACTOR.md and AGENTS.md for detailed documentation.
+**Major Refactor Completed**: The game has been refactored from a monolithic ~9300+ line single-file architecture to a modern modular system with separated concerns, improved maintainability, and clearer code organization. See `docs/REFACTOR.md` and `AGENTS.md` for detailed documentation.
 
 ## Architecture
 
@@ -184,3 +184,28 @@ No automated test suite is currently configured. Manual testing should cover:
 - All assets must maintain relative path structure
 - HTTPS required for audio playback on most browsers
 - Game is self-contained with no external dependencies
+
+## Documentation
+
+### Root Level Documentation
+- **README.md** - Main project overview, features, gameplay, and setup instructions
+- **CLAUDE.md** (this file) - Development guidance for Claude Code
+- **AGENTS.md** - Documentation for custom AI agents and workflows used in development
+
+### Documentation Folder (`docs/`)
+- **docs/REFACTOR.md** - Complete refactoring journey from monolithic to modular architecture
+- **docs/boss-system.md** - Boss enemy system design and implementation
+- **docs/GLOBAL_SCOREBOARD_PLAN.md** - Comprehensive implementation plan for global leaderboard system with Supabase
+
+### Supabase Documentation (`supabase/`)
+- **supabase/README.md** - Git guide for Supabase files (what to commit, what to ignore)
+- **supabase/SETUP_INSTRUCTIONS.md** - Step-by-step backend setup instructions
+- **supabase/setup.sql** - Database schema and RLS policies
+- **supabase/functions/submit-score/** - Edge Function for score validation and submission
+
+### Quick Reference
+- For architecture questions → `docs/REFACTOR.md`
+- For global leaderboard setup → `supabase/SETUP_INSTRUCTIONS.md`
+- For implementation details → `docs/GLOBAL_SCOREBOARD_PLAN.md`
+- For boss mechanics → `docs/boss-system.md`
+- For agent workflows → `AGENTS.md`

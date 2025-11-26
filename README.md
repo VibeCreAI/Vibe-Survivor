@@ -293,7 +293,7 @@ Originally a single 9,300+ line file, the codebase was refactored into a modular
 - **Before:** Monolithic, hard to maintain, performance bottlenecks
 - **After:** Clean separation of concerns, optimized systems, scalable
 
-*See [REFACTOR.md](REFACTOR.md) for the complete refactoring story.*
+*See [REFACTOR.md](docs/REFACTOR.md) for the complete refactoring story.*
 
 ---
 
