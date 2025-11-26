@@ -669,7 +669,7 @@ body::after {
     justify-content: center;
     padding: 20px;
     background: rgba(3, 5, 20, 0.9);
-    z-index: 12000;
+    z-index: 15000;
 }
 
 .scoreboard-content,

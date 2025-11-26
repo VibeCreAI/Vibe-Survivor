@@ -120,6 +120,10 @@ class VibeSurvivor {
         this.effectsManager = new EffectsManager();
         this.applyCameraZoom();
 
+        // Track modal origins
+        this.scoreboardLastOrigin = 'start';
+        this.scoreDetailReturnContext = null;
+
         // Initialize gameplay systems
         this.playerSystem = new PlayerSystem();
         this.pickupSystem = new PickupSystem();
@@ -747,7 +751,7 @@ class VibeSurvivor {
                     console.warn('Please wait for loading to complete.');
                     return;
                 }
-                this.showScoreboardModal();
+                this.showScoreboardModal({ origin: 'start' });
             });
 
             this.modals.startScreenModal.onRestart(() => {
@@ -774,7 +778,20 @@ class VibeSurvivor {
         if (!this._scoreboardModalInitialized) {
             this.modals.scoreboard.init();
             this.modals.scoreboard.setTranslationFunction(this.t.bind(this));
-            this.modals.scoreboard.onScoreSelected((scoreId) => this.showScoreDetailModal(scoreId));
+            this.modals.scoreboard.onScoreSelected((scoreId) => {
+                // If the game over modal is visible, hide it before showing detail
+                if (this.modals.gameOver?.isVisible && this.modals.gameOver.isVisible()) {
+                    this.modals.gameOver.hide();
+                }
+                const tab = this.modals.scoreboard?.activeTab || 'local';
+                const origin = this.scoreboardLastOrigin || 'start';
+                const wasScoreboardVisible = this.modals.scoreboard?.isVisible && this.modals.scoreboard.isVisible();
+                if (wasScoreboardVisible) {
+                    this.modals.scoreboard.hide();
+                }
+                this.scoreDetailReturnContext = { origin, tab };
+                this.showScoreDetailModal(scoreId);
+            });
             this.modals.scoreboard.onClose(() => {
                 if (!this.gameRunning) {
                     this.showStartScreen();
@@ -793,11 +810,14 @@ class VibeSurvivor {
                 promptModal: this.modals.prompt,
                 notificationModal: this.modals.notification
             });
-            this.modals.scoreDetail.onBack(() => this.showScoreboardModal());
+            this.modals.scoreDetail.onBack(() => this.handleScoreDetailBack());
             this.modals.scoreDetail.onDelete((scoreId) => {
                 scoreboardStorage.deleteScore(scoreId);
                 this.modals.scoreDetail.hide();
-                this.showScoreboardModal();
+                this.showScoreboardModal({
+                    startTab: this.modals.scoreboard?.activeTab || 'local',
+                    origin: this.scoreboardLastOrigin || 'start'
+                });
             });
 
             // Setup submission callback for global leaderboard
@@ -823,7 +843,10 @@ class VibeSurvivor {
             // Setup view global callback
             this.modals.scoreDetail.onViewGlobal(() => {
                 this.modals.scoreDetail.hide();
-                this.showScoreboardModal({ startTab: 'global' });
+                this.showScoreboardModal({
+                    startTab: 'global',
+                    origin: this.scoreboardLastOrigin || 'start'
+                });
             });
 
             this._scoreDetailModalInitialized = true;
@@ -4771,7 +4794,7 @@ class VibeSurvivor {
     }
 
     showScoreboardModal(options = {}) {
-        const { startTab = 'local', onClose = null } = options;
+        const { startTab = 'local', onClose = null, origin = 'start' } = options;
         if (!this.modals.scoreboard) return;
 
         if (this.modals.scoreDetail?.isVisible && this.modals.scoreDetail.isVisible()) {
@@ -4785,11 +4808,22 @@ class VibeSurvivor {
 
         this.modals.scoreboard.setTranslationFunction(this.t.bind(this));
         this.modals.scoreboard.populateVersions();
-        this.modals.scoreboard.onClose(onClose || (() => {
-            if (!this.gameRunning) {
-                this.showStartScreen();
-            }
-        }));
+        // Remember origin for return behavior
+        this.scoreboardLastOrigin = origin || 'start';
+
+        const closeHandler = onClose
+            ? onClose
+            : (this.scoreboardLastOrigin === 'gameover'
+                ? () => {
+                    this.modals.gameOver.show();
+                }
+                : () => {
+                    if (!this.gameRunning) {
+                        this.showStartScreen();
+                    }
+                });
+
+        this.modals.scoreboard.onClose(closeHandler);
         // Ensure correct starting tab before rendering
         if (startTab === 'global') {
             this.modals.scoreboard.switchTab('global');
@@ -4830,6 +4864,17 @@ class VibeSurvivor {
             getWeaponName: this.getWeaponName.bind(this)
         });
         this.modals.scoreDetail.showScore(score);
+    }
+
+    handleScoreDetailBack() {
+        const tab = this.scoreDetailReturnContext?.tab || this.modals.scoreboard?.activeTab || 'local';
+        const origin = this.scoreDetailReturnContext?.origin || this.scoreboardLastOrigin || 'start';
+        this.scoreDetailReturnContext = null;
+        // Hide detail modal before showing scoreboard
+        if (this.modals.scoreDetail?.isVisible && this.modals.scoreDetail.isVisible()) {
+            this.modals.scoreDetail.hide();
+        }
+        this.showScoreboardModal({ startTab: tab, origin });
     }
 
     showStartScreen() {
@@ -5234,6 +5279,7 @@ class VibeSurvivor {
                         this.modals.gameOver.hide();
                         this.showScoreboardModal({
                             startTab: 'global',
+                            origin: 'gameover',
                             onClose: () => {
                                 this.modals.gameOver.show();
                             }
@@ -5250,6 +5296,7 @@ class VibeSurvivor {
                 this.modals.gameOver.hide();
                 this.showScoreboardModal({
                     startTab: 'global',
+                    origin: 'gameover',
                     onClose: () => {
                         this.modals.gameOver.show();
                     }
@@ -8809,7 +8856,7 @@ class VibeSurvivor {
                 background: transparent;
                 align-items: center;
                 justify-content: center;
-                z-index: 99999;
+                z-index: 14000;
                 backdrop-filter: blur(5px);
                 touch-action: auto !important;
             }
