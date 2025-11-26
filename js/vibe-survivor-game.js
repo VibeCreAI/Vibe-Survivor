@@ -821,8 +821,7 @@ class VibeSurvivor {
             // Setup view global callback
             this.modals.scoreDetail.onViewGlobal(() => {
                 this.modals.scoreDetail.hide();
-                this.modals.scoreboard.show();
-                this.modals.scoreboard.switchTab('global');
+                this.showScoreboardModal({ startTab: 'global' });
             });
 
             this._scoreDetailModalInitialized = true;
@@ -4769,7 +4768,8 @@ class VibeSurvivor {
         console.log('[Guide] modal classes:', guideModal.element.className);
     }
 
-    showScoreboardModal() {
+    showScoreboardModal(options = {}) {
+        const { startTab = 'local', onClose = null } = options;
         if (!this.modals.scoreboard) return;
 
         if (this.modals.scoreDetail?.isVisible && this.modals.scoreDetail.isVisible()) {
@@ -4783,7 +4783,17 @@ class VibeSurvivor {
 
         this.modals.scoreboard.setTranslationFunction(this.t.bind(this));
         this.modals.scoreboard.populateVersions();
-        this.modals.scoreboard.renderScores();
+        this.modals.scoreboard.onClose(onClose || (() => {
+            if (!this.gameRunning) {
+                this.showStartScreen();
+            }
+        }));
+        // Ensure correct starting tab before rendering
+        if (startTab === 'global') {
+            this.modals.scoreboard.switchTab('global');
+        } else {
+            this.modals.scoreboard.switchTab('local');
+        }
         this.modals.scoreboard.show();
     }
 
@@ -5211,10 +5221,34 @@ class VibeSurvivor {
                     if (scoreData.id) {
                         scoreboardStorage.markAsSubmitted(scoreData.id, result.id, trimmed);
                     }
+                    this.modals.gameOver.markSubmissionComplete();
                     await this.modals.notification.notify(`Score submitted as ${trimmed}!`, 'success');
+
+                    // Automatically show global leaderboard and return to game over when closed
+                    if (this.modals.scoreboard) {
+                        this.modals.gameOver.hide();
+                        this.showScoreboardModal({
+                            startTab: 'global',
+                            onClose: () => {
+                                this.modals.gameOver.show();
+                            }
+                        });
+                    }
                 } else {
                     await this.modals.notification.notify(`Failed to submit: ${result.error}`, 'error');
                 }
+            });
+
+            // Allow viewing scoreboard directly from the Game Over modal when already submitted
+            this.modals.gameOver.onViewScoreboard(() => {
+                if (!this.modals.scoreboard) return;
+                this.modals.gameOver.hide();
+                this.showScoreboardModal({
+                    startTab: 'global',
+                    onClose: () => {
+                        this.modals.gameOver.show();
+                    }
+                });
             });
 
             this._gameOverModalInitialized = true;
@@ -7177,7 +7211,7 @@ class VibeSurvivor {
         } else {
             // After first boss defeated: freeze time scaling, use boss scaling only
             timeScaling = 1 + Math.floor(300 / 30) * 0.3; // Freeze at first boss time (300 seconds = 10 intervals = 4.0x)
-            bossScaling = 1 + this.bossesKilled * 0.8; // 80% health scaling per boss defeated
+            bossScaling = 1 + this.bossesKilled * 1.0; // 100% health scaling per boss defeated
         }
 
         const totalHealthMultiplier = config.health * timeScaling * bossScaling;

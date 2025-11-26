@@ -5,6 +5,7 @@
  */
 
 import { Modal } from './modal-base.js';
+import { scoreboardStorage } from '../../../utils/scoreboard-storage.js';
 
 /**
  * GameOverModal - Displays game over screen with stats
@@ -18,6 +19,8 @@ export class GameOverModal extends Modal {
         this.onRestartCallback = null;
         this.onExitCallback = null;
         this.onSubmitGlobalCallback = null;
+        this.onViewScoreboardCallback = null;
+        this.isSubmitting = false;
 
         // Store current score data for submission
         this.currentScoreData = null;
@@ -86,6 +89,14 @@ export class GameOverModal extends Modal {
     }
 
     /**
+     * Sets callback for viewing the scoreboard after submission
+     * @param {Function} callback - View scoreboard callback
+     */
+    onViewScoreboard(callback) {
+        this.onViewScoreboardCallback = callback;
+    }
+
+    /**
      * Sets translation function
      * @param {Function} getTranslation - Translation lookup
      */
@@ -112,6 +123,7 @@ export class GameOverModal extends Modal {
 
         // Store score data for potential submission
         this.currentScoreData = data;
+        this.refreshSubmitButtonState();
 
         // Update basic stats
         this.updateStat('final-level', data.level);
@@ -251,8 +263,28 @@ export class GameOverModal extends Modal {
             return;
         }
 
-        if (this.onSubmitGlobalCallback) {
-            await this.onSubmitGlobalCallback(this.currentScoreData);
+        if (this.isSubmitting) return;
+
+        // Prevent duplicate submissions if already marked
+        const status = this.currentScoreData?.id
+            ? scoreboardStorage.getSubmissionStatus(this.currentScoreData.id)
+            : null;
+        if (status?.submitted) {
+            this.refreshSubmitButtonState();
+            if (this.onViewScoreboardCallback) {
+                this.onViewScoreboardCallback();
+            }
+            return;
+        }
+
+        this.setSubmittingState(true);
+
+        try {
+            if (this.onSubmitGlobalCallback) {
+                await this.onSubmitGlobalCallback(this.currentScoreData);
+            }
+        } finally {
+            this.setSubmittingState(false);
         }
     }
 
@@ -480,5 +512,59 @@ export class GameOverModal extends Modal {
 
         const bossesLabel = this.element.querySelector('[data-i18n="bosses"]');
         if (bossesLabel) bossesLabel.textContent = t('bossesDefeated');
+
+        // Refresh submit button text/state with latest localization
+        this.refreshSubmitButtonState();
+    }
+
+    /**
+     * Updates the submit button state based on submission status
+     */
+    refreshSubmitButtonState() {
+        if (!this.submitGlobalButton) return;
+
+        const status = this.currentScoreData?.id
+            ? scoreboardStorage.getSubmissionStatus(this.currentScoreData.id)
+            : null;
+        const isSubmitted = !!status?.submitted;
+
+        const t = this.getTranslation;
+        const submitText = t ? (t('submitToGlobal') || 'Submit to Global') : 'SUBMIT TO GLOBAL';
+        const submittedText = t ? (t('viewScoreboard') || 'View Scoreboard') : 'View Scoreboard';
+        const submittingText = t ? (t('submitting') || 'Submitting...') : 'Submitting...';
+
+        if (this.isSubmitting) {
+            this.submitGlobalButton.textContent = submittingText;
+            this.submitGlobalButton.disabled = true;
+            this.submitGlobalButton.classList.remove('submitted');
+            return;
+        }
+
+        if (isSubmitted) {
+            this.submitGlobalButton.textContent = submittedText;
+            this.submitGlobalButton.disabled = false;
+            this.submitGlobalButton.classList.add('submitted');
+        } else {
+            this.submitGlobalButton.textContent = submitText;
+            this.submitGlobalButton.disabled = false;
+            this.submitGlobalButton.classList.remove('submitted');
+        }
+    }
+
+    /**
+     * Marks submission as complete and updates button UI
+     */
+    markSubmissionComplete() {
+        this.isSubmitting = false;
+        this.refreshSubmitButtonState();
+    }
+
+    /**
+     * Sets submitting/loading visual state
+     * @param {boolean} isSubmitting
+     */
+    setSubmittingState(isSubmitting) {
+        this.isSubmitting = isSubmitting;
+        this.refreshSubmitButtonState();
     }
 }

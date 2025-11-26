@@ -131,7 +131,7 @@ export class EnemySystem {
         } else {
             // After first boss defeated: freeze time scaling, use boss scaling only
             timeScaling = 1 + Math.floor(180 / 30) * 0.3; // Freeze at first boss time (180 seconds = 6 intervals = 2.8x)
-            bossScaling = 1 + bossesKilled * 0.8; // 80% health scaling per boss defeated
+            bossScaling = 1 + bossesKilled * 1.0; // 100% health scaling per boss defeated
         }
 
         const totalHealthMultiplier = config.health * timeScaling * bossScaling;
