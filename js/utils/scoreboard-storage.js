@@ -87,7 +87,7 @@ export class ScoreboardStorage {
     /**
      * Save a new score to localStorage
      * @param {Object} scoreData - Complete score object
-     * @returns {boolean} Success status
+     * @returns {Object|null} Saved score object with ID, or null if failed
      */
     saveScore(scoreData) {
         try {
@@ -117,10 +117,10 @@ export class ScoreboardStorage {
             this._setStorage(storage);
 
             console.log('Score saved successfully:', score.id);
-            return true;
+            return score;
         } catch (error) {
             console.error('Error saving score:', error);
-            return false;
+            return null;
         }
     }
 

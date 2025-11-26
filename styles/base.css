@@ -677,6 +677,7 @@ body::after {
     width: 92%;
     max-width: 640px;
     max-height: 90vh;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     background: linear-gradient(135deg, #0a0a1a, #1a0a2a);
@@ -753,9 +754,39 @@ body::after {
     padding: 12px;
     flex: 1 1 auto;
     min-height: 0;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    touch-action: pan-y;
+    overflow-y: scroll; /* Changed from auto to scroll to always enable scrolling */
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch; /* Smooth momentum scrolling on iOS */
+    touch-action: pan-y; /* Enable vertical touch panning */
+    scroll-behavior: smooth; /* Smooth scrolling for mouse wheel */
+    overscroll-behavior: contain; /* Prevent scroll chaining */
+    /* Custom scrollbar styling */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 255, 255, 0.3) rgba(255, 255, 255, 0.05);
+}
+
+/* Webkit scrollbar styling for better desktop experience */
+.scoreboard-list-container::-webkit-scrollbar,
+.score-detail-scroll::-webkit-scrollbar {
+    width: 8px;
+}
+
+.scoreboard-list-container::-webkit-scrollbar-track,
+.score-detail-scroll::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.scoreboard-list-container::-webkit-scrollbar-thumb,
+.score-detail-scroll::-webkit-scrollbar-thumb {
+    background: rgba(0, 255, 255, 0.3);
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.scoreboard-list-container::-webkit-scrollbar-thumb:hover,
+.score-detail-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 255, 255, 0.5);
 }
 
 .scoreboard-list {
@@ -791,7 +822,6 @@ body::after {
 
 .score-card__header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
     margin-bottom: 10px;
     gap: 6px;
@@ -978,9 +1008,6 @@ body::after {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
-    margin-top: 16px;
-    padding-top: 12px;
     border-top: 1px solid rgba(0, 255, 255, 0.2);
     flex-shrink: 0;
 }
@@ -1073,5 +1100,366 @@ body::after {
 
     .score-detail-meta {
         flex-wrap: wrap;
+    }
+
+    .scoreboard-tabs {
+        /* Keep horizontal layout on mobile */
+        flex-direction: row;
+        gap: 0.5rem;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .scoreboard-tab {
+        padding: 0.5rem 1rem;
+        font-size: 0.8rem;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+}
+
+/* ==========================================
+   GLOBAL LEADERBOARD - TABS
+   ========================================== */
+
+.scoreboard-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid var(--text-primary);
+}
+
+.scoreboard-tab {
+    padding: 0.75rem 1.5rem;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--text-secondary);
+    font-family: var(--font-pixel);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+}
+
+.scoreboard-tab:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.scoreboard-tab.active {
+    color: var(--accent-color);
+    border-bottom-color: var(--accent-color);
+}
+
+.scoreboard-tabs-content {
+    position: relative;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+}
+
+.scoreboard-tab-pane {
+    display: none;
+    flex-direction: column;
+    flex: 1 1 auto;
+    height: 100%;
+    min-height: 0;
+}
+
+.scoreboard-tab-pane.active {
+    display: flex;
+}
+
+/* ==========================================
+   GLOBAL LEADERBOARD - LOADING STATES
+   ========================================== */
+
+.global-loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    gap: 1rem;
+    color: var(--text-secondary);
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    border-top-color: var(--accent-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.global-error-state {
+    padding: 2rem;
+    text-align: center;
+    color: #ff6b6b;
+    font-family: var(--font-pixel);
+}
+
+.global-empty-state {
+    padding: 3rem;
+    text-align: center;
+    color: var(--text-secondary);
+    font-family: var(--font-pixel);
+}
+
+/* ==========================================
+   SCORE SUBMISSION
+   ========================================== */
+
+.score-submission-section {
+    padding: 5px;
+    border-top: 2px solid var(--text-primary);
+    border-bottom: 2px solid var(--text-primary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.submit-global {
+    width: 100%;
+    max-width: 280px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1rem 1.5rem;
+    font-size: 0.9rem;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.submit-global:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.submit-global:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#submission-status {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    align-items: center;
+}
+
+#view-on-global-btn {
+    width: 100%;
+    max-width: 280px;
+}
+
+.submission-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    background: rgba(76, 175, 80, 0.1);
+    border: 2px solid #4caf50;
+    border-radius: 4px;
+    width: 100%;
+    max-width: 280px;
+}
+
+.submission-checkmark {
+    font-size: 1.5rem;
+    color: #4caf50;
+}
+
+.submission-text {
+    font-family: var(--font-pixel);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+}
+
+/* ==========================================
+   SCORE CARD BADGES
+   ========================================== */
+
+.score-card--global {
+    border-left: 4px solid var(--accent-color);
+}
+
+.submitted-badge {
+    display: inline-block;
+    margin-left: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.anonymous-badge {
+    display: inline-block;
+    margin-left: 0.25rem;
+    font-size: 0.8rem;
+    opacity: 0.6;
+}
+
+.score-player {
+    font-weight: bold;
+    color: var(--accent-color);
+}
+
+/* ==========================================
+   PROMPT MODAL (Name Input)
+   ========================================== */
+
+.prompt-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 120000; /* Higher than all other modals (including game over) */
+    padding: 1rem;
+}
+
+.prompt-content {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border: 3px solid #00ffff;
+    border-radius: 8px;
+    padding: 2rem;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.prompt-message {
+    font-family: var(--font-pixel);
+    color: var(--text-primary);
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    line-height: 1.4;
+}
+
+.prompt-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-family: var(--font-pixel);
+    font-size: 0.9rem;
+    background: rgba(0, 0, 0, 0.3);
+    border: 2px solid var(--text-primary);
+    border-radius: 4px;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.prompt-input:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.prompt-input::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.6;
+}
+
+.prompt-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+}
+
+.prompt-actions .survivor-btn {
+    flex: 1;
+    max-width: 150px;
+}
+
+/* ==========================================
+   NOTIFICATION MODAL (Alerts)
+   ========================================== */
+
+.notification-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 120000; /* Higher than all other modals (including game over) */
+    padding: 1rem;
+}
+
+.notification-content {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border: 3px solid #00ffff;
+    border-radius: 8px;
+    padding: 2rem;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.notification-message {
+    font-family: var(--font-pixel);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    line-height: 1.5;
+    min-height: 3em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.notification-actions {
+    display: flex;
+    justify-content: center;
+}
+
+.notification-actions .survivor-btn {
+    min-width: 120px;
+}
+
+/* Notification type variations */
+.notification-modal.notification-success .notification-content {
+    border-color: #4caf50;
+}
+
+.notification-modal.notification-error .notification-content {
+    border-color: #ff6b6b;
+}
+
+.notification-modal.notification-info .notification-content {
+    border-color: var(--accent-color);
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .prompt-content,
+    .notification-content {
+        padding: 1.5rem;
+        max-width: 90%;
+    }
+
+    .prompt-message,
+    .notification-message {
+        font-size: 0.85rem;
+    }
+
+    .prompt-input {
+        font-size: 0.85rem;
+        padding: 0.65rem 0.85rem;
     }
 }

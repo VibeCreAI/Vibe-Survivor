@@ -118,10 +118,13 @@ class SupabaseClient {
                 return { success: false, error: validation.error };
             }
 
+            // Sanitize score data - ensure numeric fields are integers
+            const sanitizedScoreData = this.sanitizeScoreData(scoreData);
+
             // Prepare submission data
             const payload = {
                 player_name: playerName.trim(),
-                score_data: scoreData,
+                score_data: sanitizedScoreData,
                 game_version: gameVersion,
                 major_version: majorVersion,
                 client_fingerprint: this.fingerprint
@@ -132,6 +135,7 @@ class SupabaseClient {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
                     'apikey': SUPABASE_CONFIG.anonKey
                 },
                 body: JSON.stringify(payload)
@@ -186,6 +190,30 @@ class SupabaseClient {
         }
 
         return { valid: true };
+    }
+
+    /**
+     * Sanitize score data - ensure all numeric fields are integers
+     * Fixes floating-point precision issues (e.g., 101.39999999999553 -> 101)
+     */
+    sanitizeScoreData(scoreData) {
+        const sanitized = { ...scoreData };
+
+        // Round numeric fields to integers
+        if (sanitized.level !== undefined) {
+            sanitized.level = Math.round(sanitized.level);
+        }
+        if (sanitized.time !== undefined) {
+            sanitized.time = Math.round(sanitized.time);
+        }
+        if (sanitized.enemiesKilled !== undefined) {
+            sanitized.enemiesKilled = Math.round(sanitized.enemiesKilled);
+        }
+        if (sanitized.bossesKilled !== undefined) {
+            sanitized.bossesKilled = Math.round(sanitized.bossesKilled);
+        }
+
+        return sanitized;
     }
 
     /**

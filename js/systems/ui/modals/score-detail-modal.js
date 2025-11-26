@@ -26,6 +26,18 @@ export class ScoreDetailModal extends Modal {
         this.buttonIndex = 0;
         this.confirmOverlay = null;
         this.confirmKeyHandler = null;
+
+        // NEW: Submission properties
+        this.submitButton = null;
+        this.submissionStatus = null;
+        this.submittedName = null;
+        this.viewGlobalButton = null;
+        this.onSubmitCallback = null;
+        this.onViewGlobalCallback = null;
+
+        // Modals for prompts/alerts
+        this.promptModal = null;
+        this.notificationModal = null;
     }
 
     init() {
@@ -47,7 +59,14 @@ export class ScoreDetailModal extends Modal {
         this.weaponsSection = this.element.querySelector('.score-detail-weapons');
         this.passivesSection = this.element.querySelector('.score-detail-passives');
         this.playerSection = this.element.querySelector('.score-detail-player');
-        this.actionButtons = [this.backButton, this.deleteButton].filter(Boolean);
+
+        // NEW: Submission elements
+        this.submitButton = this.element.querySelector('#submit-to-global-btn');
+        this.submissionStatus = this.element.querySelector('#submission-status');
+        this.submittedName = this.element.querySelector('#submitted-name');
+        this.viewGlobalButton = this.element.querySelector('#view-on-global-btn');
+
+        this.actionButtons = [this.backButton, this.deleteButton, this.submitButton].filter(Boolean);
 
         if (this.backButton) {
             this.backButton.addEventListener('click', () => this.handleBack());
@@ -55,6 +74,15 @@ export class ScoreDetailModal extends Modal {
 
         if (this.deleteButton) {
             this.deleteButton.addEventListener('click', () => this.handleDelete());
+        }
+
+        // NEW: Submission event handlers
+        if (this.submitButton) {
+            this.submitButton.addEventListener('click', () => this.handleSubmit());
+        }
+
+        if (this.viewGlobalButton) {
+            this.viewGlobalButton.addEventListener('click', () => this.handleViewGlobal());
         }
 
         this.updateLocalization();
@@ -70,12 +98,26 @@ export class ScoreDetailModal extends Modal {
         this.getWeaponName = getWeaponName;
     }
 
+    setModals({ promptModal, notificationModal } = {}) {
+        this.promptModal = promptModal;
+        this.notificationModal = notificationModal;
+    }
+
     onBack(callback) {
         this.onBackCallback = callback;
     }
 
     onDelete(callback) {
         this.onDeleteCallback = callback;
+    }
+
+    // NEW: Submission callbacks
+    onSubmit(callback) {
+        this.onSubmitCallback = callback;
+    }
+
+    onViewGlobal(callback) {
+        this.onViewGlobalCallback = callback;
     }
 
     showScore(score) {
@@ -158,6 +200,9 @@ export class ScoreDetailModal extends Modal {
         this.renderWeapons(score.weapons || []);
         this.renderPassives(score.passives || {});
         this.renderPlayerStats(score.playerStats || {});
+
+        // NEW: Update submission UI
+        this.updateSubmissionUI(score);
     }
 
     renderWeapons(weapons) {
@@ -583,5 +628,107 @@ export class ScoreDetailModal extends Modal {
         };
 
         document.addEventListener('keydown', this.confirmKeyHandler, { capture: true });
+    }
+
+    // NEW: Submission methods
+    async handleSubmit() {
+        if (!this.currentScore) return;
+
+        const t = this.getTranslation;
+        const promptMessage = (t && t('enterPlayerName')) || 'Enter your display name (3-20 characters):';
+
+        // Use custom prompt modal if available, otherwise fallback to browser prompt
+        const playerName = this.promptModal
+            ? await this.promptModal.prompt(promptMessage, 'Player name', '')
+            : prompt(promptMessage);
+
+        if (!playerName) return;
+
+        // Client-side validation
+        const trimmed = playerName.trim();
+        if (trimmed.length < 3 || trimmed.length > 20) {
+            if (this.notificationModal) {
+                await this.notificationModal.notify('Player name must be 3-20 characters', 'error');
+            } else {
+                alert('Player name must be 3-20 characters');
+            }
+            return;
+        }
+
+        if (!/^[a-zA-Z0-9\s_-]+$/.test(trimmed)) {
+            if (this.notificationModal) {
+                await this.notificationModal.notify('Player name can only contain letters, numbers, spaces, _ and -', 'error');
+            } else {
+                alert('Player name can only contain letters, numbers, spaces, _ and -');
+            }
+            return;
+        }
+
+        // Show submitting state
+        if (this.submitButton) {
+            this.submitButton.disabled = true;
+            this.submitButton.textContent = 'SUBMITTING...';
+        }
+
+        // Call submission callback
+        if (this.onSubmitCallback) {
+            const success = await this.onSubmitCallback(this.currentScore, trimmed);
+
+            if (success) {
+                this.updateSubmissionUI(this.currentScore);
+            } else {
+                // Re-enable button on failure
+                if (this.submitButton) {
+                    this.submitButton.disabled = false;
+                    this.submitButton.textContent = 'SUBMIT TO GLOBAL';
+                }
+            }
+        }
+    }
+
+    handleViewGlobal() {
+        if (this.onViewGlobalCallback) {
+            this.onViewGlobalCallback();
+        }
+    }
+
+    async updateSubmissionUI(score) {
+        // If this is a global score (read-only), hide delete and submit buttons
+        if (score.isGlobal) {
+            if (this.deleteButton) this.deleteButton.style.display = 'none';
+            if (this.submitButton) this.submitButton.style.display = 'none';
+            if (this.submissionStatus) this.submissionStatus.style.display = 'none';
+            return;
+        }
+
+        // Show delete button for local scores
+        if (this.deleteButton) this.deleteButton.style.display = '';
+
+        const { scoreboardStorage } = await import('../../../utils/scoreboard-storage.js');
+        const status = scoreboardStorage.getSubmissionStatus(score.id);
+
+        if (status && status.submitted) {
+            // Hide submit button
+            if (this.submitButton) this.submitButton.style.display = 'none';
+
+            // Show submission status
+            if (this.submissionStatus) {
+                this.submissionStatus.style.display = 'flex';
+                if (this.submittedName) {
+                    this.submittedName.textContent = status.playerName;
+                }
+            }
+        } else {
+            // Show submit button
+            if (this.submitButton) {
+                this.submitButton.style.display = 'block';
+                this.submitButton.disabled = false;
+            }
+
+            // Hide submission status
+            if (this.submissionStatus) {
+                this.submissionStatus.style.display = 'none';
+            }
+        }
     }
 }

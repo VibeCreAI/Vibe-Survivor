@@ -5,6 +5,7 @@ import { Vector2 } from './utils/vector2.js';
 import { clamp, lerp, distance, distanceSquared, randomRange, randomInt, degToRad, radToDeg } from './utils/math.js';
 import { PerformanceMonitor } from './utils/performance.js';
 import { scoreboardStorage } from './utils/scoreboard-storage.js';
+import { supabaseClient } from './utils/supabase-client.js';
 
 // Import configuration
 import {
@@ -73,6 +74,8 @@ import { AboutModal } from './systems/ui/modals/about-modal.js';
 import { ChestModal } from './systems/ui/modals/chest-modal.js';
 import { ScoreboardModal } from './systems/ui/modals/scoreboard-modal.js';
 import { ScoreDetailModal } from './systems/ui/modals/score-detail-modal.js';
+import { PromptModal } from './systems/ui/modals/prompt-modal.js';
+import { NotificationModal } from './systems/ui/modals/notification-modal.js';
 
 // Import Phase 11 systems - Engine & Audio
 import { AudioManager } from './systems/audio/audio-manager.js';
@@ -154,7 +157,9 @@ class VibeSurvivor {
             aboutModal: new AboutModal(),
             chest: new ChestModal(),
             scoreboard: new ScoreboardModal(),
-            scoreDetail: new ScoreDetailModal()
+            scoreDetail: new ScoreDetailModal(),
+            prompt: new PromptModal(),
+            notification: new NotificationModal()
         };
         this._guideModalInitialized = false;
 
@@ -164,6 +169,9 @@ class VibeSurvivor {
         this.gameLoopManager = new GameLoop(); // Renamed to avoid conflict with existing gameLoop() method
         this.engineTimer = new EngineTimer();
         this.frameRateCounter = new FrameRateCounter();
+
+        // Initialize Supabase client for global leaderboard
+        supabaseClient.init();
 
         // Convenience properties (delegate to spriteManager for backward compatibility)
         this.playerSprites = this.spriteManager.playerSprites;
@@ -779,13 +787,58 @@ class VibeSurvivor {
             this.modals.scoreDetail.setHelpers({
                 getWeaponName: this.getWeaponName.bind(this)
             });
+            this.modals.scoreDetail.setModals({
+                promptModal: this.modals.prompt,
+                notificationModal: this.modals.notification
+            });
             this.modals.scoreDetail.onBack(() => this.showScoreboardModal());
             this.modals.scoreDetail.onDelete((scoreId) => {
                 scoreboardStorage.deleteScore(scoreId);
                 this.modals.scoreDetail.hide();
                 this.showScoreboardModal();
             });
+
+            // Setup submission callback for global leaderboard
+            this.modals.scoreDetail.onSubmit(async (score, playerName) => {
+                const result = await supabaseClient.submitScore(
+                    score,
+                    playerName,
+                    GAME_INFO.VERSION,
+                    GAME_INFO.MAJOR_VERSION
+                );
+
+                if (result.success) {
+                    // Mark as submitted in local storage
+                    scoreboardStorage.markAsSubmitted(score.id, result.id, playerName);
+                    await this.modals.notification.notify(`Score submitted as ${playerName}!`, 'success');
+                    return true;
+                } else {
+                    await this.modals.notification.notify(`Failed to submit: ${result.error}`, 'error');
+                    return false;
+                }
+            });
+
+            // Setup view global callback
+            this.modals.scoreDetail.onViewGlobal(() => {
+                this.modals.scoreDetail.hide();
+                this.modals.scoreboard.show();
+                this.modals.scoreboard.switchTab('global');
+            });
+
             this._scoreDetailModalInitialized = true;
+        }
+
+        // Initialize prompt and notification modals
+        if (!this._promptModalInitialized) {
+            this.modals.prompt.init();
+            this.modals.prompt.setTranslationFunction(this.t.bind(this));
+            this._promptModalInitialized = true;
+        }
+
+        if (!this._notificationModalInitialized) {
+            this.modals.notification.init();
+            this.modals.notification.setTranslationFunction(this.t.bind(this));
+            this._notificationModalInitialized = true;
         }
 
         // Wire up GUIDE button on start screen
@@ -1284,6 +1337,13 @@ class VibeSurvivor {
                                     <div class="gameover-player-stats-section"></div>
                                 </div>
 
+                                <!-- Submit to Global Section -->
+                                <div class="gameover-submit-section" style="border-top: 2px solid var(--text-primary);">
+                                    <button id="gameover-submit-global-btn" class="survivor-btn submit-global" style="width: 100%; margin-bottom: 0.5rem;">
+                                        SUBMIT TO GLOBAL
+                                    </button>
+                                </div>
+
                                 <div class="gameover-buttons">
                                     <button class="gameover-restart-btn survivor-btn primary">RETRY</button>
                                     <button class="gameover-exit-btn survivor-btn">EXIT</button>
@@ -1332,6 +1392,11 @@ class VibeSurvivor {
                             <div class="scoreboard-content">
                                 <div class="scoreboard-header">
                                     <div class="scoreboard-title">SCOREBOARD</div>
+                                    <!-- NEW: Tab buttons -->
+                                    <div class="scoreboard-tabs">
+                                        <button class="scoreboard-tab active" data-tab="local">LOCAL</button>
+                                        <button class="scoreboard-tab" data-tab="global">GLOBAL</button>
+                                    </div>
                                     <div class="scoreboard-filter">
                                         <label for="scoreboard-version-filter">Version</label>
                                         <select id="scoreboard-version-filter">
@@ -1339,9 +1404,34 @@ class VibeSurvivor {
                                         </select>
                                     </div>
                                 </div>
-                                <div class="scoreboard-list-container" tabindex="0" style="overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y;">
-                                    <div id="scoreboard-list" class="scoreboard-list"></div>
-                                    <div class="scoreboard-empty-state" style="display: none;">No scores yet. Play a run to add your first record!</div>
+                                <!-- NEW: Tab content container -->
+                                <div class="scoreboard-tabs-content">
+                                    <!-- LOCAL TAB -->
+                                    <div class="scoreboard-tab-pane active" data-tab-pane="local">
+                                        <div class="scoreboard-list-container" tabindex="0">
+                                            <div id="scoreboard-list" class="scoreboard-list"></div>
+                                            <div class="scoreboard-empty-state" style="display: none;">No scores yet. Play a run to add your first record!</div>
+                                        </div>
+                                    </div>
+                                    <!-- GLOBAL TAB -->
+                                    <div class="scoreboard-tab-pane" data-tab-pane="global">
+                                        <div class="scoreboard-list-container" tabindex="0">
+                                            <div id="global-scoreboard-list" class="scoreboard-list"></div>
+                                            <!-- Loading state -->
+                                            <div class="global-loading-state" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem; gap: 1rem;">
+                                                <div class="spinner"></div>
+                                                <p>Loading global scores...</p>
+                                            </div>
+                                            <!-- Error state -->
+                                            <div class="global-error-state" style="display: none; padding: 2rem; text-align: center;">
+                                                Failed to load global scores
+                                            </div>
+                                            <!-- Empty state -->
+                                            <div class="global-empty-state" style="display: none; padding: 3rem; text-align: center;">
+                                                No global scores yet. Be the first!
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="scoreboard-actions">
                                     <button id="scoreboard-clear-btn" class="survivor-btn small destructive">CLEAR ALL</button>
@@ -1381,9 +1471,51 @@ class VibeSurvivor {
                                         <div class="score-detail-player"></div>
                                     </div>
                                 </div>
+                                <!-- NEW: Submission Section -->
+                                <div class="score-submission-section">
+                                    <!-- Show when NOT submitted -->
+                                    <button id="submit-to-global-btn" class="survivor-btn submit-global" style="display: none;">
+                                        SUBMIT TO GLOBAL
+                                    </button>
+
+                                    <!-- Show when submitted -->
+                                    <div id="submission-status" style="display: none;">
+                                        <div class="submission-info">
+                                            <span class="submission-checkmark">✓</span>
+                                            <span class="submission-text">
+                                                Submitted as <strong id="submitted-name"></strong>
+                                            </span>
+                                        </div>
+                                        <button id="view-on-global-btn" class="survivor-btn">
+                                            VIEW ON GLOBAL BOARD
+                                        </button>
+                                    </div>
+                                </div>
                                 <div class="score-detail-actions">
                                     <button id="score-detail-back-btn" class="survivor-btn">BACK TO LIST</button>
                                     <button id="score-detail-delete-btn" class="survivor-btn destructive">DELETE RECORD</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Prompt Modal (for name input) -->
+                        <div id="prompt-modal" class="prompt-modal" style="display: none;">
+                            <div class="prompt-content">
+                                <div class="prompt-message">Enter your display name:</div>
+                                <input type="text" class="prompt-input" placeholder="Player name" maxlength="20" />
+                                <div class="prompt-actions">
+                                    <button class="prompt-confirm-btn survivor-btn primary">CONFIRM</button>
+                                    <button class="prompt-cancel-btn survivor-btn">CANCEL</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Notification Modal (for alerts) -->
+                        <div id="notification-modal" class="notification-modal" style="display: none;">
+                            <div class="notification-content">
+                                <div class="notification-message">Notification message</div>
+                                <div class="notification-actions">
+                                    <button class="notification-ok-btn survivor-btn primary">OK</button>
                                 </div>
                             </div>
                         </div>
@@ -2437,7 +2569,7 @@ class VibeSurvivor {
             }
 
             .survivor-btn {
-                padding: 12px 40px;
+                padding: 7px 20px;
                 background: rgba(0, 0, 0, 0.7);
                 border: 2px solid #00ffff;
                 color: #00ffff;
@@ -4655,12 +4787,21 @@ class VibeSurvivor {
         this.modals.scoreboard.show();
     }
 
-    showScoreDetailModal(scoreId) {
+    showScoreDetailModal(scoreIdOrData) {
         if (!this.modals.scoreDetail) return;
-        const score = scoreboardStorage.getScoreById(scoreId);
-        if (!score) {
-            console.warn('Score not found for detail view:', scoreId);
-            return;
+
+        let score;
+        // Handle both local scores (ID string) and global scores (full object)
+        if (typeof scoreIdOrData === 'object' && scoreIdOrData.isGlobal) {
+            // Global score - use directly
+            score = scoreIdOrData;
+        } else {
+            // Local score - look up by ID
+            score = scoreboardStorage.getScoreById(scoreIdOrData);
+            if (!score) {
+                console.warn('Score not found for detail view:', scoreIdOrData);
+                return;
+            }
         }
 
         if (this.modals.scoreboard?.isVisible && this.modals.scoreboard.isVisible()) {
@@ -5034,6 +5175,48 @@ class VibeSurvivor {
         if (!this._gameOverModalInitialized) {
             this.modals.gameOver.init();
             this.modals.gameOver.setTranslationFunction(this.t.bind(this));
+
+            // Setup submit to global callback
+            this.modals.gameOver.onSubmitGlobal(async (scoreData) => {
+                const playerName = await this.modals.prompt.prompt(
+                    'Enter your display name (3-20 characters):',
+                    'Player name',
+                    ''
+                );
+
+                if (!playerName) return;
+
+                // Client-side validation
+                const trimmed = playerName.trim();
+                if (trimmed.length < 3 || trimmed.length > 20) {
+                    await this.modals.notification.notify('Player name must be 3-20 characters', 'error');
+                    return;
+                }
+
+                if (!/^[a-zA-Z0-9\s_-]+$/.test(trimmed)) {
+                    await this.modals.notification.notify('Player name can only contain letters, numbers, spaces, _ and -', 'error');
+                    return;
+                }
+
+                // Submit to Supabase
+                const result = await supabaseClient.submitScore(
+                    scoreData,
+                    trimmed,
+                    GAME_INFO.VERSION,
+                    GAME_INFO.MAJOR_VERSION
+                );
+
+                if (result.success) {
+                    // Mark as submitted in local storage
+                    if (scoreData.id) {
+                        scoreboardStorage.markAsSubmitted(scoreData.id, result.id, trimmed);
+                    }
+                    await this.modals.notification.notify(`Score submitted as ${trimmed}!`, 'success');
+                } else {
+                    await this.modals.notification.notify(`Failed to submit: ${result.error}`, 'error');
+                }
+            });
+
             this._gameOverModalInitialized = true;
         }
 
@@ -12663,21 +12846,13 @@ class VibeSurvivor {
         const passivesHTML = this.generatePassivesSection();
         const playerStatsHTML = this.generatePlayerStatsSection();
 
-        // Update modal with all data
-        this.modals.gameOver.update({
-            level: this.player.level,
-            timeText: timeText,
-            enemiesKilled: Math.max(1, Math.floor(this.gameTime * 1.8)),
-            bossesKilled: this.bossesKilled,
-            weaponsHTML: weaponsHTML,
-            passivesHTML: passivesHTML,
-            playerStatsHTML: playerStatsHTML
-        });
+        // Collect complete score data
+        const scoreData = this.collectGameStats();
 
-        // Save score to local storage for scoreboard
+        // Save score to local storage for scoreboard first to get ID
+        let savedScore = null;
         try {
-            const scoreData = this.collectGameStats();
-            scoreboardStorage.saveScore(scoreData);
+            savedScore = scoreboardStorage.saveScore(scoreData);
             console.log('Game score saved to scoreboard');
 
             if (this.modals.scoreboard?.isVisible && this.modals.scoreboard.isVisible()) {
@@ -12687,6 +12862,16 @@ class VibeSurvivor {
         } catch (error) {
             console.error('Failed to save score to scoreboard:', error);
         }
+
+        // Update modal with all data (include savedScore.id if available)
+        this.modals.gameOver.update({
+            ...scoreData,
+            id: savedScore?.id, // Include the local storage ID
+            timeText: timeText,
+            weaponsHTML: weaponsHTML,
+            passivesHTML: passivesHTML,
+            playerStatsHTML: playerStatsHTML
+        });
 
         // Set up event handlers (if not already set)
         if (!this._gameOverHandlersSet) {
@@ -13238,6 +13423,7 @@ class VibeSurvivor {
                     scoreboardPassivesHeading: "Passives",
                     scoreboardPlayerHeading: "Player Stats",
                     scoreboardStatsHeading: "Damage",
+                    enterPlayerName: "Enter your display name (3-20 characters):",
                     scoreDetailTitle: "RUN DETAILS",
 
                     // Options menu
@@ -13473,6 +13659,7 @@ class VibeSurvivor {
                     scoreboardPassivesHeading: "패시브",
                     scoreboardPlayerHeading: "플레이어 스탯",
                     scoreboardStatsHeading: "피해",
+                    enterPlayerName: "표시 이름을 입력하세요 (3-20자):",
                     scoreDetailTitle: "기록 상세",
 
                     // Options menu

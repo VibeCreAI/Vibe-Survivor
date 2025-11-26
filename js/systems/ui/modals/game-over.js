@@ -14,8 +14,13 @@ export class GameOverModal extends Modal {
         super(id, { closeOnEscape: false, closeOnBackdropClick: false });
         this.restartButton = null;
         this.exitButton = null;
+        this.submitGlobalButton = null;
         this.onRestartCallback = null;
         this.onExitCallback = null;
+        this.onSubmitGlobalCallback = null;
+
+        // Store current score data for submission
+        this.currentScoreData = null;
 
         // Keyboard navigation state
         this.keyboardHandler = null;
@@ -38,12 +43,16 @@ export class GameOverModal extends Modal {
         if (result) {
             this.restartButton = this.element.querySelector('.gameover-restart-btn');
             this.exitButton = this.element.querySelector('.gameover-exit-btn');
+            this.submitGlobalButton = this.element.querySelector('#gameover-submit-global-btn');
 
             if (this.restartButton) {
                 this.restartButton.addEventListener('click', () => this.handleRestart());
             }
             if (this.exitButton) {
                 this.exitButton.addEventListener('click', () => this.handleExit());
+            }
+            if (this.submitGlobalButton) {
+                this.submitGlobalButton.addEventListener('click', () => this.handleSubmitGlobal());
             }
             if (this.getTranslation) {
                 this.updateLocalization();
@@ -66,6 +75,14 @@ export class GameOverModal extends Modal {
      */
     onExit(callback) {
         this.onExitCallback = callback;
+    }
+
+    /**
+     * Sets callback for submit to global action
+     * @param {Function} callback - Submit callback (receives score data)
+     */
+    onSubmitGlobal(callback) {
+        this.onSubmitGlobalCallback = callback;
     }
 
     /**
@@ -92,6 +109,9 @@ export class GameOverModal extends Modal {
      */
     update(data) {
         if (!data) return;
+
+        // Store score data for potential submission
+        this.currentScoreData = data;
 
         // Update basic stats
         this.updateStat('final-level', data.level);
@@ -220,6 +240,20 @@ export class GameOverModal extends Modal {
             this.onExitCallback();
         }
         this.hide();
+    }
+
+    /**
+     * Handles submit to global button click
+     */
+    async handleSubmitGlobal() {
+        if (!this.currentScoreData) {
+            alert('No score data available');
+            return;
+        }
+
+        if (this.onSubmitGlobalCallback) {
+            await this.onSubmitGlobalCallback(this.currentScoreData);
+        }
     }
 
     /**
