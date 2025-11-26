@@ -80,6 +80,13 @@ The game now uses a **modular architecture** with `VibeSurvivor` acting as the h
      - Runs the fixed-timestep game loop (using EngineTimer + PerformanceMonitor)
    - Keeps only glue logic and compatibility shims; individual behaviors live in their modules
 
+### Global Leaderboard (Supabase)
+- Opt-in global rankings run alongside the local scoreboard (tabs: Local / Global).
+- Backend: Supabase table + Edge Function `submit-score` (see `supabase/SETUP_INSTRUCTIONS.md` and `supabase/functions/submit-score/index.ts`).
+- Frontend config: set `url`, `anonKey`, and `edgeFunctionUrl` in `js/config/supabase-config.js`. If Supabase is unreachable, UI falls back to local-only.
+- Submission entry points: Game Over modal and Scoreboard modal; local scores are marked via `scoreboardStorage.markAsSubmitted`.
+- Global tab renders read-only cards from `supabaseClient.fetchGlobalScores` (with version filtering, 100 rows).
+
 ### Initialization Flow
 
 The game uses a controlled initialization pattern:

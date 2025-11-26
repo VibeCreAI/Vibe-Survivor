@@ -32,6 +32,7 @@ Vibe Survivor is a fast-paced, retro-styled arcade survival shooter where you:
 - 🎨 Experience pixel-perfect art and custom sound design
 - 📱 Play seamlessly on desktop or mobile with touch controls
 - ⏱️ Survive as long as possible and climb the leaderboard
+- 🌐 Opt-in global ranking with Supabase-powered leaderboard (keeps local scores too)
 
 **The twist?** Every line of code, every pixel, every sound was created through pure AI collaboration by someone with **zero prior software development experience**.
 
@@ -213,6 +214,27 @@ php -S localhost:8000
 Then open `http://localhost:8000` in your browser and click **Press Start**!
 
 **No build process. No dependencies. No installation. Just play.**
+
+---
+## 🌐 Global Leaderboard (Supabase)
+
+The game now ships with opt-in global ranking alongside the local scoreboard. Local runs stay on-device; you can submit any run to the global board from Game Over or the Scoreboard modal and browse tabs for **Local / Global**.
+
+### One-time backend setup
+- Follow `supabase/SETUP_INSTRUCTIONS.md` to create the `global_scores` table and deploy the `submit-score` Edge Function.
+- Grab your project URL, anon key, and Edge Function URL from Supabase.
+
+### Frontend configuration
+Edit `js/config/supabase-config.js` with your values:
+```js
+export const SUPABASE_CONFIG = {
+  url: 'https://YOUR-PROJECT.supabase.co',
+  anonKey: 'YOUR_ANON_KEY',
+  edgeFunctionUrl: 'https://YOUR-PROJECT.supabase.co/functions/v1/submit-score'
+};
+```
+
+That’s it—serve the game and submit scores. If Supabase isn’t reachable, the game gracefully falls back to local-only scores.
 
 ---
 
