@@ -80,7 +80,7 @@ serve(async (req) => {
       if (trimmedName.length < 3 || trimmedName.length > 20) {
         throw new Error('Player name must be 3-20 characters')
       }
-      if (!/^[a-zA-Z0-9\s_-]+$/.test(trimmedName)) {
+      if (!/^[\p{L}\p{N}\s_-]+$/u.test(trimmedName)) {
         throw new Error('Player name can only contain letters, numbers, spaces, _ and -')
       }
       if (containsProfanity(trimmedName)) {

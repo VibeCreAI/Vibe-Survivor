@@ -655,7 +655,7 @@ export class ScoreDetailModal extends Modal {
             return;
         }
 
-        if (!/^[a-zA-Z0-9\s_-]+$/.test(trimmed)) {
+        if (!/^[\p{L}\p{N}\s_-]+$/u.test(trimmed)) {
             if (this.notificationModal) {
                 await this.notificationModal.notify('Player name can only contain letters, numbers, spaces, _ and -', 'error');
             } else {

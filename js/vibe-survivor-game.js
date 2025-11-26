@@ -5203,7 +5203,8 @@ class VibeSurvivor {
                     return;
                 }
 
-                if (!/^[a-zA-Z0-9\s_-]+$/.test(trimmed)) {
+                // Allow any letters (including non-Latin), numbers, spaces, _ and -
+                if (!/^[\p{L}\p{N}\s_-]+$/u.test(trimmed)) {
                     await this.modals.notification.notify('Player name can only contain letters, numbers, spaces, _ and -', 'error');
                     return;
                 }

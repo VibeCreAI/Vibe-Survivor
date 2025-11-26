@@ -176,7 +176,7 @@ class SupabaseClient {
             return { valid: false, error: 'Player name must be 3-20 characters' };
         }
 
-        if (!/^[a-zA-Z0-9\s_-]+$/.test(trimmedName)) {
+        if (!/^[\p{L}\p{N}\s_-]+$/u.test(trimmedName)) {
             return { valid: false, error: 'Player name can only contain letters, numbers, spaces, _ and -' };
         }
 
