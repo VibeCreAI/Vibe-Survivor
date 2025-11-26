@@ -90,6 +90,8 @@ class VibeSurvivor {
         this.gameTime = 0;
         this.gameRunning = false;
         this.playerDead = false;
+        this.gameOverHandled = false;
+        this.gameOverShown = false;
         this.gameFullyInitialized = false; // Track if initGame() completed successfully
 
         // Initialize input manager
@@ -5052,6 +5054,8 @@ class VibeSurvivor {
 
         // Reset death flag
         this.playerDead = false;
+        this.gameOverHandled = false;
+        this.gameOverShown = false;
 
         // Add game-active class to show the game container
         const modal = document.getElementById('vibe-survivor-modal');
@@ -9341,7 +9345,11 @@ class VibeSurvivor {
      * Handle player death - called by PhysicsManager
      */
     handlePlayerDeath() {
+        if (this.playerDead || this.gameOverHandled) {
+            return;
+        }
         this.playerDead = true; // Mark player as dead to stop game logic
+        this.gameOverHandled = true;
 
         // Delay stopping the game to let red flash complete
         setTimeout(() => {
@@ -12871,6 +12879,10 @@ class VibeSurvivor {
 
     showGameOverModal() {
         // Phase 12c integration - Use GameOverModal class (Option B: Proper Encapsulation)
+        if (this.gameOverShown) {
+            return;
+        }
+        this.gameOverShown = true;
 
         // Calculate final stats
         const minutes = Math.floor(this.gameTime / 60);
@@ -13485,6 +13497,9 @@ class VibeSurvivor {
                     left: "LEFT",
                     right: "RIGHT",
                     button: "BUTTON",
+                    submitToGlobal: "Submit to Global",
+                    submitting: "Submitting...",
+                    viewScoreboard: "View Scoreboard",
 
                     // Modal titles
                     gamePaused: "GAME PAUSED",
@@ -13721,6 +13736,9 @@ class VibeSurvivor {
                     left: "왼쪽",
                     right: "오른쪽",
                     button: "버튼",
+                    submitToGlobal: "글로벌 제출",
+                    submitting: "제출 중...",
+                    viewScoreboard: "기록판 보기",
 
                     // Modal titles
                     gamePaused: "일시정지",
