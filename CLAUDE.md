@@ -18,6 +18,46 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
+## Version Number Update Process
+
+When updating the game version (e.g., 1.0.0 → 1.0.1), you MUST update **5 files** with the new version number:
+
+### 1. Main Version Configuration
+**File**: `js/config/constants.js`
+- Update `VERSION: '1.0.X'`
+- Update `BUILD_DATE: 'YYYY-MM-DD'` to current date
+
+### 2. Score Detail Modal Template
+**File**: `js/vibe-survivor-game.js`
+- Search for: `<span class="score-detail-version">v1.0.X</span>`
+- Update version number
+
+### 3. Score Detail Modal Fallback
+**File**: `js/systems/ui/modals/score-detail-modal.js`
+- Search for: `score.version || score.majorVersion || '1.0.X'`
+- Update fallback version number
+
+### 4. Scoreboard Modal Fallback
+**File**: `js/systems/ui/modals/scoreboard-modal.js`
+- Search for: `score.game_version || '1.0.X'`
+- Update fallback version number
+
+### 5. JSDoc Example Comment
+**File**: `js/utils/supabase-client.js`
+- Search for: `@param {string} gameVersion - Full game version (e.g., "1.0.X")`
+- Update example version number in comment
+
+### Quick Search Method
+
+To find all version references quickly:
+```bash
+grep -n "1\.0\.0" js/config/constants.js js/vibe-survivor-game.js js/systems/ui/modals/*.js js/utils/supabase-client.js
+```
+
+Replace all occurrences of the old version with the new version in these 5 files.
+
+---
+
 ## Project Overview
 
 Vibe Survivor is a standalone JavaScript arcade-style survival game built with HTML5 Canvas. The game features pixel art styling, multiple weapon systems, enemy waves, and progression mechanics. It's designed as a self-contained web application that can be deployed independently.
@@ -200,6 +240,22 @@ No automated test suite is currently configured. Manual testing should cover:
 - All assets must maintain relative path structure
 - HTTPS required for audio playback on most browsers
 - Game is self-contained with no external dependencies
+
+### ⚠️ Case-Sensitivity Warning (Production)
+
+**Critical**: Production servers (Vercel, Linux) use case-sensitive filesystems, while development (Windows/Mac) may not.
+
+- **Asset filenames** must match **code references exactly** (case-sensitive)
+- Example: If code references `napalmBuckshot.png`, the file MUST be named `napalmBuckshot.png` (not `NapalmBuckshot.png`)
+- Use **camelCase** for all asset filenames to match JavaScript conventions
+- Test in production early to catch case-sensitivity issues
+
+**Files affected**:
+- `images/weapons/*.png` - Weapon icons
+- `sound/weapon/*.mp3` - Weapon sounds
+- All other image/audio assets
+
+**Prevention**: When adding new assets, use camelCase naming (e.g., `weaponName.png`, `weaponName.mp3`)
 
 ## Documentation
 

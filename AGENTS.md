@@ -2,6 +2,37 @@
 
 Vibe Survivor is a standalone JavaScript arcade-style survival game built with HTML5 Canvas. The game features pixel art styling, multiple weapon systems, enemy waves, and progression mechanics. It's designed as a self-contained web application that can be deployed independently.
 
+## Version Number Update Checklist
+
+When updating the game version (e.g., 1.0.0 → 1.0.1), update **ALL 5 files** listed below:
+
+### Files to Update
+
+1. **`js/config/constants.js`**
+   - `VERSION: '1.0.X'`
+   - `BUILD_DATE: 'YYYY-MM-DD'` (set to current date)
+
+2. **`js/vibe-survivor-game.js`**
+   - Search: `<span class="score-detail-version">v1.0.X</span>`
+
+3. **`js/systems/ui/modals/score-detail-modal.js`**
+   - Search: `score.version || score.majorVersion || '1.0.X'`
+
+4. **`js/systems/ui/modals/scoreboard-modal.js`**
+   - Search: `score.game_version || '1.0.X'`
+
+5. **`js/utils/supabase-client.js`**
+   - Search: `@param {string} gameVersion - Full game version (e.g., "1.0.X")`
+
+### Quick Verification
+
+After updating, verify all changes with:
+```bash
+grep -n "1\.0\.X" js/config/constants.js js/vibe-survivor-game.js js/systems/ui/modals/*.js js/utils/supabase-client.js
+```
+
+Replace `1.0.X` with your new version to confirm all 5 files are updated.
+
 ## Architecture
 
 ### Core Structure
@@ -104,12 +135,15 @@ The game uses a controlled initialization pattern:
 - The guide tab lists all unique passives (icon, name, description). Status reuses the existing weapons/passives/player stats render callbacks shared with the level-up modal.
 - Unique passives currently available:
   - Regeneration (legacy healing passive).
-  - Turbo-Flux Cycler (+25% global fire rate).
-  - Aegis Impact Core (+50% global weapon damage).
+  - Turbo-Flux Cycler (+25% global fire rate, also increases burn tick speed by 25%).
+  - Aegis Impact Core (+50% global weapon damage, also increases burn damage for DOT weapons).
   - Splitstream Matrix (+1 projectile per weapon and raises per-weapon projectile cap).
   - Macro-Charge Amplifier (+50% explosion radius for explosive weapons).
   - Mod-Bay Expander (raises the weapon slot cap to five; HUD displays the extra slot).
 - `UpgradeSystem` and `addPassiveAbility()` ensure the corresponding bonuses are applied immediately (e.g., applying retroactive weapon stat adjustments, slot cap changes, etc.).
+- **Important**: Passives that affect weapon damage/fire rate also apply to special weapon properties:
+  - Aegis Impact Core boosts both `weapon.damage` AND `weapon.burnDamage` (for Napalm Buckshot)
+  - Turbo-Flux Cycler reduces `weapon.fireRate` AND burn tick interval (10 frames → 8 frames)
 
 ## Development Commands
 

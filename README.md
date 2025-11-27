@@ -102,16 +102,17 @@ No tutorials. No Stack Overflow. No copy-paste. Just pure collaboration between 
 - 🔥 **Flame Thrower** - Short-range inferno
 - ⚡ **Tesla Coil** - Chain lightning attacks
 - 🌀 **Plasma Cannon** - High-damage energy blasts
-- 💣 **Grenade Launcher** - Area-of-effect explosions
+- 💣 **Shotgun** - Close-range spread damage
 - 🎯 **Homing Missiles** - Auto-targeting projectiles
-- ⭐ And 14+ more unique weapons with merge capabilities!
+- 🔥💣 **Napalm Buckshot** - Merge weapon with stacking burn damage (Shotgun + Flamethrower)
+- ⭐ And many more unique weapons with merge capabilities!
 
 ### Passive Abilities
-- 🛡️ **Aegis Impact Core** - Damage reflection on hit
-- ⚡ **Turbo-Flux Cycler** - Massive fire rate boost
-- 💉 **Regeneration** - Passive health recovery
-- 🔄 **Splitstream Matrix** - Multi-projectile split
-- 🔋 **Macro-Charge Amplifier** - Global damage multiplier
+- 🛡️ **Aegis Impact Core** - +50% weapon damage (affects burn damage too)
+- ⚡ **Turbo-Flux Cycler** - +25% fire rate (faster burn ticks for DOT weapons)
+- 💉 **Regeneration** - Passive health recovery over time
+- 🔄 **Splitstream Matrix** - +1 projectile per weapon, raises projectile cap
+- 🔋 **Macro-Charge Amplifier** - +50% explosion radius for explosive weapons
 - 🎰 **Mod-Bay Expander** - Unlock 5th weapon slot
 
 ### Platform Support
