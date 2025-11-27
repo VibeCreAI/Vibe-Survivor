@@ -26,7 +26,8 @@ export const ASSET_PATHS = {
         homingMissiles: 'images/weapons/homingMissiles.png',
         homingLaser: 'images/weapons/homingLaser.png',
         shockburst: 'images/weapons/shockburst.png',
-        gatlingGun: 'images/weapons/gatlingGun.png'
+        gatlingGun: 'images/weapons/gatlingGun.png',
+        napalmBuckshot: 'images/weapons/NapalmBuckshot.png'
     },
     passives: {
         healthBoost: 'images/passives/healthBoost.png',
@@ -76,7 +77,8 @@ export const ASSET_PATHS = {
         weaponHomingMissile: 'sound/weapon/homingMissile.mp3?v=2',
         weaponHomingLaser: 'sound/weapon/homingLaser.mp3?v=2',
         weaponShockBurst: 'sound/weapon/shockBurst.mp3?v=2',
-        weaponGatlingGun: 'sound/weapon/gatlingGun.mp3?v=2'
+        weaponGatlingGun: 'sound/weapon/gatlingGun.mp3?v=2',
+        weaponNapalmBuckshot: 'sound/weapon/NapalmBuckshot.mp3?v=2'
     }
 };
 

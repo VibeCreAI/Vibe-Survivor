@@ -70,6 +70,11 @@ export class WeaponSystem {
         // Increase damage by 30% per level
         weapon.damage = Math.floor(weapon.damage * (1 + WEAPON_UPGRADES.DAMAGE_PER_LEVEL));
 
+        // Scale burn damage for napalm weapons (same 30% scaling as base damage)
+        if (weapon.burnDamage) {
+            weapon.burnDamage = Math.floor(weapon.burnDamage * (1 + WEAPON_UPGRADES.DAMAGE_PER_LEVEL));
+        }
+
         // Projectile count increases every level from level 2 onwards
         // Game-specific behavior: more generous than every-other-level
         if (weapon.level === 2 && (!weapon.projectileCount || weapon.projectileCount === 1)) {
@@ -147,6 +152,14 @@ export class WeaponSystem {
         if ((weapon1.type === 'rapid' && weapon2.type === 'spread' && weapon1.level >= 5 && weapon2.level >= 3) ||
             (weapon1.type === 'spread' && weapon2.type === 'rapid' && weapon1.level >= 3 && weapon2.level >= 5)) {
             return 'gatling_gun';
+        }
+
+        // Shotgun (level 3+) + Flamethrower (level 3+) = Napalm Buckshot
+        if ((weapon1.type === 'shotgun' && weapon2.type === 'flamethrower' &&
+             weapon1.level >= 3 && weapon2.level >= 3) ||
+            (weapon1.type === 'flamethrower' && weapon2.type === 'shotgun' &&
+             weapon1.level >= 3 && weapon2.level >= 3)) {
+            return 'napalm_buckshot';
         }
 
         return null;
@@ -294,6 +307,9 @@ export class WeaponSystem {
                 case 'gatling_gun':
                     // Separate barrel firing system
                     this.fireGatlingBarrels(weapon, nearestEnemy, context);
+                    break;
+                case 'napalm_buckshot':
+                    this.createNapalmBlast(weapon, adjustedDx, adjustedDy, distance, context);
                     break;
             }
         }
@@ -832,6 +848,51 @@ export class WeaponSystem {
     }
 
     /**
+     * Creates napalm buckshot blast with sticky burn pellets
+     * @private
+     */
+    createNapalmBlast(weapon, dx, dy, distance, context) {
+        const { player, fastCos, fastSin, getPooledProjectile, addProjectile } = context;
+        const angle = Math.atan2(dy, dx);
+
+        // Pellet count scales with level (6 base, +1 every 2 levels)
+        const pelletCount = (weapon.pelletCount || 6) + Math.floor(weapon.level / 2);
+
+        // Tighter spread than shotgun for boss-killing accuracy (45 degrees)
+        const spreadAngle = Math.PI / 4;
+
+        for (let i = 0; i < pelletCount; i++) {
+            // Cone spread with some randomness
+            const spreadOffset = (Math.random() - 0.5) * spreadAngle;
+            const pelletAngle = angle + spreadOffset;
+
+            // Slight speed variation
+            const speed = weapon.projectileSpeed * (0.9 + Math.random() * 0.2);
+
+            const projectile = getPooledProjectile();
+
+            projectile.x = player.x;
+            projectile.y = player.y;
+            projectile.vx = fastCos(pelletAngle) * speed;
+            projectile.vy = fastSin(pelletAngle) * speed;
+            projectile.damage = weapon.damage;
+            projectile.life = 160;  // Long life for extended range (320 units)
+            projectile.type = 'napalm';
+            projectile.color = '#FF4500';  // OrangeRed
+            projectile.size = 3;
+            projectile.sourceType = weapon.type;
+
+            // Napalm-specific burn properties
+            projectile.isNapalm = true;
+            projectile.burnDamage = weapon.burnDamage || 6;
+            projectile.burnDuration = weapon.burnDuration || 240;
+            projectile.maxBurnStacks = weapon.maxBurnStacks || 6;
+
+            addProjectile(projectile);
+        }
+    }
+
+    /**
      * Gets the sound name for a weapon type
      * @param {string} weaponType - Weapon type
      * @returns {string|null} Sound name or null if no sound
@@ -851,7 +912,8 @@ export class WeaponSystem {
             'missiles': 'weaponHomingMissile',
             'homing_laser': 'weaponHomingLaser',
             'shockburst': 'weaponShockBurst',
-            'gatling_gun': 'weaponGatlingGun'
+            'gatling_gun': 'weaponGatlingGun',
+            'napalm_buckshot': 'weaponNapalmBuckshot'
         };
         return soundMap[weaponType] || null;
     }

@@ -346,6 +346,19 @@ export const WEAPONS = {
         projectileSpeed: 10,
         piercing: 0,
         isMergeWeapon: true
+    },
+    NAPALM_BUCKSHOT: {
+        name: 'Napalm Buckshot',
+        damage: 12,              // Base pellet impact damage
+        fireRate: 55,            // ~0.9 seconds between shots (slower than shotgun)
+        range: 320,              // Long range for safe boss fighting while dodging
+        projectileSpeed: 10,     // Same as shotgun
+        piercing: 0,
+        pelletCount: 6,          // Base pellet count (fewer for accuracy)
+        isMergeWeapon: true,
+        burnDamage: 12,          // Damage per burn tick (every 20 frames) - increased for better visibility
+        burnDuration: 240,       // 4 seconds at 60 FPS
+        maxBurnStacks: 6         // Maximum burn stacks per enemy (72 dmg/tick at max = 216 DPS)
     }
 };
 

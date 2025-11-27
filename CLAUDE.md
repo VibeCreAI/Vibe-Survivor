@@ -196,6 +196,7 @@ No automated test suite is currently configured. Manual testing should cover:
 - **docs/REFACTOR.md** - Complete refactoring journey from monolithic to modular architecture
 - **docs/boss-system.md** - Boss enemy system design and implementation
 - **docs/GLOBAL_SCOREBOARD_PLAN.md** - Comprehensive implementation plan for global leaderboard system with Supabase
+- **docs/WEAPON_CREATION_GUIDE.md** - Step-by-step guide for creating standalone and merge weapons with checklists
 
 ### Supabase Documentation (`supabase/`)
 - **supabase/README.md** - Git guide for Supabase files (what to commit, what to ignore)
@@ -208,4 +209,5 @@ No automated test suite is currently configured. Manual testing should cover:
 - For global leaderboard setup → `supabase/SETUP_INSTRUCTIONS.md`
 - For implementation details → `docs/GLOBAL_SCOREBOARD_PLAN.md`
 - For boss mechanics → `docs/boss-system.md`
+- For creating new weapons → `docs/WEAPON_CREATION_GUIDE.md`
 - For agent workflows → `AGENTS.md`

@@ -48,7 +48,11 @@ export class ProjectileSystem {
             trail: [], // Visual trail for missiles/lasers
             rotation: 0, // Rotation angle for rendering
             isMine: false,
-            pulseOffset: 0
+            pulseOffset: 0,
+            burnDamage: 0,           // Damage per burn tick
+            burnDuration: 0,         // Total burn duration in frames
+            maxBurnStacks: 5,        // Max stacks this projectile can apply
+            isNapalm: false          // Sticky napalm projectile flag
         };
     }
 
@@ -84,6 +88,9 @@ export class ProjectileSystem {
         projectile.homing = false;
         projectile.isMine = false;
         projectile.pulseOffset = 0;
+        projectile.burnDamage = 0;
+        projectile.burnDuration = 0;
+        projectile.isNapalm = false;
 
         // Return to pool if not at capacity
         if (this.pool.length < this.poolSize) {

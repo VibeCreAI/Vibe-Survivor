@@ -414,20 +414,11 @@ class VibeSurvivor {
         // Phase 1: Load sprites and icons (25%)
         updateProgress(25, 1);
 
-        // All weapon icons
-        const weaponIcons = [
-            'basicMissile', 'rapidFire', 'spreadShot', 'laserBeam', 'plasmaBolt',
-            'shotgun', 'lightning', 'flamethrower', 'railgun', 'homingMissiles',
-            'homingLaser', 'shockburst', 'gatlingGun'
-        ];
+        // All weapon icons - use ASSET_PATHS to ensure consistency
+        const weaponIcons = Object.keys(ASSET_PATHS.weapons);
 
-        // All passive icons
-        const passiveIcons = [
-            'healthBoost', 'speedBoost', 'regeneration', 'magnet', 'armor',
-            'criticalStrike', 'dashBoost', 'weaponFirerate', 'weaponPower',
-            'weaponProjectile', 'weaponSize', 'weaponSlot',
-            'upgrade', 'evolution', 'passive', 'stats', 'nextStage'
-        ];
+        // All passive icons - use ASSET_PATHS to ensure consistency
+        const passiveIcons = Object.keys(ASSET_PATHS.passives);
 
         // Create image preload promises
         const imagePromises = [
@@ -460,7 +451,7 @@ class VibeSurvivor {
                     img.onload = resolve;
                     img.onerror = resolve;
                     setTimeout(resolve, 2000);
-                    img.src = `images/weapons/${iconName}.png`;
+                    img.src = ASSET_PATHS.weapons[iconName];
                 });
             }),
             // Passive icons
@@ -470,7 +461,7 @@ class VibeSurvivor {
                     img.onload = resolve;
                     img.onerror = resolve;
                     setTimeout(resolve, 2000);
-                    img.src = `images/passives/${iconName}.png`;
+                    img.src = ASSET_PATHS.passives[iconName];
                 });
             }),
             // Title image
@@ -479,7 +470,7 @@ class VibeSurvivor {
                 img.onload = resolve;
                 img.onerror = resolve;
                 setTimeout(resolve, 2000);
-                img.src = 'images/Title.png';
+                img.src = ASSET_PATHS.ui.title;
             }),
             // Background image
             new Promise(resolve => {
@@ -487,7 +478,7 @@ class VibeSurvivor {
                 img.onload = resolve;
                 img.onerror = resolve;
                 setTimeout(resolve, 2000);
-                img.src = 'images/background.png';
+                img.src = ASSET_PATHS.ui.background;
             }),
             // VibeCreAI Logo
             new Promise(resolve => {
@@ -495,7 +486,7 @@ class VibeSurvivor {
                 img.onload = resolve;
                 img.onerror = resolve;
                 setTimeout(resolve, 2000);
-                img.src = 'images/VibeCreAI_Logo.png';
+                img.src = ASSET_PATHS.ui.logo;
             }),
             // Start screen bot sprite
             new Promise(resolve => {
@@ -503,7 +494,7 @@ class VibeSurvivor {
                 img.onload = resolve;
                 img.onerror = resolve;
                 setTimeout(resolve, 2000);
-                img.src = 'images/AI BOT.png';
+                img.src = ASSET_PATHS.sprites.aiBot;
             })
         ];
 
@@ -4464,30 +4455,30 @@ class VibeSurvivor {
      * Returns a Promise that resolves when initialization is complete
      */
     async initializeCanvas() {
-        return new Promise((resolve, reject) => {
-            try {
-                // Initialize canvas using rendering module
-                const canvasResult = initCanvas('survivor-canvas');
-                this.canvas = canvasResult.canvas;
-                this.ctx = canvasResult.ctx;
+        try {
+            // Initialize canvas using rendering module
+            const canvasResult = initCanvas('survivor-canvas');
+            this.canvas = canvasResult.canvas;
+            this.ctx = canvasResult.ctx;
 
-                if (this.canvas) {
-                    // Resize canvas to fit container
-                    resizeCanvas(this.canvas);
+            if (this.canvas) {
+                // Resize canvas to fit container
+                resizeCanvas(this.canvas);
 
-                    // Load sprites with progress tracking
-                    this.spriteManager.loadSprites((loaded, total) => {
-                        // Optional: Track sprite loading progress
-                        console.log(`Sprites loading: ${loaded}/${total}`);
-                    });
+                // Load sprites with progress tracking - AWAIT to ensure they load
+                await this.spriteManager.loadSprites((loaded, total) => {
+                    // Optional: Track sprite loading progress
+                    console.log(`Sprites loading: ${loaded}/${total}`);
+                });
 
-                    // Load item icons
-                    this.spriteManager.loadItemIcons();
+                // Load item icons
+                this.spriteManager.loadItemIcons();
 
-                    // Initialize input manager after canvas is ready
-                    this.inputManager.initialize(this);
+                // Initialize input manager after canvas is ready
+                this.inputManager.initialize(this);
 
-                    // Ensure canvas gets proper dimensions after CSS settles
+                // Ensure canvas gets proper dimensions after CSS settles
+                await new Promise(resolve => {
                     setTimeout(() => {
                         resizeCanvas(this.canvas);
                         if (!this.gameRunning) {
@@ -4497,18 +4488,18 @@ class VibeSurvivor {
                         this.showModalHeader();
 
                         // Don't mark as fully initialized yet - wait for background to load
-                        console.log('✓ Canvas initialized, waiting for background...');
+                        console.log('✓ Canvas initialized, sprites loaded, waiting for background...');
 
                         resolve();
                     }, 100);
-                } else {
-                    reject(new Error('Canvas initialization failed'));
-                }
-            } catch (e) {
-                console.error('Canvas initialization error:', e);
-                reject(e);
+                });
+            } else {
+                throw new Error('Canvas initialization failed');
             }
-        });
+        } catch (e) {
+            console.error('Canvas initialization error:', e);
+            throw e;
+        }
     }
 
     launchGame() {
@@ -8630,7 +8621,8 @@ class VibeSurvivor {
             'missiles': 'homingMissiles',
             'homing_laser': 'homingLaser',
             'shockburst': 'shockburst',
-            'gatling_gun': 'gatlingGun'
+            'gatling_gun': 'gatlingGun',
+            'napalm_buckshot': 'napalmBuckshot'
         };
 
         const nameKey = weaponNameMap[type];
@@ -8671,7 +8663,8 @@ class VibeSurvivor {
             'missiles': 'homingMissiles',
             'homing_laser': 'homingLaser',
             'shockburst': 'shockburst',
-            'gatling_gun': 'gatlingGun'
+            'gatling_gun': 'gatlingGun',
+            'napalm_buckshot': 'napalmBuckshot'
         };
 
         const iconName = weaponIconMap[type] || 'basicMissile';
@@ -8722,7 +8715,8 @@ class VibeSurvivor {
             'missiles': 'homingMissiles',
             'homing_laser': 'homingLaser',
             'shockburst': 'shockburst',
-            'gatling_gun': 'gatlingGun'
+            'gatling_gun': 'gatlingGun',
+            'napalm_buckshot': 'napalmBuckshot'
         };
 
         const iconName = weaponIconMap[type] || 'basicMissile';
@@ -11713,6 +11707,47 @@ class VibeSurvivor {
                     this.ctx.fillRect(-barWidth / 2, -r - 6, barWidth * healthPercent, barHeight);
                 }
 
+                // Napalm burn aura effects
+                if (enemy.napalmStacks && enemy.napalmStacks.length > 0) {
+                    const stackCount = enemy.napalmStacks.length;
+
+                    // Pulsing flame aura (more intense with more stacks)
+                    const pulsePhase = Math.sin(this.frameCount * 0.15);
+                    const baseSize = 6 + stackCount * 2;
+                    const pulseSize = baseSize + pulsePhase * 3;
+
+                    this.ctx.save();
+
+                    // Outer flame ring (orange-red) - reduced opacity to keep enemies visible
+                    this.ctx.globalAlpha = 0.15 + (stackCount / 40);
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, 0, r + pulseSize, 0, Math.PI * 2);
+                    this.ctx.fillStyle = stackCount >= 4 ? '#FF4500' : '#FF6347';
+                    this.ctx.fill();
+
+                    // Inner flame ring (yellow-orange) - reduced opacity to keep enemies visible
+                    this.ctx.globalAlpha = 0.12 + (stackCount / 50);
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, 0, r + pulseSize * 0.6, 0, Math.PI * 2);
+                    this.ctx.fillStyle = '#FFA500';
+                    this.ctx.fill();
+
+                    this.ctx.restore();
+
+                    // Spawn flame particles for high burn stacks
+                    if (this.frameCount % 6 === 0 && stackCount >= 3) {
+                        for (let p = 0; p < Math.floor(stackCount / 2); p++) {
+                            const angle = Math.random() * Math.PI * 2;
+                            const dist = r + Math.random() * 12;
+                            this.createHitParticles(
+                                enemy.x + Math.cos(angle) * dist,
+                                enemy.y + Math.sin(angle) * dist,
+                                stackCount >= 5 ? '#FF4500' : '#FF6347'
+                            );
+                        }
+                    }
+                }
+
                 this.ctx.restore();
             }
         }
@@ -11822,6 +11857,48 @@ class VibeSurvivor {
                     this.ctx.fillRect(-barWidth / 2, -(enemy.renderRadius || enemy.radius || 20) - 8, barWidth * healthPercent, barHeight);
                 }
 
+                // Napalm burn aura effects (for bosses and tanks)
+                if (enemy.napalmStacks && enemy.napalmStacks.length > 0) {
+                    const stackCount = enemy.napalmStacks.length;
+                    const r = enemy.renderRadius || enemy.radius || 20;
+
+                    // Pulsing flame aura (more intense with more stacks)
+                    const pulsePhase = Math.sin(this.frameCount * 0.15);
+                    const baseSize = 8 + stackCount * 3; // Larger for bosses
+                    const pulseSize = baseSize + pulsePhase * 4;
+
+                    this.ctx.save();
+
+                    // Outer flame ring (orange-red) - reduced opacity to keep enemies visible
+                    this.ctx.globalAlpha = 0.15 + (stackCount / 40);
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, 0, r + pulseSize, 0, Math.PI * 2);
+                    this.ctx.fillStyle = stackCount >= 4 ? '#FF4500' : '#FF6347';
+                    this.ctx.fill();
+
+                    // Inner flame ring (yellow-orange) - reduced opacity to keep enemies visible
+                    this.ctx.globalAlpha = 0.12 + (stackCount / 50);
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, 0, r + pulseSize * 0.6, 0, Math.PI * 2);
+                    this.ctx.fillStyle = '#FFA500';
+                    this.ctx.fill();
+
+                    this.ctx.restore();
+
+                    // Spawn flame particles for high burn stacks
+                    if (this.frameCount % 6 === 0 && stackCount >= 3) {
+                        for (let p = 0; p < Math.floor(stackCount / 2); p++) {
+                            const angle = Math.random() * Math.PI * 2;
+                            const dist = r + Math.random() * 15;
+                            this.createHitParticles(
+                                enemy.x + Math.cos(angle) * dist,
+                                enemy.y + Math.sin(angle) * dist,
+                                stackCount >= 5 ? '#FF4500' : '#FF6347'
+                            );
+                        }
+                    }
+                }
+
                 this.ctx.restore();
             }
         }
@@ -11927,8 +12004,8 @@ class VibeSurvivor {
             }
         }
 
-        // Render complex projectiles individually (plasma, flame, lightning, missiles)
-        const complexTypes = ['plasma', 'flame', 'lightning', 'missile', 'boss-missile', 'shockburst'];
+        // Render complex projectiles individually (plasma, flame, lightning, missiles, napalm)
+        const complexTypes = ['plasma', 'flame', 'lightning', 'missile', 'boss-missile', 'shockburst', 'napalm'];
         for (const type of complexTypes) {
             const projectiles = projectilesByType[type];
             if (!projectiles || projectiles.length === 0) continue;
@@ -12162,6 +12239,37 @@ class VibeSurvivor {
                             this.ctx.globalAlpha = 0.8;
                             this.ctx.fillRect(-12, -2, 4, 4);
                         }
+                        break;
+
+                    case 'napalm':
+                        // Napalm pellet with fire trail
+                        this.ctx.save();
+
+                        // Fire trail from previous position
+                        this.ctx.globalAlpha = 0.6;
+                        const trailLength = 3;
+                        const trailX = projectile.x - projectile.vx * trailLength;
+                        const trailY = projectile.y - projectile.vy * trailLength;
+
+                        const gradient = this.ctx.createLinearGradient(trailX, trailY, projectile.x, projectile.y);
+                        gradient.addColorStop(0, 'rgba(255, 69, 0, 0)');
+                        gradient.addColorStop(1, 'rgba(255, 69, 0, 0.8)');
+
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(trailX, trailY);
+                        this.ctx.lineTo(projectile.x, projectile.y);
+                        this.ctx.strokeStyle = gradient;
+                        this.ctx.lineWidth = projectile.size * 1.5;
+                        this.ctx.stroke();
+
+                        // Draw the napalm pellet itself
+                        this.ctx.globalAlpha = 1;
+                        this.ctx.fillStyle = projectile.color;
+                        this.ctx.beginPath();
+                        this.ctx.arc(projectile.x, projectile.y, projectile.size, 0, Math.PI * 2);
+                        this.ctx.fill();
+
+                        this.ctx.restore();
                         break;
                 }
 
@@ -13725,6 +13833,7 @@ class VibeSurvivor {
                     homingLaser: "Homing Laser",
                     shockburst: "Shockburst",
                     gatlingGun: "Gatling Gun",
+                    napalmBuckshot: "Napalm Buckshot",
 
                     // Weapon descriptions
                     basicDesc: "Fires a basic missile at the nearest enemy",
@@ -13735,7 +13844,8 @@ class VibeSurvivor {
                     lightningDesc: "Chain lightning that jumps between enemies",
                     flamethrowerDesc: "Continuous flame stream with burning damage",
                     railgunDesc: "Ultra high damage piercing shot",
-                    missilesDesc: "Homing missiles with explosive damage"
+                    missilesDesc: "Homing missiles with explosive damage",
+                    napalmBuckshotDesc: "Sticky fire pellets with devastating stacking burn damage"
                 },
                 passives: {
                     healthBoost: "Health Boost",
@@ -13802,6 +13912,8 @@ class VibeSurvivor {
                     shockburstDesc: "Explosive energy bursts",
                     gatlingGunRecipe: "Rapid Fire lvl 5 + Spread Shot lvl 3",
                     gatlingGunDesc: "Multi-barrel rapid fire",
+                    napalmBuckshotRecipe: "Shotgun lvl 3 + Flamethrower lvl 3",
+                    napalmBuckshotDesc: "Sticky fire pellets with stacking burn damage",
 
                     // Additional help content
                     weaponEvolution: "WEAPON EVOLUTION",
@@ -13964,6 +14076,7 @@ class VibeSurvivor {
                     homingLaser: "유도 레이저",
                     shockburst: "충격파",
                     gatlingGun: "개틀링 건",
+                    napalmBuckshot: "네이팜 산탄",
 
                     // Weapon descriptions
                     basicDesc: "가장 가까운 적에게 기본 미사일을 발사",
@@ -13974,7 +14087,8 @@ class VibeSurvivor {
                     lightningDesc: "적들 사이를 점프하는 연쇄 번개",
                     flamethrowerDesc: "지속적인 화염 공격과 화상 데미지",
                     railgunDesc: "초고데미지 관통 사격",
-                    missilesDesc: "폭발 피해를 주는 유도 미사일"
+                    missilesDesc: "폭발 피해를 주는 유도 미사일",
+                    napalmBuckshotDesc: "치명적인 누적 화상 피해를 주는 점착성 화염 펠릿"
                 },
                 passives: {
                     healthBoost: "체력 강화",
@@ -14041,6 +14155,8 @@ class VibeSurvivor {
                     shockburstDesc: "폭발적 에너지 파동",
                     gatlingGunRecipe: "속사 레벨 5 + 산탄 총 레벨 3",
                     gatlingGunDesc: "다총신 속사",
+                    napalmBuckshotRecipe: "샷건 레벨 3 + 화염방사기 레벨 3",
+                    napalmBuckshotDesc: "누적 화상 피해를 주는 점착성 화염 펠릿",
 
                     // Additional help content
                     weaponEvolution: "무기 진화",

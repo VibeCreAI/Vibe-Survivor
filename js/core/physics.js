@@ -220,6 +220,27 @@ export class PhysicsManager {
                             duration: 180,
                             sourceType: projectile.sourceType
                         };
+                    } else if (projectile.isNapalm && projectile.burnDamage) {
+                        // Initialize napalm stacks array if needed
+                        if (!enemy.napalmStacks) {
+                            enemy.napalmStacks = [];
+                        }
+
+                        // Apply new burn stack
+                        const maxStacks = projectile.maxBurnStacks || 6;
+                        if (enemy.napalmStacks.length < maxStacks) {
+                            enemy.napalmStacks.push({
+                                damage: projectile.burnDamage,
+                                duration: projectile.burnDuration,
+                                sourceType: projectile.sourceType
+                            });
+                        } else {
+                            // At max stacks, refresh oldest stack's duration
+                            enemy.napalmStacks[0].duration = Math.max(
+                                enemy.napalmStacks[0].duration,
+                                projectile.burnDuration
+                            );
+                        }
                     }
 
                     // Check if projectile should be removed

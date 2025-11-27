@@ -34,6 +34,7 @@ const WEAPON_KEY_TO_TYPE = {
     HOMING_LASER: 'homing_laser',
     SHOCKBURST: 'shockburst',
     GATLING_GUN: 'gatling_gun',
+    NAPALM_BUCKSHOT: 'napalm_buckshot',
     RAPID: 'rapid'
 };
 
@@ -464,7 +465,8 @@ export class HelpMenu {
             return [
                 { type: 'homing_laser', recipe: 'Laser lvl 3 + Homing Missiles lvl 3', description: 'Heat-seeking laser beams.' },
                 { type: 'shockburst', recipe: 'Lightning lvl 3 + Plasma lvl 3', description: 'Explosive energy bursts.' },
-                { type: 'gatling_gun', recipe: 'Rapid Fire lvl 5 + Spread Shot lvl 3', description: 'Multi-barrel rapid fire.' }
+                { type: 'gatling_gun', recipe: 'Rapid Fire lvl 5 + Spread Shot lvl 3', description: 'Multi-barrel rapid fire.' },
+                { type: 'napalm_buckshot', recipe: 'Shotgun lvl 3 + Flamethrower lvl 3', description: 'Sticky fire pellets with stacking burn damage.' }
             ];
         }
 
@@ -472,7 +474,8 @@ export class HelpMenu {
         return [
             { type: 'homing_laser', recipe: t('homingLaserRecipe'), description: t('homingLaserDesc') },
             { type: 'shockburst', recipe: t('shockburstRecipe'), description: t('shockburstDesc') },
-            { type: 'gatling_gun', recipe: t('gatlingGunRecipe'), description: t('gatlingGunDesc') }
+            { type: 'gatling_gun', recipe: t('gatlingGunRecipe'), description: t('gatlingGunDesc') },
+            { type: 'napalm_buckshot', recipe: t('napalmBuckshotRecipe'), description: t('napalmBuckshotDesc') }
         ];
     }
 
@@ -526,7 +529,8 @@ export class HelpMenu {
             'missiles': 'homingMissiles',
             'homing_laser': 'homingLaser',
             'shockburst': 'shockburst',
-            'gatling_gun': 'gatlingGun'
+            'gatling_gun': 'gatlingGun',
+            'napalm_buckshot': 'napalmBuckshot'
         };
 
         const nameKey = weaponNameMap[type];
@@ -563,7 +567,8 @@ export class HelpMenu {
             'missiles': 'homingMissiles',
             'homing_laser': 'homingLaser',
             'shockburst': 'shockburst',
-            'gatling_gun': 'gatlingGun'
+            'gatling_gun': 'gatlingGun',
+            'napalm_buckshot': 'napalmBuckshot'
         };
 
         const iconName = weaponIconMap[type] || 'basicMissile';

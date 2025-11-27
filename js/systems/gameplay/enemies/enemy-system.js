@@ -938,6 +938,36 @@ export class EnemySystem {
                 }
             }
 
+            // Process napalm burn stacks
+            if (enemy.napalmStacks && enemy.napalmStacks.length > 0) {
+                // Apply burn damage every 20 frames (3 times per second)
+                if (frameCount % 20 === 0) {
+                    let totalBurnDamage = 0;
+
+                    // Sum damage from all active stacks
+                    for (const stack of enemy.napalmStacks) {
+                        totalBurnDamage += stack.damage;
+                        if (stack.sourceType && recordWeaponDamage) {
+                            recordWeaponDamage(stack.sourceType, stack.damage, enemy);
+                        }
+                    }
+
+                    enemy.health -= totalBurnDamage;
+
+                    // Visual feedback: more intense for higher stacks
+                    if (createHitParticles) {
+                        const color = enemy.napalmStacks.length >= 4 ? '#ff4500' : '#ff6347';
+                        createHitParticles(enemy.x, enemy.y, color);
+                    }
+                }
+
+                // Decrement durations and remove expired stacks
+                enemy.napalmStacks = enemy.napalmStacks.filter(stack => {
+                    stack.duration--;
+                    return stack.duration > 0;
+                });
+            }
+
             if (enemy.specialCooldown > 0) {
                 enemy.specialCooldown--;
             }
