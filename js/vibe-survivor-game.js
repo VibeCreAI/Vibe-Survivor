@@ -12803,7 +12803,8 @@ class VibeSurvivor {
             'missiles': 'homingMissiles',
             'homing_laser': 'homingLaser',
             'shockburst': 'shockburst',
-            'gatling_gun': 'gatlingGun'
+            'gatling_gun': 'gatlingGun',
+            'napalm_buckshot': 'napalmBuckshot'
         };
 
         const weaponsHtml = this.weapons

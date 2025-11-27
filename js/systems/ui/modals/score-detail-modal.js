@@ -228,7 +228,8 @@ export class ScoreDetailModal extends Modal {
             'missiles': 'homingMissiles',
             'homing_laser': 'homingLaser',
             'shockburst': 'shockburst',
-            'gatling_gun': 'gatlingGun'
+            'gatling_gun': 'gatlingGun',
+            'napalm_buckshot': 'napalmBuckshot'
         };
 
         const damageHeading = t ? t('scoreboardStatsHeading') || t('totalDamage') : 'Damage';

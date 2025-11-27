@@ -1,6 +1,6 @@
 # Weapon Creation Guide
 
-**Last Updated**: 2025-11-27
+**Last Updated**: 2025-11-27 (Icon mapping locations update)
 **Based On**: Napalm Buckshot implementation experience
 
 This comprehensive guide covers creating both **standalone weapons** and **merge weapons** in Vibe Survivor. Following this guide will help avoid common mistakes and reduce debugging time.
@@ -215,11 +215,14 @@ Add to **basic weapons** section:
 □ 17. Added English help translations (vibe-survivor-game.js)
 □ 18. Added Korean help translations (vibe-survivor-game.js)
 □ 19. Added weapon name mapping (vibe-survivor-game.js)
-□ 20. Added weapon icon mappings (x2) (vibe-survivor-game.js)
-□ 21. Added to BASIC weapons in guide-modal.js
-□ 22. Added to BASIC weapons in help-menu.js
-□ 23. Added name and icon mappings in help-menu.js
-□ 24. Tested all items in Testing Checklist
+□ 20. Added weapon icon mapping in getWeaponIcon (vibe-survivor-game.js)
+□ 21. Added weapon icon mapping in getWeaponIconForHeader (vibe-survivor-game.js)
+□ 22. Added weapon icon mapping in generateWeaponsSection (vibe-survivor-game.js)
+□ 23. Added weapon icon mapping in score-detail-modal.js
+□ 24. Added to BASIC weapons in guide-modal.js
+□ 25. Added to BASIC weapons in help-menu.js
+□ 26. Added name and icon mappings in help-menu.js
+□ 27. Tested all items in Testing Checklist
 ```
 
 **⚠️ Key Difference from Merge Weapons**:
@@ -689,9 +692,20 @@ const weaponNameMap = {
 
 **⚠️ Missing this causes "Unknown Weapon" in level-up modal!**
 
-#### 12c. Add Icon Mappings (vibe-survivor-game.js)
+#### 12c. Add Icon Mappings (Multiple Locations)
 
-**Around line 8675** in `getWeaponIcon()`:
+**⚠️ CRITICAL**: Icon mappings are needed in FOUR locations for different modals!
+
+**Location 1 - vibe-survivor-game.js (~line 8675)** in `getWeaponIcon()`:
+
+```javascript
+const iconMap = {
+    // ... existing mappings
+    'weapon_name': 'weaponName'  // snake_case → camelCase
+};
+```
+
+**Location 2 - vibe-survivor-game.js (~line 8726)** in `getWeaponIconForHeader()`:
 
 ```javascript
 const iconMap = {
@@ -700,14 +714,29 @@ const iconMap = {
 };
 ```
 
-**Around line 8726** in `getWeaponIconForHeader()`:
+**Location 3 - vibe-survivor-game.js (~line 12792)** in `generateWeaponsSection()`:
 
 ```javascript
-const iconMap = {
+const weaponIconMap = {
     // ... existing mappings
     'weapon_name': 'weaponName'  // snake_case → camelCase
 };
 ```
+
+**Location 4 - js/systems/ui/modals/score-detail-modal.js (~line 217)**:
+
+```javascript
+const weaponIconMap = {
+    // ... existing mappings
+    'weapon_name': 'weaponName'  // snake_case → camelCase
+};
+```
+
+**Where each mapping is used**:
+- Location 1: Level-up modal weapon choices
+- Location 2: HUD header weapon display
+- Location 3: Victory modal, Help modal status tab, Level-up status tab, Chest modal status tab
+- Location 4: Game Over modal weapons section
 
 #### 12d. Add to Guide Modal
 
@@ -786,8 +815,14 @@ const WEAPON_KEYS = {
 **Solution**: Add mapping in `js/vibe-survivor-game.js:8634`
 
 ### Issue: Missing Weapon Icon in HUD/Modals
-**Cause**: Missing icon mappings in `getWeaponIcon()` or `getWeaponIconForHeader()`
-**Solution**: Add mappings in `js/vibe-survivor-game.js:8675,8726`
+**Cause**: Missing icon mappings in one or more of the FOUR required locations
+**Solution**: Add mappings in ALL four locations:
+- `js/vibe-survivor-game.js:8675` (getWeaponIcon) - Breaks: Level-up modal weapon choices
+- `js/vibe-survivor-game.js:8726` (getWeaponIconForHeader) - Breaks: HUD header weapon display
+- `js/vibe-survivor-game.js:12792` (generateWeaponsSection) - Breaks: Victory modal, Help modal status tab, Level-up status tab, Chest modal status tab
+- `js/systems/ui/modals/score-detail-modal.js:217` (weaponIconMap) - Breaks: Game Over modal weapons section
+
+**⚠️ Critical**: Each location controls different UI elements. Missing even ONE causes icons to fall back to Basic Missile in specific modals!
 
 ### Issue: Weapon Missing from Guide/Help Modals
 **Cause**: Not added to modal weapon lists
@@ -938,14 +973,16 @@ Use this checklist when creating a new merge weapon:
 □ 21. Added weapon name mapping (vibe-survivor-game.js:~8634)
 □ 22. Added weapon icon mapping in getWeaponIcon (vibe-survivor-game.js:~8675)
 □ 23. Added weapon icon mapping in getWeaponIconForHeader (vibe-survivor-game.js:~8726)
-□ 24. Added weapon key constant to guide-modal.js
-□ 25. Added weapon to guide modal fallback array (guide-modal.js)
-□ 26. Added weapon to guide modal translated array (guide-modal.js)
-□ 27. Added weapon key constant to help-menu.js
-□ 28. Added weapon to help menu merge weapons list (help-menu.js)
-□ 29. Added weapon name mapping in help-menu.js
-□ 30. Added weapon icon mapping in help-menu.js
-□ 31. Tested all items in Testing Checklist
+□ 24. Added weapon icon mapping in generateWeaponsSection (vibe-survivor-game.js:~12792)
+□ 25. Added weapon icon mapping in score-detail-modal.js:~217
+□ 26. Added weapon key constant to guide-modal.js
+□ 27. Added weapon to guide modal fallback array (guide-modal.js)
+□ 28. Added weapon to guide modal translated array (guide-modal.js)
+□ 29. Added weapon key constant to help-menu.js
+□ 30. Added weapon to help menu merge weapons list (help-menu.js)
+□ 31. Added weapon name mapping in help-menu.js
+□ 32. Added weapon icon mapping in help-menu.js
+□ 33. Tested all items in Testing Checklist
 ```
 
 ---
@@ -956,13 +993,14 @@ Use this checklist when creating a new merge weapon:
 
 **From Napalm Buckshot Implementation**:
 1. **Don't forget UI integrations** - This is where 80% of bugs came from
-2. **Apply effects to ALL enemy types** - Basic AND special (bosses/tanks)
-3. **Scale special damage too** - Don't just scale base damage
-4. **Match projectile life to range** - life = range ÷ speed + buffer
-5. **Use ASSET_PATHS everywhere** - For proper preloading
-6. **Balance for weapon's role** - Boss killer needs range, crowd control needs AOE
-7. **Keep effects visible** - Use low opacity so players can see enemies
-8. **Test in incognito mode** - Catches asset loading issues
+2. **Add icon mappings in ALL FOUR locations** - Missing even one causes icons to break in specific modals
+3. **Apply effects to ALL enemy types** - Basic AND special (bosses/tanks)
+4. **Scale special damage too** - Don't just scale base damage
+5. **Match projectile life to range** - life = range ÷ speed + buffer
+6. **Use ASSET_PATHS everywhere** - For proper preloading
+7. **Balance for weapon's role** - Boss killer needs range, crowd control needs AOE
+8. **Keep effects visible** - Use low opacity so players can see enemies
+9. **Test in incognito mode** - Catches asset loading issues
 
 ### Universal Tips (Both Weapon Types)
 
