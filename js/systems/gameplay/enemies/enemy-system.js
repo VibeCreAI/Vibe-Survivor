@@ -940,8 +940,8 @@ export class EnemySystem {
 
             // Process napalm burn stacks
             if (enemy.napalmStacks && enemy.napalmStacks.length > 0) {
-                // Apply burn damage every 20 frames (3 times per second)
-                if (frameCount % 20 === 0) {
+                // Apply burn damage every 10 frames (6 times per second)
+                if (frameCount % 10 === 0) {
                     let totalBurnDamage = 0;
 
                     // Sum damage from all active stacks
