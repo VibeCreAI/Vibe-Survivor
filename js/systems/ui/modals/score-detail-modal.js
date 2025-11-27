@@ -173,7 +173,7 @@ export class ScoreDetailModal extends Modal {
         });
         const dateText = score.date ? formatter.format(new Date(score.date)) : '';
 
-        if (this.versionEl) this.versionEl.textContent = `v${score.version || score.majorVersion || '1.0.0'}`;
+        if (this.versionEl) this.versionEl.textContent = `v${score.version || score.majorVersion || '1.0.1'}`;
         if (this.dateEl) this.dateEl.textContent = dateText;
 
         if (this.summaryEls.level) {

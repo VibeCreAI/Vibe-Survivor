@@ -102,7 +102,7 @@ class SupabaseClient {
      *
      * @param {Object} scoreData - The score data object from local storage
      * @param {string} playerName - The player's display name
-     * @param {string} gameVersion - Full game version (e.g., "1.0.0")
+     * @param {string} gameVersion - Full game version (e.g., "1.0.1")
      * @param {string} majorVersion - Major version (e.g., "1.0")
      * @returns {Promise<Object>} - { success: boolean, id?: string, error?: string }
      */

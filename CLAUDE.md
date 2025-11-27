@@ -2,6 +2,22 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## ⚠️ CRITICAL: Git Workflow Rules
+
+**NEVER** use git commit or git push commands. The user handles all git operations.
+
+- ❌ DO NOT run `git commit`
+- ❌ DO NOT run `git push`
+- ❌ DO NOT run `git add` unless explicitly requested
+- ✅ DO make code changes and modifications
+- ✅ DO create/update files as needed
+- ✅ DO explain what changes were made
+- ✅ The user will commit and push when ready
+
+**Why**: The user prefers to review all changes before committing and maintains their own git workflow.
+
+---
+
 ## Project Overview
 
 Vibe Survivor is a standalone JavaScript arcade-style survival game built with HTML5 Canvas. The game features pixel art styling, multiple weapon systems, enemy waves, and progression mechanics. It's designed as a self-contained web application that can be deployed independently.

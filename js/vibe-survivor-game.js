@@ -1461,7 +1461,7 @@ class VibeSurvivor {
                                 <div class="score-detail-header">
                                     <div class="score-detail-title">RUN DETAILS</div>
                                     <div class="score-detail-meta">
-                                        <span class="score-detail-version">v1.0.0</span>
+                                        <span class="score-detail-version">v1.0.1</span>
                                         <span class="score-detail-date">--</span>
                                     </div>
                                 </div>
