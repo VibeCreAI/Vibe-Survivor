@@ -940,8 +940,9 @@ export class EnemySystem {
 
             // Process napalm burn stacks
             if (enemy.napalmStacks && enemy.napalmStacks.length > 0) {
-                // Apply burn damage every 10 frames (6 times per second)
-                if (frameCount % 10 === 0) {
+                // Apply burn damage - faster with Turbo-Flux Cycler passive
+                const burnTickInterval = player.passives?.turbo_flux_cycler ? 8 : 10;
+                if (frameCount % burnTickInterval === 0) {
                     let totalBurnDamage = 0;
 
                     // Sum damage from all active stacks

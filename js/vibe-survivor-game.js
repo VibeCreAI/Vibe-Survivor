@@ -9373,6 +9373,10 @@ class VibeSurvivor {
 
         if (this.player.passives.aegis_impact_core && !weapon._aegisCoreApplied) {
             weapon.damage = Math.floor(weapon.damage * 1.5);
+            // Also boost burn damage for napalm weapons
+            if (weapon.burnDamage) {
+                weapon.burnDamage = Math.floor(weapon.burnDamage * 1.5);
+            }
             weapon._aegisCoreApplied = true;
         }
 
