@@ -8440,6 +8440,9 @@ class VibeSurvivor {
             this.showChestSpawnNotification();
             this.audioManager.playSound('upgradeBox');
             this.createChestSpawnParticles(orb.x, orb.y);
+            console.log(`Chest #${(this.player.chestsCollected || 0) + 1} spawned at game time ${Math.floor(this.gameTime / 60)}s`);
+        } else {
+            console.warn('Failed to spawn chest orb - pool exhausted?');
         }
     }
 
@@ -8466,6 +8469,8 @@ class VibeSurvivor {
             this.player.chestsCollected = 1;
         }
 
+        console.log(`Chest #${this.player.chestsCollected} collected. Total passives: ${Object.keys(this.player.passives).length}`);
+
         // Show chest modal with passive upgrades
         this.showChestModal();
     }
@@ -8477,7 +8482,8 @@ class VibeSurvivor {
         this.gameRunning = false;
         this.timePaused = true;
 
-        // Generate 3 passive upgrade choices using UpgradeSystem
+        // Generate up to 3 passive upgrade choices using UpgradeSystem
+        // Will return 1-3 choices based on what's available
         const passiveChoices = this.upgradeSystem.getUpgradeChoices(
             this.weapons,
             this.player.passives,
@@ -8485,7 +8491,17 @@ class VibeSurvivor {
             'passives'
         );
 
-        // Show modal with choices
+        // Safeguard: If no upgrades available, resume game and skip modal
+        if (!passiveChoices || passiveChoices.length === 0) {
+            console.warn('No passive upgrades available - skipping chest modal');
+            this.gameRunning = true;
+            this.timePaused = false;
+            return;
+        }
+
+        console.log(`Showing chest modal with ${passiveChoices.length} upgrade choices:`, passiveChoices.map(c => c.passiveName));
+
+        // Show modal with choices (1-3 options)
         this.modals.chest.show(passiveChoices);
     }
 
