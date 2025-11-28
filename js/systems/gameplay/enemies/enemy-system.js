@@ -236,6 +236,16 @@ export class EnemySystem {
                 duration: 0,
                 maxDuration: 30,
                 originalSpeed: 0
+            },
+            catchUpDashState: {
+                active: false,
+                targetX: 0,
+                targetY: 0,
+                startX: 0,
+                startY: 0,
+                duration: 0,
+                maxDuration: 60,
+                lastParticleFrame: 0
             }
         });
 
@@ -308,6 +318,16 @@ export class EnemySystem {
                 duration: 0,
                 maxDuration: 30,
                 originalSpeed: 0
+            },
+            catchUpDashState: {
+                active: false,
+                targetX: 0,
+                targetY: 0,
+                startX: 0,
+                startY: 0,
+                duration: 0,
+                maxDuration: 60,
+                lastParticleFrame: 0
             }
         });
 
@@ -768,7 +788,7 @@ export class EnemySystem {
      * Phase 1 (>70%): Direct chase with 1.5x speed
      * Phase 2 (30-70%): Faster movement with 1.8x speed
      * Phase 3 (<30%): Dash attacks with up to 6x speed
-     * Teleports if >800 units away, fires phase-based missiles
+     * Catch-up dash triggers if >800 units away, with visible effects
      * @param {Array} bossEnemies - Enemies with boss behavior
      * @param {Object} player - Player object
      * @param {number} frameCount - Current frame count
@@ -778,8 +798,9 @@ export class EnemySystem {
      * @param {Function} cachedSqrt - Cached square root function
      * @param {Function} createBossMissile - Boss missile callback
      * @param {Function} createHitParticles - Hit particle callback
+     * @param {Function} createScreenShake - Screen shake callback
      */
-    processBatchBoss(bossEnemies, player, frameCount, bossesKilled, direction, distanceSquared, cachedSqrt, createBossMissile, createHitParticles) {
+    processBatchBoss(bossEnemies, player, frameCount, bossesKilled, direction, distanceSquared, cachedSqrt, createBossMissile, createHitParticles, createScreenShake) {
         if (bossEnemies.length === 0) return;
 
         const playerX = player.x;
@@ -794,27 +815,21 @@ export class EnemySystem {
             // Enhanced boss AI with phases based on health
             const bossHealthPercent = enemy.health / enemy.maxHealth;
             const [dirX, dirY] = direction(enemy.x, enemy.y, playerX, playerY);
-            const distSq = distanceSquared(enemy.x, enemy.y, playerX, playerY);
-            const distance = cachedSqrt(distSq);
+            const distance = cachedSqrt(distanceSquared(enemy.x, enemy.y, playerX, playerY));
 
-            // Boss teleportation - prevent player from escaping boss fight
-            const maxBossDistance = 800;
-            if (distance > maxBossDistance) {
-                // Create burst particles at current position before teleporting
-                for (let i = 0; i < 8; i++) {
-                    createHitParticles(enemy.x, enemy.y, '#FF0066');
-                }
-
-                // Teleport boss in the direction the player ran FROM (behind the player)
-                const [teleportDirX, teleportDirY] = direction(playerX, playerY, enemy.x, enemy.y);
-                const teleportDistance = 400 + Math.random() * 100;
-                enemy.x = playerX + teleportDirX * teleportDistance;
-                enemy.y = playerY + teleportDirY * teleportDistance;
-
-                // Create burst particles at new position after teleporting
-                for (let i = 0; i < 8; i++) {
-                    createHitParticles(enemy.x, enemy.y, '#FF0066');
-                }
+            const isCatchingUp = this.handleBossCatchUpDash(
+                enemy,
+                playerX,
+                playerY,
+                distance,
+                frameCount,
+                direction,
+                distanceSquared,
+                createHitParticles,
+                createScreenShake
+            );
+            if (isCatchingUp) {
+                continue;
             }
 
             // Boss missile firing logic
@@ -878,6 +893,81 @@ export class EnemySystem {
                 }
             }
         }
+    }
+
+    handleBossCatchUpDash(enemy, playerX, playerY, distance, frameCount, direction, distanceSquared, createHitParticles, createScreenShake) {
+        const state = enemy.catchUpDashState || (enemy.catchUpDashState = {
+            active: false,
+            targetX: 0,
+            targetY: 0,
+            startX: 0,
+            startY: 0,
+            duration: 0,
+            maxDuration: 60,
+            lastParticleFrame: 0
+        });
+        const wasActive = state.active;
+        const maxBossDistance = 400;
+        const particleColor = '#FF0066';
+        const dashSpeedMultiplier = 12;
+        const arrivalThresholdSq = 2500;
+        const minTargetDistance = 190;
+        const maxTargetDistance = 210;
+
+        if (!state.active) {
+            if (distance <= maxBossDistance) {
+                return false;
+            }
+
+            const [teleportDirX, teleportDirY] = direction(playerX, playerY, enemy.x, enemy.y);
+            const targetDistance = minTargetDistance + Math.random() * (maxTargetDistance - minTargetDistance);
+            state.active = true;
+            state.startX = enemy.x;
+            state.startY = enemy.y;
+            state.targetX = playerX + teleportDirX * targetDistance;
+            state.targetY = playerY + teleportDirY * targetDistance;
+            state.duration = 0;
+            state.lastParticleFrame = frameCount;
+
+            const startParticles = 12 + Math.floor(Math.random() * 4);
+            if (createHitParticles) {
+                for (let i = 0; i < startParticles; i++) {
+                    createHitParticles(enemy.x, enemy.y, particleColor);
+                }
+            }
+            return true;
+        }
+
+        const [dashDirX, dashDirY] = direction(enemy.x, enemy.y, state.targetX, state.targetY);
+        const dashSpeed = Math.max(enemy.speed * dashSpeedMultiplier, 25);
+        enemy.x += dashDirX * dashSpeed;
+        enemy.y += dashDirY * dashSpeed;
+
+        if (createHitParticles) {
+            for (let i = 0; i < 3; i++) {
+                createHitParticles(enemy.x, enemy.y, particleColor);
+            }
+        }
+
+        state.duration++;
+
+        const distSq = distanceSquared(enemy.x, enemy.y, state.targetX, state.targetY);
+        if (distSq < arrivalThresholdSq || state.duration >= (state.maxDuration || 60)) {
+            if (createHitParticles) {
+                for (let i = 0; i < 15; i++) {
+                    createHitParticles(enemy.x, enemy.y, particleColor);
+                }
+            }
+            enemy.x = state.targetX;
+            enemy.y = state.targetY;
+            if (createScreenShake) {
+                createScreenShake(18, 18);
+            }
+            state.active = false;
+            state.duration = 0;
+        }
+
+        return state.active || wasActive;
     }
 
     getBossCycle(level) {
@@ -958,7 +1048,7 @@ export class EnemySystem {
                     // Visual feedback: more intense for higher stacks
                     if (createHitParticles) {
                         const color = enemy.napalmStacks.length >= 4 ? '#ff4500' : '#ff6347';
-                        createHitParticles(enemy.x, enemy.y, color);
+                        createHitParticles(enemy.x, enemy.y, color, 0.4);
                     }
                 }
 

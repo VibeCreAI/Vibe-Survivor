@@ -5,9 +5,9 @@
  * Game version and metadata
  */
 export const GAME_INFO = {
-    VERSION: '1.0.1',
-    MAJOR_VERSION: '1.0',
-    BUILD_DATE: '2025-11-27',
+    VERSION: '1.1.0',
+    MAJOR_VERSION: '1.1',
+    BUILD_DATE: '2025-11-28',
     SCOREBOARD_SCHEMA_VERSION: 1
 };
 

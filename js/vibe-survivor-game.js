@@ -1461,7 +1461,7 @@ class VibeSurvivor {
                                 <div class="score-detail-header">
                                     <div class="score-detail-title">RUN DETAILS</div>
                                     <div class="score-detail-meta">
-                                        <span class="score-detail-version">v1.0.1</span>
+                                        <span class="score-detail-version">v1.1.0</span>
                                         <span class="score-detail-date">--</span>
                                     </div>
                                 </div>
@@ -7496,6 +7496,16 @@ class VibeSurvivor {
                 maxDuration: 20, // 0.33 seconds at 60fps (reduced from 30 for easier dodging)
                 originalSpeed: 0
             },
+            catchUpDashState: {
+                active: false,
+                targetX: 0,
+                targetY: 0,
+                startX: 0,
+                startY: 0,
+                duration: 0,
+                maxDuration: 60,
+                lastParticleFrame: 0
+            },
             variantId: variantConfig?.id || 'pulse_hunter',
             variantName: variantConfig?.name || 'Pulse Hunter',
             variantShape: variantConfig?.shape || 'octagon',
@@ -7561,6 +7571,16 @@ class VibeSurvivor {
                 duration: 0,
                 maxDuration: 20, // 0.33 seconds at 60fps (reduced from 30 for easier dodging)
                 originalSpeed: 0
+            },
+            catchUpDashState: {
+                active: false,
+                targetX: 0,
+                targetY: 0,
+                startX: 0,
+                startY: 0,
+                duration: 0,
+                maxDuration: 60,
+                lastParticleFrame: 0
             },
             variantId: variantConfig?.id || 'pulse_hunter',
             variantName: variantConfig?.name || 'Pulse Hunter',
@@ -7904,10 +7924,12 @@ class VibeSurvivor {
             const variantConfig = this.getBossVariantById(enemy.variantId) || this.getBossVariantForLevel(enemy.bossLevel || 1) || {};
             const bossHealthPercent = enemy.health / enemy.maxHealth;
             const [dirX, dirY] = Vector2.direction(enemy.x, enemy.y, playerX, playerY);
-            const distanceSquared = Vector2.distanceSquared(enemy.x, enemy.y, playerX, playerY);
-            const distance = this.cachedSqrt(distanceSquared);
+            const distance = this.cachedSqrt(Vector2.distanceSquared(enemy.x, enemy.y, playerX, playerY));
 
-            this.handleBossTeleport(enemy, distance, playerX, playerY);
+            const isCatchingUp = this.handleBossCatchUpDash(enemy, distance, playerX, playerY);
+            if (isCatchingUp) {
+                continue;
+            }
 
             const missileInterval = enemy.missileInterval || variantConfig.missileInterval || 200;
             if (this.frameCount - (enemy.lastMissileFrame || 0) >= missileInterval) {
@@ -7950,24 +7972,71 @@ class VibeSurvivor {
         }
     }
 
-    handleBossTeleport(enemy, distance, playerX, playerY) {
-        const maxBossDistance = 800;
-        if (distance <= maxBossDistance) return;
+    handleBossCatchUpDash(enemy, distance, playerX, playerY) {
+        const state = enemy.catchUpDashState || (enemy.catchUpDashState = {
+            active: false,
+            targetX: 0,
+            targetY: 0,
+            startX: 0,
+            startY: 0,
+            duration: 0,
+            maxDuration: 60,
+            lastParticleFrame: 0
+        });
+        const wasActive = state.active;
+        const maxBossDistance = 400;
+        const particleColor = '#FF0066';
+        const dashSpeedMultiplier = 12;
+        const arrivalThresholdSq = 2500; // 50 units squared
+        const minTargetDistance = 190;
+        const maxTargetDistance = 210;
 
-        for (let i = 0; i < 8; i++) {
-            this.createHitParticles(enemy.x, enemy.y, '#FF0066');
+        if (!state.active) {
+            if (distance <= maxBossDistance) {
+                return false;
+            }
+
+            const [teleportDirX, teleportDirY] = Vector2.direction(playerX, playerY, enemy.x, enemy.y);
+            const targetDistance = minTargetDistance + Math.random() * (maxTargetDistance - minTargetDistance);
+            state.active = true;
+            state.startX = enemy.x;
+            state.startY = enemy.y;
+            state.targetX = playerX + teleportDirX * targetDistance;
+            state.targetY = playerY + teleportDirY * targetDistance;
+            state.duration = 0;
+            state.lastParticleFrame = this.frameCount || 0;
+
+            const startParticles = 12 + Math.floor(Math.random() * 4);
+            for (let i = 0; i < startParticles; i++) {
+                this.createHitParticles(enemy.x, enemy.y, particleColor);
+            }
+            return true;
         }
 
-        const [teleportDirX, teleportDirY] = Vector2.direction(playerX, playerY, enemy.x, enemy.y);
-        const teleportDistance = 400 + Math.random() * 100;
-        enemy.x = playerX + teleportDirX * teleportDistance;
-        enemy.y = playerY + teleportDirY * teleportDistance;
+        const [dashDirX, dashDirY] = Vector2.direction(enemy.x, enemy.y, state.targetX, state.targetY);
+        const dashSpeed = Math.max(enemy.speed * dashSpeedMultiplier, 25);
+        enemy.x += dashDirX * dashSpeed;
+        enemy.y += dashDirY * dashSpeed;
 
-        for (let i = 0; i < 8; i++) {
-            this.createHitParticles(enemy.x, enemy.y, '#FF0066');
+        for (let i = 0; i < 3; i++) {
+            this.createHitParticles(enemy.x, enemy.y, particleColor);
         }
 
-        this.cameraShake = Math.max(this.cameraShake || 0, 15);
+        state.duration++;
+
+        const distSq = Vector2.distanceSquared(enemy.x, enemy.y, state.targetX, state.targetY);
+        if (distSq < arrivalThresholdSq || state.duration >= (state.maxDuration || 60)) {
+            for (let i = 0; i < 15; i++) {
+                this.createHitParticles(enemy.x, enemy.y, particleColor);
+            }
+            enemy.x = state.targetX;
+            enemy.y = state.targetY;
+            this.createScreenShake(18, 18);
+            state.active = false;
+            state.duration = 0;
+        }
+
+        return state.active || wasActive;
     }
 
     updatePulseHunterMovement(enemy, dirX, dirY, distance, bossHealthPercent, playerX, playerY) {
@@ -9579,8 +9648,10 @@ class VibeSurvivor {
         );
     }
 
-    createHitParticles(x, y, color) {
-        // Particles removed for performance
+    createHitParticles(x, y, color, countScale = 1) {
+        if (this.particleSystem?.createHitParticles) {
+            this.particleSystem.createHitParticles(x, y, color, countScale);
+        }
     }
 
     createDashParticles() {

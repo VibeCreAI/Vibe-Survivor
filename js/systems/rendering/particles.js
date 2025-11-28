@@ -297,10 +297,32 @@ export class ParticleSystem {
     }
 
     /**
-     * Stub methods for future particle effects (currently disabled for performance)
+     * Basic particle helpers (lightweight, pooled)
      */
-    createHitParticles(x, y, color) {
-        // Particles removed for performance
+    createHitParticles(x, y, color = '#FFFFFF', countScale = 1) {
+        const multiplier = this.qualitySettings?.particleMultiplier ?? 1;
+        if (multiplier <= 0) return;
+
+        const count = Math.max(1, Math.floor(6 * multiplier * countScale));
+        for (let i = 0; i < count; i++) {
+            const particle = this.getPooledParticle();
+            if (!particle) break;
+
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 1.25 + Math.random() * 1.75;
+
+            particle.x = x;
+            particle.y = y;
+            particle.vx = Math.cos(angle) * speed;
+            particle.vy = Math.sin(angle) * speed;
+            particle.size = 1 + Math.random() * 2;
+            particle.color = color;
+            particle.life = 0.45 + Math.random() * 0.4;
+            particle.maxLife = particle.life;
+            particle.type = 'hit';
+
+            this.particles.push(particle);
+        }
     }
 
     createDashParticles() {

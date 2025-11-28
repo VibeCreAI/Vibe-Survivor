@@ -262,7 +262,7 @@ export class ScoreboardModal extends Modal {
                 <div class="score-rank">#${score.rank}</div>
                 <div class="score-meta">
                     <span class="score-player">${this.escapeHtml(score.player_name)}</span>
-                    <span class="score-version">v${score.game_version || '1.0.1'}</span>
+                    <span class="score-version">v${score.game_version || '1.1.0'}</span>
                     <span class="score-date">${dateText}</span>
                 </div>
             </div>

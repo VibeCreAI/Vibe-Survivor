@@ -837,14 +837,6 @@ export class WeaponSystem {
 
         addProjectile(projectile);
 
-        // Create muzzle flash for this barrel
-        if (createHitParticles) {
-            createHitParticles(
-                player.x + offsetX + Math.cos(angle) * 20,
-                player.y + offsetY + Math.sin(angle) * 20,
-                '#FFD700'
-            );
-        }
     }
 
     /**
