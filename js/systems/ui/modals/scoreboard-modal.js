@@ -1,4 +1,5 @@
 import { Modal } from './modal-base.js';
+import { GAME_INFO } from '../../../config/constants.js';
 import { scoreboardStorage } from '../../../utils/scoreboard-storage.js';
 import { supabaseClient } from '../../../utils/supabase-client.js';
 
@@ -185,7 +186,7 @@ export class ScoreboardModal extends Modal {
         this.showGlobalLoading(true);
 
         try {
-            const version = this.versionFilter?.value || 'all';
+            const version = this.getVersionFilterValue();
             const majorVersion = version === 'all' ? null : version;
 
             const result = await supabaseClient.fetchGlobalScores({
@@ -422,36 +423,68 @@ export class ScoreboardModal extends Modal {
         this.populateVersions();
     }
 
+    getVersionSuggestions() {
+        // Include current game major version and known fallbacks so users can pick versions even without local runs
+        const versions = new Set(scoreboardStorage.getUniqueMajorVersions());
+
+        const defaults = ['1.0', GAME_INFO?.MAJOR_VERSION];
+        const configured = Array.isArray(GAME_INFO?.KNOWN_MAJOR_VERSIONS) ? GAME_INFO.KNOWN_MAJOR_VERSIONS : [];
+
+        [...defaults, ...configured].forEach((version) => {
+            if (version) versions.add(version.replace(/^v/i, ''));
+        });
+
+        return Array.from(versions)
+            .filter(Boolean)
+            .sort((a, b) => b.localeCompare(a));
+    }
+
+    getVersionFilterValue() {
+        if (!this.versionFilter) return 'all';
+
+        const raw = (this.versionFilter.value || '').trim();
+        const lower = raw.toLowerCase();
+
+        if (!raw || lower === 'all' || lower === 'all versions') {
+            return 'all';
+        }
+
+        return raw.replace(/^v/i, '') || 'all';
+    }
+
     populateVersions() {
         if (!this.versionFilter) return;
 
-        const selected = this.versionFilter.value || 'all';
-        const versions = scoreboardStorage.getUniqueMajorVersions();
+        const selected = this.getVersionFilterValue();
+        const versions = this.getVersionSuggestions();
         const t = this.getTranslation;
 
-        this.versionFilter.innerHTML = '';
         const allLabel = t ? t('scoreboardAllVersions') : 'All Versions';
-        const allOption = document.createElement('option');
-        allOption.value = 'all';
-        allOption.textContent = allLabel;
-        this.versionFilter.appendChild(allOption);
+        const safeVersions = [...versions];
 
-        versions.forEach(version => {
-            const option = document.createElement('option');
-            option.value = version;
-            option.textContent = `v${version}`;
-            this.versionFilter.appendChild(option);
-        });
-
-        if (selected) {
-            this.versionFilter.value = selected;
+        if (selected !== 'all' && !safeVersions.includes(selected)) {
+            safeVersions.unshift(selected);
         }
+
+        this.versionFilter.innerHTML = '';
+
+        const addOption = (value, label) => {
+            const option = document.createElement('option');
+            option.value = value;
+            option.textContent = label;
+            this.versionFilter.appendChild(option);
+        };
+
+        addOption('all', allLabel);
+        safeVersions.forEach(version => addOption(version, `v${version}`));
+
+        this.versionFilter.value = selected || 'all';
     }
 
     renderScores() {
         if (!this.scoreList) return;
 
-        const version = this.versionFilter?.value || 'all';
+        const version = this.getVersionFilterValue();
         const scores = version === 'all'
             ? scoreboardStorage.getAllScores()
             : scoreboardStorage.getScoresByVersion(version);

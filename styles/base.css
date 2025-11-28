@@ -718,7 +718,8 @@ body::after {
     color: rgba(255, 255, 255, 0.8);
 }
 
-.scoreboard-filter select {
+.scoreboard-filter select,
+.scoreboard-filter input {
     background: rgba(16, 12, 40, 0.96);
     border: 1px solid rgba(0, 255, 255, 0.35);
     color: #fff;
@@ -729,7 +730,9 @@ body::after {
 }
 
 .scoreboard-filter select:focus,
-.scoreboard-filter select:focus-visible {
+.scoreboard-filter select:focus-visible,
+.scoreboard-filter input:focus,
+.scoreboard-filter input:focus-visible {
     outline: none;
     border-color: #00ffff;
     box-shadow: 0 0 15px rgba(0, 255, 255, 0.8);

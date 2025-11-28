@@ -12856,6 +12856,17 @@ class VibeSurvivor {
         }
     }
 
+    formatDamageValue(value = 0) {
+        const amount = Math.max(0, Math.round(value ?? 0));
+        if (amount >= 1_000_000) {
+            return `${(amount / 1_000_000).toFixed(1)}m`;
+        }
+        if (amount >= 100_000) {
+            return `${Math.floor(amount / 1000)}k`;
+        }
+        return `${amount}`;
+    }
+
     generateWeaponsSection() {
         if (this.weapons.length === 0) return '';
 
@@ -12896,10 +12907,10 @@ class VibeSurvivor {
                         mergeClass,
                         weaponLevel: weapon.level,
                         name: this.getWeaponName(weapon.type),
-                        weaponDamage: weapon.damage,
-                        bossDamage,
-                        enemyDamage,
-                        totalDamage
+                        weaponDamage: this.formatDamageValue(weapon.damage),
+                        bossDamage: this.formatDamageValue(bossDamage),
+                        enemyDamage: this.formatDamageValue(enemyDamage),
+                        totalDamage: this.formatDamageValue(totalDamage)
                     }
                 };
             })
