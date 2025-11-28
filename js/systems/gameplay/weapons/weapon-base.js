@@ -67,8 +67,9 @@ export class WeaponSystem {
 
         weapon.level++;
 
-        // Increase damage by 30% per level
-        weapon.damage = Math.floor(weapon.damage * (1 + WEAPON_UPGRADES.DAMAGE_PER_LEVEL));
+        // Increase damage per level (gatling gets a gentler ramp to avoid runaway DPS)
+        const damageScale = weapon.type === 'gatling_gun' ? 0.20 : WEAPON_UPGRADES.DAMAGE_PER_LEVEL;
+        weapon.damage = Math.floor(weapon.damage * (1 + damageScale));
 
         // Scale burn damage for napalm weapons (same 30% scaling as base damage)
         if (weapon.burnDamage) {

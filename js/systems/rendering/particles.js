@@ -303,7 +303,7 @@ export class ParticleSystem {
         const multiplier = this.qualitySettings?.particleMultiplier ?? 1;
         if (multiplier <= 0) return;
 
-        const count = Math.max(1, Math.floor(6 * multiplier * countScale));
+        const count = Math.max(1, Math.floor(4 * multiplier * countScale));
         for (let i = 0; i < count; i++) {
             const particle = this.getPooledParticle();
             if (!particle) break;
