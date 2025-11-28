@@ -909,7 +909,7 @@ export class EnemySystem {
         const wasActive = state.active;
         const maxBossDistance = 400;
         const particleColor = '#FF0066';
-        const dashSpeedMultiplier = 12;
+        const dashSpeedMultiplier = 8;
         const arrivalThresholdSq = 2500;
         const minTargetDistance = 190;
         const maxTargetDistance = 210;
@@ -939,7 +939,7 @@ export class EnemySystem {
         }
 
         const [dashDirX, dashDirY] = direction(enemy.x, enemy.y, state.targetX, state.targetY);
-        const dashSpeed = Math.max(enemy.speed * dashSpeedMultiplier, 25);
+        const dashSpeed = Math.max(enemy.speed * dashSpeedMultiplier, 18);
         enemy.x += dashDirX * dashSpeed;
         enemy.y += dashDirY * dashSpeed;
 
@@ -965,6 +965,7 @@ export class EnemySystem {
             }
             state.active = false;
             state.duration = 0;
+            enemy.specialCooldown = Math.max(enemy.specialCooldown || 0, 30);
         }
 
         return state.active || wasActive;
