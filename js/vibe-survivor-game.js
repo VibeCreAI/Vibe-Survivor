@@ -352,6 +352,7 @@ class VibeSurvivor {
         this.pendingBossSpawn = null;      // Delayed boss spawn entry created after alert
         this.bossSpawnDelaySeconds = 3;    // Lead time between alert and spawn
         this.bossSpawnDistance = 450;      // Spawn bosses further away from player
+        this.bossAlertLeadSeconds = 6;     // Keep boss arrival after all three alert beeps (approx 6s)
 
         // Level up and timing state management
         this.pendingLevelUps = 0;           // Count of deferred level ups
@@ -1296,8 +1297,8 @@ class VibeSurvivor {
                             <div class="levelup-content" tabindex="-1">
                                 <div class="levelup-tabs">
                                     <button id="levelup-tab-main" class="levelup-tab active" data-tab="levelup">LEVEL UP</button>
-                                    <button id="levelup-tab-guide" class="levelup-tab" data-tab="guide">GUIDE</button>
                                     <button id="levelup-tab-status" class="levelup-tab" data-tab="status">STATUS</button>
+                                    <button id="levelup-tab-guide" class="levelup-tab" data-tab="guide">GUIDE</button>
                                 </div>
                                 <div id="levelup-pane-levelup" class="levelup-pane active">
                                     <div class="levelup-title">LEVEL UP</div>
@@ -7428,7 +7429,9 @@ class VibeSurvivor {
             return;
         }
 
-        const delaySeconds = Math.max(0, Number(options.delaySeconds ?? this.bossSpawnDelaySeconds) || 0);
+        const requestedDelay = Number(options.delaySeconds ?? this.bossSpawnDelaySeconds) || 0;
+        const minAlertLead = Math.max(0, this.bossAlertLeadSeconds || 0);
+        const delaySeconds = Math.max(minAlertLead, requestedDelay);
         const spawnDistance = Math.max(options.distance || this.bossSpawnDistance, 250);
         const bossLevel = options.bossLevel || this.bossLevel;
         const baseVariant = options.variantId ? this.getBossVariantById(options.variantId) : this.getBossVariantForLevel(bossLevel);
@@ -7926,6 +7929,9 @@ class VibeSurvivor {
             const [dirX, dirY] = Vector2.direction(enemy.x, enemy.y, playerX, playerY);
             const distance = this.cachedSqrt(Vector2.distanceSquared(enemy.x, enemy.y, playerX, playerY));
 
+            enemy.specialCooldown = Math.max(0, (enemy.specialCooldown || 0) - 1);
+            enemy.catchUpLockFrames = Math.max(0, (enemy.catchUpLockFrames || 0) - 1);
+
             const isCatchingUp = this.handleBossCatchUpDash(enemy, distance, playerX, playerY);
             if (isCatchingUp) {
                 continue;
@@ -8035,6 +8041,7 @@ class VibeSurvivor {
             state.active = false;
             state.duration = 0;
             enemy.specialCooldown = Math.max(enemy.specialCooldown || 0, 30);
+            enemy.catchUpLockFrames = Math.max(enemy.catchUpLockFrames || 0, 30);
         }
 
         return state.active || wasActive;
@@ -8050,7 +8057,7 @@ class VibeSurvivor {
             enemy.y += dirY * enemy.speed * 1.8;
         } else {
             if (!enemy.dashState.active) {
-                if (enemy.specialCooldown <= 0) {
+                if (enemy.specialCooldown <= 0 && (enemy.catchUpLockFrames || 0) <= 0) {
                     enemy.dashState.active = true;
                     enemy.dashState.targetX = playerX;
                     enemy.dashState.targetY = playerY;
@@ -8128,7 +8135,7 @@ class VibeSurvivor {
         const dashMultiplier = this.getBossCycleDashMultiplier(enemy.bossLevel || this.bossLevel || 1);
 
         if (!dashState.active) {
-            if (enemy.specialCooldown <= 0) {
+            if (enemy.specialCooldown <= 0 && (enemy.catchUpLockFrames || 0) <= 0) {
                 dashState.active = true;
                 dashState.targetX = playerX + (Math.random() - 0.5) * 140;
                 dashState.targetY = playerY + (Math.random() - 0.5) * 140;

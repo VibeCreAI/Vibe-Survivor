@@ -855,7 +855,7 @@ export class EnemySystem {
                 // Dash state management for aggressive Phase 3 behavior
                 if (!enemy.dashState.active) {
                     // Start new dash towards player
-                    if (enemy.specialCooldown <= 0) {
+                    if (enemy.specialCooldown <= 0 && (enemy.catchUpLockFrames || 0) <= 0) {
                         enemy.dashState.active = true;
                         enemy.dashState.targetX = playerX;
                         enemy.dashState.targetY = playerY;
@@ -966,6 +966,7 @@ export class EnemySystem {
             state.active = false;
             state.duration = 0;
             enemy.specialCooldown = Math.max(enemy.specialCooldown || 0, 30);
+            enemy.catchUpLockFrames = Math.max(enemy.catchUpLockFrames || 0, 30);
         }
 
         return state.active || wasActive;
@@ -1062,6 +1063,9 @@ export class EnemySystem {
 
             if (enemy.specialCooldown > 0) {
                 enemy.specialCooldown--;
+            }
+            if (enemy.catchUpLockFrames > 0) {
+                enemy.catchUpLockFrames--;
             }
 
             // Rotate any enemy that has a rotation speed set

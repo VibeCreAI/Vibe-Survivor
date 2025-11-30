@@ -18,7 +18,7 @@ export class LevelUpModal extends Modal {
 
         // Tab management
         this.activeTab = 'levelup';
-        this.tabs = ['levelup', 'guide', 'status'];
+        this.tabs = ['levelup', 'status', 'guide'];
 
         // Keyboard navigation state
         this.keyboardHandler = null;
@@ -239,6 +239,10 @@ export class LevelUpModal extends Modal {
         const gatlingRecipe = t('gatlingGunRecipe', 'help');
         const gatlingDesc = t('gatlingGunDesc', 'help');
 
+        const napalmName = t('napalmBuckshot', 'weapons');
+        const napalmRecipe = t('napalmBuckshotRecipe', 'help');
+        const napalmDesc = t('napalmBuckshotDesc', 'help');
+
         const rapidEvolution = t('rapidFireEvolution', 'help');
 
         guidePane.innerHTML = `
@@ -258,6 +262,11 @@ export class LevelUpModal extends Modal {
                     <h3><img src="images/weapons/gatlingGun.png" alt="Gatling Gun"> ${gatlingName}</h3>
                     <p>${gatlingRecipe}</p>
                     <span class="recipe-desc">${gatlingDesc}</span>
+                </div>
+                <div class="merge-recipe">
+                    <h3><img src="images/weapons/napalmBuckshot.png" alt="Napalm Buckshot"> ${napalmName}</h3>
+                    <p>${napalmRecipe}</p>
+                    <span class="recipe-desc">${napalmDesc}</span>
                 </div>
             </div>
             <h2 class="levelup-guide-evolution"><img src="images/passives/evolution.png" alt="Weapon Evolution" class="section-icon"> ${evolutionTitle}</h2>

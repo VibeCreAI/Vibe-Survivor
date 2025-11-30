@@ -808,6 +808,29 @@ const WEAPON_KEYS = {
 
 ---
 
+#### 12f. Add to Level-Up Modal Guide Tab
+
+**File**: `js/systems/ui/modals/level-up.js`
+
+**Around the `renderGuidePane()` merger list**, add a new recipe card with icon, name, recipe, and description (reuse the same translation keys used in Help → Weapons tab):
+
+```javascript
+const napalmName = t('napalmBuckshot', 'weapons');
+const napalmRecipe = t('napalmBuckshotRecipe', 'help');
+const napalmDesc = t('napalmBuckshotDesc', 'help');
+
+// In the guidePane markup
+<div class="merge-recipe">
+    <h3><img src="images/weapons/napalmBuckshot.png" alt="Napalm Buckshot"> ${napalmName}</h3>
+    <p>${napalmRecipe}</p>
+    <span class="recipe-desc">${napalmDesc}</span>
+</div>
+```
+
+**Tip**: Keep Level-Up Guide, Help → Weapons tab, and Guide modal merger lists in sync.
+
+---
+
 ## Common Pitfalls & Solutions
 
 ### Issue: "Unknown Weapon" in Level-Up Modal
@@ -826,7 +849,7 @@ const WEAPON_KEYS = {
 
 ### Issue: Weapon Missing from Guide/Help Modals
 **Cause**: Not added to modal weapon lists
-**Solution**: Add to both `guide-modal.js` and `help-menu.js` weapon arrays
+**Solution**: Add to `guide-modal.js`, `help-menu.js`, and Level-Up Guide tab (`js/systems/ui/modals/level-up.js`)
 
 ### Issue: Visual Effects Only on Basic Enemies
 **Cause**: Only added effects to basic enemy rendering, not special types

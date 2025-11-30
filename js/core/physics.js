@@ -203,9 +203,10 @@ export class PhysicsManager {
                         game.recordWeaponDamage(projectile.sourceType, damage, enemy);
                     }
 
-                    // Create hit particles
+                    // Create hit particles (lighter for homing lasers)
                     if (game.createHitParticles) {
-                        game.createHitParticles(enemy.x, enemy.y, projectile.color);
+                        const hitScale = projectile.type === 'homing_laser' ? 0.4 : 1;
+                        game.createHitParticles(enemy.x, enemy.y, projectile.color, hitScale);
                     }
 
                     // Special projectile effects
