@@ -14003,7 +14003,7 @@ class VibeSurvivor {
 
                     // Passive stack info
                     healthBoostStack: "+25 Max Health (infinite stacks)",
-                    speedBoostStack: "+10% Movement Speed (max 3 stacks)",
+                    speedBoostStack: "+15% Movement Speed (max 3 stacks)",
                     magnetStack: "Attract XP orbs (max 3 stacks)",
                     armorStack: "15% damage reduction (infinite stacks, 90% cap)",
                     criticalStack: "15% crit chance, 2x damage (max 3 stacks)",
@@ -14246,7 +14246,7 @@ class VibeSurvivor {
 
                     // Passive stack info
                     healthBoostStack: "+25 최대 체력 (무한 중첩)",
-                    speedBoostStack: "+10% 이동 속도 (최대 3 중첩)",
+                    speedBoostStack: "+15% 이동 속도 (최대 3 중첩)",
                     magnetStack: "경험치 구슬 흡수 (최대 3 중첩)",
                     armorStack: "15% 피해 감소 (무한 중첩, 90% 상한)",
                     criticalStack: "15% 치명타 확률, 2배 피해 (최대 3 중첩)",

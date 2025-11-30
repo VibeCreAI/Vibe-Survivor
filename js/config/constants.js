@@ -385,8 +385,8 @@ export const PASSIVES = {
     },
     SPEED_BOOST: {
         name: 'Speed Boost',
-        description: '+10% Movement Speed',
-        value: 0.1,
+        description: '+15% Movement Speed',
+        value: 0.15,
         stackable: true,
         maxStacks: 3
     },
